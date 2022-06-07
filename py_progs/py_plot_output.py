@@ -1,9 +1,5 @@
 #!/usr/bin/env python 
 '''
-    University of Southampton -- JM -- November 2014
-
-                py_plot_output.py
-
 Synopsis:
     various plotting routines for making standard plots
     from Python outputs 
@@ -31,8 +27,6 @@ Arguments:
         compare  compare the root to other roots to compare
         all         make all the above plots
 '''
-
-#import pylab as p 
 import pylab as p
 import py_read_output as r 
 import numpy as np 
@@ -54,31 +48,27 @@ except ImportError:
 def make_spec_plot(s, fname, smooth_factor = 10, angles = True, components = False, with_composite=False):
 
     '''
-    make a spectrum plot from astropy.table.table.Table object 
+    make a spectrum plot from astropy.table.table.Table object. Saves output as "spectrum_%s.png" % (fname)
 
-    Parameters
-    ----------
-    s: astropy.table.table.Table
-        table containing spectrum data outputted from Python 
+    Parameters:
+        s: astropy.table.table.Table
+            table containing spectrum data outputted from Python 
 
-    fname: str 
-        filename to save as e.g. sv
+        fname: str 
+            filename to save as e.g. sv
 
-    smooth_factor: int 
-        factor you would like to smooth by, default 10
+        smooth_factor: int 
+            factor you would like to smooth by, default 10
 
-    angles: Bool 
-        Would you like to plot the viewing angle spectra? 
+        angles: Bool 
+            Would you like to plot the viewing angle spectra? 
 
-    components: Bool 
-        would you like to plot the individual components e.g. Disk Wind 
+        components: Bool 
+            would you like to plot the individual components e.g. Disk Wind 
     
-    Returns
-    ----------
-    Success returns 0
-    Failure returns 1
-
-    Saves output as "spectrum_%s.png" % (fname)
+    Returns:
+        Success returns 0
+        Failure returns 1
     '''
 
     if type(s) != astropy.table.table.Table:
@@ -157,31 +147,27 @@ def make_spec_plot(s, fname, smooth_factor = 10, angles = True, components = Fal
 def make_spec_plot_from_class(s, fname, smooth_factor = 10, angles = True, components = False):
 
     '''
-    make a spectrum plot from py_classes.specclass object
+    make a spectrum plot from py_classes.specclass object. Saves output as "spectrum_%s.png" % (fname)
 
-    Parameters
-    ----------
-    s: specclass object
-        table containing spectrum data outputted from Python 
+    Parameters:
+        s: specclass object
+            table containing spectrum data outputted from Python 
 
-    fname: str 
-        filename to save as e.g. sv
+        fname: str 
+            filename to save as e.g. sv
 
-    smooth_factor: int 
-        factor you would like to smooth by, default 10
+        smooth_factor: int 
+            factor you would like to smooth by, default 10
 
-    angles: Bool 
-        Would you like to plot the viewing angle spectra? 
+        angles: Bool 
+            Would you like to plot the viewing angle spectra? 
 
-    components: Bool 
-        would you like to plot the individual components e.g. Disk Wind 
+        components: Bool 
+            would you like to plot the individual components e.g. Disk Wind 
     
-    Returns
-    ----------
-    Success returns 0
-    Failure returns 1
-
-    Saves output as "spectrum_%s.png" % (fname)
+    Returns:
+        Success returns 0
+        Failure returns 1
     '''
 
 
@@ -240,43 +226,39 @@ def make_spec_plot_from_class(s, fname, smooth_factor = 10, angles = True, compo
 
 def make_wind_plot(d, fname, var=None, shape=(4,2), axes="log", den_or_frac=0, fname_prefix="wind", lims=None):
     '''
-    make a wind plot from astropy.table.table.Table object 
+    make a wind plot from astropy.table.table.Table object. Saves output as "spectrum_%s.png" % (fname)
 
-    Parameters
-    ----------
-    d: astropy.table.table.Table
-        table containing wind data outputted from Python 
-        if == None then this routine will get the data for you
+    Parameters:
+        d: astropy.table.table.Table
+            table containing wind data outputted from Python 
+            if == None then this routine will get the data for you
 
-    fname: str 
-        filename to save as e.g. sv
+        fname: str 
+            filename to save as e.g. sv
 
-    var: array type 
-        array of string colnames to plot 
+        var: array type 
+            array of string colnames to plot 
 
-    angles: Bool 
-        Would you like to plot the viewing angle spectra? 
+        angles: Bool 
+            Would you like to plot the viewing angle spectra? 
 
-    components: Bool 
-        would you like to plot the individual components e.g. Disk Wind 
+        components: Bool 
+            would you like to plot the individual components e.g. Disk Wind 
 
-    axes: str 
-        lin or log axes
+        axes: str 
+            lin or log axes
 
-    den_or_frac: int
-        0 calculate ion densities
-        1 calculate ion fractions
+        den_or_frac: int
+            0 calculate ion densities
+            1 calculate ion fractions
 
-    lims: array-like
-        limits of plot, specified as ((xmin,xmax), (ymin, tmax))
-        can be array or tuple. Default is Nonetype.
+        lims: array-like
+            limits of plot, specified as ((xmin,xmax), (ymin, tmax))
+            can be array or tuple. Default is Nonetype.
 
-    Returns
-    ----------
-    Success returns 0
-    Failure returns 1
-
-    Saves output as "spectrum_%s.png" % (fname)
+    Returns:
+        Success returns 0
+        Failure returns 1
     '''
     
     if d == None:
@@ -345,34 +327,30 @@ def make_wind_plot(d, fname, var=None, shape=(4,2), axes="log", den_or_frac=0, f
 def make_spec_comparison_plot (s_array, labels, fname="comparison", smooth_factor = 10, angles = True, components = False):
 
     '''
-    make a spectrum comparison plot from array of astropy.table.table.Table objects 
+    make a spectrum comparison plot from array of astropy.table.table.Table objects. Saves output as "spectrum_%s.png" % (fname)
 
-    Parameters
-    ----------
-    s_array: array-like of astropy.table.table.Table objects
-        table containing spectrum data outputted from Python 
+    Parameters:
+        s_array: array-like of astropy.table.table.Table objects
+            table containing spectrum data outputted from Python 
 
-    labels: array-like
-        strings of labels for each spectrum 
+        labels: array-like
+            strings of labels for each spectrum 
 
-    fname: str
-        filename to save as e.g. sv
+        fname: str
+            filename to save as e.g. sv
 
-    smooth_factor: int 
-        factor you would like to smooth by, default 10
+        smooth_factor: int 
+            factor you would like to smooth by, default 10
 
-    angles: Bool 
-        Would you like to plot the viewing angle spectra? 
+        angles: Bool 
+            Would you like to plot the viewing angle spectra? 
 
-    components: Bool 
-        would you like to plot the individual components e.g. Disk Wind 
+        components: Bool 
+            would you like to plot the individual components e.g. Disk Wind 
     
-    Returns
-    ----------
-    Success returns 0
-    Failure returns 1
-
-    Saves output as "spectrum_%s.png" % (fname)
+    Returns:
+        Success returns 0
+        Failure returns 1
     '''
 
     ncomponents = 9

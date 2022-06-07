@@ -1,36 +1,26 @@
 #!/usr/bin/env python 
 
+
 '''
-                    Space Telescope Science Institute
-
 Synopsis:  
-
-Read the master file produced by windsave2table for a
- model created in cylindrical coordinates and produce 
- a file which can be imported into Python and run
+    Read the master file produced by windsave2table for a
+    model created in cylindrical coordinates and produce 
+    a file which can be imported into Python and run
 
 
 Command line usage (if any):
-
-    usage: import_cyl.py rootname
-
+    ``import_cyl.py rootname``
     where rootname is the rootname of the mastertable
     or windsave file
 
 Description:  
-
     This operates on the mastertable produced by windsavetable
 
 Primary routines:
-
     doit
 
 Notes:
                                        
-History:
-
-171106 ksl Coding begun
-
 '''
 
 import sys
@@ -45,13 +35,6 @@ def read_file(filename,char=''):
     char is an optional parameter used as the delimiter for
     splitting lines into words.  Otherwise white space is
     assumed.
-
-    History:
-    
-    110729    ksl    Added optional delimiters
-    141209    ksl    Reinstalled in my standard startup
-            script so there was flexibility to
-            read any ascii file
     '''
 
     try:

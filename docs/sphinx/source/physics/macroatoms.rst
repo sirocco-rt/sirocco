@@ -3,6 +3,8 @@ Macro Atoms
 
 .. todo:: This page shoud contain a description of how macro atoms work. The below is copied from JM's thesis.
 
+.. todo:: Add description of accelerated macro-atom scheme
+
 The macro-atom scheme was created by Leon Lucy and is outlined in his 2002/03 papers. It was implemented in Python by Stuart Sim, initially for the study of recombination lines in YSOs (Sim et al. 2005).
 
 Lucy (2002,2004) hereafter L02, L03) has shown that it is possible to calculate the emissivity of a gas in statistical equilibrium without approximation for problems with large departures from LTE. His `macro-atom` scheme allows for all possible transition paths from a given level, dispensing with the two-level approximation, and provides a full non-LTE solution for the level populations based on Monte Carlo estimators. The macro-atom technique has already been used to model Wolf-Rayet star winds (Sim 2004), AGN disc winds (Sim et al. 2008), supernovae (Kromer and Sim 2009, Kerzendorf and Sim 2014) and YSOs (Sim et al. 2005). A full description of the approach can be found in L02 and L03. 
@@ -80,8 +82,18 @@ For a bound-free transition, the code assumes radiative recombination, and thus 
 
 This hybrid approach preserves the fast treatment of, for example, UV resonance lines, while accurately modelling the recombination cascades that populate the levels responsible for, e.g., H and He line emission. As a result of this hybrid scheme, a separate set of estimators must be recorded for simple-atoms,  and the ionization and excitation of these elements is calculated with a different, approximate approach. In order to include simple-atoms, we must add in a few extra pathways, so that energy packets can also activate simple-atoms, through either bound-free or bound-bound processes. The relative probabilities of these channels are set in proportion with the simple-atom opacities.
 
-.. todo:: Describe.
+Macro-atom Emissivity Calculation
+========================================
 
+In order to preserve the philosophy that a detailed spectrum is calculated in a limited wavelength regime, Python carries out a macro-atom emissivity calculation before the spectral cycles. The aim of this step is to calculate the luminosity contributed by macro-atoms -- equivalent to the total amount of reprocessed emission -- in the wavelength range being considered.
+
+This process can be very computationally intensive, especially if the wavelength regime being simulated has very little emission from bound-free and line processes in the wind, but the overall broad-band emissivity is high. During the ionization cycles, the amount of energy absorbed into :math:`k`-packets and every macro-atom level is recorded using MC estimators. Once  the ionization cycles are finished, and the model has converged, these absorption energies are split into a certain number of packets and tracked through the macro-atom machinery until a deactivation occurs. When this happens, the emissivity of the level the macro-atom de-activated from is incremented if the packet lies in the requested wavelength range. If it does not, then  the packet is thrown away. It is easy to see how what is essentially a MC rejection method can be an inefficient way of sampling this parameter space. Fortunately, this problem is parallelised in the code.
+
+Once the emissivities have been calculated, the spectral synthesis can proceed. This is done in a different way to the ionization cycles. Photons are generated from the specified photon sources over the required wavelength range, but are now also generated according to the calculated macro-atom and :math:`k`-packet emissivities in each cell. These photons are "extracted" as with normal photon packets. In order to ensure that radiative equilibrium still holds, any photon that interacts with a macro-atom or :math:`k`-packet is immediately destroyed. The photons are tracked and extracted as normal until they escape the simulation; resonant scatters are dealt with by a combination of macro-atom photon production and destruction.
+
+.. admonition :: Developer note: Emissivites
+
+    We are a little lax in terms of what we actually call an emissivity in the code. The quantities stored in variables like ``kpkt_emiss`` and ``matom_emiss`` in the plasma and macro-atom structures are actually *comoving-frame energies* in erg, which are sampled when generating :math:`r`-packets in each cell. Roughly speaking, these are luminosities given that the code assumes a time unit of 1s. Similarly, when the code prints out level *emissivities* to screen and to the diag file, these are really a sum over all these quantities (and can approximately be thought of as level *luminosities*).
 
 Bound-free Continua of Simple Atoms
 =============================================
@@ -97,5 +109,3 @@ This result in two changes to the code for ionization cycles:
 In the spectral cycles, interactions with simple bound-free continua now kill the photon, and :math:`k \to r` follow the same behaviour as above, because in these cycles we introduce a precalculated band-limited :math:`k`-packet emissivity. 
 
 **It is possible for some numerical problems to occur.** For example, there is nothing to stop the value of :math:`f_{\rm up}` being quite large, if the photon is being emitted close to the edge. This is most likely to happen when the electron temperature :math:`T_e` is quite low, but there is nothing to stop it happening anywhere. This is most likely to lead to problems when the factor :math:`f_{\rm up}` is comparable to the typical number of photon passages per cell, since then a single photon can dominate the heating or ionization estimators in a given cell and lead to convergence problems by dramatically exacerbating shot noise. 
-
-.. todo:: Finish documentation of upweighting scheme with some basic explanation.

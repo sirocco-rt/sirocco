@@ -24,7 +24,7 @@ The parameters involved in describing a flat disk are::
 Vertically Extended disk (Details)
 ================================================
 
-.. figure:: images/vertical_disk.png
+.. figure:: ../images/vertical_disk.png
     :width: 300px
     :align: center
 

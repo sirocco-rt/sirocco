@@ -101,12 +101,6 @@ calc_matom_matrix (xplasma, matom_matrix)
       rad_rate = (a21 (line_ptr) * p_escape (line_ptr, xplasma));
       coll_rate = q21 (line_ptr, t_e);  // this is multiplied by ne below
 
-//OLD Unneeded check.  There is already a check in q21
-//OLD      if (coll_rate < 0)
-//OLD      {
-//OLD        coll_rate = 0;
-//OLD      }
-
       bb_cont = rad_rate + (coll_rate * ne);
 
       target_level = line_ptr->nconfigl;
@@ -128,15 +122,9 @@ calc_matom_matrix (xplasma, matom_matrix)
     {
 
       cont_ptr = &phot_top[config[uplvl].bfd_jump[n]];  //pointer to continuum
-      if (n < 25)               //?
-      {
-        sp_rec_rate = mplasma->recomb_sp[config[uplvl].bfd_indx_first + n];     //need this twice so store it
-        bf_cont = (sp_rec_rate + q_recomb (cont_ptr, t_e) * ne) * ne;
-      }
-      else
-      {
-        bf_cont = sp_rec_rate = 0.0;
-      }
+
+      sp_rec_rate = mplasma->recomb_sp[config[uplvl].bfd_indx_first + n];       //need this twice so store it
+      bf_cont = (sp_rec_rate + q_recomb (cont_ptr, t_e) * ne) * ne;
 
 
       target_level = phot_top[config[uplvl].bfd_jump[n]].nlev;
@@ -167,14 +155,8 @@ calc_matom_matrix (xplasma, matom_matrix)
 
       coll_rate = q12 (line_ptr, t_e);  // this is multiplied by ne below
 
-// Unneded check this has been checked previously
-//OLD      if (coll_rate < 0)
-//OLD      {
-//OLD        coll_rate = 0;
-//OLD      }
       target_level = line[config[uplvl].bbu_jump[n]].nconfigu;
       Q_matrix[uplvl][target_level] += Qcont = ((rad_rate) + (coll_rate * ne)) * config[uplvl].ex;      //energy of lower state
-
 
       Q_norm[uplvl] += Qcont;
     }
@@ -581,8 +563,8 @@ fill_kpkt_rates (xplasma, escape, p)
 
     if (one->inwind >= 0)
     {
-      cooling_ff = mplasma->cooling_ff = total_free (one, xplasma->t_e, freqmin, freqmax) / xplasma->vol / xplasma->ne;
-      cooling_ff += mplasma->cooling_ff_lofreq = total_free (one, xplasma->t_e, 0.0, freqmin) / xplasma->vol / xplasma->ne;
+      cooling_ff = mplasma->cooling_ff = total_free (xplasma, xplasma->t_e, freqmin, freqmax) / xplasma->vol / xplasma->ne;
+      cooling_ff += mplasma->cooling_ff_lofreq = total_free (xplasma, xplasma->t_e, 0.0, freqmin) / xplasma->vol / xplasma->ne;
     }
     else
     {
@@ -841,16 +823,12 @@ f_kpkt_emit_accelerate (xplasma, freq_min, freq_max)
   int i;
   int escape_dummy;
   struct topbase_phot *cont_ptr;
-//OLD  double electron_temperature;
   MacroPtr mplasma;
-  WindPtr one;
   struct photon pdummy;
   double ff_freq_min, ff_freq_max;
   double eprbs, eprbs_band, penorm, penorm_band;
   double flast, fthresh, bf_int_full, bf_int_inrange;
   double total_ff_lofreq, total_ff;
-
-  one = &wmain[xplasma->nwind];
 
   penorm = 0.0;
   penorm_band = 0.0;
@@ -945,8 +923,8 @@ f_kpkt_emit_accelerate (xplasma, freq_min, freq_max)
   /* consult issues #187, #492 regarding free-free */
   penorm += eprbs = mplasma->cooling_ff + mplasma->cooling_ff_lofreq;
 
-  total_ff_lofreq = total_free (one, xplasma->t_e, 0, ff_freq_min);
-  total_ff = total_free (one, xplasma->t_e, ff_freq_min, ff_freq_max);
+  total_ff_lofreq = total_free (xplasma, xplasma->t_e, 0, ff_freq_min);
+  total_ff = total_free (xplasma, xplasma->t_e, ff_freq_min, ff_freq_max);
 
   /*
    * Do not increment penorm_band when the total free-free luminosity is zero
@@ -955,19 +933,19 @@ f_kpkt_emit_accelerate (xplasma, freq_min, freq_max)
   if (freq_min > ff_freq_min)
   {
     if (total_ff > 0)
-      penorm_band += total_free (one, xplasma->t_e, freq_min, freq_max) / total_ff * mplasma->cooling_ff;
+      penorm_band += total_free (xplasma, xplasma->t_e, freq_min, freq_max) / total_ff * mplasma->cooling_ff;
   }
   else if (freq_max > ff_freq_min)
   {
     if (total_ff > 0)
-      penorm_band += total_free (one, xplasma->t_e, ff_freq_min, freq_max) / total_ff * mplasma->cooling_ff;
+      penorm_band += total_free (xplasma, xplasma->t_e, ff_freq_min, freq_max) / total_ff * mplasma->cooling_ff;
     if (total_ff_lofreq > 0)
-      penorm_band += total_free (one, xplasma->t_e, freq_min, ff_freq_min) / total_ff_lofreq * mplasma->cooling_ff_lofreq;
+      penorm_band += total_free (xplasma, xplasma->t_e, freq_min, ff_freq_min) / total_ff_lofreq * mplasma->cooling_ff_lofreq;
   }
   else
   {
     if (total_ff_lofreq > 0)
-      penorm_band += total_free (one, xplasma->t_e, freq_min, freq_max) / total_ff_lofreq * mplasma->cooling_ff_lofreq;
+      penorm_band += total_free (xplasma, xplasma->t_e, freq_min, freq_max) / total_ff_lofreq * mplasma->cooling_ff_lofreq;
   }
 
   penorm += eprbs = mplasma->cooling_adiabatic;

@@ -46,6 +46,8 @@ communicate_estimators_para ()
   double *redhelper, *redhelper2, *qdisk_helper, *qdisk_helper2;
   double *ion_helper, *ion_helper2;
   double *inner_ion_helper, *inner_ion_helper2;
+  double *flux_helper, *flux_helper2;
+
 //OLD  int nspec, size_of_commbuffer;
   int size_of_commbuffer;
 
@@ -82,6 +84,9 @@ communicate_estimators_para ()
      two integers (nhit and nphot) */
   qdisk_helper = calloc (sizeof (double), NRINGS * 2);
   qdisk_helper2 = calloc (sizeof (double), NRINGS * 2);
+
+  flux_helper = calloc (sizeof (double), NPLASMA * NFLUX_ANGLES * 3);
+  flux_helper2 = calloc (sizeof (double), NPLASMA * NFLUX_ANGLES * 3);
 
   MPI_Barrier (MPI_COMM_WORLD);
   // the following blocks gather all the estimators to the zeroth (Master) thread
@@ -147,6 +152,12 @@ communicate_estimators_para ()
     {
       inner_ion_helper[mpi_i * n_inner_tot + mpi_j] = plasmamain[mpi_i].inner_ioniz[mpi_j] / np_mpi_global;
     }
+    for (mpi_j = 0; mpi_j < NFLUX_ANGLES; mpi_j++)
+    {
+      flux_helper[mpi_i * (3 * NFLUX_ANGLES) + mpi_j] = plasmamain[mpi_i].F_UV_ang_x[mpi_j] / np_mpi_global;
+      flux_helper[mpi_i * (3 * NFLUX_ANGLES) + NFLUX_ANGLES + mpi_j] = plasmamain[mpi_i].F_UV_ang_y[mpi_j] / np_mpi_global;
+      flux_helper[mpi_i * (3 * NFLUX_ANGLES) + 2 * NFLUX_ANGLES + mpi_j] = plasmamain[mpi_i].F_UV_ang_z[mpi_j] / np_mpi_global;
+    }
   }
 
   for (mpi_i = 0; mpi_i < NRINGS; mpi_i++)
@@ -163,6 +174,7 @@ communicate_estimators_para ()
   MPI_Reduce (maxfreqhelper, maxfreqhelper2, NPLASMA, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
   MPI_Reduce (redhelper, redhelper2, plasma_double_helpers, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
   //XXXX Duplicate MPI_Reduce (redhelper, redhelper2, plasma_double_helpers, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce (flux_helper, flux_helper2, NPLASMA * 3 * NFLUX_ANGLES, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   MPI_Reduce (ion_helper, ion_helper2, NPLASMA * nions, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
   MPI_Reduce (inner_ion_helper, inner_ion_helper2, NPLASMA * n_inner_tot, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -182,7 +194,7 @@ communicate_estimators_para ()
   /* 131213 NSH Send out the global min and max band limited frequencies to all threads */
   MPI_Bcast (minbandfreqhelper2, NPLASMA * NXBANDS, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast (maxbandfreqhelper2, NPLASMA * NXBANDS, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
+  MPI_Bcast (flux_helper2, NPLASMA * 3 * NFLUX_ANGLES, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast (ion_helper2, NPLASMA * nions, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast (inner_ion_helper2, NPLASMA * n_inner_tot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
@@ -250,6 +262,12 @@ communicate_estimators_para ()
     for (mpi_j = 0; mpi_j < n_inner_tot; mpi_j++)
     {
       plasmamain[mpi_i].inner_ioniz[mpi_j] = inner_ion_helper2[mpi_i * n_inner_tot + mpi_j];
+    }
+    for (mpi_j = 0; mpi_j < NFLUX_ANGLES; mpi_j++)
+    {
+      plasmamain[mpi_i].F_UV_ang_x[mpi_j] = flux_helper2[mpi_i * (3 * NFLUX_ANGLES) + mpi_j];
+      plasmamain[mpi_i].F_UV_ang_y[mpi_j] = flux_helper2[mpi_i * (3 * NFLUX_ANGLES) + NFLUX_ANGLES + mpi_j];
+      plasmamain[mpi_i].F_UV_ang_z[mpi_j] = flux_helper2[mpi_i * (3 * NFLUX_ANGLES) + 2 * NFLUX_ANGLES + mpi_j];
     }
   }
 
@@ -714,7 +732,7 @@ communicate_matom_estimators_para ()
  * @param   [in,out]  int   *my_nmax   pointer to integer value of final task
  * @return            int   ndo        number of tasks this thread is working on 
 
- * @detailsFor a process with ntotal tasks, 
+ * @details  For a process with ntotal tasks, 
  * this routine calculates which thread will be given each task.
  * typically ntotal is NPLASMA and the thread is splitting up wind cells.
  * The routine deals with remainders by distributing the remainder over the 

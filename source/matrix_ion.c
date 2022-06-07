@@ -271,9 +271,21 @@ matrix_ion_populations (xplasma, mode)
     /* The actual LU decomposition- the process of obtaining a solution - is done by the routine solve_matrix() */
 
 
+    /* Replaced inline array allocation with calloc, which will work with older version of c compilers calloc also sets the
+       elements to zero, which is required */
+
     /* This next line produces an array of the correct size to hold the rate matrix */
 
     a_data = (double *) calloc (sizeof (double), nrows * nrows);
+
+    populations = (double *) calloc (nrows, sizeof (double));
+
+    /* This b_data column matrix is the total number density for each element, placed into the row which relates to the neutral
+       ion. This matches the row in the rate matrix which is just 1 1 1 1 for all stages. NB, we could have chosen any line for
+       this. */
+
+    b_data = (double *) calloc (nrows, sizeof (double));
+
     /* We now copy our rate matrix into the prepared matrix */
     for (mm = 0; mm < nrows; mm++)
     {
@@ -282,16 +294,6 @@ matrix_ion_populations (xplasma, mode)
         a_data[mm * nrows + nn] = rate_matrix[mm][nn];
       }
     }
-
-    /* Replaced inline array allocation with calloc, which will work with older version of c compilers calloc also sets the
-       elements to zero, which is required */
-
-    b_data = (double *) calloc (nrows, sizeof (double));
-    populations = (double *) calloc (nrows, sizeof (double));
-
-    /* This b_data column matrix is the total number density for each element, placed into the row which relates to the neutral
-       ion. This matches the row in the rate matrix which is just 1 1 1 1 for all stages. NB, we could have chosen any line for
-       this. */
 
     for (nn = 0; nn < nrows; nn++)
     {

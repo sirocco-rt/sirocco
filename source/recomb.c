@@ -69,7 +69,7 @@ int nfb = 0;
  * x*= H;
  */
 #define FBEMISS   7.67413e-62   // Calculated with constants.c
-
+#define LOG_FBEMISS -140.7224208336316
 
 
 /* These are external structures used primarily because we need to call
@@ -78,8 +78,8 @@ Numerical Recipes routines from fb_verner and fb_topbase */
 ///Topbase description of a photoionization x-section
 struct topbase_phot *fb_xtop;
 
-/// Temperature at which thee emissivity is calculated
-double fbt;
+/// Temperature (and log) at which the emissivity is calculated 
+double fbt, log_fbt;
 
 /// fb_choice (see above)
 int fbfr;
@@ -111,7 +111,7 @@ int fbfr;
  *
  * This routine used to be used for integrations, the wrapper routine fb_topbase_partial2 is
  * now used for that purpose - this is only used directly now.
- *
+ * Recast in log space for speedup purposes
  *
  *
  **********************************************************/
@@ -121,10 +121,14 @@ fb_topbase_partial (freq)
      double freq;
 {
   int nion;
-  double partial;
-  double x;
+  double partial, log_freq;
+  double logx;
   double gn, gion;
+  double log_gn, log_gion;
   double fthresh;
+  double test;
+
+  log_freq = log (freq);        //Go into log space
 
   fthresh = fb_xtop->freq[0];
   if (freq < fthresh)
@@ -134,23 +138,45 @@ fb_topbase_partial (freq)
 
   /* JM -- below lines to address bug #195 */
   gn = 1;
+  log_gn = 0;
   if (ion[nion].phot_info > 0)  // it's a topbase record
+  {
     gn = config[fb_xtop->nlev].g;
+    log_gn = config[fb_xtop->nlev].log_g;
+  }
+
   else if (ion[nion].phot_info == 0)    // it's a VFKY record, so shouldn't really use levels
+  {
     gn = ion[nion].g;
+    log_gn = ion[nion].log_g;
+  }
   else
   {
     Error
       ("fb_topbase_partial: Did not understand cross-section type %i for ion %i (z=%i, istate %i). Setting multiplicity to zero!\n",
        ion[nion].phot_info, nion, ion[nion].z, ion[nion].istate);
     gn = 0.0;
+    log_gn = -999.;             //Not really sure what to do here - probably return a zero
   }
 
   gion = ion[nion + 1].g;       // Want the g factor of the next ion up
-  x = sigma_phot (fb_xtop, freq);
-  // Now calculate emission using Ferland's expression
+  log_gion = ion[nion + 1].log_g;       // Want the g factor of the next ion up in log space
 
-  partial = FBEMISS * gn / (2. * gion) * pow (freq * freq / fbt, 1.5) * exp (H_OVER_K * (fthresh - freq) / fbt) * x;
+//  x = sigma_phot (fb_xtop, freq);
+  logx = log_sigma_phot (fb_xtop, log_freq);
+
+
+
+  // Now calculate emission using Ferland's expression - recast in log space 2022 for speed.
+
+//  partial = FBEMISS * gn / (2. * gion) * pow (freq * freq / fbt, 1.5) * exp (H_OVER_K * (fthresh - freq) / fbt) * x;
+
+  test =
+    LOG_FBEMISS + log_gn - 0.6931471805599453 - log_gion + 1.5 * (2.0 * log_freq - log_fbt) + (H_OVER_K * (fthresh - freq) / fbt) + logx;
+
+
+  partial = exp (test);         //Go back to linear space
+
 
   // 0=emissivity, 1=heat loss from electrons, 2=photons emissivity
 
@@ -163,6 +189,9 @@ fb_topbase_partial (freq)
 
   return (partial);
 }
+
+
+
 
 
 /**********************************************************/
@@ -366,7 +395,7 @@ integ_fb (t, f1, f2, nion, fb_choice, mode)
  * 	associated with each recombination.  Python tracks effectively the kinetic energy
  * 	of the plasma (not the potential energy available if everything recombined).
  *
- * @param [in] WindPtr  one   The wind cell of interest
+ * @param [in] PlasmaPtr  xplasma   The plasma cell of interest
  * @param [in] double  t   The temperature of the cell
  * @param [in] double  f1   The minimum frequency
  * @param [in] double  f2   The maximum frequency
@@ -400,19 +429,14 @@ integ_fb (t, f1, f2, nion, fb_choice, mode)
  **********************************************************/
 
 double
-total_fb (one, t, f1, f2, fb_choice, mode)
-     WindPtr one;
+total_fb (xplasma, t, f1, f2, fb_choice, mode)
+     PlasmaPtr xplasma;
      double t, f1, f2;
      int fb_choice;
      int mode;
 {
   double total;
   int nion;
-  int nplasma;
-  PlasmaPtr xplasma;
-
-  nplasma = one->nplasma;
-  xplasma = &plasmamain[nplasma];
 
   if (t < 100. || f2 < f1)
     t = 100.;                   /* Set the temperature to 100 K so that if there are free electrons emission by this process continues */
@@ -471,7 +495,7 @@ double fb_jumps[NLEVELS];
 double xfb_jumps[NLEVELS];
 int fb_njumps = (-1);
 
-WindPtr ww_fb;
+// WindPtr ww_fb;
 double one_fb_f1, one_fb_f2, one_fb_te; /* Old values */
 
 
@@ -479,7 +503,7 @@ double one_fb_f1, one_fb_f2, one_fb_te; /* Old values */
 /**
  * @brief      generates one free bound photon with specific frequency limits
  *
- * @param [in] WindPtr  one   The wind cell in which the photon is being
+ * @param [in] PlasmaPtr  xplasma   The wind cell in which the photon is being
  * @param [in] double  f1   The minimum frequency
  * @param [in] double  f2   The frequency limits
  * @return     The frequency of the fb photon that was generated.
@@ -502,21 +526,17 @@ double one_fb_f1, one_fb_f2, one_fb_te; /* Old values */
  **********************************************************/
 
 double
-one_fb (one, f1, f2)
-     WindPtr one;               /* a single cell */
+one_fb (xplasma, f1, f2)
+     PlasmaPtr xplasma;         /* a single cell */
      double f1, f2;             /* freqmin and freqmax */
 {
   double freq, tt, delta;
   int n, nn, nnn;
   double fthresh, dfreq;
   int nplasma;
-  PlasmaPtr xplasma;
   PhotStorePtr xphot;
-
-  nplasma = one->nplasma;
-  xplasma = &plasmamain[nplasma];
+  nplasma = xplasma->nplasma;
   xphot = &photstoremain[nplasma];
-
 
   if (f2 < f1)
   {
@@ -536,15 +556,15 @@ one_fb (one, f1, f2)
     return (freq);
   }
 
+
   delta = tt / 100;             // Fudge factor to prevent generation of a CDF if t has changed only slightly
 
   /* Check to see if we have already generated a cdf */
   if (tt > (one_fb_te + delta) || tt < (one_fb_te - delta) || f1 != one_fb_f1 || f2 != one_fb_f2)
   {
-
 /* Then need to generate a new cdf */
 
-    ww_fb = one;
+//OLD    ww_fb = one;
 
     /* Create the fb_array */
 
@@ -639,7 +659,7 @@ one_fb (one, f1, f2)
     if (cdf_gen_from_array (&cdf_fb, fb_x, fb_y, nnn, f1, f2) != 0)
     {
       Error ("one_fb after cdf_gen_from_array error: f1 %g f2 %g te %g ne %g nh %g vol %g\n",
-             f1, f2, xplasma->t_e, xplasma->ne, xplasma->density[1], one->vol);
+             f1, f2, xplasma->t_e, xplasma->ne, xplasma->density[1], xplasma->vol);
       Error ("Giving up\n");
       Exit (0);
     }
@@ -805,6 +825,7 @@ fb (xplasma, t, freq, ion_choice, fb_choice)
 
 
   fbt = t;                      /* Externally transmitted variable */
+  log_fbt = log (t);
   fbfr = fb_choice;             /* Externally transmitted variable */
 
   fnu = 0.0;                    /* Initially set the emissivity to zero */
@@ -1198,6 +1219,8 @@ xinteg_fb (t, f1, f2, nion, fb_choice)
 
   // Put information where it can be used by the integrating function
   fbt = t;
+  log_fbt = log (t);
+
   fbfr = fb_choice;
 
   /* Limit the frequency range to one that is reasonable before integrating */
@@ -1316,6 +1339,8 @@ xinteg_inner_fb (t, f1, f2, nion, fb_choice)
     {
       nn = n;
       fbt = t;
+      log_fbt = log (t);
+
       fbfr = fb_choice;
 
       /* Limit the frequency range to one that is reasonable before integrating */
@@ -1549,6 +1574,7 @@ gs_rrate (nion, T)
     rate = 0.0;                 /* NSH 130605 to remove o3 compile error */
 
     fbt = T;
+    log_fbt = log (T);
     fbfr = FB_RATE;
 
     if (ion[nion - 1].phot_info > 0)    //topbase or hybrid
@@ -1710,6 +1736,7 @@ matom_select_bf_freq (WindPtr one, int nconf)
   xplasma = &plasmamain[one->nplasma];
   te = xplasma->t_e;            //electron temperature in cell
   fbt = te;                     //set external temperature to the right value
+  log_fbt = log (te);           //set external temperature to the right value
 
   //If hydrogenic ion use analytic expression
   if (ion[phot_top[nconf].nion].istate == ion[phot_top[nconf].nion].z)

@@ -42,11 +42,11 @@ char rngsave_file[LINELENGTH];
 /**********************************************************/
 /** @name      randvec
  *
- * @brief GEt a 3 vector "a" whose direction will be random and whose
+ * @brief Get a 3 vector "a" whose direction will be random and whose
  * lenght will be r
  *
  * @param [out] double a[] The resulting 3 vector      
- * @param [in] double  r   desired radius of the vector
+ * @param [in] double  r   desired length of the vector
  * @return     Always retursn 0                       
  *
  * @details

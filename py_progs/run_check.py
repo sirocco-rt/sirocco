@@ -1,31 +1,28 @@
 #!/usr/bin/env python 
-
 '''
-                    Space Telescope Science Institute
-
 Synopsis:  
-
-Sumarize a model run with python, ultimately generating
-an html file with various plots, etc.
+    Sumarize a model run with python, ultimately generating
+    an html file with various plots, etc.
 
 
 Command line usage (if any):
+    run_check.py root1 [root2 ...]
 
-    usage:  run_check.py root1 [root2 ...]
-            run_check.py root1.pf [root2.pf ...]
-            run_check -all
-            run_check -h
+    run_check.py root1.pf [root2.pf ...]
+
+    run_check -all
+
+    run_check -h
             
 
 Description:  
-
     This routine performs basic checks on one or more python runs
     and creates an html file for each that is intended to provide
     a quick summary of a run.  
 
     The user can enter the runs to be tested from the command line,
     either in the form of a set of root names or .pf names. Wildcarding,
-    e.g *.pf can be used.  *.out.pf files will be ignored.  
+    e.g ``*.pf`` can be used.  ``*.out.pf`` files will be ignored.  
 
     Alternatively to process all of the files in a directory, one can use
     the switch -all (which supercedes anything else).  
@@ -33,20 +30,13 @@ Description:
     In all cases the routine checks to see if the appropriate wind_save file
     exists before attempting to run.
 
-    -h delievers this documentation
+    -h delivers this documentation
 
 Primary routines:
-
     doit - processes a single file
     steer  - processes the command line and calls doit for each file.
 
 Notes:
-                                       
-History:
-
-190312 ksl Coding begun
-190806 ksl Added a steering routine so that multiple files could be processed
-
 '''
 
 import sys

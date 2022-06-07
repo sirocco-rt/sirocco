@@ -2,9 +2,15 @@ Spectrum.select_photons_by_position
 ===================================
 Advanced command associated with adding conditions for
 the detailed spectra that are extracted.  This command simply
-asks whether one would like to select photons by position.  If
-so one will be asked to define a spheical region in interms of
-its cylindrical coordinates.
+asks whether one would like to construct spectra from photons
+that originate or last scattered from a certain regions of space.
+
+If yes, then one will be asked to specify the regions for all
+extraction angles.
+
+This option is useful for diagnostic purposes, such as differentiating
+between photons that read the observer from the near or far side of
+the disk.
 
 Type
   Boolean (yes/no)

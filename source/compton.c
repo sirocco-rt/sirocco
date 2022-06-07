@@ -380,6 +380,85 @@ compton_dir (p)
   return (0);
 }
 
+/**********************************************************/
+/** 
+ * @brief      return the (unormalized) proability density Maxwell-Boltzman distribution
+ *
+ * @param [in] double x  
+ * @param [in] void *params  dummy variable needed for gsl compatability
+ * @return     the unormalized proablitly density for a Maxwell-Boltzmann distribution         
+ *
+ * @details
+ * 
+ * ### Notes ###
+ *
+ **********************************************************/
+
+struct Cdf cdf_thermal;
+int init_cdf_thermal = TRUE;
+
+
+double
+pdf_thermal (double x, void *params)
+{
+  return (x * x * exp (-x * x));
+}
+
+/**********************************************************/
+/** 
+ * @brief      get a random thermal velocity of an electron in a plasma
+ *
+ * @param [in] double t   temperature of the plasma
+ * @param [out] double *v the velocity of a random electron
+ * @return     0
+ *
+ * @details
+ * 
+ * ### Notes ###
+ *
+ * The PDF for the speed of thermalized particles is given by the Maxwell-Boltzmann
+ * distribution.  Given a temperature, this routine gets a random
+ * speed and then converts this to a velocity assuming that the 
+ * directions are isotropic.
+ *
+ **********************************************************/
+
+
+int
+compton_get_thermal_velocity (t, v)
+     double t, *v;
+{
+  double vel;
+
+
+  if (init_cdf_thermal)
+  {
+    double dummy[2] = { 0, 1 };
+    cdf_gen_from_func (&cdf_thermal, &pdf_thermal, 0, 5, 0, dummy);
+    init_cdf_thermal = FALSE;
+  }
+
+  vel = cdf_get_rand (&cdf_thermal);
+
+  vel *= sqrt ((2. * BOLTZMANN / MELEC) * t);
+
+  if (vel > 0.5 * VLIGHT)
+  {
+    Error ("compton_get_thermal_velocity: v (%e) > 0.5 C\n", vel);
+    vel = 0.5 * VLIGHT;
+  }
+
+
+  randvec (v, vel);
+
+
+
+  return (0);
+
+
+
+}
+
 
 /**********************************************************/
 /** 

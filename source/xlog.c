@@ -794,6 +794,9 @@ Log_parallel (char *format, ...)
   va_list ap, ap2;
   int result;
 
+  if (init_log == 0)
+    Log_init ("logfile");
+
   if (log_verbosity < SHOW_PARALLEL)
     return (0);
 

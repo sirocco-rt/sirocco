@@ -119,7 +119,7 @@ LDFLAGS+= -L$(LIB) -lm -lgsl -lgslcblas
 
 #Note that version should be a single string without spaces.
 
-VERSION = 86a
+VERSION = 86c
 
 INDENT = yes
 
@@ -363,6 +363,14 @@ inspect_wind:  $(inspect_wind_objects)
 	mv $@ $(BIN)/inspect_wind$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
+
+# unit_tests allows one to test low level routines, but one must be aware that one needs to define
+# everything in the main routine before one can probe a particular routine.  
+unit_test: startup unit_test.o $(python_objects)
+	$(CC) ${CFLAGS} unit_test.o $(python_objects) $(kpar_objects) $(LDFLAGS) -o unit_test
+	cp $@ $(BIN)/unit_test
+	# Fix indenting, if necessary.
+	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 py_optd_obj = py_optd.o py_optd_output.o py_optd_trans.o py_optd_util.o \
 		bb.o atomicdata.o atomicdata_init.o atomicdata_sub.o photon2d.o photon_gen.o parse.o setup_files.o \

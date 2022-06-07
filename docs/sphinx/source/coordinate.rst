@@ -29,7 +29,7 @@ So a wide angle wind with a 100 x 100 grid can take much more memory than a narr
 It is also, of course, the number of cells that are actually in the wind that determine the fidelity of the model.  
 
 Partial cells
--------------
+===============
 
 As note above, parameterized models often have region of space that are in the wind and regions whch are not.  If one overlays, a coordinate grid 
 on such a model, there will be cells that cross edges of the wind.  These partial cells present particular problems.

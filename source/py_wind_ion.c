@@ -574,8 +574,7 @@ line_summary (w, rootname, ochoice)
  *
  **********************************************************/
 int
-total_emission_summary (w, rootname, ochoice)
-     WindPtr w;
+total_emission_summary (rootname, ochoice)
      char rootname[];
      int ochoice;
 {
@@ -585,13 +584,10 @@ total_emission_summary (w, rootname, ochoice)
 
 
   tot = 0.0;
-  for (n = 0; n < NDIM2; n++)
+  for (n = 0; n < NPLASMA; n++)
   {
     aaa[n] = 0;
-    if (w[n].inwind >= 0)
-    {
-      tot += aaa[n] = total_emission (&w[n], 0.0, VERY_BIG);
-    }
+    tot += aaa[n] = total_emission (&plasmamain[n], 0.0, VERY_BIG);
   }
 
   display ("Calculated thermal luminosities of cells");

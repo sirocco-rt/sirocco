@@ -589,7 +589,7 @@ one_choice (choice, root, ochoice)
     wind_reg_summary (wmain, root, ochoice);
     break;
   case 'x':                    /*Total emission */
-    total_emission_summary (wmain, root, ochoice);
+    total_emission_summary (root, ochoice);
     break;
   case 'X':                    /* Position summary */
     position_summary (wmain);

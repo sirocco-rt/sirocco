@@ -321,7 +321,9 @@ radiation (PhotPtr p, double ds)
                 }
                 if (density > DENSITY_PHOT_MIN)
                 {
-                  kappa_tot += x = sigma_phot (x_top_ptr, freq_xs) * density * frac_path * zdom[ndom].fill;
+//                  kappa_tot += x = sigma_phot (x_top_ptr, freq_xs) * density * frac_path * zdom[ndom].fill;
+                  kappa_tot += x = exp (log_sigma_phot (x_top_ptr, log (freq_xs))) * density * frac_path * zdom[ndom].fill;
+
                   if (geo.ioniz_or_extract && x_top_ptr->n_elec_yield != -1)    // Calculate during ionization cycles only
                   {
                     frac_auger += z = x * (inner_elec_yield[x_top_ptr->n_elec_yield].Ea / EV2ERGS) / (freq_xs * HEV);
@@ -403,7 +405,9 @@ radiation (PhotPtr p, double ds)
 
   if (sane_check (p->w))
   {
-    Error ("Radiation:sane_check photon weight is %e for tau %e\n", p->w, tau);
+    Error ("Radiation:sane_check photon weight is %e for photon %d tau %e\n", p->w, p->np, tau);
+    p->w = 0.0;
+    Error ("Radiation: after same check, set weight of photont %d to zerro\n", p->np);
   }
 
   if (geo.ioniz_or_extract == CYCLE_EXTRACT)
@@ -619,12 +623,92 @@ sigma_phot (x_ptr, freq)
   nmax = x_ptr->np;
   x_ptr->nlast = linterp (freq, &x_ptr->freq[0], &x_ptr->x[0], nmax, &xsection, 1);     //call linterp in log space
 
+
+
   x_ptr->sigma = xsection;
   x_ptr->f = freq;
 
   return (xsection);
 
 }
+
+
+/**********************************************************/
+/**
+ * @brief      calculates the log of 
+ *  photionization crossection due to a Topbase level associated with
+ *  x_ptr at log frequency log_freq
+ *
+ * @param [in,out] struct topbase_phot *  x_ptr   The structure that contains
+ * TopBase information about the photoionization x-section
+ * @param [in] double  freq   The frequency where the x-section is to be calculated
+ *
+ * @return     The x-section
+ *
+ * @details
+ * log_sigma_phot uses the Topbase x-sections to calculate the bound free
+ * (or photoionization) xsection.   The data must have been into the
+ * photoionization structures xphot with get_atomic_data and the
+ * densities of individual ions must have been calculated previously.
+ *
+ * ### Notes ###
+ * The logs of the x-section and frequency are stored in the topbase_phot struture
+ * so that if one requests the same xsection with the same log frequency  
+ * again, then the calculation of the x-section is avoided.
+ * this was recast in   log space as part of an effort to speed up the code.
+ *
+ **********************************************************/
+
+double
+log_sigma_phot (x_ptr, log_freq)
+     struct topbase_phot *x_ptr;
+     double log_freq;
+{
+  int nmax;
+  double logxsection;
+  double frac, fbot, ftop;
+  int linterp ();
+  int nlast;
+
+
+  if (log_freq < x_ptr->log_freq[0])
+  {
+    return (0.0);               // Since this was below threshold
+  }
+  if (log_freq == x_ptr->log_f)
+    return (x_ptr->log_sigma);  // Avoid recalculating xsection
+
+  if (x_ptr->nlast > -1)
+  {
+    nlast = x_ptr->nlast;
+    if ((fbot = x_ptr->log_freq[nlast]) < log_freq && log_freq < (ftop = x_ptr->log_freq[nlast + 1]))
+    {
+      frac = (log_freq - fbot) / (ftop - fbot);
+      logxsection = (1. - frac) * x_ptr->log_x[nlast] + frac * x_ptr->log_x[nlast + 1];
+
+      x_ptr->log_sigma = logxsection;
+      x_ptr->log_f = log_freq;
+      return (logxsection);
+    }
+  }
+
+  nmax = x_ptr->np;
+  x_ptr->nlast = linterp (log_freq, &x_ptr->log_freq[0], &x_ptr->log_x[0], nmax, &logxsection, 0);      //call linterp in lin space
+
+  x_ptr->log_sigma = logxsection;
+  x_ptr->log_f = log_freq;
+
+  if (logxsection == 0.0)
+  {
+    printf ("ERROR %e %e\n", log_freq, x_ptr->log_freq[0]);
+
+    exit (0);
+  }
+
+  return (logxsection);
+
+}
+
 
 
 /**********************************************************/

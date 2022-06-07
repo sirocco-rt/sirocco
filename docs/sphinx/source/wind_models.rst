@@ -10,6 +10,7 @@ Wind Models
    wind_models/sv
    wind_models/kwd
    wind_models/homologous
+   wind_models/stellar
 
 .. todo::
 

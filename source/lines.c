@@ -24,7 +24,7 @@
  * Calculate the total line emission from a wind cell
  *
  *
- * @param [in] WindPtr  one   A specific cell in the wind
+ * @param [in] PlasmaPtr  xplasma   A specific plasma cell in the wind
  * @param [in] double  f1   A minimum frequncy
  * @param [in] double  f2   A maximum frequency
  * @return     The line lumionisity of the cell (in erg/s)
@@ -51,15 +51,15 @@
  **********************************************************/
 
 double
-total_line_emission (one, f1, f2)
-     WindPtr one;               /* WindPtr to a specific cell in the wind */
+total_line_emission (xplasma, f1, f2)
+     PlasmaPtr xplasma;         /* WindPtr to a specific cell in the wind */
      double f1, f2;             /* Minimum and maximum frequency */
 {
 
   double lum;
   double t_e;
 
-  t_e = plasmamain[one->nplasma].t_e;
+  t_e = xplasma->t_e;
 
   if (t_e <= 0 || f2 < f1)
     return (0);
@@ -71,7 +71,7 @@ total_line_emission (one, f1, f2)
 
   limit_lines (f1, f2);
 
-  lum = lum_lines (one, nline_min, nline_max);
+  lum = lum_lines (xplasma, nline_min, nline_max);
 
 
 
@@ -85,7 +85,7 @@ total_line_emission (one, f1, f2)
  * @brief      Calculate the line lumiosity of lines between
  * nmin and nmax of the frequency ordered list of lines
  *
- * @param [in] WindPtr  one   A wind cell
+ * @param [in] PlasmaPtr  xplasma   A wind cell
  * @param [in] int  nmin   The minimum number of a line in the frequency ordered list
  * @param [in] int  nmax   The maximum number of a line in the frequency ordered list
  * @return     The total line luminosity between element nmin and nmax of the frequncy
@@ -103,8 +103,8 @@ total_line_emission (one, f1, f2)
  **********************************************************/
 
 double
-lum_lines (one, nmin, nmax)
-     WindPtr one;
+lum_lines (xplasma, nmin, nmax)
+     PlasmaPtr xplasma;
      int nmin, nmax;            /* The min and max index in lptr array for which the power is to be calculated */
 {
   int n;
@@ -112,14 +112,7 @@ lum_lines (one, nmin, nmax)
   double dd, d1, d2;
   double q;
   double t_e;
-  int nplasma;
   double foo1, foo2, foo3, foo4;
-  PlasmaPtr xplasma;
-
-
-
-  nplasma = one->nplasma;
-  xplasma = &plasmamain[nplasma];
   t_e = xplasma->t_e;
   lum = 0;
   for (n = nmin; n < nmax; n++)

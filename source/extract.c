@@ -87,6 +87,7 @@ extract (w, p, itype)
   int ierr;
 
 
+
   ierr = check_frame (p, F_OBSERVER, "extract_start");
   if (ierr)
   {
@@ -217,6 +218,8 @@ extract (w, p, itype)
       /*At this point photons of type DISK or WIND are in the local frame, but others
          are in the global frame
        */
+
+
 
       extract_one (w, &pp, itype, n);
     }
@@ -423,6 +426,8 @@ extract_one (w, pp, itype, nspec)
   {
     istat = translate (w, pp, 20., &tau, &nres);
     icell++;
+
+
 
     stuff_phot (pp, &pdummy);
     istat = walls (pp, &pstart, normal);

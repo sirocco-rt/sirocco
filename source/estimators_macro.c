@@ -197,6 +197,7 @@ bf_estimators_increment (one, p, ds)
         if (density > DENSITY_PHOT_MIN)
         {
           x = sigma_phot (&phot_top[n], freq_av);
+
           weight_of_packet = p->w;
           y = weight_of_packet * x * ds;
 
@@ -1056,6 +1057,7 @@ gamma_integrand (double freq, void *params)
     return (0.0);               // No photoionization at frequencies lower than the threshold freq occur
 
   x = sigma_phot (cont_ext_ptr2, freq); //this is the cross-section
+
   integrand = x * freq * freq / (exp (H_OVER_K * freq / tt) - 1);
 
   return (integrand);
@@ -1230,6 +1232,7 @@ alpha_st_integrand (double freq, void *params)
     return (0.0);               // No recombination at frequencies lower than the threshold freq occur
 
   x = sigma_phot (cont_ext_ptr2, freq); //this is the cross-section
+
   integrand = x * freq * freq * exp (H_OVER_K * (fthresh - freq) / tt) / (exp (H_OVER_K * freq / ttrr) - 1);
 
   return (integrand);
@@ -1326,7 +1329,8 @@ alpha_st_e_integrand (double freq, void *params)
   if (freq < fthresh)
     return (0.0);               // No recombination at frequencies lower than the threshold freq occur
 
-  x = sigma_phot (cont_ext_ptr2, freq); //this is the cross-section
+  x = sigma_phot (cont_ext_ptr2, freq); //this is the cross-section  
+
   integrand = x * freq * freq * exp (H_OVER_K * (fthresh - freq) / tt) / (exp (H_OVER_K * freq / ttrr) - 1) * freq / fthresh;
 
   return (integrand);

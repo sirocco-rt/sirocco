@@ -21,7 +21,7 @@ In highly optically thick regions, escape probabilities in all directions can be
 
 Anisotropy within the viewpoint technique
 ==================================================
-Within the viewpoint technique (also called extract or the peel-off method), described under :doc:`/spectral_cycles`, anisotropy has to be accounted for. At each interaction or wind photon generation, the photon packet is forced along a direction :math:`\theta`, with its weight  adjusted according to 
+Within the viewpoint technique (also called extract or the peel-off method), described under :doc:`../operation/spectral_cycles`, anisotropy has to be accounted for. At each interaction or wind photon generation, the photon packet is forced along a direction :math:`\theta`, with its weight  adjusted according to 
 
 .. math::
 

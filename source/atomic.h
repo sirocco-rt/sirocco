@@ -84,8 +84,9 @@ typedef struct ions
   int istate;                   /* 1=neutral, 2 = once ionized, etc. */
   int nelem;                    /* index to elements structure */
   double ip;                    /* ionization potential of this ion (converted from eV to ergs by get_atomic) */
-  double g;                     /* multiplicity of ground state, note that this is not totally consistent
-                                   with energy levels and this needs to be reconciled */
+  double g,log_g;               /* multiplicity of ground state, note that this is not totally consistent
+                                   with energy levels and this needs to be reconciled  
+	                               there is also a log version for use in freebound calculations*/
   int nmax;                     /* The maximum number of allowed lte configurations for this ion. 
                                    Used only by get_atomic */
   int n_lte_max;                /* The maximum number of allowed nlte configurations for this ion. 
@@ -175,7 +176,7 @@ typedef struct configurations
                                  */
   int n_bbu_jump, n_bbd_jump;   /* No. of bound-bound upward/downward jumps available to this configuration (SS) */
   int n_bfu_jump, n_bfd_jump;   /* No. of bound-free upward/downward jumps available to this configuration (SS) */
-  double g;                     /* multiplicity for level */
+  double g,log_g;                     /* multiplicity for level and log version for use in freebound integrations */
   double q_num;                 /* principal quantum number.  In Topbase this has non-integer values */
   double ex;                    /*excitation energy of level */
   double rad_rate;              /* Total spontaneous radiative de-excitation rate for level */
@@ -253,12 +254,12 @@ typedef struct coll_stren
   int upper;                    //The upper energy level - this is in Chianti notation and is currently unused
   double energy;                //The energy of the transition
   double gf;                    //The effective oscillator strength - NSH thinks this is oscillator strtength x lower level multiplicity
-  double hi_t_lim;              //The high temerature limit
-  double n_points;              //The number of points in the splie fit
+  double hi_t_lim;              //The high temperature limit
+  int n_points;                 //The number of points in the spline fit
   int type;                     //The type of fit, this defines how one computes the scaled temperature and scaled coll strength
   float scaling_param;          //The scaling parameter C used in the Burgess and Tully calculations
   double sct[N_COLL_STREN_PTS]; //The scaled temperature points in the fit
-  double scups[N_COLL_STREN_PTS];       //The sclaed coll sttengths in ythe fit.
+  double scups[N_COLL_STREN_PTS];       //The scaled coll strengths in ythe fit.
 } Coll_stren, *Coll_strenptr;
 
 extern Coll_stren coll_stren[NLINES];  
@@ -301,15 +302,15 @@ typedef struct topbase_phot
                                    configuration (nlev) and then up_index. (SS) */
   int up_index;
   int use;                      /* It we are to use this cross section. This allows unused VFKY cross sections to sit in the array. */
-  double freq[NCROSS], x[NCROSS];
-  double f, sigma;              /*last freq, last x-section */
+  double freq[NCROSS],log_freq[NCROSS], x[NCROSS],log_x[NCROSS]; /*frequency and cross sections, plus log versions for FB integrals*/
+  double f,log_f, sigma,log_sigma;              /*last freq, last x-section and log versions*/
 } Topbase_phot, *TopPhotPtr;
 
 extern Topbase_phot phot_top[NLEVELS];
 extern TopPhotPtr phot_top_ptr[NLEVELS];       /* Pointers to phot_top in threshold frequency order - this */
 
-extern Topbase_phot inner_cross[N_INNER * NIONS];
-extern TopPhotPtr inner_cross_ptr[N_INNER * NIONS];
+extern Topbase_phot inner_cross[N_INNER * NIONS];  /*Pointer to inner shell cross sections which use the same structure type */
+extern TopPhotPtr inner_cross_ptr[N_INNER * NIONS];  /*Pointer to inner shell cross sections in frequency order */
 
 
 

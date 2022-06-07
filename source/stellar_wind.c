@@ -4,9 +4,10 @@
  * @author ksl
  * @date   January, 2018
  *
- * @brief  Routines needed to define a spherical wind with a Castor and Larmors velocity law
+ * @brief  Routines needed to define a spherical wind with a Castor and 
+ * Larmers (1979) velocity law
  *
- * The Castor and Lamors' velocity law has
+ * The Castor and Lamers (1979)  velocity law has
  *
  * v(r)=V_o + (V_infinity-V_o) (1-R/r)**beta
  ***********************************************************/

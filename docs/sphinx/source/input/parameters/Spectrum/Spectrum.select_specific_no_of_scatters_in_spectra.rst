@@ -1,9 +1,15 @@
 Spectrum.select_specific_no_of_scatters_in_spectra
 ==================================================
 Advanced command which allows one to place additional
-constraints on the detailed spectra which are extract.
-This includes selectiong photons from above or below the
-disk, only photons which have scttered, etc.
+constraints on the detailed spectra that are extracted.
+
+If yes, then one will be asked to supply details for
+each extraction angle.  
+
+The command is useful for diagnositic purposes when 
+one would like to separate contributions to the 
+spectra from, for example, unscattered, singly scatterred,
+and multiply scattered photons.
 
 Type
   Boolean (yes/no)

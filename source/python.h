@@ -134,7 +134,10 @@ extern int NWAVE_NOW;                  //Either NWAVE_IONIZ or NWAVE_EXTRACT dep
 
 /* Number of model_lists that one can have, should be the same as NCOMPS in models.h */
 #define NCOMPS 	10
-#define LINELENGTH 	256
+#ifdef LINELENGTH
+#undef LINELENGTH
+#endif
+#define LINELENGTH 	400
 
 /* This structure contains the information needed for each separate region of space, e.g the
  * wind and the disk
@@ -807,7 +810,7 @@ typedef struct plasma
   double *recomb_simple_upweight;       /* multiplicative factor to account for ratio of total to "cooling" energy for b-f processes in simple atoms. */
 
 /* Beginning of macro information */
-  double kpkt_emiss;            /*This is the specific emissivity due to the conversion k-packet -> r-packet in the cell
+  double kpkt_emiss;            /*This is the luminosity produced due to the conversion k-packet -> r-packet in the cell
                                    in the frequency range that is required for the final spectral synthesis. (SS) */
 
   double kpkt_abs;              /* k-packet equivalent of matom_abs. (SS) */
@@ -914,6 +917,22 @@ typedef struct plasma
   double F_vis[4];
   double F_UV[4];
   double F_Xray[4];
+  
+  double F_vis_persistent[4];
+  double F_UV_persistent[4];
+  double F_Xray_persistent[4];
+  
+#define NFLUX_ANGLES 36 /* The number of bins into which the directional flux is calculated */
+  
+  /*Binned fluxes*/
+  double F_UV_ang_x[NFLUX_ANGLES];
+  double F_UV_ang_y[NFLUX_ANGLES];
+  double F_UV_ang_z[NFLUX_ANGLES];
+  
+  /*A version of the binned flux that is averaged over cycles */
+  double F_UV_ang_x_persist[NFLUX_ANGLES];
+  double F_UV_ang_y_persist[NFLUX_ANGLES];
+  double F_UV_ang_z_persist[NFLUX_ANGLES];
 
   /* The term direct here means from photons which have not been scattered. These are photons which have been
      created by the central object, or the disk, or in the simple case the wind, but which have not undergone
@@ -958,7 +977,9 @@ typedef struct plasma
   double rad_force_ff[4];       /*Radiative force of wind - 4th element is sum of magnitudes */
   double rad_force_bf[4];       /*Radiative force of wind - 4th element is sum of magnitudes */
 
-
+  double rad_force_es_persist[4];       /*Radiative force of wind - 4th element is sum of magnitudes */
+  double rad_force_ff_persist[4];       /*Radiative force of wind - 4th element is sum of magnitudes */
+  double rad_force_bf_persist[4];       /*Radiative force of wind - 4th element is sum of magnitudes */
 
   double gain;                  /* The gain being used in iterations of the structure */
   double converge_t_r, converge_t_e, converge_hc;
@@ -1062,7 +1083,7 @@ typedef struct macro
   /* "e" version of the spontaneous recombination coefficient. (SS) */
 
   double *matom_emiss;
-  /* This is the specific emissivity due to the de-activation of macro atoms in the cell
+  /* This is the luminosity due to the de-activation of macro atoms in the cell
      in the frequency range that is required for the final spectral synthesis. (SS) */
 
   double *matom_abs;

@@ -250,6 +250,7 @@ tb_planck (double freq, void *params)
   answer *= (1 / (bbe - 1));
 //      answer*=weight;
   answer *= sigma_phot (xtop, freq);
+
   answer /= freq;
 
   return (answer);
@@ -307,6 +308,7 @@ tb_exp (double freq, void *params)
 
   answer = xexp_w * exp ((-1.0 * PLANCK * freq) / (BOLTZMANN * xexp_temp));
   answer *= sigma_phot (xtop, freq);    // and finally multiply by the cross section.
+
   answer /= freq;               //then finally finally divide by the frequency
   return (answer);
 }

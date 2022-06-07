@@ -1,9 +1,9 @@
 Spectrum.select_rho
 ===================
-Advanced command which defines a spherical  region of
+Advanced command which defines a spherical region of
 space from which photons are to be extracted in constructing a detailed
 spectrum.  The region is defined by a cylindrical distance, and z height
-and an aximuth, and a radius r.  This parameter defines the rho coordiante
+and azimuth, and a rho coordainate.   This parameter defines the rho coordinate
 of the region.
 
 Type

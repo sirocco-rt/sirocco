@@ -42,7 +42,7 @@ File types
 
 The first two columns are fairly obvious. Lambda is in Angstroms. 
 
-The remainder indicate the luminosity, that is :math:`L_{\nu}` of the system for specific types of photons. The units are :math:`ergs\:cm^{-2} s^{-1} Hz^{-1}`. 
+The remainder indicate the luminosity, that is :math:`L_{\nu}` of the system for specific types of photons. The units are :math:`ergs\: s^{-1} Hz^{-1}`. 
 
 The remaining columns are:
 

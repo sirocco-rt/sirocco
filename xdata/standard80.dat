@@ -20,6 +20,10 @@ data/atomic/topbase_all_levels_10_lev.dat
 #
 data/atomic/levels_ver_2.dat
 #
+# The next file contains 'dummy' ground state levels for all ions up to Nickel 
+#
+data/atomic/levels_ground.dat
+#
 # And the next is for the actual lines
 #
 data/atomic/lines_linked_ver_2.dat
@@ -39,9 +43,10 @@ data/atomic/topbase_he2_phot_extrap.dat
 data/atomic/topbase_cno_phot_extrap.dat
 data/atomic/topbase_fe_phot_extrap.dat
 #
-#Next is VFKY PI cross sections, supplemented with VY data out to 50kev.
+#Next is VFKY PI cross sections, supplemented with VY data out to 50kev and supplmented with VY data for species not in VFKY
 #
 data/atomic/vfky_outershell_tab.dat
+data/atomic/vy_outershell_tab.dat
 #
 #Next is VY inner shell photoionization cross sections
 #

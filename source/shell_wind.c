@@ -31,7 +31,7 @@
 
 /**********************************************************/
 /**
- * @brief      Get the inputs needed to specigy the shell_wind modelen radius.
+ * @brief      Get the inputs needed to specigy the shell_wind model.
  *
  * @param [in] int  ndom   The domain for the shell
  * @return     Alwyas returns 0

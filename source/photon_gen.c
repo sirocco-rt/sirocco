@@ -86,7 +86,6 @@ define_phot (p, f1, f2, nphot_tot, ioniz_or_final, iwind, freq_sampling)
   int n;
   int iphot_start, nphot_rad, nphot_k;
   long nphot_tot_rad, nphot_tot_k;
-
   nphot_k = nphot_tot_k = natural_weight = iphot_start = 0;     // Initialize to avoid compiler warnings
 
   /* if we are generating nonradiative kpackets, then we need to subtract 
@@ -110,7 +109,7 @@ define_phot (p, f1, f2, nphot_tot, ioniz_or_final, iwind, freq_sampling)
 
     if (f1 != f1_old || f2 != f2_old || iwind != iwind_old)
     {                           // The reinitialization is required
-      xdefine_phot (f1, f2, ioniz_or_final, iwind, PRINT_ON);
+      xdefine_phot (f1, f2, ioniz_or_final, iwind, PRINT_ON, 1);
     }
     /* The weight of each photon is designed §so that all of the photons add up to the
        luminosity of the photosphere.  This implies that photons must be generated in such
@@ -144,22 +143,23 @@ define_phot (p, f1, f2, nphot_tot, ioniz_or_final, iwind, freq_sampling)
       {
         /* Reinitialization is required here always because we are changing
          * the frequencies around all the time */
-
         Log ("Defining photons for band %d...\n", n);
-
-        xdefine_phot (xband.f1[n], xband.f2[n], ioniz_or_final, iwind, PRINT_ON);
-
+        if (n == 0)
+          xdefine_phot (xband.f1[n], xband.f2[n], ioniz_or_final, iwind, PRINT_ON, 1);
+        else
+          xdefine_phot (xband.f1[n], xband.f2[n], ioniz_or_final, iwind, PRINT_ON, 0);
         /* The weight of each photon is designed so that all of the photons add up to the
            luminosity of the photosphere.  This implies that photons must be generated in such
            a way that it mimics the energy distribution of the star. */
-
         geo.weight = (natural_weight) = (ftot) / (nphot_tot_rad);
         xband.weight[n] = weight = natural_weight * xband.nat_fraction[n] / xband.used_fraction[n];
         xmake_phot (p, xband.f1[n], xband.f2[n], ioniz_or_final, iwind, weight, iphot_start, xband.nphot[n]);
 
         iphot_start += xband.nphot[n];
       }
+
     }
+
   }
 
   /* deal with k-packets generated from nonradiative heating */
@@ -254,7 +254,10 @@ populate_bands (ioniz_or_final, iwind, band)
   {
     if (band->f1[n] < band->f2[n])
     {
-      xdefine_phot (band->f1[n], band->f2[n], ioniz_or_final, iwind, PRINT_OFF);
+      if (n == 0)
+        xdefine_phot (band->f1[n], band->f2[n], ioniz_or_final, iwind, PRINT_OFF, 1);   //We only need to compute the total wind lum for the first time thruogh
+      else
+        xdefine_phot (band->f1[n], band->f2[n], ioniz_or_final, iwind, PRINT_OFF, 0);
 
       ftot += band->flux[n] = geo.f_tot;
     }
@@ -264,6 +267,7 @@ populate_bands (ioniz_or_final, iwind, band)
     if (band->flux[n] == 0.0)
       band->min_fraction[n] = 0;
   }
+
 
 /* So now we can distribute the photons among the different bands */
 
@@ -318,6 +322,7 @@ populate_bands (ioniz_or_final, iwind, band)
  * @param [in] int  iwind   if 0, include wind photons; if 1 include wind photons and force a recalcuation of
  * ion denisities, if -1, ignore the possibility of wind photons
  * @param [in] int print_mode Detemines whether certain summary messages are printed out or not
+ * @param [in] int tot_flag, we only need to compute the total wind luminosity for the first band
  * @return     Always returns 0
  *
  * @details
@@ -344,13 +349,13 @@ populate_bands (ioniz_or_final, iwind, band)
  **********************************************************/
 
 int
-xdefine_phot (f1, f2, ioniz_or_final, iwind, print_mode)
+xdefine_phot (f1, f2, ioniz_or_final, iwind, print_mode, tot_flag)
      double f1, f2;
      int ioniz_or_final;
      int iwind;
      int print_mode;
+     int tot_flag;
 {
-
   /* First determine if you need to reinitialize because the frequency boundaries are
      different than previously */
 
@@ -393,11 +398,15 @@ iwind = -1 	Don't generate any wind photons at all
   if (iwind == 1 || (iwind == 0))
   {
     /* Find the luminosity of the wind in the CMF, and the energy emerging in the simulation time step */
+    if (tot_flag == 1)
+    {
+      geo.lum_wind = wind_luminosity (0.0, VERY_BIG, MODE_CMF_TIME);
+    }
 
-    geo.lum_wind = wind_luminosity (0.0, VERY_BIG, MODE_CMF_TIME);
     xxxpdfwind = 1;             // Turn on the portion of the line luminosity routine which creates pdfs
     geo.f_wind = wind_luminosity (f1, f2, MODE_OBSERVER_FRAME_TIME);
     xxxpdfwind = 0;             // Turn off the portion of the line luminosity routine which creates pdfs
+
   }
 
   /* Handle the initialization of emission via k-packets and macro atoms. SS */
@@ -649,6 +658,7 @@ stellar photons */
       photo_gen_wind (p, weight, f1, f2, iphot_start, nphot);
     iphot_start += nphot;
   }
+
 
 /* Generate the disk photons */
 
