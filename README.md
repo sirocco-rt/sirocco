@@ -1,4 +1,6 @@
-# Python
+# Sirocco
+
+Sirocco is currently in the process of being renamed (from Python, for obvious reasons). Soon, this repository URL will point to the full repository with issue tracking and so on, but for now it is a placeholder. The code in the source code and documentation is referred to as Python. 
 
 Python is a (confusingly named) Monte Carlo radiative transfer code which uses the Sobolev approximation. It has been developed by Knox Long, Christian Knigge, Stuart Sim, Nick Higginbottom, James Matthews, Sam Manghamm Edward Parkinson, Mandy Hewitt and Nico Scepi.The code has been used for a variety of research projects invovling the winds of cataclysmic variables, young stellar objects, X-ray binaries and AGN.
 
