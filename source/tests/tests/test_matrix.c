@@ -167,10 +167,10 @@ get_solve_matrix_test_data (const char *a_path, const char *b_path, const char *
 static int
 call_invert_matrix (const char *test_name)
 {
-  const char *sirocco_path = getenv ((const char *) "PYTHON");
+  const char *sirocco_path = getenv ((const char *) "SIROCCO");
   if (sirocco_path == NULL)
   {
-    CU_FAIL_FATAL ("$PYTHON has not been set");
+    CU_FAIL_FATAL ("$SIROCCO has not been set");
   }
 
   double *matrix;
@@ -221,10 +221,10 @@ call_invert_matrix (const char *test_name)
 int
 call_solve_matrix (const char *test_name)
 {
-  const char *sirocco_path = getenv ((const char *) "PYTHON");
+  const char *sirocco_path = getenv ((const char *) "SIROCCO");
   if (sirocco_path == NULL)
   {
-    CU_FAIL_FATAL ("$PYTHON has not been set");
+    CU_FAIL_FATAL ("$SIROCCO has not been set");
   }
 
   double *matrix_a;

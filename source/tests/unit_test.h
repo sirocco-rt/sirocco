@@ -8,8 +8,8 @@
  *
  * ****************************************************************************************************************** */
 
-#ifndef PYTHON_UNIT_TEST_H
-#define PYTHON_UNIT_TEST_H
+#ifndef SIROCCO_UNIT_TEST_H
+#define SIROCCO_UNIT_TEST_H
 
 int cleanup_model (const char *root_name);
 int setup_model_grid (const char *root_name, const char *atomic_data_location);
