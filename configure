@@ -1,5 +1,5 @@
 #!/bin/sh
-# Shell script for configuring Python radiative transfer code compilation
+# Shell script for configuring Sirocco radiative transfer code compilation
 # James Matthews, University of Southampton
 # Questions: jm8g08@soton.ac.uk
 # Usage: ./configure
