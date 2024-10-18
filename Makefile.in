@@ -1,26 +1,26 @@
 #
-# This is the Makefile for the python related programs
+# This is the Makefile for the Sirocco related programs
 #
-# Make sure you have defined $PYTHON as this directory first
+# Make sure you have defined $SIROCCO as this directory first
 # then type:
 #
 #   ./configure [--with-cuda]
 # 	make install
 #
-# If this fails, consult https://github.com/agnwinds/python/wiki/Installing-Python
+# If this fails, consult documentation
 # for manual install.
 
 CMAKE = mpicc
-GSL_LOCATION = $(PYTHON)/software/gsl-2.6
-CUNIT_LOCATION = $(PYTHON)/software/cunit-3.2.7
+GSL_LOCATION = $(SIROCCO)/software/gsl-2.6
+CUNIT_LOCATION = $(SIROCCO)/software/cunit-3.2.7
 INSTALL_LIBS = True
 
 ifeq (True, $(INSTALL_LIBS))
 	# GNU Science library -- math routines
 	MOVE_GSL = \
-		mkdir $(PYTHON)/include/gsl; \
-		mv $(GSL_LOCATION)/include/gsl/* $(PYTHON)/include/gsl; \
-		mv $(GSL_LOCATION)/lib/lib* $(PYTHON)/lib;
+		mkdir $(SIROCCO)/include/gsl; \
+		mv $(GSL_LOCATION)/include/gsl/* $(SIROCCO)/include/gsl; \
+		mv $(GSL_LOCATION)/lib/lib* $(SIROCCO)/lib;
 	INSTALL_GSL = \
 		cd $(GSL_LOCATION); \
 		./configure --disable-shared --prefix=$(GSL_LOCATION) cc=gcc CPP=cpp; \
@@ -40,19 +40,19 @@ ifeq (True, $(INSTALL_LIBS))
 	# CUnit -- unit test framework: built using CMake, so only build if installed
 	ifneq ($(shell which cmake), )
 		INSTALL_CUNIT = \
-			mkdir -p $(PYTHON)/include/CUnit; \
+			mkdir -p $(SIROCCO)/include/CUnit; \
 			cd $(CUNIT_LOCATION); \
 			mkdir -p build; \
 			cd build; \
 			cmake ..; \
 			cmake --build .; \
-			mv CUnit/libcunit.a $(PYTHON)/lib; \
-			cp ../CUnit/CUnit/*.h $(PYTHON)/include/CUnit/; \
+			mv CUnit/libcunit.a $(SIROCCO)/lib; \
+			cp ../CUnit/CUnit/*.h $(SIROCCO)/include/CUnit/; \
 			cd ..; \
 			rm -rf build;
 
 		MAKE_CHECK = \
-			cd $(PYTHON)/source; \
+			cd $(SIROCCO)/source; \
 			make check CC=$(CMAKE)
 	else
 		INSTALL_CUNIT = echo 'Unable to install CUnit as CMake (https://cmake.org) is not installed'
@@ -65,14 +65,14 @@ else
 	MAKE_CHECK =
 endif
 
-MAKE_PYTHON = \
-	cd $(PYTHON)/source; \
+MAKE_SIROCCO = \
+	cd $(SIROCCO)/source; \
 	make CC=$(CMAKE) INDENT=no all \
 
-# Compile and install the libraries and Python
+# Compile and install the libraries and Sirocco
 install:
-	@echo 'Installing Python. the radiative transfer code'
-	@echo 'Installing in directory '$(PYTHON)
+	@echo 'Installing Sirocco. the radiative transfer code'
+	@echo 'Installing in directory '$(SIROCCO)
 
 	# Then make GSL library
 	@echo 'Installing GSL library...'
@@ -84,13 +84,13 @@ install:
 
 	# Finally, make the latest release
 	@echo 'Making source code...'
-	$(MAKE_PYTHON)
+	$(MAKE_SIROCCO)
 	@echo 'all done'
 
-# Install Python for travis -- as above, minus post-installation checks for GSL
+# Install Sirocco for travis -- as above, minus post-installation checks for GSL
 gh_workflow_install:
-	@echo 'Installing Python. the radiative transfer code'
-	@echo 'Installing in directory '$(PYTHON)
+	@echo 'Installing Sirocco. the radiative transfer code'
+	@echo 'Installing in directory '$(SIROCCO)
 
 	# Then make GSL library
 	@echo 'Installing GSL library...'
@@ -102,12 +102,12 @@ gh_workflow_install:
 
 	#finally, make the latest release
 	@echo 'Making source code...'
-	$(MAKE_PYTHON)
+	$(MAKE_SIROCCO)
 	@echo 'all done'
 
-# Runs Python's unit tests
+# Runs Sirocco's unit tests
 check:
-	cd $(PYTHON)/source; make check
+	cd $(SIROCCO)/source; make check
 
 # Runs through the install for GSL and post-installation checks
 gsl:
@@ -119,24 +119,24 @@ cunit:
 	@echo 'Installing CUnit unit test framework'
 	$(INSTALL_CUNIT)
 
-# Run the regular clean for the libraries and Python. CUnit doesn't need this,
+# Run the regular clean for the libraries and Sirocco. CUnit doesn't need this,
 # as we delete the CMake build directory after installing it
 clean:
 	rm -f *.o *~
 	cd $(GSL_LOCATION); make clean;
 	rm -rf $(CUNIT_LOCATION)/build
-	cd $(PYTHON)/source/; make clean
+	cd $(SIROCCO)/source/; make clean
 
-# Runs a more rigorous clean for the libraries and Python. CUnit doesn't need
+# Runs a more rigorous clean for the libraries and Sirocco. CUnit doesn't need
 # this, as we delete the CMake build directory after installing it
 distclean:
 	rm -f *.o *~
 	cd $(GSL_LOCATION); make distclean
 	rm -rf $(CUNIT_LOCATION)/build
-	cd $(PYTHON)/source/; make clean
+	cd $(SIROCCO)/source/; make clean
 
 # Remove just the libraries
 rm_lib:
-	rm -rf $(PYTHON)/include/gsl
-	rm -rf $(PYTHON)/include/CUnit
-	rm -f $(PYTHON)/lib/lib*
+	rm -rf $(SIROCCO)/include/gsl
+	rm -rf $(SIROCCO)/include/CUnit
+	rm -f $(SIROCCO)/lib/lib*
