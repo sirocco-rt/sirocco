@@ -134,7 +134,7 @@ def read_pywind_smart(filename, return_inwind=False):
 
     values = d[2].reshape(xshape, zshape)
 
-    # these are the values of inwind PYTHON spits out
+    # these are the values of inwind SIROCCO spits out
     inwind = d[3].reshape(xshape, zshape)
 
     # create an inwind boolean to use to create mask
@@ -211,7 +211,7 @@ def wind_to_masked(d, value_string, return_inwind=False, mode="2d", ignore_parti
 
         values = d[value_string].reshape(xshape, zshape)
 
-        # these are the values of inwind PYTHON spits out
+        # these are the values of inwind SIROCCO spits out
         inwind = d["inwind"].reshape(xshape, zshape)
 
         # create an inwind boolean to use to create mask

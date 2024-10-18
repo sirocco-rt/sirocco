@@ -18,8 +18,8 @@ Arguments:
         Print the full text of all .yaml files that would be created to the screen.
 
     -w / --write
-        Move any deprecated parameters to `$PYTHON/parameters/old/`,
-        then write any new parameters to in `$PYTHON/parameters/`
+        Move any deprecated parameters to `$SIROCCO/parameters/old/`,
+        then write any new parameters to in `$SIROCCO/parameters/`
 
         Note, this will not over-write any parameters that have changed types
         but not names e.g. `rdflo('thing')` to `rdint('thing')`.
@@ -27,7 +27,7 @@ Arguments:
     -h / --help
         Prints this documentation.
 
-After the program has been run $PYTHON/parameters should contain a yaml file
+After the program has been run $SIROCCO/parameters should contain a yaml file
 for every possible input, and any input that has changed significantly should
 be in $PYHON/parameters.old  One should normally be sure to add the new yaml
 files to the repository.
@@ -58,7 +58,7 @@ Note:
 
     The recommendation is to:
 
-    * to clean both $PYTHON/parameters/, and $PYTHON/parameters/old/ from your
+    * to clean both $SIROCCO/parameters/, and $SIROCCO/parameters/old/ from your
       local directories before using writing files using this routine, and then
     * to add and comit  all of the files that are produced before going on to other
       stages of activities associated with documentation.
@@ -464,9 +464,9 @@ def autogenerate_parameter_docs():
     """
     Function to autogenerate parameter documentation.
     """
-    input_folder = os.path.join(os.environ["PYTHON"], "source")
-    output_folder = os.path.join(os.environ["PYTHON"], "docs", "parameters")
-    output_old_folder = os.path.join(os.environ["PYTHON"], "docs", "parameters", "old")
+    input_folder = os.path.join(os.environ["SIROCCO"], "source")
+    output_folder = os.path.join(os.environ["SIROCCO"], "docs", "parameters")
+    output_old_folder = os.path.join(os.environ["SIROCCO"], "docs", "parameters", "old")
 
     input_files = list_input_files(input_folder)
     existing_documentation = list_existing_documentation(output_folder)

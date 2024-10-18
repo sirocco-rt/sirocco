@@ -98,7 +98,7 @@ def make_spec_plot(s, fname, smooth_factor = 10, angles = True, components = Fal
         print ("Making a {} by {} plot, {} spectra".format(nx, ny, nspecs))
 
         if with_composite:
-            lambda_composite, f_composite, errors = np.loadtxt("%s/examples/telfer_qso_composite_hst.asc" % (os.environ["PYTHON"]), unpack=True, comments="#")
+            lambda_composite, f_composite, errors = np.loadtxt("%s/examples/telfer_qso_composite_hst.asc" % (os.environ["SIROCCO"]), unpack=True, comments="#")
 
         for i in range(nspecs):
 
