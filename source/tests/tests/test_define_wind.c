@@ -19,7 +19,7 @@
 #include <CUnit/CUnit.h>
 
 #include "../../atomic.h"
-#include "../../python.h"
+#include "../../sirocco.h"
 #include "../assert.h"
 #include "../unit_test.h"
 

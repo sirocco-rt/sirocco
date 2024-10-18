@@ -13,7 +13,7 @@
 #include <stdlib.h>
 
 #include "../atomic.h"
-#include "../python.h"
+#include "../sirocco.h"
 
 #define PATH_SEPARATOR '/'
 
@@ -29,7 +29,7 @@
  * ****************************************************************************************************************** */
 
 const char *
-get_python_env_variable (void)
+get_sirocco_env_variable (void)
 {
   const char *env = getenv ("PYTHON");
   if (env == NULL)
@@ -308,7 +308,7 @@ setup_model_grid (const char *root_name, const char *atomic_data_location)
     return EXIT_FAILURE;
   }
 
-  zdom = calloc (MAX_DOM, sizeof (domain_dummy));       /* We'll allocate MAX_DOM to follow python */
+  zdom = calloc (MAX_DOM, sizeof (domain_dummy));       /* We'll allocate MAX_DOM to follow sirocco */
   if (zdom == NULL)
   {
     fprintf (stderr, "Unable to allocate space for domain structure\n");
