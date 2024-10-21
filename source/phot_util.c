@@ -20,7 +20,7 @@
 #include <string.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 int init_stuff_phot = 0;
 size_t sizeofphot;

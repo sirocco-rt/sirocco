@@ -14,7 +14,7 @@
 #include <string.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 #include "models.h"
 
 double old_t, old_g, old_freqmin, old_freqmax;

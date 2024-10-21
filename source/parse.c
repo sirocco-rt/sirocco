@@ -14,7 +14,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -92,7 +92,7 @@ parse_command_line (argc, argv)
       {
         if (sscanf (argv[i + 1], "%lf", &time_max) != 1)
         {
-          Error ("python: Expected time after -t switch\n");
+          Error ("sirocco: Expected time after -t switch\n");
           exit (1);
         }
         set_max_time (files.root, time_max);
@@ -105,7 +105,7 @@ parse_command_line (argc, argv)
       {
         if (sscanf (argv[i + 1], "%d", &verbosity) != 1)
         {
-          Error ("python: Expected verbosity after -v switch\n");
+          Error ("sirocco: Expected verbosity after -v switch\n");
           exit (0);
         }
         Log_set_verbosity (verbosity);
@@ -118,7 +118,7 @@ parse_command_line (argc, argv)
       {
         if (sscanf (argv[i + 1], "%lf", &x) != 1)
         {
-          Error ("python: Expected max errors after -e switch\n");
+          Error ("sirocco: Expected max errors after -e switch\n");
           exit (1);
         }
         max_errors = x;
@@ -132,7 +132,7 @@ parse_command_line (argc, argv)
       {
         if (sscanf (argv[i + 1], "%lf", &x) != 1)
         {
-          Error ("python: Expected max errors after -e switch\n");
+          Error ("sirocco: Expected max errors after -e switch\n");
           exit (1);
         }
         max_errors = x;
@@ -175,7 +175,7 @@ parse_command_line (argc, argv)
 
       else if (strcmp (argv[i], "--version") == 0)
       {
-        /* give information about the python version, such as commit hash */
+        /* give information about the sirocco version, such as commit hash */
         Log ("Python Version %s \n", VERSION);  //54f -- ksl -- Now read from version.h
         Log ("Built from git commit hash %s\n", GIT_COMMIT_HASH);
         /* warn the user if there are uncommited changes */
@@ -273,7 +273,7 @@ parse_command_line (argc, argv)
 
       else if (strncmp (argv[i], "-", 1) == 0)
       {
-        Error ("python: Unknown switch %s\n", argv[i]);
+        Error ("sirocco: Unknown switch %s\n", argv[i]);
         help ();
       }
     }
@@ -369,7 +369,7 @@ and the switches have the following meanings \n\
  --dry-run              Create a new .pf file and stop \n\
  -i                     Same as --dry-run \n\
  --grid-only            Define the wind grid and save to wind_save file, then stop \n\
- --version              Print out python version, commit hash and if there were files with uncommitted \n\
+ --version              Print out sirocco version, commit hash and if there were files with uncommitted \n\
                         changes and stop \n\
  --rseed                Set the random number seed to be time-based, rather than fixed. \n\
  --rng                  Save or load the RNG state to file, to allow persistent RNG states between restarts\n\
@@ -395,7 +395,7 @@ These are largely diagnostic or for special cases. These include\n\
  -include_partial_cells Include wind cells that are only partially filled by the wind   \n\
  -no-matrix-storage     Do not store macro-atom transition matrices if using the macro-atom line transfer and the matrix matom_transition_mode.\n\
 \n\
- -xtest                 Instead of running python, call the routine xtest so that one can diagnose issues associted with the \n\
+ -xtest                 Instead of running sirocco, call the routine xtest so that one can diagnose issues associted with the \n\
                         setup.  This is only useful to devlopers \n\
 If one simply types py or pyZZ where ZZ is the version number, one is queried for a name \n\
 of the parameter file and inputs will be requested from the command line. \n\

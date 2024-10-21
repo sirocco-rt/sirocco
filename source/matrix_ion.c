@@ -15,7 +15,7 @@
 
 #include <float.h>
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -182,7 +182,7 @@ matrix_ion_populations (xplasma, mode)
     }
   }
 
-  /* This next line sets the partition function for each ion. This has always been the place here python calculates the
+  /* This next line sets the partition function for each ion. This has always been the place here sirocco calculates the
      partition functions and sets the level densities for each ion. It needs to be done, or other parts of the code which rely
      on sensible level populations don't work properly. In the case of the dilute blackbody, the code works well, however we do
      not currently (v78) have a procedure to calucate the levels for a spectral model case. We therefore call partition
@@ -212,7 +212,7 @@ matrix_ion_populations (xplasma, mode)
   /* xne is the current working number xxne */
 
 
-  /* We are now going to iterate on the electron density - MAXITERATIONS is set in python.h and is currently (78) set to 200.
+  /* We are now going to iterate on the electron density - MAXITERATIONS is set in sirocco.h and is currently (78) set to 200.
      We would normally expect to converge much fater than this */
 
   niterate = 0;

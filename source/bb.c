@@ -33,7 +33,7 @@
 #include <gsl/gsl_randist.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 #define ALPHAMIN 0.4            // Region below which we will use a low frequency approximation
 #define ALPHAMAX 30.            // Region above which we will use a high frequency approximation

@@ -11,7 +11,7 @@
  * file to ascii files which can be read with astropy.io ascii
  * as tables.
  *
- * Unlike py_wind, windsave2table is hardwired and to change what
+ * Unlike swind, windsave2table is hardwired and to change what
  * is written one must actually modify the routines themselves.
  ***********************************************************/
 
@@ -21,7 +21,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 int xedge = FALSE;
 

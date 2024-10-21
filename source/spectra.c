@@ -18,7 +18,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 int spec_initialized = FALSE;
 
@@ -540,7 +540,7 @@ spectrum_create (p, nangle, select_extract)
 
       /* When a photon that originated for example in the BL which has a type of PTYPE_BL is scattered in the wind by 
        * a macro atom it's type is increased by 10.  When we want to construct a spectrum for photons originating
-       * from the boundary layer we need to subtract 10 from the type.    See python.h 
+       * from the boundary layer we need to subtract 10 from the type.    See sirocco.h 
        */
       if (spectype >= 10)
         spectype -= 10;

@@ -3,8 +3,8 @@
                                        Space Telescope Science Institute
 
  Synopsis:
-	py_wind is a program which can be used to display various parameters of a wind
-	as calculated by python.  This file contains many of the subroutiens
+	swind is a program which can be used to display various parameters of a wind
+	as calculated by sirocco.  This file contains many of the subroutiens
 	used
 
 Arguments:
@@ -18,8 +18,8 @@ Description:
 Notes:
 
 History:
- 	97jun	ksl	Coding on py_wind began.
-	05jul	ksl	56d -- Moved all of the subroutines to py_wind_sub so that it was
+ 	97jun	ksl	Coding on swind began.
+	05jul	ksl	56d -- Moved all of the subroutines to swind_sub so that it was
 			easier to make templates.
 
 **************************************************************/
@@ -30,7 +30,7 @@ History:
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**************************************************************************
@@ -44,8 +44,8 @@ History:
   Description:	
 
 	There are basically two options, determined by the variable "determine"
-	If determine==1, then zoom sets up the variables py_wind_min, py_wind_max and
-	py_wind_delta so that the the entire wind is displayed, but it is
+	If determine==1, then zoom sets up the variables swind_min, swind_max and
+	swind_delta so that the the entire wind is displayed, but it is
 	subsampled in the x direction.
  
 	If determine!=1, then a section of the wind is displayed at full resolution
@@ -75,34 +75,34 @@ zoom (direction)
   if (direction == 1)
   {                             /* then unzoom */
     Log ("Showing selected positions throughout wind\n");
-    py_wind_min = 0;
-    py_wind_max = ndim;
-    py_wind_delta = ndim / 10;
+    swind_min = 0;
+    swind_max = ndim;
+    swind_delta = ndim / 10;
     /*
      * Allow for the possibility that the wind has an xdimension
      * < 10
      */
-    if (py_wind_delta < 1)
-      py_wind_delta = 1;
+    if (swind_delta < 1)
+      swind_delta = 1;
   }
   else
   {
     Log ("Select part of wind to display\n");
     center = 5;
     rdint ("Center_x", &center);
-    py_wind_min = center - 5;
-    if (py_wind_min < 0)
+    swind_min = center - 5;
+    if (swind_min < 0)
     {
-      Log ("zoom: this choice of center is needlessly close to origin, adjusting py_wind_min to 0\n");
-      py_wind_min = 0;
+      Log ("zoom: this choice of center is needlessly close to origin, adjusting swind_min to 0\n");
+      swind_min = 0;
     }
-    py_wind_max = py_wind_min + 10;
-    if (py_wind_max > ndim)
+    swind_max = swind_min + 10;
+    if (swind_max > ndim)
     {
-      py_wind_max = ndim;
-      Log ("zoom: this choice of py_wind_max is lager than NDIM, adusting py_wind_max to NDIM");
+      swind_max = ndim;
+      Log ("zoom: this choice of swind_max is lager than NDIM, adusting swind_max to NDIM");
     }
-    py_wind_delta = 1;
+    swind_delta = 1;
   }
   return (0);
 }
@@ -365,8 +365,8 @@ abs_summary (w, rootname, ochoice)
   }
 
   display (name);
-  /* Log ("Component heating %8.3e\n", xtot * py_wind_delta);
-     JM130624 v76: Removed py_wind_delta term as gives too high heating */
+  /* Log ("Component heating %8.3e\n", xtot * swind_delta);
+     JM130624 v76: Removed swind_delta term as gives too high heating */
   Log ("Component heating %8.3e\n", xtot);
 
   if (ochoice)
@@ -646,8 +646,8 @@ lum_summary (w, rootname, ochoice)
 
   display (name);
 
-  /* Log ("Luminosity total %8.3e\n", xtot * py_wind_delta);
-     JM130624 v76: Removed py_wind_delta term as gives too high heating */
+  /* Log ("Luminosity total %8.3e\n", xtot * swind_delta);
+     JM130624 v76: Removed swind_delta term as gives too high heating */
   Log ("Luminosity total %8.3e\n", xtot);
 
   if (ochoice)
@@ -3319,7 +3319,7 @@ heat_tot\theat_photo\theat_auger\theat_lines\theat_ff\theat_comp\theat_ind_comp\
 ionH1\tionH2\tionHe1\tionHe2\tionHe3\tionC3\tionC4\tionC5\tionN5\tionO6\tionSi4\n");
 
 
-  Log ("py_wind_sub does not work yet\n");
+  Log ("swind_sub does not work yet\n");
   ndom = 0;
   np = 0;
   for (n = 0; n < NDIM2; n++)
@@ -3828,7 +3828,7 @@ flux_summary (w, rootname, ochoice)
     fprintf (fptr, "\n");
   }
 
-  Log ("py_wind_sub does not work yet\n");
+  Log ("swind_sub does not work yet\n");
   ndom = 0;
   for (n = 0; n < NDIM2; n++)
   {

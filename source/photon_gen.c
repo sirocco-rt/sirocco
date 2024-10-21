@@ -14,7 +14,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 // These are external variables that are used to determine whether one needs to reinitialize
 // by running xdefine_phot

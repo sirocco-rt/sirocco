@@ -11,9 +11,9 @@
  * ### Programming Comment ###
  * The name of this file is not really acurate.  The routines
  * here do drive the major portions of the calculation but they
- * are still run from python.c.  It might be better to move even
+ * are still run from sirocco.c.  It might be better to move even
  * more of the running of the code to here.  Alternatively, one
- * might make python.c simpler, so that developers could see
+ * might make sirocco.c simpler, so that developers could see
  * the structure better, but moving the input section
  * into it's own file.
  *
@@ -25,12 +25,12 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /**********************************************************/
 /**
  * @brief      run the ionization cycles for a
- * python model
+ * sirocco model
  *
  * @param [in] int  restart_stat   FALSE if the is run is beginning from
  * scratch,  TRUE if this was a restart
@@ -200,7 +200,7 @@ calculate_ionization (restart_stat)
       zz += p[nn].w;
     }
 
-    Log ("!!python: Total photon luminosity before transphot %18.12e\n", zz);
+    Log ("!!sirocco: Total photon luminosity before transphot %18.12e\n", zz);
     Log_flush ();
 
     /* kbf_need determines how many & which bf processes one needs to considere.  It was introduced
@@ -272,37 +272,37 @@ calculate_ionization (restart_stat)
     Log ("XXX  rad  else  l  %12.3e    %12.3e\n", z_else, z_else_orig);
 
     Log
-      ("!!python: luminosity (radiated or lost) after transphot %18.12e (absorbed or lost  %18.12e  %18.12e). \n",
+      ("!!sirocco: luminosity (radiated or lost) after transphot %18.12e (absorbed or lost  %18.12e  %18.12e). \n",
        z_abs_all, z_abs_all - zz, z_abs_all - z_abs_all_orig);
     Log ("\n");
-    Log ("!!python:  luminosity escaping                          %18.12e\n", z_abs[P_ESCAPE]);
-    Log ("!!python: stellar photon luminosity escaping            %18.12e \n", radiated[PTYPE_STAR] + radiated[PTYPE_STAR_MATOM]);
-    Log ("!!python: boundary layer photon luminosity escaping     %18.12e \n", radiated[PTYPE_BL] + radiated[PTYPE_BL_MATOM]);
-    Log ("!!python: disk photon luminosity escaping               %18.12e \n", radiated[PTYPE_DISK] + radiated[PTYPE_DISK_MATOM]);
-    Log ("!!python: wind photon luminosity escaping               %18.12e \n", radiated[PTYPE_WIND] + radiated[PTYPE_WIND_MATOM]);
-    Log ("!!python: agn photon luminosity escaping                %18.12e \n", radiated[PTYPE_AGN] + radiated[PTYPE_AGN_MATOM]);
-    Log ("!!python: luminosity lost by any process                %18.12e \n", z_else);
+    Log ("!!sirocco:  luminosity escaping                          %18.12e\n", z_abs[P_ESCAPE]);
+    Log ("!!sirocco: stellar photon luminosity escaping            %18.12e \n", radiated[PTYPE_STAR] + radiated[PTYPE_STAR_MATOM]);
+    Log ("!!sirocco: boundary layer photon luminosity escaping     %18.12e \n", radiated[PTYPE_BL] + radiated[PTYPE_BL_MATOM]);
+    Log ("!!sirocco: disk photon luminosity escaping               %18.12e \n", radiated[PTYPE_DISK] + radiated[PTYPE_DISK_MATOM]);
+    Log ("!!sirocco: wind photon luminosity escaping               %18.12e \n", radiated[PTYPE_WIND] + radiated[PTYPE_WIND_MATOM]);
+    Log ("!!sirocco: agn photon luminosity escaping                %18.12e \n", radiated[PTYPE_AGN] + radiated[PTYPE_AGN_MATOM]);
+    Log ("!!sirocco: luminosity lost by any process                %18.12e \n", z_else);
     Log ("\n");
-    Log ("!!python: luminosity lost by being completely absorbed  %18.12e \n", z_abs[P_ABSORB]);
-    Log ("!!python: luminosity lost by too many scatters          %18.12e \n", z_abs[P_TOO_MANY_SCATTERS]);
-    Log ("!!python: luminosity lost by hitting the central object %18.12e \n", z_abs[P_HIT_STAR]);
-    Log ("!!python: luminosity lost by hitting the disk           %18.12e \n", z_abs[P_HIT_DISK]);
+    Log ("!!sirocco: luminosity lost by being completely absorbed  %18.12e \n", z_abs[P_ABSORB]);
+    Log ("!!sirocco: luminosity lost by too many scatters          %18.12e \n", z_abs[P_TOO_MANY_SCATTERS]);
+    Log ("!!sirocco: luminosity lost by hitting the central object %18.12e \n", z_abs[P_HIT_STAR]);
+    Log ("!!sirocco: luminosity lost by hitting the disk           %18.12e \n", z_abs[P_HIT_DISK]);
     if (geo.rt_mode == RT_MODE_MACRO)
     {
-      Log ("!!python: luminosity lost by adiabatic kpkt destruction %18.12e number of packets %d\n", z_abs[P_ADIABATIC],
+      Log ("!!sirocco: luminosity lost by adiabatic kpkt destruction %18.12e number of packets %d\n", z_abs[P_ADIABATIC],
            nphot_istat[P_ADIABATIC]);
-      Log ("!!python: luminosity lost to low-frequency free-free    %18.12e number of packets %d\n", z_abs[P_LOFREQ_FF],
+      Log ("!!sirocco: luminosity lost to low-frequency free-free    %18.12e number of packets %d\n", z_abs[P_LOFREQ_FF],
            nphot_istat[P_LOFREQ_FF]);
     }
-    Log ("!!python: luminosity lost by errors                     %18.12e \n",
+    Log ("!!sirocco: luminosity lost by errors                     %18.12e \n",
          z_abs[P_ERROR] + z_abs[P_ERROR_MATOM] + z_abs[P_REPOSITION_ERROR]);
     if (geo.binary == TRUE)
-      Log ("!!python: luminosity lost by hitting the secondary %18.12e \n", z_abs[P_SEC]);
+      Log ("!!sirocco: luminosity lost by hitting the secondary %18.12e \n", z_abs[P_SEC]);
 
 
     photon_checks (p, freqmin, freqmax, "Check after transport");
     spectrum_create (p, geo.nangles, geo.select_extract);
-    Log ("!!python: Number of ionizing photons %g lum of ionizing photons %g\n", geo.n_ioniz, geo.cool_tot_ioniz);
+    Log ("!!sirocco: Number of ionizing photons %g lum of ionizing photons %g\n", geo.n_ioniz, geo.cool_tot_ioniz);
 
 
 #ifdef MPI_ON
@@ -373,7 +373,7 @@ calculate_ionization (restart_stat)
  Note that if one wants to write out the files from all threads, then one should comment out the
  MPI specific if statements below, leving MPI_Barrier, and replace the sprintf statment with
 
- sprintf (dummy, "python%02d.%02d.wind_save", geo.wcycle, rank_global);
+ sprintf (dummy, "sirocco%02d.%02d.wind_save", geo.wcycle, rank_global);
 
  */
 
@@ -390,7 +390,7 @@ calculate_ionization (restart_stat)
       if (modes.keep_ioncycle_windsaves)
       {
         strcpy (dummy, "");
-        sprintf (dummy, "python%02d.wind_save", geo.wcycle);
+        sprintf (dummy, "sirocco%02d.wind_save", geo.wcycle);
         wind_save (dummy);
         Log ("Saved wind structure in %s\n", dummy);
       }
@@ -403,7 +403,7 @@ calculate_ionization (restart_stat)
       if (modes.keep_ioncycle_spectra)
       {
         strcpy (dummy, "");
-        sprintf (dummy, "python%02d.log_spec_tot", geo.wcycle);
+        sprintf (dummy, "sirocco%02d.log_spec_tot", geo.wcycle);
         spectrum_summary (dummy, 0, 6, SPECTYPE_RAW, 1., 1, 0); /* .log_spec_tot */
       }
 #ifdef MPI_ON
@@ -596,7 +596,7 @@ make_spectra (restart_stat)
     {
       if (sane_check (p[icheck].freq))
       {
-        Error ("python after define phot:sane_check unnatural frequency for photon %d\n", icheck);
+        Error ("sirocco after define phot:sane_check unnatural frequency for photon %d\n", icheck);
       }
     }
 

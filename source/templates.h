@@ -430,7 +430,7 @@ double calc_pi_rate(int nion, PlasmaPtr xplasma, int mode, int type);
 double tb_planck(double freq, void *params);
 double tb_logpow(double freq, void *params);
 double tb_exp(double freq, void *params);
-/* python_extern_init.c */
+/* sirocco_extern_init.c */
 /* radiation.c */
 double radiation(PhotPtr p, double ds);
 double kappa_ff(PlasmaPtr xplasma, double freq);
@@ -730,7 +730,7 @@ void Exit(int error_code);
 int xtest(void);
 /* zeta.c */
 double compute_zeta(double temp, int nion, int mode);
-/* py_wind_sub.c */
+/* swind_sub.c */
 int zoom(int direction);
 int overview(WindPtr w, char rootname[]);
 int position_summary(WindPtr w);
@@ -776,7 +776,7 @@ int find_element(int element);
 int get_los_dvds(WindPtr w, char rootname[], int ochoice);
 int grid_summary(WindPtr w, char rootname[], int ochoice);
 int flux_summary(WindPtr w, char rootname[], int ochoice);
-/* py_wind_ion.c */
+/* swind_ion.c */
 int ion_summary(WindPtr w, int element, int istate, int iswitch, char rootname[], int ochoice);
 int tau_ave_summary(WindPtr w, int element, int istate, double freq, char rootname[], int ochoice);
 int line_summary(WindPtr w, char rootname[], int ochoice);
@@ -784,10 +784,10 @@ int total_emission_summary(char rootname[], int ochoice);
 int modify_te(WindPtr w, char rootname[], int ochoice);
 int partial_measure_summary(WindPtr w, int element, int istate, char rootname[], int ochoice);
 int collision_summary(WindPtr w, char rootname[], int ochoice);
-/* py_wind_write.c */
+/* swind_write.c */
 int write_array(char filename[], int choice);
 int display(char name[]);
-/* py_wind_macro.c */
+/* swind_macro.c */
 int xadiabatic_cooling_summary(WindPtr w, char rootname[], int ochoice);
 int macro_summary(WindPtr w, char rootname[], int ochoice);
 int ion_overview(int icell);
@@ -800,10 +800,10 @@ int level_popsoverview(int nplasma, WindPtr w, char rootname[], int ochoice);
 int level_emissoverview(int nlev, WindPtr w, char rootname[], int ochoice);
 int level_escapeoverview(int nlev, WindPtr w, char rootname[], int ochoice);
 int level_tauoverview(int nlev, WindPtr w, char rootname[], int ochoice);
-/* py_wind.c */
+/* swind.c */
 int main(int argc, char *argv[]);
 int one_choice(int choice, char *root, int ochoice);
-void py_wind_help(void);
+void swind_help(void);
 /* windsave2table.c */
 void parse_arguments(int argc, char *argv[], char root[], int *ion_switch, int *spec_switch, int *edge_switch);
 int main(int argc, char *argv[]);

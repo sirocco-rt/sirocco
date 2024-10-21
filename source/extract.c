@@ -14,7 +14,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -60,7 +60,7 @@
  * that arise from the above or below the disk.  extract enforces
  * those choices before calling extract_one.
  * The parameters for this option all come in through
- * python.h, and are contained in the spectrum structure.
+ * sirocco.h, and are contained in the spectrum structure.
  *
  * The basic choices, some of which can be used in tandom are as follows:
  *

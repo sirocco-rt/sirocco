@@ -17,7 +17,7 @@
  *
  *    - hit_secondary   determines whether a photon defined by p_roche will hit the secondary
  *    or not.  If it misses, hit_secondary returns 0, if it hits, the return is
- *    P_SEC (or hit secondary as contained in python.h).
+ *    P_SEC (or hit secondary as contained in sirocco.h).
  *
  * ###Notes###
  *
@@ -45,7 +45,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /* Given the mass of the primary and secondary and the period calculate some other basic parameters
  for the binary system, including the L1 point. */

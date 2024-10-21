@@ -1,6 +1,6 @@
-# This is the makefile for the python related programs
+# This is the makefile for the sirocco related programs
 #
-# usage      make [CC=...] [D] python
+# usage      make [CC=...] [D] sirocco
 # 			 make [CC=...] [D] all to remake all of the routines, and assure they
 # 			 					are properly indented.
 #
@@ -11,7 +11,7 @@
 
 # MATOM_VER is a temporary switch that allows one to compile the code so that it will
 # use the gsl routines wheen computing alpha_sp.  It should be invoked from the commad line, e.g
-# make MATOM_VER=2 python (or all); the Makefile should not be altered unless we change our mind
+# make MATOM_VER=2 sirocco (or all); the Makefile should not be altered unless we change our mind
 # about the integration approach to use. The default is set to use the newer brute force technique
 
 MATOM_VER := 1
@@ -115,7 +115,7 @@ BIN = ../bin
 
 ifeq (D,$(firstword $(MAKECMDGOALS)))
 # use pg when you want to use gprof the profiler
-# to use profiler make with arguments "make D python"
+# to use profiler make with arguments "make D sirocco"
 # this can be altered to whatever is best
 	CFLAGS = -std=gnu99 -g -pg -Wl,-Ttext-segment=0x68000000 -Wall -Werror $(EXTRA_FLAGS) -I$(INCLUDE) $(MPI_FLAG) ${CUDA_FLAG}
 	FFLAGS = -g -pg
@@ -137,7 +137,7 @@ endif
 
 
 
-# next line for debugging when concerned about memory problems and duma installed in python directory
+# next line for debugging when concerned about memory problems and duma installed in sirocco directory
 # LDFLAGS= -L$(LIB)  -lm -lkpar  -lgslcblas ../duma_2_5_3/libduma.a -lpthread
 # next line if you want to use kpar as a library, rather than as source below
 # LDFLAGS= -L$(LIB)  -lm -lkpar -lcfitsio -lgsl -lgslcblas
@@ -147,7 +147,7 @@ LDFLAGS+= -L$(LIB) -lm -lgsl -lgslcblas $(CUDA_LIBS)
 #Note that version should be a single string without spaces.
 
 
-VERSION = 88x
+VERSION = 0.1
 
 
 
@@ -193,7 +193,7 @@ foo: foo.o signal.o time.o
 
 # For reasons that are unclear to me. get_models.c cannot be included in the sources.
 # Problems occur due to the prototypes that are generated. Same for kpar_source it seems.
-python_source = agn.c anisowind.c atomic_extern_init.c atomicdata.c atomicdata_init.c  \
+sirocco_source = agn.c anisowind.c atomic_extern_init.c atomicdata.c atomicdata_init.c  \
 	atomicdata_sub.c bands.c bb.c bilinear.c brem.c cdf.c charge_exchange.c communicate_macro.c  \
 	communicate_plasma.c communicate_spectra.c communicate_wind.c compton.c continuum.c cooling.c corona.c  \
 	cv.c cylind_var.c cylindrical.c define_wind.c density.c diag.c dielectronic.c direct_ion.c  \
@@ -203,27 +203,27 @@ python_source = agn.c anisowind.c atomic_extern_init.c atomicdata.c atomicdata_i
 	janitor.c knigge.c levels.c lines.c macro_accelerate.c macro_gen_f.c macro_gov.c  \
 	matom.c matom_diag.c matrix_cpu.c matrix_ion.c models_extern_init.c para_update.c  \
 	parse.c partition.c paths.c phot_util.c photon2d.c photon_gen.c photon_gen_matom.c  \
-	pi_rates.c python_extern_init.c radiation.c random.c rdpar.c rdpar_init.c recipes.c  \
+	pi_rates.c sirocco_extern_init.c radiation.c random.c rdpar.c rdpar_init.c recipes.c  \
 	recomb.c resonate.c reverb.c roche.c rtheta.c run.c saha.c setup.c setup_disk.c setup_domains.c  \
 	setup_files.c setup_line_transfer.c setup_reverb.c setup_star_bh.c shell_wind.c signal.c  \
 	spectra.c spectral_estimators.c spherical.c stellar_wind.c sv.c synonyms.c time.c  \
 	trans_phot.c vvector.c walls.c wind.c wind2d.c wind_sum.c wind_updates2d.c wind_util.c  \
 	windsave.c windsave2table_sub.c xlog.c xtest.c zeta.c
 
-# these are the objects required for compilation of python. We are using pattern
+# these are the objects required for compilation of sirocco. We are using pattern
 # substitution so we don't have to maintain two identical lists but with .o instead of
 # .c. Previously these two lists were slightly different. For some reason, get_models.c
 # cannot be included in the sources, but we can define it OK in the objects.
-python_objects := $(python_source:.c=.o) get_models.o
+sirocco_objects := $(sirocco_source:.c=.o) get_models.o
 
-# kpar_source is now declared separately from python_source so that the file log.h
+# kpar_source is now declared separately from sirocco_source so that the file log.h
 # can be made using cproto
 kpar_source = rdpar.c xlog.c synonyms.c
-additional_py_wind_source = py_wind_sub.c py_wind_ion.c py_wind_write.c py_wind_macro.c py_wind.c windsave2table.c windsave2table_sub.c
+additional_swind_source = swind_sub.c swind_ion.c swind_write.c swind_macro.c swind.c windsave2table.c windsave2table_sub.c
 
 prototypes:
 	cp templates.h templates.h.old
-	cproto -I$(INCLUDE) $(python_source) ${additional_py_wind_source} > foo.h
+	cproto -I$(INCLUDE) $(sirocco_source) ${additional_swind_source} > foo.h
 	cp foo.h templates.h
 	rm foo.h
 	cproto -I$(INCLUDE) $(kpar_source) > log.h
@@ -239,40 +239,40 @@ ifneq ($(CUDA_FLAG),)
 	$(NVCC) $(NVCC_FLAGS) -DCUDA_ON -I$(INCLUDE) -c $< -o $@
 endif
 
-python: startup python.o $(python_objects) $(CUDA_OBJECTS)
-	$(CC) $(CFLAGS) python.o $(python_objects) $(CUDA_OBJECTS) $(kpar_objects) $(LDFLAGS) -o python
-	cp $@ $(BIN)/py
+sirocco: startup sirocco.o $(sirocco_objects) $(CUDA_OBJECTS)
+	$(CC) $(CFLAGS) sirocco.o $(sirocco_objects) $(CUDA_OBJECTS) $(kpar_objects) $(LDFLAGS) -o sirocco
+	cp $@ $(BIN)/sirocco
         ifdef XDEBUG
-	  mv $@ $(BIN)/py$(VERSION)_debug
+	  mv $@ $(BIN)/sirocco-$(VERSION)_debug
         else
-	  mv $@ $(BIN)/py$(VERSION)
+	  mv $@ $(BIN)/sirocco-$(VERSION)
         endif
 	# Fix indenting, if necessary.
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 
-#This line is just so you can use make D python for debugging
+#This line is just so you can use make D sirocco for debugging
 D:
 	@echo 'Debugging Mode'
 
 # Define the objects for the helper programs. They, in general, they all need
 # to link with all of Python due to how interlinked a lot of it is.
 
-py_wind_objects = py_wind.o py_wind_ion.o py_wind_macro.o py_wind_sub.o py_wind_write.o $(python_objects)
-table_objects = windsave2table.o $(python_objects) # windsave2table_sub.o is already part of $(python_objects)
-rhf_objects = rad_hydro_files.o $(python_objects)
-modify_wind_objects = modify_wind.o $(python_objects)
-inspect_wind_objects = inspect_wind.o $(python_objects)
-py_optd_obj = py_optd.o py_optd_output.o py_optd_trans.o py_optd_util.o py_optd_extern_init.o $(python_objects)
-windsave2fits_objects = windsave2fits.o $(python_objects)
+swind_objects = swind.o swind_ion.o swind_macro.o swind_sub.o swind_write.o $(sirocco_objects)
+table_objects = windsave2table.o $(sirocco_objects) # windsave2table_sub.o is already part of $(sirocco_objects)
+rhf_objects = rad_hydro_files.o $(sirocco_objects)
+modify_wind_objects = modify_wind.o $(sirocco_objects)
+inspect_wind_objects = inspect_wind.o $(sirocco_objects)
+sirocco_optd_obj = sirocco_optd.o sirocco_optd_output.o sirocco_optd_trans.o sirocco_optd_util.o sirocco_optd_extern_init.o $(sirocco_objects)
+windsave2fits_objects = windsave2fits.o $(sirocco_objects)
 
 run_indent:
 	../py_progs/run_indent.py -all_no_headers
 
-py_wind: startup $(py_wind_objects) $(CUDA_OBJECTS)
-	$(CC) $(CFLAGS) $(py_wind_objects) $(CUDA_OBJECTS) $(LDFLAGS) -o py_wind
+swind: startup $(swind_objects) $(CUDA_OBJECTS)
+	$(CC) $(CFLAGS) $(swind_objects) $(CUDA_OBJECTS) $(LDFLAGS) -o swind
 	cp $@ $(BIN)
-	mv $@ $(BIN)/py_wind$(VERSION)
+	mv $@ $(BIN)/swind$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 windsave2table: startup $(table_objects) $(CUDA_OBJECTS)
@@ -305,16 +305,16 @@ inspect_wind: startup $(inspect_wind_objects) $(CUDA_OBJECTS)
 	mv $@ $(BIN)/inspect_wind$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
-py_optd: startup $(py_optd_obj) $(CUDA_OBJECTS)
-	$(CC) $(CFLAGS) $(py_optd_obj) $(CUDA_OBJECTS) $(LDFLAGS) -o $@
+sirocco_optd: startup $(sirocco_optd_obj) $(CUDA_OBJECTS)
+	$(CC) $(CFLAGS) $(sirocco_optd_obj) $(CUDA_OBJECTS) $(LDFLAGS) -o $@
 	cp $@ $(BIN)
-	mv $@ $(BIN)/py_optd$(VERSION)
+	mv $@ $(BIN)/sirocco_optd$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 # unit_tests allows one to test low level routines, but one must be aware that one needs to define
 # everything in the main routine before one can probe a particular routine.
-unit_test: startup unit_test.o $(python_objects)
-	$(CC) ${CFLAGS} unit_test.o $(python_objects) $(kpar_objects) $(LDFLAGS) -o unit_test
+unit_test: startup unit_test.o $(sirocco_objects)
+	$(CC) ${CFLAGS} unit_test.o $(sirocco_objects) $(kpar_objects) $(LDFLAGS) -o unit_test
 	cp $@ $(BIN)/unit_test
 	# Fix indenting, if necessary.
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
@@ -326,8 +326,8 @@ check:
 	cd tests; make check NVCC=$(NVCC) CC=$(CC) MATOM_VER=$(MATOM_VER)
 
 # The next line runs recompiles all of the routines after first cleaning the directory
-# all: clean run_indent python windsave2table py_wind
-all: clean python windsave2table py_wind indent rad_hydro_files modify_wind inspect_wind py_optd
+# all: clean run_indent sirocco windsave2table swind
+all: clean sirocco windsave2table swind indent rad_hydro_files modify_wind inspect_wind sirocco_optd
 
 FILE = atomicdata.o atomicdata_init.o atomicdata_sub.o atomic.o
 

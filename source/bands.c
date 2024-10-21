@@ -51,9 +51,9 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
-/* Actual structures are in python.h.  Here for reference only.
+/* Actual structures are in sirocco.h.  Here for reference only.
 
 #define NBANDS 10
 struct xbands

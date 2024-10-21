@@ -19,11 +19,11 @@
 #include <CUnit/CUnit.h>
 
 #include "../../atomic.h"
-#include "../../python.h"
+#include "../../sirocco.h"
 #include "../assert.h"
 #include "../unit_test.h"
 
-char *PYTHON_ENV;
+char *SIROCCO_ENV;
 char TEST_CWD[LINELENGTH];
 char ATOMIC_DATA_TARGET[LINELENGTH];
 char ATOMIC_DATA_DEST[LINELENGTH];
@@ -38,9 +38,9 @@ char ATOMIC_DATA_DEST_DEVELOPER[LINELENGTH];
  *
  * @details
  *
- * This uses the data from $PYTHON/source/tests/test_data/define_wind/agn_macro.pf and
- * $PYTHON/source/tests/test_data/define_wind/agn_macro.grid.txt. The latter was created using the Python script in the
- * $PYTHON/source/tests/test_data/define_wind directory.
+ * This uses the data from $SIROCCO/source/tests/test_data/define_wind/agn_macro.pf and
+ * $SIROCCO/source/tests/test_data/define_wind/agn_macro.grid.txt. The latter was created using the Python script in the
+ * $SIROCCO/source/tests/test_data/define_wind directory.
  *
  * TODO: we don't check anything to do with macro atoms (we don't output this from windsave2table)
  *
@@ -65,7 +65,7 @@ test_sv_agn_macro_wind (void)
 
   define_wind ();
 
-  snprintf (test_data_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/agn_macro.grid.txt", PYTHON_ENV);
+  snprintf (test_data_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/agn_macro.grid.txt", SIROCCO_ENV);
   fp = fopen (test_data_filename, "r");
   if (fp == NULL)
   {
@@ -166,9 +166,9 @@ test_sv_agn_macro_wind (void)
  *
  * @details
  *
- * This uses the data from $PYTHON/source/tests/test_data/define_wind/cv.pf and
- * $PYTHON/source/tests/test_data/define_wind/cv.grid.txt. The latter was created using the Python script in the
- * $PYTHON/source/tests/test_data/define_wind directory.
+ * This uses the data from $SIROCCO/source/tests/test_data/define_wind/cv.pf and
+ * $SIROCCO/source/tests/test_data/define_wind/cv.grid.txt. The latter was created using the Python script in the
+ * $SIROCCO/source/tests/test_data/define_wind directory.
  *
  * ****************************************************************************************************************** */
 
@@ -195,7 +195,7 @@ test_sv_cv_wind (void)
   define_wind ();
 
   /* And now we can compare our created grid to the "ground truth" grid */
-  snprintf (test_data_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/cv.grid.txt", PYTHON_ENV);
+  snprintf (test_data_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/cv.grid.txt", SIROCCO_ENV);
   fp = fopen (test_data_filename, "r");
   if (fp == NULL)
   {
@@ -289,7 +289,7 @@ test_sv_cv_wind (void)
   }
 
   /* For the CV model, we want to save the wind_save to use in another test */
-  snprintf (windsave_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/restart_cv.wind_save", PYTHON_ENV);
+  snprintf (windsave_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/restart_cv.wind_save", SIROCCO_ENV);
   const int err = wind_save (windsave_filename);
   if (err == 0)
   {
@@ -329,7 +329,7 @@ test_shell_wind (void)
   define_wind ();
 
   /* And now we can compare our created grid to the "ground truth" grid */
-  snprintf (test_data_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/shell.grid.txt", PYTHON_ENV);
+  snprintf (test_data_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/shell.grid.txt", SIROCCO_ENV);
   fp = fopen (test_data_filename, "r");
   if (fp == NULL)
   {
@@ -454,7 +454,7 @@ test_spherical_star_wind (void)
   define_wind ();
 
   /* And now we can compare our created grid to the "ground truth" grid */
-  snprintf (test_data_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/star.grid.txt", PYTHON_ENV);
+  snprintf (test_data_filename, LINELENGTH, "%s/source/tests/test_data/define_wind/star.grid.txt", SIROCCO_ENV);
   fp = fopen (test_data_filename, "r");
   if (fp == NULL)
   {
@@ -593,13 +593,13 @@ suite_init (void)
 {
   struct stat sb;
 
-  /* Find the PYTHON env var and the directory where tests are called. We need
+  /* Find the SIROCCO env var and the directory where tests are called. We need
    * these to create a symbolic link to the atomic data required for the
    * tests */
-  PYTHON_ENV = getenv ("PYTHON");
-  if (PYTHON_ENV == NULL)
+  SIROCCO_ENV = getenv ("SIROCCO");
+  if (SIROCCO_ENV == NULL)
   {
-    fprintf (stderr, "Failed to find PYTHON environment variable\n");
+    fprintf (stderr, "Failed to find SIROCCO environment variable\n");
     return EXIT_FAILURE;
   }
   if (getcwd (TEST_CWD, LINELENGTH) == NULL)
@@ -609,7 +609,7 @@ suite_init (void)
   }
 
   /* Set global variables for atomic data */
-  snprintf (ATOMIC_DATA_TARGET, LINELENGTH, "%s/xdata", PYTHON_ENV);
+  snprintf (ATOMIC_DATA_TARGET, LINELENGTH, "%s/xdata", SIROCCO_ENV);
   if (!(stat (ATOMIC_DATA_TARGET, &sb) == EXIT_SUCCESS && S_ISDIR (sb.st_mode)))
   {
     perror ("Unable to find atomic data directory");
@@ -629,7 +629,7 @@ suite_init (void)
   }
 
   /* Set global variables for atomic data for developers */
-  snprintf (ATOMIC_DATA_TARGET_DEVELOPER, LINELENGTH, "%s/zdata", PYTHON_ENV);
+  snprintf (ATOMIC_DATA_TARGET_DEVELOPER, LINELENGTH, "%s/zdata", SIROCCO_ENV);
   if (!(stat (ATOMIC_DATA_TARGET_DEVELOPER, &sb) == EXIT_SUCCESS && S_ISDIR (sb.st_mode)))
   {
     perror ("Unable to find atomic data directory");

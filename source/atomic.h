@@ -216,7 +216,7 @@ extern ConfigPtr xconfig;
 
 typedef struct auger
 {
-  int nion;                     /* The ion no (in python) of the transition */
+  int nion;                     /* The ion no (in sirocco) of the transition */
   int z, istate;                /* element and ion associated with the line */
   int nconfig;                  /* the entry in the config structure where the vacancy state lies */
   int iauger;                   /* the index to this auger entry */
@@ -234,10 +234,10 @@ extern AugerPtr auger_macro;
 
 typedef struct lines
 {
-  int nion;                     /**< The ion no (in python) of the transition */
+  int nion;                     /**< The ion no (in sirocco) of the transition */
   int z, istate;                /**< element and ion associated with the line */
   double gl, gu;                /**< multiplicity of lower and upper level respectively */
-  int nconfigl, nconfigu;       /**< The configuration no (in python) of the transition */
+  int nconfigl, nconfigu;       /**< The configuration no (in sirocco) of the transition */
   int levl, levu;               /**< level no of transition..parallel/redundant with el,eu hopefully */
   int macro_info;               /**<  Identifies whether line is to be treated using a Macro Atom approach.
                                   **  set to -1 (not known initially) 

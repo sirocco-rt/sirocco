@@ -26,7 +26,7 @@
 #include <sys/stat.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -296,7 +296,7 @@ get_spectype (yesno, question, spectype)
  * @details
  *
  * ### Notes ###
- * modes is a structure declared in python.h
+ * modes is a structure declared in sirocco.h
  *
  * Most of the modes are initialized to FALSE, which means that
  * activites that could be undertaken for this mode, will
@@ -842,7 +842,7 @@ fixed concentration file. \n\
  * ### Notes ###
  *
  * setup_dfudge is used to modify the variable DFUDGE which
- * can be found in python.h.
+ * can be found in sirocco.h.
  *
  * Originally, DFUDGE was the only number used to push through
  * boundariies, but today DFUDGE is used sparingly, if at all,

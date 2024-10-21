@@ -10,11 +10,11 @@
  *
  * There a various possibilities for how the
  * velocities could be entered.  One possibility
- * which is the way the zeus_python models work
+ * which is the way the zeus_sirocco models work
  * is for the velocity to be given in spherical
  * polar coordinates.
 
- * However, internally, python uses xyz coordinates
+ * However, internally, sirocco uses xyz coordinates
  * for velocities (as measured in the xz plane),
  * and that is the model followed, here.  This also
  * makes these routines similar to those used
@@ -31,7 +31,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/

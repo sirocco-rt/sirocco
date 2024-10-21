@@ -20,7 +20,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -39,7 +39,7 @@
  *
  * ### Notes ###
  * 
- * This routine is adapted from a very similar routine in py_wind 
+ * This routine is adapted from a very similar routine in swind 
  *
  * If the number of grid cells in the x direction is less more than 30 
  * the grid gets subsampled in the x direction
@@ -59,7 +59,7 @@ xtemp_rad (w)
 {
   int i, j, n;
   double x;
-  int py_wind_min, py_wind_max, py_wind_delta;
+  int swind_min, swind_max, swind_delta;
   int nplasma;
   int ndom, ndim, mdim, nstart;
   int ntot;
@@ -76,20 +76,20 @@ xtemp_rad (w)
 
 
 
-    py_wind_min = 0;
-    py_wind_max = ndim;
+    swind_min = 0;
+    swind_max = ndim;
 
-    /* py_wind_delta can be used to subsample the array */
-    py_wind_delta = 1;
+    /* swind_delta can be used to subsample the array */
+    swind_delta = 1;
     if (mdim > 30)
-      py_wind_delta = 1 + mdim / 30;
+      swind_delta = 1 + mdim / 30;
 
 
     if (zdom[ndom].coord_type == SPHERICAL)
     {
       Log ("\n R\n");
       j = 1;
-      for (i = py_wind_min; i < py_wind_max; i += 1)
+      for (i = swind_min; i < swind_max; i += 1)
       {
         Log ("%8.2e ", w[nstart + i * mdim].r);
         if (j % 10 == 0)
@@ -101,7 +101,7 @@ xtemp_rad (w)
       Log ("\n T rad\n");
 
       j = 1;
-      for (i = py_wind_min; i < py_wind_max; i += 1)
+      for (i = swind_min; i < swind_max; i += 1)
       {
         n = nstart + i;
         nplasma = w[n].nplasma;
@@ -116,7 +116,7 @@ xtemp_rad (w)
       Log ("\n T e\n");
 
       j = 1;
-      for (i = py_wind_min; i < py_wind_max; i += 1)
+      for (i = swind_min; i < swind_max; i += 1)
       {
         n = nstart + i;
         nplasma = w[n].nplasma;
@@ -131,7 +131,7 @@ xtemp_rad (w)
       Log ("\n nphot\n");
 
       j = 1;
-      for (i = py_wind_min; i < py_wind_max; i += 1)
+      for (i = swind_min; i < swind_max; i += 1)
       {
         n = nstart + i;
         nplasma = w[n].nplasma;
@@ -163,14 +163,14 @@ xtemp_rad (w)
     Log ("\n T rad\n");
 
     Log ("   z\\x   ");
-    for (i = py_wind_min; i < py_wind_max; i += py_wind_delta)
+    for (i = swind_min; i < swind_max; i += swind_delta)
       Log ("%8.2e ", w[nstart + i * mdim].x[0]);
     Log ("\n");
 
     for (j = 0; j < mdim; j++)
     {
       Log ("%8.2e ", w[j].x[2]);
-      for (i = py_wind_min; i < py_wind_max; i += py_wind_delta)
+      for (i = swind_min; i < swind_max; i += swind_delta)
       {
         n = nstart + i * mdim + j;
         if (w[n].inwind >= 0)
@@ -188,14 +188,14 @@ xtemp_rad (w)
     Log ("\n T e\n");
 
     Log ("   z\\x   ");
-    for (i = py_wind_min; i < py_wind_max; i += py_wind_delta)
+    for (i = swind_min; i < swind_max; i += swind_delta)
       Log ("%8.2e ", w[nstart + i * mdim].x[0]);
     Log ("\n");
 
     for (j = 0; j < mdim; j++)
     {
       Log ("%8.2e ", w[j].x[2]);
-      for (i = py_wind_min; i < py_wind_max; i += py_wind_delta)
+      for (i = swind_min; i < swind_max; i += swind_delta)
       {
         n = nstart + i * mdim + j;
         nplasma = w[n].nplasma;
@@ -213,14 +213,14 @@ xtemp_rad (w)
     Log ("\n ntot \n");
 
     Log ("   z\\x   ");
-    for (i = py_wind_min; i < py_wind_max; i += py_wind_delta)
+    for (i = swind_min; i < swind_max; i += swind_delta)
       Log ("%8.2e ", w[nstart + i * mdim].x[0]);
     Log ("\n");
 
     for (j = 0; j < mdim; j++)
     {
       Log ("%8.2e ", w[j].x[2]);
-      for (i = py_wind_min; i < py_wind_max; i += py_wind_delta)
+      for (i = swind_min; i < swind_max; i += swind_delta)
       {
         n = nstart + i * mdim + j;
         nplasma = w[n].nplasma;

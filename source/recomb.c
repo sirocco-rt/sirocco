@@ -30,7 +30,7 @@
 #include <string.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /***************************FBSTRUC ***********************************/
 /* The next section contains the freebound structures that can be used for both the
@@ -905,7 +905,7 @@ int init_freebound_nfb;
 /**********************************************************/
 /**
  * @brief      initializes the structure fb_struc as well as some
- * associated arrays and variables (found in python.h) that describe
+ * associated arrays and variables (found in sirocco.h) that describe
  * recombination rates and band-limited luminosities.
  *
  * @param [in] double  t1   A lower limit for the temperature
@@ -941,7 +941,7 @@ int init_freebound_nfb;
  * frequency intervals than place to store data and will recylce
  * the structure if this occurs (indicating this with several error
  * messages).  This allows the program to proceed, but if this
- * happens often then the variable NFB in python.h should be increased.
+ * happens often then the variable NFB in sirocco.h should be increased.
  *
  **********************************************************/
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 '''
-Runs tests of the Balmer decrement for a one zone  thin shell Python model.
+Runs tests of the Balmer decrement for a one zone  thin shell Sirocco model.
 
-Involves running py_wind on a wind_save file and reading some output files.
+Involves running swind on a wind_save file and reading some output files.
 Compares to Osterbrock values.
 
 Usage:
@@ -14,7 +14,7 @@ Requirements:
 	py_wind
 	numpy 
 	matplotlib 
-	py_plot_util, py_read_output from $PYTHON/py_progs in the python path
+	py_plot_util, py_read_output from $SIROCCO/py_progs in the python path
 
 Notes:
 	This routine is a routine to check the results of running a one zone
@@ -26,8 +26,8 @@ import sys, os
 
 # Do not call this when we're on ReadTheDocs
 if not os.environ.get('READTHEDOCS'):
-	PYTHON = os.environ["PYTHON"]
-	sys.path.append("$PYTHON/py_progs/")
+	SIROCCO = os.environ["SIROCCO"]
+	sys.path.append("$SIROCCO/py_progs/")
 
 import py_plot_util as util 
 import py_read_output as rd 
@@ -48,7 +48,7 @@ def BalmerTest(root, plotit=True):
 
 	print ("Running Balmer Test for run {}...".format(root))
 
-	# create the list of commands to run in py wind
+	# create the list of commands to run in swind
 	nlevels = 8
 	cmds = ["1","s","n","i","1","1","1","1","2","0","M","2"]
 	for i in range(nlevels):
@@ -57,8 +57,8 @@ def BalmerTest(root, plotit=True):
 	cmds.append("q")
 
 	# run py wind. pass the command to run for situations in CI where we can't get the path working
-	py_wind_cmd = "{}/bin/py_wind".format(PYTHON)
-	isys, logfile_contents = util.run_py_wind(root, cmds=cmds, py_wind_cmd = py_wind_cmd, return_output = True)
+	swind_cmd = "{}/bin/swind".format(SIROCCO)
+	isys, logfile_contents = util.run_py_wind(root, cmds=cmds, py_wind_cmd = swind_cmd, return_output = True)
 	print (isys)
 
 	# these could be in principle be used to check absolute emissivity values 
@@ -74,7 +74,7 @@ def BalmerTest(root, plotit=True):
 		for i in range(nlevels):
 			ratios[i] = rd.read_pywind("{}.lev{}_emiss.dat".format(root,i+3), mode="1d")[2][1]
 	except FileNotFoundError:
-		print("Error reading py_wind output. Logfile follows...")
+		print("Error reading swind output. Logfile follows...")
 		print (logfile_contents)
 
 

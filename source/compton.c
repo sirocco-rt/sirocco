@@ -13,7 +13,7 @@
 #include <stdlib.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 PlasmaPtr xplasma;              /// Pointer to current plasma cell
 

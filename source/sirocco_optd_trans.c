@@ -14,8 +14,8 @@
 #include <stdlib.h>
 
 #include "atomic.h"
-#include "python.h"
-#include "py_optd.h"
+#include "sirocco.h"
+#include "sirocco_optd.h"
 static const double MAXDIFF = VCHECK / VLIGHT;  // For linear velocity requirement for photon transport
 
 /* ************************************************************************* */

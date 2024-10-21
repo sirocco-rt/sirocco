@@ -4,7 +4,7 @@
 During-run parser for error logs from parallel simulation runs.
 	
 This is the during-processing watchdog code to deal with the error logs in 
-PYTHON's parallel mode. Very similar to py_error.py
+SIROCCO's parallel mode. Very similar to py_error.py
 
 usage and arguments:
 

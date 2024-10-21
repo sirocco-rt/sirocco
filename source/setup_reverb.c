@@ -15,7 +15,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -127,7 +127,7 @@ get_meta_params (void)
       geo.reverb_dump_cell_z = (double *) calloc (geo.reverb_dump_cells, sizeof (double));
       geo.reverb_dump_cell = (int *) calloc (geo.reverb_dump_cells, sizeof (int));
       for (k = 0; k < geo.reverb_dump_cells; k++)
-      {                         //For each we expect, read a paired cell coord as "[i]:[j]". May need to use py_wind to find indexes.
+      {                         //For each we expect, read a paired cell coord as "[i]:[j]". May need to use swind to find indexes.
         rdline ("Reverb.dump_cell(x:z_position)", trackline);
         if (sscanf (trackline, "%lf:%lf", &geo.reverb_dump_cell_x[k], &geo.reverb_dump_cell_z[k]) == EOF)
         {                       //If this line is malformed, warn the user

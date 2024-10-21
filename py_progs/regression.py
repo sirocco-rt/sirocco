@@ -17,10 +17,10 @@ Command line usage (if any):
         the number of processors with which to run (default 3)
     `-pf_dir test`
         the directory containing all of the .pf files which will be run
-        The defaults is `$PYTHON/examples/regress`.  One does not need
+        The defaults is `$SIROCCO/examples/regress`.  One does not need
         to provide the full path name to the directory.  The routine doit
         first searches the current workind directory for the directory and then
-        looks in `$PYTHON/examples/`
+        looks in `$SIROCCO/examples/`
     `-x  '-v/c'`
         Extra switches to be applied to the run, such as using linear Doppler
         shifts.  Note that these will be applied to everything except the
@@ -207,7 +207,7 @@ def doit(version='py',pf_dir='',out_dir='',np=3,switches='',outputfile='Summary.
     Notes:
 
         The routine looks for the input directory first as a subdirectory
-        of the directory from which regression is run, and then in $PYTHON/examples/
+        of the directory from which regression is run, and then in $SIROCCO/examples/
 
     History:
 
@@ -235,22 +235,22 @@ def doit(version='py',pf_dir='',out_dir='',np=3,switches='',outputfile='Summary.
 
     print(date)
 
-    # Get the PYTHON environment variable
+    # Get the SIROCCO environment variable
 
-    PYTHON=os.environ['PYTHON']
-    print(PYTHON)
+    SIROCCO=os.environ['SIROCCO']
+    print(SIROCCO)
 
     if pf_dir=='':
-        pf_dir=PYTHON+'/examples/regress'
+        pf_dir=SIROCCO+'/examples/regress'
 		
     if os.path.isdir(pf_dir):
         pf_files=glob(pf_dir+'/*pf')
         txt_files=glob(pf_dir+'/*.txt')
         dat_files=glob(pf_dir+'/*.dat')
         wind_save=glob(pf_dir+'/*.wind_save')
-    elif os.path.isdir('%s/examples/%s' % (PYTHON,pf_dir)):
-        pf_files=glob('%s/examples/%s/*pf' % (PYTHON,pf_dir))
-        txt_files=glob('%s/examples/%s/*.txt' % (PYTHON,pf_dir))
+    elif os.path.isdir('%s/examples/%s' % (SIROCCO,pf_dir)):
+        pf_files=glob('%s/examples/%s/*pf' % (SIROCCO,pf_dir))
+        txt_files=glob('%s/examples/%s/*.txt' % (SIROCCO,pf_dir))
         dat_files=glob(pf_dir+'/*.dat')
         wind_save=glob(pf_dir+'/*.wind_save')
     else:

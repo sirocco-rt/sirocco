@@ -6,7 +6,7 @@
  * @brief  Get the parameters needed to describe winds
  *
  * File containing several routines that collectively
- * define the components to a wind in python. Each component
+ * define the components to a wind in sirocco. Each component
  * of the wind is said to be a domain, and the information
  * for each domain is stored in the elements of zdom
  ***********************************************************/
@@ -17,7 +17,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -94,7 +94,7 @@ get_domain_params (ndom)
     if (zdom[ndom].ndim > NDIM_MAX)
     {
       Error
-        ("get_domain_params: %d x-cells for domain %d is greater than the maximum allowed cells of %d. Try increasing NDIM_MAX in python.h\n",
+        ("get_domain_params: %d x-cells for domain %d is greater than the maximum allowed cells of %d. Try increasing NDIM_MAX in sirocco.h\n",
          zdom[ndom].ndim, ndom, NDIM_MAX);
       Exit (EXIT_FAILURE);
     }
@@ -104,13 +104,13 @@ get_domain_params (ndom)
       if (zdom[ndom].mdim > NDIM_MAX)
       {
         Error
-          ("get_domain_params: %d z-cells for domain %d is greater than the maximum allowed cells of %d. Try increasing NDIM_MAX in python.h\n",
+          ("get_domain_params: %d z-cells for domain %d is greater than the maximum allowed cells of %d. Try increasing NDIM_MAX in sirocco.h\n",
            zdom[ndom].mdim, ndom, NDIM_MAX);
         Exit (EXIT_FAILURE);
       }
       else if (zdom[ndom].mdim < 4)
       {
-        Error ("python: domain mdim must be at least 4 to allow for boundaries\n");
+        Error ("sirocco: domain mdim must be at least 4 to allow for boundaries\n");
         Exit (EXIT_FAILURE);
       }
     }

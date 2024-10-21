@@ -2,8 +2,8 @@
 
 
 
-# please make sure your $PYTHON path is setup to use this script
-top=$PYTHON
+# please make sure your $SIROCCO path is setup to use this script
+top=$SIROCCO
 xdata=xdata
 xmod=xmod
 zdata=zdata

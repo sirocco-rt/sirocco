@@ -17,10 +17,10 @@ Command line usage (if any):
         the number of processors with which to run (default 3)
     -pf_dir test
         the directory containing all of the .pf files which will be run
-        The defaults is $PYTHON/examples/regress.  One does not need
+        The defaults is $SIROCCO/examples/regress.  One does not need
         to provide the full path name to the directory.  The routine doit
         first searches the current workind directory for the directory and then
-        looks in $PYTHON/examples/
+        looks in $SIROCCO/examples/
     -out_dir foo
         The directory (below the current working directory) where the
         tests will run.  The defauld is constructed for the version and the data
@@ -162,7 +162,7 @@ def doit(version='py',pf_dir='',out_dir='',np=3,outputfile='Summary.txt'):
     Notes:
 
         The routine looks for the input directory first as a subdirectory
-        of the directory from which regression is run, and then in $PYTHON/examples/
+        of the directory from which regression is run, and then in $SIROCCO/examples/
 
     History:
 
@@ -183,18 +183,18 @@ def doit(version='py',pf_dir='',out_dir='',np=3,outputfile='Summary.txt'):
 
     print(date)
 
-    # Get the PYTHON environment variable
+    # Get the SIROCCO environment variable
 
-    PYTHON=os.environ['PYTHON']
-    print(PYTHON)
+    SIROCCO=os.environ['SIROCCO']
+    print(SIROCCO)
 
     if pf_dir=='':
-        pf_dir=PYTHON+'/examples/regress'
+        pf_dir=SIROCCO+'/examples/regress'
 		
     if os.path.isdir(pf_dir):
         pf_files=glob(pf_dir+'/*pf')
-    elif os.path('%s/%s' % (PYTHON,pf_dir)):
-        pf_files=glob('%s/%s' % (PYTHON,pf_dir))
+    elif os.path('%s/%s' % (SIROCCO,pf_dir)):
+        pf_files=glob('%s/%s' % (SIROCCO,pf_dir))
     else:
         print('Error: The pf directory %s does not appear to exist' % pf_dir)
         return

@@ -4,9 +4,9 @@
 #include <math.h>
 #include <time.h>
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
-#include "py_optd.h"
+#include "sirocco_optd.h"
 
 
 int COLUMN_MODE;

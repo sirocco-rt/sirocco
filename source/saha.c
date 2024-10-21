@@ -17,7 +17,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -99,7 +99,7 @@ nebular_concentrations (xplasma, mode)
 //#define MAXITERATIONS 200
 //#define FRACTIONAL_ERROR 0.03
 //#define THETAMAX       1e4
-//#define MIN_TEMP         100. NSH 0712 - moved into python.h because this is used in severalpaces
+//#define MIN_TEMP         100. NSH 0712 - moved into sirocco.h because this is used in severalpaces
 
 
 

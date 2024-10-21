@@ -11,7 +11,7 @@
  *
  * windsave2table  windsave_root
  *
- * where windsave_root is the root name for a python run, or more precisely
+ * where windsave_root is the root name for a sirocco run, or more precisely
  * the rootname of a windsave file, as the .pf file is not read.
  *
  * The routine reads the windsavefile and then writes out a selected 
@@ -40,7 +40,7 @@
  *
  * ### Notes ###
  *
- * Whereas py_wind is intended to be run interactively, windsave2table is
+ * Whereas swind is intended to be run interactively, windsave2table is
  * entirely hardwired so that it produces a standard set of output
  * files.  To change the outputs one has to modify the routine
  *
@@ -58,7 +58,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -153,7 +153,7 @@ parse_arguments (int argc, char *argv[], char root[], int *ion_switch, int *spec
       {
         if (sscanf (argv[i + 1], "%d", spec_switch) != 1)
         {
-          Error ("python: wind cell number  after -x switch\n");
+          Error ("sirocco: wind cell number  after -x switch\n");
           exit (1);
         }
 
@@ -247,7 +247,7 @@ main (argc, argv)
 
   strcpy (parameter_file, "NONE");
 
-  /* Next command stops Debug statements printing out in py_wind */
+  /* Next command stops Debug statements printing out in swind */
   Log_set_verbosity (3);
 
   /*
@@ -280,7 +280,7 @@ main (argc, argv)
 
   if (wind_read (windsavefile) < 0)
   {
-    Error ("py_wind: Could not open %s", windsavefile);
+    Error ("swind: Could not open %s", windsavefile);
     exit (0);
   }
 

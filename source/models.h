@@ -3,7 +3,7 @@
 /* Note that there are some limits on how large NMODS*NWAVES can be.  When you exceed this limit, you will get a segmentation
  * fault on startup */
 
-/* Note that there is some overlap between these definitions and those in python.h and so mixing these two
+/* Note that there is some overlap between these definitions and those in sirocco.h and so mixing these two
  * header files can be dangerous.  
  *
  * NDIM --> MOD_NDIM  -- 081026
@@ -17,7 +17,7 @@
 #define NCOMPS	10              //The maximum number of separate components
 #define NPARS	10              //The maximum number of parameters in a component (not all variable)
 #define NMODS   2000            //The total number of models read in in all components
-#define LINELEN 160             //This should always be the same as LINELENGTH in python.h!
+#define LINELEN 160             //This should always be the same as LINELENGTH in sirocco.h!
 
 
 

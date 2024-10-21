@@ -14,7 +14,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -26,7 +26,7 @@
  * @param [in] int  mode   variable which controls whether or not we need to compute the
  *            emissivities (CALCULATE_MATOM_EMISSIVITIES) or use stored ones
  *            because we are restarting a spectral cycle (USE_STORED_MATOM_EMISSIVITIES)
- *            see #define statements in python.h and code in xdefine_phot().
+ *            see #define statements in sirocco.h and code in xdefine_phot().
  * @return double lum  The energy radiated by the deactivation of macro atoms in the wind in the
  *            wavelength range required for the spectrum calculation.
  *
@@ -368,7 +368,7 @@ get_matom_f (mode)
  * @param [in] int  mode   vvariable which controls whether or not we need to compute the
  *            emissivities (CALCULATE_MATOM_EMISSIVITIES) or use stored ones
  *            because we are restarting a spectral cycle (USE_STORED_MATOM_EMISSIVITIES)
- *            see #define statements in python.h and code in xdefine_phot().
+ *            see #define statements in sirocco.h and code in xdefine_phot().
  * @return double lum  The energy radiated by the deactivation of macro atoms in the wind in the
  *            wavelength range required for the specrum calculation.
  *

@@ -18,7 +18,7 @@
 #include <gsl/gsl_permutation.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 #ifndef CUDA_ON                 /* removes a compiler warning about unused functions */
 

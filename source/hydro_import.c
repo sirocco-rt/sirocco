@@ -50,7 +50,7 @@ HydroPtr hydro_ptr;
 
 #include  "log.h"
 #include  "atomic.h"
-#include  "python.h"
+#include  "sirocco.h"
 
 #define LINE 200
 
@@ -314,8 +314,8 @@ get_hydro (ndom)
  * @return 					The speed - relating the velocity we have computed
  *
  * The velocities in a zeus hydro-grid are defined on the middle of cell
- * edges, wheras in python we require them at the verticies. This routine
- * interpolates on rhe supplied grid to make the python grid.
+ * edges, wheras in sirocco we require them at the verticies. This routine
+ * interpolates on rhe supplied grid to make the sirocco grid.
  *
  *
  * ###Notes###
@@ -419,7 +419,7 @@ hydro_velocity (ndom, x, v)
  * @return 	rrho			The density at the requested loc ation
  *
  * This is a routine which allows the density in a supplied
- * hydro-dynamic snapshot to be used to populate a python
+ * hydro-dynamic snapshot to be used to populate a sirocco
  * model. Often the grids overlap, but this should work whatever
  * the case.
  *
@@ -479,7 +479,7 @@ hydro_rho (x)
  * @return 	temp			The temperature at the requested loc ation
  *
  * This is a routine which allows the temperature in a supplied
- * hydro-dynamic snapshot to be used to populate a python
+ * hydro-dynamic snapshot to be used to populate a sirocco
  * model. Often the grids overlap, but this should work whatever
  * the case.
  *
@@ -700,9 +700,9 @@ rtheta_hydro_cell_volume (WindPtr w)
 
  *
  * hydro_frac replaces many lines of identical code, all of which
- * interpolate on the input grid to get value for the python grid.
+ * interpolate on the input grid to get value for the sirocco grid.
  * This code find out the fraction along a coord array where the centre
- * or edge of the python grid cell lies on the hydro grid
+ * or edge of the sirocco grid cell lies on the hydro grid
  *
  *
  * ###Notes###
@@ -770,7 +770,7 @@ hydro_frac (coord, coord_array, imax, cell1, cell2, frac)
 
  *
  * hydro_interp_value replaces many lines of identical code, all of which
- * interpolate on the input grid to get value for the python grid.
+ * interpolate on the input grid to get value for the sirocco grid.
  * This returns the actuak value of an interpolated array
  *
  *
@@ -946,7 +946,7 @@ create_hydro_output_files (void)
     {
       nplasma = wmain[nwind].nplasma;
       wind_n_to_ij (geo.hydro_domain_number, plasmamain[nplasma].nwind, &i, &j);
-      i = i - 1;                //There is a radial 'ghost zone' in python, we need to make our i,j agree with zeus
+      i = i - 1;                //There is a radial 'ghost zone' in sirocco, we need to make our i,j agree with zeus
       vol = w[plasmamain[nplasma].nwind].vol;
       fprintf (fptr, "%d %d %e %e %e ", i, j, w[plasmamain[nplasma].nwind].rcen, w[plasmamain[nplasma].nwind].thetacen / RADIAN, vol);  //output geometric things
       fprintf (fptr, "%e %e %e ", plasmamain[nplasma].t_e, plasmamain[nplasma].xi, plasmamain[nplasma].ne);     //output temp, xi and ne to ease plotting of heating rates

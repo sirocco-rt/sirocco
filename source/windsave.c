@@ -14,7 +14,7 @@
  * ### Notes ###
  *
  * The files here are all written out as binary files.  They are
- * used for restars, and also by routines like py_wind and windsave2talbe
+ * used for restars, and also by routines like swind and windsave2talbe
  * which inspect what is happening in the wind.
  *
  * There are separate ascii_writing 
@@ -29,7 +29,7 @@
 #include <sys/stat.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -202,7 +202,7 @@ wind_read (filename)
 
   n = fread (header, sizeof (header), 1, fptr);
   sscanf (header, "%*s %s", version);
-  Log ("Reading Windfile %s created with python version %s with python version %s\n", filename, version, VERSION);
+  Log ("Reading Windfile %s created with sirocco version %s with sirocco version %s\n", filename, version, VERSION);
 
   /* Now read in the geo structure */
 
@@ -498,7 +498,7 @@ spec_read (filename)
     Exit (EXIT_FAILURE);
   }
 
-  Log ("Reading specfile %s with %d spectra and %d wavelength bins, created with python version %s and currently using python version %s\n",
+  Log ("Reading specfile %s with %d spectra and %d wavelength bins, created with sirocco version %s and currently using sirocco version %s\n",
        filename, nspectra, NWAVE_EXTRACT, version, VERSION);
 
   /* First allocate space */

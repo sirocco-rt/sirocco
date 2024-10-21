@@ -1,11 +1,11 @@
 
 /***********************************************************/
-/** @file  py_wind_write.c
+/** @file  swind_write.c
  * @author ksl
  * @date   May, 2018
  *
  * @brief  
- * These are subroutines used by py_wind to write ascii
+ * These are subroutines used by swind to write ascii
  * files of various variables for use with smongo or normal display
  * software.
  *
@@ -18,7 +18,7 @@
 #include	<stdlib.h>
 
 #include	"atomic.h"
-#include	"python.h"
+#include	"sirocco.h"
 #include    "templates.h"
 
 #define ODIM 256
@@ -36,7 +36,7 @@ float aout[ODIM][ODIM];
  * @return     Always returns 0
  *
  * @details
- * This is a general purpose routine used by py_wind to write 
+ * This is a general purpose routine used by swind to write 
  * ascii data files.  If a file is written, it can be written
  * at the positions of of the windsave grid, or interpolated
  * onto a linear coordinate grid.  The latter was intended
@@ -124,7 +124,7 @@ write_array (filename, choice)
 //OLD  }
 
 
-/* In py_wind the filenames are set to start with z if the output coordinates
+/* In swind the filenames are set to start with z if the output coordinates
 are linear, and x otherwise.  This is not particularly transparent ?? ksl */
 
   if (choice == 1)
@@ -265,13 +265,13 @@ display (name)
   mdim = zdom[ndom].mdim;
   nstart = zdom[ndom].nstart;
 
-  Log ("Check me now %d %d\n", py_wind_min, py_wind_max);
+  Log ("Check me now %d %d\n", swind_min, swind_max);
 
 
   Log ("\n %s \n", name);
   Log ("z/theta \\x/r");
-  for (i = py_wind_min; i < py_wind_max; i += py_wind_delta)
-    if (zdom[ndom].coord_type == 1 || py_wind_project == 1)
+  for (i = swind_min; i < swind_max; i += swind_delta)
+    if (zdom[ndom].coord_type == 1 || swind_project == 1)
       Log ("%8.2e ", wmain[nstart + i * mdim].x[0]);
     else
       Log ("%8.2e ", wmain[nstart + i * mdim].rcen);
@@ -280,12 +280,12 @@ display (name)
 
   for (j = 0; j < mdim; j++)
   {
-    if (zdom[ndom].coord_type == 1 || py_wind_project == 1)
+    if (zdom[ndom].coord_type == 1 || swind_project == 1)
       Log ("%8.2e ", wmain[nstart + j].x[2]);
     else
       Log ("%8.2e ", wmain[nstart + j].thetacen);
 
-    for (i = py_wind_min; i < py_wind_max; i += py_wind_delta)
+    for (i = swind_min; i < swind_max; i += swind_delta)
     {
       n = nstart + i * mdim + j;
       Log ("%8.2g ", aaa[n]);

@@ -14,7 +14,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -675,7 +675,7 @@ Note that it simply calls where_in_wind multiple times.
 
 History:
   11Aug	ksl	70b - Modified to incoporate torus
-  		See python.h for more complete explanation
+  		See sirocco.h for more complete explanation
 		of how PART and ALL are related
   15sep ksl	Modified to ask the more refined question of
   		whether this cell is in the wind of the

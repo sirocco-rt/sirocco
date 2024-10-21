@@ -11,7 +11,7 @@
  *
  * rad_hydro_files  windsave_root
  *
- * where windsave_root is the root name for a python run, or more precisely
+ * where windsave_root is the root name for a sirocco run, or more precisely
  * the rootname of a windsave file, as the .pf file is not read.
  *
  * The routine reads the windsavefile and then writes out a set of files
@@ -22,7 +22,7 @@
 
  * ### Notes ###
  *
- * Whereas py_wind is intended to be run interactively, rad_hydro_files is
+ * Whereas swind is intended to be run interactively, rad_hydro_files is
  * entirely hardwired so that it produces a standard set of output
  * files.  To change the outputs one has to modify the routine
  *
@@ -44,7 +44,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -186,7 +186,7 @@ main (argc, argv)
 
   if (wind_read (windsavefile) < 0)
   {
-    Error ("py_wind: Could not open %s", windsavefile);
+    Error ("swind: Could not open %s", windsavefile);
     exit (0);
   }
 
@@ -336,7 +336,7 @@ main (argc, argv)
       wind_n_to_ij (domain, plasmamain[nplasma].nwind, &i, &j);
 
       if (zdom[domain].coord_type == SPHERICAL)
-        i = i - 1;              //There is an extra radial 'ghost zone' in spherical coords in python, we need to make our i,j agree with zeus
+        i = i - 1;              //There is an extra radial 'ghost zone' in spherical coords in sirocco, we need to make our i,j agree with zeus
       vol = wmain[plasmamain[nplasma].nwind].vol;
       if (zdom[domain].coord_type == SPHERICAL || zdom[domain].coord_type == RTHETA)
         fprintf (fptr_hc, "%d %d %e %e %e ", i, j, wmain[nwind].rcen, wmain[nwind].thetacen / RADIAN, vol);     //output geometric things

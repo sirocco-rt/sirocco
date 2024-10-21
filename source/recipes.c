@@ -13,7 +13,7 @@
  * Routines, but these have been replaced with gsl
  *
  * These routines should be kept SEPARATE from routines that require the Python specific
- * structures in python.h
+ * structures in sirocco.h
  *
  ***********************************************************/
 
@@ -350,7 +350,7 @@ find_function_minimum (a, m, b, func, tol, xmin)
  *
  * fraction is a utility written to speed up the search for the bracketing
  * topbase photionization x-sections, but in principle it should work in
- * other situations within python (which at one time at least contributed
+ * other situations within sirocco (which at one time at least contributed
  * significantly to the runtime for Python).
  *
  * Today, fraction is called directly in the routines that are used to set up coordinate

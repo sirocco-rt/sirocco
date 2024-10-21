@@ -4,7 +4,7 @@
 Post-run parser for error logs from parallel simulation runs.
     
 This is the post-processing code to deal with the error logs in 
-PYTHON's parallel mode. It basically sums the number of errors
+SIROCCO's parallel mode. It basically sums the number of errors
 in the various diagnostic files
 
 usage and arguments:

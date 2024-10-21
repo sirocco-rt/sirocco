@@ -23,7 +23,7 @@
 
 #include "log.h"
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 int ierr_coord_fraction = 0;
 

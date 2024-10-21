@@ -49,7 +49,7 @@
 #include <sys/time.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 long n_lost_to_dfudge = 0;
 
@@ -133,7 +133,7 @@ trans_phot (WindPtr w, PhotPtr p, int iextract)
 
   Log ("\n");
 
-  print_timer_duration ("!!python: photon transport completed in", timer_t0);
+  print_timer_duration ("!!sirocco: photon transport completed in", timer_t0);
   //XXXX Delete when understand what is going on with state machines
   xsignal (files.root, "%-20s Photon transport completed\n", "NOK");
 

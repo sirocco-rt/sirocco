@@ -13,8 +13,8 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
-#include "py_optd.h"
+#include "sirocco.h"
+#include "sirocco_optd.h"
 
 /* ************************************************************************* */
 /**
@@ -22,7 +22,7 @@
  *
  * @details
  *
- * The version python, commit hash and date are written to the file pointer
+ * The version sirocco, commit hash and date are written to the file pointer
  * provided. This assumes that the file pointer is pointing to the top of the
  * file, as this is supposed to be writing a header.
  *

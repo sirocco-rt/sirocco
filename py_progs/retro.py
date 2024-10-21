@@ -191,20 +191,20 @@ def log2table(logfile='commits.txt',masterfile='retro_master.txt'):
 
     return SUCCESS
         
-PYTHON_SOURCE_DIRECTORY=''
+SIROCCO_SOURCE_DIRECTORY=''
 
 def get_python_source_directory():
-    global PYTHON_SOURCE_DIRECTORY
+    global SIROCCO_SOURCE_DIRECTORY
 
     result=subprocess.run(['which','py'],capture_output=True,text=True)
     location=str(result.stdout)
     x=location.strip()
     xx=x.replace('bin/py','source/')
 
-    PYTHON_SOURCE_DIRECTORY=xx
-    print('Set Python source directory to :',PYTHON_SOURCE_DIRECTORY)
+    SIROCCO_SOURCE_DIRECTORY=xx
+    print('Set Python source directory to :',SIROCCO_SOURCE_DIRECTORY)
 
-    return  PYTHON_SOURCE_DIRECTORY 
+    return  SIROCCO_SOURCE_DIRECTORY 
 
 
 def compile_one(commit='a77ec180c017244cb56f41b50178daf81541748a',number=35,print_output=False):
@@ -215,9 +215,9 @@ def compile_one(commit='a77ec180c017244cb56f41b50178daf81541748a',number=35,prin
 
     # cwd=os.getcwd()
 
-    if PYTHON_SOURCE_DIRECTORY=='':
+    if SIROCCO_SOURCE_DIRECTORY=='':
         get_python_source_directory()
-    os.chdir(PYTHON_SOURCE_DIRECTORY)
+    os.chdir(SIROCCO_SOURCE_DIRECTORY)
 
     result=subprocess.run(['git', 'checkout', commit],capture_output=True,text=True)
     if result.returncode:

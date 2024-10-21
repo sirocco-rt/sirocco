@@ -13,7 +13,7 @@
 #include <stdlib.h>
 
 #include "../atomic.h"
-#include "../python.h"
+#include "../sirocco.h"
 
 #define PATH_SEPARATOR '/'
 
@@ -29,12 +29,12 @@
  * ****************************************************************************************************************** */
 
 const char *
-get_python_env_variable (void)
+get_sirocco_env_variable (void)
 {
-  const char *env = getenv ("PYTHON");
+  const char *env = getenv ("SIROCCO");
   if (env == NULL)
   {
-    fprintf (stderr, "Failed to find PYTHON environment variable\n");
+    fprintf (stderr, "Failed to find SIROCCO environment variable\n");
     return NULL;
   }
 
@@ -69,7 +69,7 @@ free_and_null (void **ptr)
  *
  * @brief Clean up after a model has run as a test case.
  *
- * @param [in]  root_name  The root name of the model in $PYTHON/source/tests/test_data/define_wind
+ * @param [in]  root_name  The root name of the model in $SIROCCO/source/tests/test_data/define_wind
  *
  * @details
  *
@@ -79,7 +79,7 @@ int
 cleanup_model (const char *root_name)
 {
   int n_plasma;
-  char *PYTHON_ENV;
+  char *SIROCCO_ENV;
   char parameter_filepath[LINELENGTH];
 
   PlasmaPtr plasma_cell;
@@ -87,14 +87,14 @@ cleanup_model (const char *root_name)
 
   (void) root_name;
 
-  PYTHON_ENV = getenv ("PYTHON");
-  if (PYTHON_ENV == NULL)
+  SIROCCO_ENV = getenv ("SIROCCO");
+  if (SIROCCO_ENV == NULL)
   {
-    fprintf (stderr, "Failed to find PYTHON environment variable\n");
+    fprintf (stderr, "Failed to find SIROCCO environment variable\n");
     return EXIT_FAILURE;
   }
 
-  snprintf (parameter_filepath, LINELENGTH, "%s/source/tests/test_data/define_wind/%s.pf", PYTHON_ENV, files.root);
+  snprintf (parameter_filepath, LINELENGTH, "%s/source/tests/test_data/define_wind/%s.pf", SIROCCO_ENV, files.root);
   if (cpar (parameter_filepath) != 1)   /* cpar returns 1 when something is "normal" */
   {
     return EXIT_FAILURE;
@@ -269,7 +269,7 @@ set_atomic_data_filename (const char *atomic_data_location)
  *
  * @brief Initialise all the necessary parameters to define the wind
  *
- * @param [in]  root_name  The root name of the model in $PYTHON/source/tests/test_data/define_wind
+ * @param [in]  root_name  The root name of the model in $SIROCCO/source/tests/test_data/define_wind
  * @param [in]  atomic_data_location  The location of atomic data
  *
  * @details
@@ -284,15 +284,15 @@ int
 setup_model_grid (const char *root_name, const char *atomic_data_location)
 {
   int n_dom;
-  char *PYTHON_ENV;
+  char *SIROCCO_ENV;
   char rdchoice_answer[LINELENGTH];
   char rdchoice_choices[LINELENGTH];
   char parameter_filepath[LINELENGTH];
 
-  PYTHON_ENV = getenv ("PYTHON");
-  if (PYTHON_ENV == NULL)
+  SIROCCO_ENV = getenv ("SIROCCO");
+  if (SIROCCO_ENV == NULL)
   {
-    fprintf (stderr, "Failed to find PYTHON environment variable\n");
+    fprintf (stderr, "Failed to find SIROCCO environment variable\n");
     return EXIT_FAILURE;
   }
 
@@ -301,14 +301,14 @@ setup_model_grid (const char *root_name, const char *atomic_data_location)
   /* Set up parameter file, that way we can get all the parameters from that
    * instead of defining them manually */
   strcpy (files.root, root_name);
-  snprintf (parameter_filepath, LINELENGTH, "%s/source/tests/test_data/define_wind/%s.pf", PYTHON_ENV, files.root);
+  snprintf (parameter_filepath, LINELENGTH, "%s/source/tests/test_data/define_wind/%s.pf", SIROCCO_ENV, files.root);
   if (opar (parameter_filepath) != 2)   /* opar returns 2 when reading for the parameter file */
   {
     fprintf (stderr, "Unable to read from parameter file %s.pf", files.root);
     return EXIT_FAILURE;
   }
 
-  zdom = calloc (MAX_DOM, sizeof (domain_dummy));       /* We'll allocate MAX_DOM to follow python */
+  zdom = calloc (MAX_DOM, sizeof (domain_dummy));       /* We'll allocate MAX_DOM to follow sirocco */
   if (zdom == NULL)
   {
     fprintf (stderr, "Unable to allocate space for domain structure\n");

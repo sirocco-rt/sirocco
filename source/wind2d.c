@@ -16,7 +16,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 int wig_n;
 double wig_x, wig_y, wig_z;

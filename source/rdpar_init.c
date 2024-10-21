@@ -23,7 +23,7 @@
 
 #include "log.h"
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /* the form of the structure which contains
  * the map from words to values
@@ -84,7 +84,7 @@ init_choices ()
     { SPECTYPE_BB, SPECTYPE_UNIFORM, SPECTYPE_POW, SPECTYPE_CL_TAB, SPECTYPE_BREM, SPECTYPE_NONE, SPECTYPE_MODEL, SPECTYPE_BB_FCOL,
     SPECTYPE_MONO
   };
-  int num_choices = 9;          //Should match the length of xchoices and xvals above. must be <= MAX_RDPAR_CHOICES in python.h 
+  int num_choices = 9;          //Should match the length of xchoices and xvals above. must be <= MAX_RDPAR_CHOICES in sirocco.h 
 
   if (xinit_choices)
     return (0);

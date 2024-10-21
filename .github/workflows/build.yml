@@ -1,4 +1,4 @@
-name: "Python: continuous integration tests"
+name: "Sirocco: continuous integration tests"
 on:
   push:
     branches:
@@ -9,20 +9,20 @@ on:
       - "dev"
       - "main"
 env:
-  PYTHON: ${{ github.workspace }}
+  SIROCCO: ${{ github.workspace }}
 jobs:
   greeting:
     name: Greeting job
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: "Print out environment variables"
       run: |
         echo "WORKSPACE IS $GITHUB_WORKSPACE"
-        echo "PYTHON ENV VARIABLE IS: $PYTHON"
+        echo "SIROCCO ENV VARIABLE IS: $SIROCCO"
 
   build_and_test:
-    name: Build Python and run tests
+    name: Build Sirocco and run tests
     runs-on: ubuntu-latest
     needs: greeting
     steps:
@@ -30,48 +30,48 @@ jobs:
     #- name: "Installing build dependencies"
     #  run: sudo apt update && apt install -y build-essential cmake
 
-    - name: Configuring Python
+    - name: Configuring Sirocco
       run: ./configure
-    - name: Build GH Workflow version of Python
+    - name: Build GH Workflow version of Sirocco
       run: make gh_workflow_install
 
     - uses: actions/setup-python@v3
       with:
         python-version: '3.x' # Version range
-    - name: Install Python (the language) dependencies
+    - name: Install python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install wheel
-        cd $PYTHON/examples/gh-workflow/
+        cd $SIROCCO/examples/gh-workflow/
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
 #    - name: Compile programs, again
 #      run: |
-#        cd $PYTHON/source
+#        cd $SIROCCO/source
 #        make CC=gcc INDENT=no all
 
-    - name: Checking Python compiled and can read in inputs correctly
+    - name: Checking Sirocco compiled and can read in inputs correctly
       run: |
-        cd $PYTHON/examples/gh-workflow/
-        $PYTHON/bin/Setup_Py_Dir
-        $PYTHON/bin/py -i cv_macro_benchmark
-        $PYTHON/bin/py -i cv_standard
-        $PYTHON/bin/py -i fiducial_agn
-        $PYTHON/bin/py -i 1d_sn
-        $PYTHON/bin/py -i -d sv_detailedmode
-        $PYTHON/bin/py -i agn_ss_2010_modela
-        $PYTHON/bin/py -i XRB_standard.pf
-        $PYTHON/bin/py -i ngc5548
-        $PYTHON/bin/py -i lamp_post
-        $PYTHON/bin/py -i cv_standard_import
+        cd $SIROCCO/examples/gh-workflow/
+        $SIROCCO/bin/Setup_Py_Dir
+        $SIROCCO/bin/sirocco -i cv_macro_benchmark
+        $SIROCCO/bin/sirocco -i cv_standard
+        $SIROCCO/bin/sirocco -i fiducial_agn
+        $SIROCCO/bin/sirocco -i 1d_sn
+        $SIROCCO/bin/sirocco -i -d sv_detailedmode
+        $SIROCCO/bin/sirocco -i agn_ss_2010_modela
+        $SIROCCO/bin/sirocco -i XRB_standard.pf
+        $SIROCCO/bin/sirocco -i ngc5548
+        $SIROCCO/bin/sirocco -i lamp_post
+        $SIROCCO/bin/sirocco -i cv_standard_import
 
     - name: Running unit tests
       run: |
-        cd $PYTHON/source/tests
+        cd $SIROCCO/source/tests
         make check CC=gcc
 
     - name: Running Balmer test case
       run: |
-        cd $PYTHON/examples/gh-workflow/
-        $PYTHON/bin/py -f -v 1 balmer_test
-        python $PYTHON/py_progs/balmer_decrement.py balmer_test
+        cd $SIROCCO/examples/gh-workflow/
+        $SIROCCO/bin/sirocco -f -v 1 balmer_test
+        python $SIROCCO/py_progs/balmer_decrement.py balmer_test

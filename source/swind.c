@@ -1,16 +1,16 @@
 
 /***********************************************************/
-/** @file  py_wind.c
+/** @file  swind.c
  * @author ksl
  * @date   May, 2018
  *
- * @brief  py_wind is a program which can be used to display various parameters of a wind
-as calculated by python.  This is the main routine.
+ * @brief  swind is a program which can be used to display various parameters of a wind
+as calculated by sirocco.  This is the main routine.
  *
  *
  * Arguments:
  *
- * py_wind [-h] [-s] [-p parameter_file] [root]
+ * swind [-h] [-s] [-p parameter_file] [root]
  *
  * where
  * * -h 	prints out a short help file and exits (see help routine below)
@@ -31,20 +31,20 @@ as calculated by python.  This is the main routine.
  *
  * Description:
  *
- * Py_wind simply reads and then displays portions of the wind file created by python.
+ * Py_wind simply reads and then displays portions of the wind file created by sirocco.
  * It can select various parameters from the wind and it can write them to files so that
  * the variables can be plotted.
  *
- * The normal mode of running py_wind is to run it interactively.  As you run it interactively
+ * The normal mode of running swind is to run it interactively.  As you run it interactively
  * the variables you select are displayed ont the screen.  The variables that you display
  * can also be written to files (depending on the answer to the question Make_files)
  *
- * The commands that were executed in the interactive will be stored in py_wind.pf (if you end
+ * The commands that were executed in the interactive will be stored in swind.pf (if you end
  * with a "q", and not an EOF response to the choice question)  EOF terminates the program
- * at that point before the command file is written to py_wind.pf
+ * at that point before the command file is written to swind.pf
  *
- * The py_wind.pf file is useful if you want to run the exact same set of commands on another
- * windfile. You should rename py_wind.pf to something_else.pf and run py_wind on that
+ * The swind.pf file is useful if you want to run the exact same set of commands on another
+ * windfile. You should rename swind.pf to something_else.pf and run swind on that
  * data set using the -p something_else.pf option
  *
  * The command_line switches -d and -s are intended to produce a standard set of output files sufficient
@@ -52,19 +52,19 @@ as calculated by python.  This is the main routine.
  *
  * ###Notes####
  *
- * The files that are produced  can contain either the original gridding which was used by python, in which
+ * The files that are produced  can contain either the original gridding which was used by sirocco, in which
  * case the file prefix will be "x.", or "z", in which case it will be regridded to a
  * linear array.  This option is intended so one can create a contour plot more easily.
  *
- * The structure of py_wind is intended to make it easy to add additional variables to print to the
+ * The structure of swind is intended to make it easy to add additional variables to print to the
  * scen or a file.  Basically to add a new option, one needs to update the list of possibilities,
  * add a new choice statement in one_choice, and then write the routine that grabs a new variable (or
- * calculates a value from several), and add this to either py_wind_subs or py_wind_macro_subs.
+ * calculates a value from several), and add this to either swind_subs or swind_macro_subs.
  *
  * Because this was intended as a diagnositic routine, some of the more esoteric choices may seem
  * a bit odd today.
  *
- * IMPORTANT: py_wind has not been adapted to handle multiple domains.  Use windsave2table instead.
+ * IMPORTANT: swind has not been adapted to handle multiple domains.  Use windsave2table instead.
  ***********************************************************/
 
 #include <stdio.h>
@@ -73,7 +73,7 @@ as calculated by python.  This is the main routine.
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 //char *choice_options;
 
@@ -100,28 +100,28 @@ char *choice_options = "\n\
 
 /**********************************************************/
 /**
- * @brief      py_wind is a program which can be used to display various parameters of a wind
- * 		as calculated by python.  This is the  main routine
+ * @brief      swind is a program which can be used to display various parameters of a wind
+ * 		as calculated by sirocco.  This is the  main routine
  *
  * @param [in] int  argc   The number of command line arguments
  * @param [in] char *  argv[]   The command line arguments
  * @return     Always returns 0
  *
  * @details
- * Py_wind simply reads and then displays portions of the wind file created by python.
+ * Py_wind simply reads and then displays portions of the wind file created by sirocco.
  * 	It can select various parameters from the wind and it can write them to files so that
  * 	the variables can be plotted.
  *
- * 	The normal mode of running py_wind is to run it interactively.  As you run it interactively
+ * 	The normal mode of running swind is to run it interactively.  As you run it interactively
  * 	the variables you select are displayed ont the screen.  The variables that you display
  * 	can also be written to files (depending on the answer to the question Make_files)
  *
- * 	The commands that were executed in the interactive will be stored in py_wind.pf (if you end
+ * 	The commands that were executed in the interactive will be stored in swind.pf (if you end
  * 	with a "q", and not an EOF response to the choice question)  EOF terminates the program
- * 	at that point before the command file is written to py_wind.pf
+ * 	at that point before the command file is written to swind.pf
  *
- * 	The py_wind.pf file is useful if you want to run the exact same set of commands on another
- * 	windfile. You should rename py_wind.pf to something_else.pf and run py_wind on that
+ * 	The swind.pf file is useful if you want to run the exact same set of commands on another
+ * 	windfile. You should rename swind.pf to something_else.pf and run swind on that
  * 	data set using the -p something_else.pf option
  *
  * 	The command_line switches -d and -s are intended to produce a standard set of output files sufficient
@@ -132,7 +132,7 @@ char *choice_options = "\n\
  * 	on user inputs are (now) contained in the subroutine one_choice
  *
  * ### Notes ###
- * The files that are produced  can contain either the original gridding which was used by python, in which
+ * The files that are produced  can contain either the original gridding which was used by sirocco, in which
  * case the file prefix will be "x.", or "z", in which case it will be regridded to a
  * linear array.  This option is intended so one can create a contour plot more easily.
  *
@@ -158,16 +158,16 @@ main (argc, argv)
   int interactive;
 
 
-  // py_wind uses rdpar, but only in an interactive mode. As a result
+  // swind uses rdpar, but only in an interactive mode. As a result
   // there is no associated .pf file
 
-  interactive = 1;              /* Default to the standard operating mofe for py_wind */
+  interactive = 1;              /* Default to the standard operating mofe for swind */
   strcpy (parameter_file, "NONE");
 
-  /* Next command stops Debug statements printing out in py_wind */
+  /* Next command stops Debug statements printing out in swind */
   Log_set_verbosity (3);
 
-  /* Parse the command line.  It is Important that py_wind_help
+  /* Parse the command line.  It is Important that swind_help
    * below is updated if this changes
    */
 
@@ -188,7 +188,7 @@ main (argc, argv)
     {
       if (strcmp (argv[i], "-h") == 0)
       {
-        py_wind_help ();
+        swind_help ();
       }
       else if (strcmp (argv[i], "-d") == 0)
       {
@@ -207,8 +207,8 @@ main (argc, argv)
       }
       else if (strncmp (argv[i], "-", 1) == 0)
       {
-        Error ("py_wind: unknown switch %s\n", argv[i]);
-        py_wind_help ();
+        Error ("swind: unknown switch %s\n", argv[i]);
+        swind_help ();
       }
     }
 
@@ -236,7 +236,7 @@ main (argc, argv)
 
   /* Initialize other variables here */
 
-  py_wind_project = 1;          // The default is to try to project onto a yz plane
+  swind_project = 1;          // The default is to try to project onto a yz plane
 
 /* Read in the wind file */
 
@@ -260,7 +260,7 @@ I did not change this now.  Though it could be done.  02apr ksl */
 
   if (wind_read (windsavefile) < 0)
   {
-    Error ("py_wind: Could not open %s", windsavefile);
+    Error ("swind: Could not open %s", windsavefile);
     exit (0);
   }
 
@@ -297,17 +297,17 @@ I did not change this now.  Though it could be done.  02apr ksl */
     complete_file_summary (wmain, root, ochoice);
     i = 0;
     strcpy (root, "");
-    sprintf (root, "python%02d", i);
+    sprintf (root, "sirocco%02d", i);
     strcpy (windsavefile, "");
-    sprintf (windsavefile, "python%02d.wind_save", i);
+    sprintf (windsavefile, "sirocco%02d.wind_save", i);
     while (wind_read (windsavefile) > 0)
     {
       Log ("Trying %s %s\n", windsavefile, root);
       complete_file_summary (wmain, root, ochoice);
       strcpy (root, "");
-      sprintf (root, "python%02d", i);
+      sprintf (root, "sirocco%02d", i);
       strcpy (windsavefile, "");
-      sprintf (windsavefile, "python%02d.wind_save", i);
+      sprintf (windsavefile, "sirocco%02d.wind_save", i);
       i++;
     }
     exit (0);
@@ -450,7 +450,7 @@ one_choice (choice, root, ochoice)
   case 'g':                    /*n photo */
     photo_summary (wmain, root, ochoice);
     break;
-//  case 'G':    Removed relevant data from python so option removed May 18         /* inner shell summary */
+//  case 'G':    Removed relevant data from sirocco so option removed May 18         /* inner shell summary */
 //    inner_shell_summary (wmain, root, ochoice);
 //    break;
   case 'h':                    /*n photo */
@@ -611,14 +611,14 @@ one_choice (choice, root, ochoice)
     zoom (0);
     break;
   case 'Z':                    /* Switch between raw and projected mode */
-    if (py_wind_project == 0)
+    if (swind_project == 0)
     {
-      py_wind_project = 1;
+      swind_project = 1;
       Log ("Switching to raw display, whatever the coordinate system");
     }
-    else if (py_wind_project == 1)
+    else if (swind_project == 1)
     {
-      py_wind_project = 0;
+      swind_project = 0;
       Log ("Switching to projected y z display");
     }
     break;
@@ -649,7 +649,7 @@ one_choice (choice, root, ochoice)
 
   case 'q':                    /* quit */
     /* Write out a parameterfile that gives all of the commands used in this run */
-    cpar ("py_wind.pf");
+    cpar ("swind.pf");
     exit (0);
     break;
 
@@ -674,27 +674,27 @@ one_choice (choice, root, ochoice)
  * It should be updated whenever the program changes in
  * a major way.
  *
- * It is called if py_wind is invoked with -h, or if there
+ * It is called if swind is invoked with -h, or if there
  * if it is given a switch that it does not understand.
  *
  * ### Notes ###
- * Unfortunately unlike python the program language
+ * Unfortunately unlike python 
  * c is not self documenting
  *
  **********************************************************/
 
 void
-py_wind_help ()
+swind_help ()
 {
 
   char *some_help;
 
-/* Beginning of a string to provide some help for py_wind */
+/* Beginning of a string to provide some help for swind */
   some_help = "\
 \n\
-This program reads a wind save file created by python and examine the wind structure\\
+This program reads a wind save file created by sirocco and examine the wind structure\\
 \n\
-	Usage: py_wind [-h] [-s] [-p parameter_file] [root] \n\
+	Usage: swind [-h] [-s] [-p parameter_file] [root] \n\
 \n\
 	where\n\
 		-h 	prints out a short help file and exits (see help routine below) \n\
