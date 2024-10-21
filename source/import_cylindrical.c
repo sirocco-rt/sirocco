@@ -15,7 +15,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -44,7 +44,7 @@
  * * inwind indicates whether this cell is in the wind
  *
  * We assume that all of the variables are defined as they
- * are in the python structues, that is that positions and
+ * are in the sirocco structues, that is that positions and
  * velocities are defined at the corners of cells but that
  * rho refers to the cell center.
  *

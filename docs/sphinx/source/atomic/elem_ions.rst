@@ -2,7 +2,7 @@ Elements and Ions
 #################
 
 
-The first file that must be read into **Python** is the file that defines the elements and ions.  The 
+The first file that must be read into *SIROCCO* is the file that defines the elements and ions.  The 
 
 Source:
 =======
@@ -13,7 +13,7 @@ This data comes from `Verner, Barthel & Tytler, 1994, ApJ 108, 287. <http://arti
 Translation to python:
 ======================
 
-The original data and the translation can be found in py\_verner.  A simple awkscript converts the downloaded data to Python format.
+The original data and the translation can be found in py\_verner.  A simple awkscript converts the downloaded data to SIROCCO format.
 
 
 Data Format
@@ -92,9 +92,9 @@ Note that only evident changed is the label, but in this case the number of nlte
 
 
 
-Python structure:
+SIROCCO structure:
 =================
-This data is held in Python in various fields in structures **elements** and **ions**.
+This data is held in SIROCCO in various fields in structures **elements** and **ions**.
 
 Comments:
 =========
@@ -103,6 +103,6 @@ Comments:
 
 As indicated the numbers here are maximum values, and the actual numbers of levels for particular ion will depend on the data that follows. 
 One can use the numbers here to limit the complexity of, for example, a macro-atom to see whether making a more complicated macro-atom affects
-the reusult of a calculation.  One does not need to change the "downstream" data to make this happen, **Python** will simply ignore the extra
+the reusult of a calculation.  One does not need to change the "downstream" data to make this happen, *SIROCCO* will simply ignore the extra
 data.
 

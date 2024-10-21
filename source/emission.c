@@ -14,7 +14,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /**********************************************************/
 /**
@@ -635,7 +635,7 @@ total_free (xplasma, t_e, f1, f2)
  *
  * ### Notes ###
  *
- * Within python, this routine is accessed through one_ff
+ * Within sirocco, this routine is accessed through one_ff
  *
  * Most of the computation in this routine arises from calculating
  * a the gaunt factor, so this version of the code checks to

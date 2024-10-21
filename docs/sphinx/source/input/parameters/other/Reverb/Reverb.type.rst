@@ -5,7 +5,7 @@ path of photons emitted in the simulation as they travel through the geometry,
 assuming that any delays from recombination etc. are negligible and all delays
 are due to light travel time. For each final spectrum, all contributing
 photons are output to a '.delay_dump' file that can then be processed using
-our 'tfpy' Python (no relation) library.
+our 'tfpy' SIROCCO (no relation) library.
 
 Type
   Enumerator

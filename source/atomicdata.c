@@ -15,7 +15,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 #include "log.h"
 // If routines are added cproto > atomic_proto.h should be run
@@ -85,8 +85,8 @@
  * other than Python, e.g for another routine intended to calculate the ionization state of
  * a plasma in collisional equilibrium.
  *
- * To this end, the routines populate stuctures in atomic.h, which are not part of python.h, and 
- * one should avoid calling routines like Exit(0) that are very python centric.  It's important
+ * To this end, the routines populate stuctures in atomic.h, which are not part of sirocco.h, and 
+ * one should avoid calling routines like Exit(0) that are very sirocco centric.  It's important
  * that future modifications to get_atomic_data maintain this independence.
  *
  *
@@ -544,7 +544,7 @@ structure does not have this property! */
 */
 
 /* ?? ksl This mix and match situation may be too much.  We are storing both macro level densities and so-called
-topbase level densities in some of the same arrays in python.  Leave for now, but it may be difficult to keep
+topbase level densities in some of the same arrays in sirocco.  Leave for now, but it may be difficult to keep
 the program working in both cases, and certainly mixed cases  04apr ksl  */
 
 /* 080810 -- ksl -- 62 -- I have changed the way levels are created so that one can only read one type

@@ -25,7 +25,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /* A couple of external things for use in the routines for computing gamma's below. */

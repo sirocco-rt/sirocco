@@ -3,7 +3,7 @@
 Demo: Tidal Disruption Event
 ############################
 
-One of the recent applications of Python is modelling outflows in Tidal
+One of the recent applications of SIROCCO is modelling outflows in Tidal
 Disruption Events (TDEs). We have explored how line formation in an accretion
 disc wind could explain the BAL vs. BEL dichotomy observed in the UV spectra of
 TDEs. We have also explored how reprocessing in an accretion disc wring could
@@ -21,7 +21,7 @@ Key Model Parameters
 We model a disc wind outflow using the kinematic
 `Shlosman & Vitello (1993) <https://ui.adsabs.harvard.edu/abs/1993ApJ...409..372S/abstract>`_
 (SV93) biconical disc wind model. This model has seen extensive use throughout the
-history of Python to model across all length scales of accretion, from CVs to
+history of SIROCCO to model across all length scales of accretion, from CVs to
 QSO winds. Further information about the SV93 model can be found in the
 documentation `here <../../sv.rst>`_.
 
@@ -59,7 +59,7 @@ Wind geometry parameters:
     \lambda               &=~0 \\
     f_{v}                 &=~0.1 \\
 
-For parameters controlling the radiative transfer and flow of Python, the
+For parameters controlling the radiative transfer and flow of SIROCCO, the
 parameter file for this model can be found :download:`here <tde_fiducial.pf>`.
 
 Radiation Sources
@@ -92,7 +92,7 @@ total of 48 cores. Each processor core runs at a clock frequency of 2.1 GHz, wit
 a maximum boost clock of 3.7 GHz. The model uses roughly 70 GB of the available
 DDR4 2666 MHz memory available in this system.
 
-With this configuration using :math:`10^{8}` photons and Python's "-p 2" option
+With this configuration using :math:`10^{8}` photons and SIROCCO's "-p 2" option
 for logarithmic photon number stepping, the model takes roughly 10 ionization
 cycles to converge in roughly 7.5 hours, or 360 total CPU hours. The spectral
 cycles take a significantly longer time to complete. For six inclination angles and
@@ -154,7 +154,7 @@ formation processes which scale with electron density, such as collisional
 excitation, decreasing with radius also.
 
 The outer top edge of the wind is cool, reaching temperature as low as
-:math:`T_{e} \sim 10^{3}` K. Python does not implement any dust or molecular
+:math:`T_{e} \sim 10^{3}` K. SIROCCO does not implement any dust or molecular
 physics, hence the treatment of this region of the wind is highly approximate.
 However, since the line formation we are interested in does not occur in this
 region, our neglect of this physics should not effect the emergency spectrum.

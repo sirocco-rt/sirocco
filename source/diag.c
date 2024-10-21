@@ -6,7 +6,7 @@
  *
  * @brief
  * This routine consolidates an approach to providing extra diagnostics
- * for debugging python. It also
+ * for debugging sirocco. It also
  * contains initialization routines
  * that control which diagnosics are tracked.
  *
@@ -69,7 +69,7 @@
 #include <stdarg.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/

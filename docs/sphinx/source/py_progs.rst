@@ -1,8 +1,8 @@
-Python Scripts
+SIROCCO Scripts
 ################################
 
-There are several `Python` scripts written to prepare input for
-and analyse the output of *python* (the C code).
+There are several SIROCCO scripts written to prepare input for
+and analyse the output of SIROCCO.
 
 Some of the more useful scripts/modules are documented below.
 Alternatively, you can generate documentation for all the scripts by navigating to :code:`docs/pydocs` and running :code:`write_docs.py`.

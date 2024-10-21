@@ -17,7 +17,7 @@
 #include <gsl/gsl_sf_expint.h>  //We need this gsl library to evaluate the first exponential integral
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 //OLD #include "recipes.h"
 
 /* Ratio of hnu / kT beyond which we don't bother calculating

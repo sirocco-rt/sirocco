@@ -3,7 +3,7 @@
 Importing Models
 ################
 
-Python can read 1D or 2.5D grids of density and velocity, instead of setting up
+SIROCCO can read 1D or 2.5D grids of density and velocity, instead of setting up
 the model from an analytic prescription. Caution should be exercised with this
 mode, as it is still in a development phase, and the mode requires the user to
 ensure that things like mass and angular momentum conservation are enforced.
@@ -52,7 +52,7 @@ In order to create your own model, there are a few important things to consider:
 * Ghost cells **must** be included. This means that additional rows and columns
   of cells must be included at the edges of the grid, and they must be excluded
   from the wind so that their temperatures and densities are set to zero, but
-  have a velocity that python can interpolate with.
+  have a velocity that SIROCCO can interpolate with.
 * i and j correspond to rows and columns respectively, so that the first row of
   cells at the disk plane has i = 0.
 * rho the density of the cell in cgs units
@@ -70,7 +70,7 @@ Spherical Grids
 ---------------
 
 Using a spherical coordinate system, a 1D spherically symmetric model can be
-read into Python.
+read into SIROCCO.
 
 To read in a grid of this type, the following columns are required for each cell:
 
@@ -88,7 +88,7 @@ To read in a grid of this type, the following columns are required for each cell
 Cylindrical Grids
 -----------------
 
-Using cylindrical coordinates, a 2.5D model can be read into Python.
+Using cylindrical coordinates, a 2.5D model can be read into SIROCCO.
 
 .. admonition :: Grid Coordinates
 
@@ -113,18 +113,18 @@ To read in a grid of this type, the following columns are required for each cell
 
     In principle, it is possible to read in an unstructured or non-linear
     cylindrical grid, i.e. where the cells are not regularly spaced, however,
-    Python has been designed for structured grids with regular grid spacing, and
+    SIROCCO has been designed for structured grids with regular grid spacing, and
     as such there may be undefined behaviour for unstructured grids.
 
 Polar Grids
 -----------
 
-Using polar coordinates, a 2.5D model can be read into Python.
+Using polar coordinates, a 2.5D model can be read into SIROCCO.
 
 .. admonition :: Cartesian Velocity
 
     The velocity in for the polar grid is required to be in Cartesian
-    coordinates due to conventions within the Python programming style. As such,
+    coordinates due to conventions within the SIROCCO programming style. As such,
     any polar velocity components must first be projected into their Cartesian
     equivalent.
 
@@ -151,7 +151,7 @@ Setting Wind Temperatures
 -------------------------
 
 Reading in a temperature is optional when importing a model. However, if one
-temperature value for a cell is provided, then Python assumes that this is
+temperature value for a cell is provided, then SIROCCO assumes that this is
 the electron temperature and the radiation temperature will be initialised as,
 
 .. math ::
@@ -184,7 +184,7 @@ in the wind. The following enumerator flags are used,
     W_ALL_INWIND  =  0   // this cell is in the wind
 
 Whilst it is possible to set in `inwind = 1` for a grid cell, that is that the
-cell is partially in the wind, Python will instead set these cells with
+cell is partially in the wind, SIROCCO will instead set these cells with
 `inwind = -2` and ignore these grid cells.
 
 Spherical
@@ -217,7 +217,7 @@ guard cells in the same way as the a spherical grid, as above. For these cells,
 and all cells which do not make up the wind, an inwind value of -1 or -2 should be set.
 
 In this example, the theta cells extend beyond 90°. But, as they are not inwind,
-Python is happy to include these cells. For a stellar wind in polar coordinates,
+SIROCCO is happy to include these cells. For a stellar wind in polar coordinates,
 these extra :math:`\theta` cells extending beyond 90° are required.
 
 .. figure:: ../images/import_polar_inwind.png
@@ -234,26 +234,26 @@ these extra :math:`\theta` cells extending beyond 90° are required.
     A colour plot of the inwind variable for a stellar wind imposed on a polar
     coordinate grid. Important to note is the "halo" of inwind = -1 cells
     surrounding the inwind cells. The cells with inwind = 1 will be set to
-    inwind = -2 when imported into Python and ignored.
+    inwind = -2 when imported into SIROCCO and ignored.
 
 
 Maximum and Minimum Wind Radius
 --------------------------------
 
 The maximum and minimum spherical extent of the wind is calculated automatically
-by Python, and does not take into account guard cells when it is doing this.
+by SIROCCO, and does not take into account guard cells when it is doing this.
 
-Generating example inputs for testing and familiarizing oneself with Python's import capability
+Generating example inputs for testing and familiarizing oneself with SIROCCO's import capability
 ===============================================================================================
 
-If one is trying to use the import capability of Python for the first time,
+If one is trying to use the import capability of SIROCCO for the first time,
 it will be useful to familiarize oneself with the process, and the file format
-for a particular coordinate system, by running first running Python on a model
+for a particular coordinate system, by running first running SIROCCO on a model
 that is something similar to model to be imported, but which takes advantage of
 one of the kinematic models available with the code.
 
 For example, suppose you have a hydrodynamical simulation of an AGN wind which
-is in polar coordinates and you want to use Python to calculate the spectrum.
+is in polar coordinates and you want to use SIROCCO to calculate the spectrum.
 Then you might create a model of an AGN with a similar coordinate system using,
 say, a Knigge Wood & Drew wind (and similar atomic data).
 For specificity, suppose this model has the root name "test"
@@ -270,7 +270,7 @@ This produces a large number of ascii tables, which are described elsewhere
 In the py_progs directory, you will find 3 scripts, :code:`import_1d.py`,
 :code:`import_cyl.py` and :code:`import_rtheta.py`, which will convert one of
 the output files :code:`test.0.master.txt` to an import file, :code:`test.import.txt`,
-that can be used with the import mode of Python. The 3 different routines are
+that can be used with the import mode of SIROCCO. The 3 different routines are
 for 1d spherical coordinates, and polar (r-theta) coordinates respectively.
 
 Assuming the py_progs directory is in your PATH, and given that our example is
@@ -281,21 +281,21 @@ for cylindrical coordinates, one would run:
    import_cyl.py test
 
 At that point, you can test this import file, by modifying the first .pf file to
-import mode (imported). Running Python on this file, will result in your being
+import mode (imported). Running SIROCCO on this file, will result in your being
 asked the name of the import file, and give you a "baseline" to import the
 hydrodynamical simulation to work.
 
 Note that one should not assume that spectra produced by the original run of
-Python and the run of the imported model will be identical. There are several
+SIROCCO and the run of the imported model will be identical. There are several
 reasons for this:
 
-First, in creating the original model, Python accounts for the possibility that
+First, in creating the original model, SIROCCO accounts for the possibility that
 some cells are partially in the wind. This is not possible in the imported
 models. Only cells that are complete in the wind are counted.
 
-Second, within Python, positions and velocities are assumed defined at the
+Second, within SIROCCO, positions and velocities are assumed defined at the
 corners of cells, whereas densities are assumed to be cell centered. If one
 provides a table where all of the quantities are at the same exact position
 (namely density is at the same position as x), there will be a slight
 discrepancy between the way in model as calculated internally and as represented
-within Python.
+within SIROCCO.

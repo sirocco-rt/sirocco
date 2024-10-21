@@ -718,7 +718,7 @@ string_process_from_file (question, dummy)
  * @brief      store the parsed version of an input line into 
  * 	a structure so that it can be written out to a file
  * 	, generally
- * 	the header for one of the ascii files produced by python
+ * 	the header for one of the ascii files produced by sirocco
  *
  * @param [in] char *  name   name of the parameter
  * @param [in] char *  value   string containing the value for the parameter

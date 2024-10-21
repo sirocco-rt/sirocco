@@ -17,7 +17,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /**********************************************************/
 /**
@@ -385,7 +385,7 @@ wind_update (WindPtr w)
   /* Summarize the radiative temperatures (ksl 04 mar) */
   xtemp_rad (w);
 
-/* This next block is to allow the output of data relating to the abundances of ions when python is being tested
+/* This next block is to allow the output of data relating to the abundances of ions when sirocco is being tested
  * with thin shell mode.
  */
   shell_output_wind_update_diagnostics (xsum, psum, fsum, csum, icsum, lsum, ausum, chexsum, cool_sum, lum_sum);

@@ -176,7 +176,7 @@ Log_init (filename)
  * @return     0 unless the log file cannot be reopened in which case the program terminates
  *
  * The routine opens a logfile that should have existed previously so that one 
- * can continue an early run of python 
+ * can continue an early run of sirocco 
  *
  * ###Notes###
  *

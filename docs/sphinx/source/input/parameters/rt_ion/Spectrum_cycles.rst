@@ -1,7 +1,7 @@
 Spectrum_cycles
 ===============
 
-In Python, the detailed spectra are calculate with flights of photons that have
+In SIROCCO, the detailed spectra are calculate with flights of photons that have
 the same number of photon bundles as in ionization cycles. The detailed spectra
 are calculated between a minimum and maximum wavelenth, and at specific inclination
 angles. Various other conditions can be placed on each spectrum that is accumulated.

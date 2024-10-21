@@ -2,7 +2,7 @@ Diag.partial_cells
 ================================
 
 Additional options for how to deal with cells that are partially filled by wind.
-Somewhat degenerate with the ``-include_partial_cells`` flag under :ref:`Running Python`.
+Somewhat degenerate with the ``-include_partial_cells`` flag under :ref:`Running SIROCCO`.
 
 
 Type

@@ -46,7 +46,7 @@ extern int NDIM2;                      /**< The total number of wind cells in wm
 extern int NPLASMA;                    /**< /The number of cells with non-zero volume or the size of plasma structure
                                         */
 
-/* These are tunable parameters that control various aspects of python
+/* These are tunable parameters that control various aspects of sirocco
  * and the assorted programs.  In some cases they affect the "care" with
  * which a calculation is made, and this can in principle affect the
  * speed of the program.  One day if may be desirable to change some
@@ -251,7 +251,7 @@ extern double velocity_electron[3];     // velocity of the electron when thermal
 /**
   * The structure which defines a wind model
   *
-  * In python multiple domains can be created for different
+  * In sirocco multiple domains can be created for different
   * portion of the wind.
   *
   */
@@ -334,7 +334,7 @@ typedef struct domain
 domain_dummy, *DomainPtr;       // One structure for each domain
 
 extern DomainPtr zdom;          //This is the array pointer that contains the domains
-extern int current_domain;      // This integer is used by py_wind only
+extern int current_domain;      // This integer is used by swind only
 
 
 /*******************GEOMETRY structure*********************************************/
@@ -382,7 +382,7 @@ struct geometry
      Other components should be added here.  Right now we need a wind_domain
      number because the inputs for the disk and a putativel disk atmosphere are
      interrsed.  The first step will be to put this information into alocal variale
-     in python.c. We should not have to carry this forward */
+     in sirocco.c. We should not have to carry this forward */
 
   int wind_domain_number;
   /* Ultimately the next variable should not be needed but to avoid a bad
@@ -1337,7 +1337,7 @@ p_dummy, *PhotPtr;
 #define NRES_BF NLINES
 
 extern PhotPtr photmain;               /**< A pointer to all of the photons that have been created in a subcycle. Added to ease
-                                        breaking the main routine of python into separate rooutines for inputs and
+                                        breaking the main routine of sirocco into separate rooutines for inputs and
                                         running the program */
 
 /**************************************SPECTRUM STRUCTURE ***********************/
@@ -1420,14 +1420,14 @@ spectrum_dummy, *SpecPtr;
 
 extern SpecPtr xxspec;
 
-/* Parameters used only by py_wind
- * py_wind_projecti	0 -> simply print the various parameters without
+/* Parameters used only by swind
+ * swind_projecti	0 -> simply print the various parameters without
  * 			atempting toproject onto a yz plane
  * 			1 -> project onto a yz plane.
  */
 
-extern int py_wind_min, py_wind_max, py_wind_delta, py_wind_project;
-extern double *aaa;             // A pointer to an array used by py_wind
+extern int swind_min, swind_max, swind_delta, swind_project;
+extern double *aaa;             // A pointer to an array used by swind
 
 /***************************CDF STRUCTURE*****************************/
 /* This is the structure for storing cumulative distribution functions. The CDFs are
@@ -1549,7 +1549,7 @@ enum partial_cells_enum
   * which of the various modes for running the code are exercized
   *
   * Most (though perhaps not all) of these modes are accessed
-  * via special inputs that are only read in when python
+  * via special inputs that are only read in when sirocco
   * is started up with athe -d command line option.
   *
   * All of the various variables take TRUE or FALSE, effectively
@@ -1557,7 +1557,7 @@ enum partial_cells_enum
 
 struct advanced_modes
 {
-  int iadvanced;                /**< Set to TRUE when python is invoked with -d flag.
+  int iadvanced;                /**< Set to TRUE when sirocco is invoked with -d flag.
                                  * By itself, simply causes Python ot acces the
                                  * various advanced modes commands in the .pf file
                                  */
@@ -1665,7 +1665,7 @@ struct filenames
   char lspec_wind[LINELENGTH];  /**< .spec file (extracted spectra limited to wind photons on a log scale) */
   char disk[LINELENGTH];        /**< disk diag file name */
   char tprofile[LINELENGTH];    /**< non standard tprofile fname */
-  char phot[LINELENGTH];        /**< photfile e.g. python.phot */
+  char phot[LINELENGTH];        /**< photfile e.g. sirocco.phot */
   char windrad[LINELENGTH];     /**< wind rad file */
   char extra[LINELENGTH];       /**< extra diagnositcs file opened by init_extra_diagnostics */
 };
@@ -1795,11 +1795,11 @@ struct Import
   double *wind_midx, *wind_midz;        /**<  the wind grid mid points */
 };
 
-extern struct Import *imported_model;   // MAX_DOM is defined in python.h and as such import.h has to be included after
+extern struct Import *imported_model;   // MAX_DOM is defined in sirocco.h and as such import.h has to be included after
 
 /* the functions contained in log., rdpar.c and lineio.c are
    declare separately from templates. This is because some functions
-   only use log.h and don't use python.h due to repeated definitions */
+   only use log.h and don't use sirocco.h due to repeated definitions */
 #include "log.h"
 #include "version.h"
 #include "templates.h"

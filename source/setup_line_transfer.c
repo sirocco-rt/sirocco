@@ -14,7 +14,7 @@
 
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -141,7 +141,7 @@ get_line_transfer_mode ()
   /* an adaptive mode might be added in future */
   if (geo.rt_mode == RT_MODE_MACRO)
   {
-    /* XMACRO -- these options MUST be consistent with the define statements in python.h */
+    /* XMACRO -- these options MUST be consistent with the define statements in sirocco.h */
     strcpy (answer, "mc_jumps");
     geo.matom_transition_mode = rdchoice ("Matom_transition_mode(mc_jumps,matrix)", "0,1", answer);
 
@@ -228,7 +228,7 @@ Available line transfer modes and descriptions are: \n\
   Classic mode is thermal_trapping for runs involving weight reduction and no macro-atoms\n\
   Hybrid macro-atom mode is macro_atoms_thermal_trapping\n\
 \n\
-See this web address for more information: https://github.com/agnwinds/python/wiki/Line-Transfer-and-Scattering\n\
+See this web address for more information: https://github.com/agnwinds/sirocco/wiki/Line-Transfer-and-Scattering\n\
 \n\
 \n\
 ";                              // End of string to provide one with help

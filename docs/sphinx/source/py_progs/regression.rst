@@ -1,14 +1,14 @@
 Regression
 ----------
 
-Primarily to verify that changes made to Python do not inadvertently cause unexpected changes
+Primarily to verify that changes made to SIROCCO do not inadvertently cause unexpected changes
 if models, several routines exist to run a fixed set of (relatively fast) models that are
 **nominally**  contained in Examples/regress.
 
 Developers are encouraged to use this routines, before they merge anything into one of the
-major branches of Python.
+major branches of SIROCCO.
 
-The routines involved are 
+The routines involved are
 
  * `regression.py`
  * `regression_check.py`
@@ -21,18 +21,18 @@ Setup
 =====
 
 Typically one should set up a directory, e.g Regression to run the routines, and, if for example,
-py87f, is the version of Python being used when you set up the directory, being run.
+sirocco87f, is the version of SIROCCO being used when you set up the directory, being run.
 
-Python should be compiled with mpicc before running the regression program
+SIROCCO should be compiled with mpicc before running the regression program
 
 Basic Procedure
 ===============
 
 Run::
 
-    regression.py py87f
+    regression.py sirocco87f
 
-This will create a directory py87f_231108 where 231108 is the current date.  The pf files from
+This will create a directory sirocco87f_231108 where 231108 is the current date.  The pf files from
 the regression directory as well as various ancillary files will be copied into this directory,
 and all of the models contained therein will run sequentially.
 In the absence of command line
@@ -45,9 +45,9 @@ to change occassionaly.
 
 Once changes have been made to python, one reruns the program, e.g::
 
-    regression.py py
+    regression.py sirocco
 
-This will create a directory py_2311108 (assuming it this is the same day) and repead the previous
+This will create a directory sirocco_2311108 (assuming it this is the same day) and repead the previous
 precedured.
 
 **If the program is run on the same day with the same version of python, the older models
@@ -83,7 +83,7 @@ regression_check.py to compare any two sets of runs::
 where one gives the names of the two directories to be compared.
 
 While the regression procedure described here is generally set up to run on the models that are contained in the Examples/regress directory,
-regression.py has switches that allow one to do tests on models that are in any input directory.  This can be useful, if one wishes to test 
+regression.py has switches that allow one to do tests on models that are in any input directory.  This can be useful, if one wishes to test
 different models in order to solve specific problems, or to run a set of models sequentially.
 
 API Documentation

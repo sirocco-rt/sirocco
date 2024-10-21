@@ -1,19 +1,19 @@
 Atomic Data
 ###########
 
-Any Python model is only as good as the atomic data which goes into making the model.  
-All of the atomic data that Python accepts is read in by the routine get_atomicdata,
+Any SIROCCO model is only as good as the atomic data which goes into making the model.  
+All of the atomic data that SIROCCO accepts is read in by the routine get_atomicdata,
 and all of the data is read in from a series of ascii data files and stored in structures
 that are defined in atomic.h.
 
 
 The purpose of documentation is as follows:
 
-* to explain the atomic data formats used by Python and the relationship of different sets
+* to explain the atomic data formats used by SIROCCO and the relationship of different sets
   of data to one another
 
-* to explain where the data currently used in Python and to explain how the raw data 
-  is translated in to a format the Python accepts
+* to explain where the data currently used in SIROCCO and to explain how the raw data 
+  is translated in to a format the SIROCCO accepts
 
 The routines used to translate raw data format for two-level atoms (as well as much of the raw data)
 are contained in a separate github `repository <https://github.com/agnwinds/data-gen>`_
@@ -25,7 +25,7 @@ The routines used to generate data for MacroAtoms are described in :doc:`Generat
 
 Choosing a dataset 
 -----------------------
-The "masterfile" that determines what data will be read into Python is determined by the
+The "masterfile" that determines what data will be read into SIROCCO is determined by the
 line in the parameter file, which will read something like::
 
     Atomic_data                                data/standard80.dat
@@ -33,7 +33,7 @@ line in the parameter file, which will read something like::
 where the file `data/standard80.dat` will contain names (one to a line) of files which will
 be read in sequentially.  
 
-All of the atomic data that comes as standard with Python is stored in the `xdata` directory (and its subdirectories) but users are not required to put their data
+All of the atomic data that comes as standard with SIROCCO is stored in the `xdata` directory (and its subdirectories) but users are not required to put their data
 there. Various experimental or testing dataset masterfiles are stored in the `zdata` directory. Symbolic links to these directories
 are setup by running `Setup_Py_Dir`.
 
@@ -44,7 +44,7 @@ are setup by running `Setup_Py_Dir`.
 Data hierarchy and I/O 
 -----------------------
 As mentioned above, the masterfile will contain names (one to a line) of files which will
-be read in sequentially. Every line in the atomic data files read by Python consists of a keyword that defines the type
+be read in sequentially. Every line in the atomic data files read by SIROCCO consists of a keyword that defines the type
 of data and various data values that are required for that particular data type.  Lines that
 beging with # or are empty are ignored.
 

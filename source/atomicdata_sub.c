@@ -208,7 +208,7 @@ index_lines ()
  *
  * ### Notes ###
  * Adapted from index_lines as part to topbase
- *             addition to python
+ *             addition to sirocco
  *
  **********************************************************/
 

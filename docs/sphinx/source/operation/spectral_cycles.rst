@@ -19,7 +19,7 @@ by the packet diminishes as it moves through the wind.
 Then one could simply create a spectrum from photon packets that exit the
 simulation volume at a particular incination angle (plus or minus some
 delta) to construct the spectrum.  This so-called live-or-die  option
-is implemented in Python, but only as a diagnostic option, because it is
+is implemented in SIROCCO, but only as a diagnostic option, because it is
 inefficient since most photon packets exit the system at inclination
 angles that are not of interest.
 

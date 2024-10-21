@@ -1,6 +1,6 @@
 Wind.ionization
 ===============
-The approach used by Python to calculate the ionization
+The approach used by SIROCCO to calculate the ionization
 of the wind during ionization cycles.  A number of these
 modes are historical or included for diagnostic purposes.
 

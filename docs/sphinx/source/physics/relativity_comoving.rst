@@ -1,7 +1,7 @@
 Special Relativity and Co-Moving Frames
 ---------------------------------------
 
-The current version of Python incorporates special relativity and takes co-moving frame
+The current version of SIROCCO incorporates special relativity and takes co-moving frame
 effects into account by default.  
 
 Global properties of the wind, such as a densities are defined in the observer

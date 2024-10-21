@@ -1,6 +1,6 @@
 Spectrum.live_or_die
 ====================
-Normally in creating detailed spectrum Python "extracts" photons in a certain
+Normally in creating detailed spectrum SIROCCO "extracts" photons in a certain
 direction reweighting them to account for the fact that they have been extracted
 in a certain direction.  It is possible to just count the photons that are emitted
 in a single angle range. The two methods should yield the same or very similar results

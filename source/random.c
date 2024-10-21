@@ -9,7 +9,7 @@
  *
  * These routines should be kept SEPARATE from routines that 
  * require the Python specific
- * structures in python.h so that it is possible to test 
+ * structures in sirocco.h so that it is possible to test 
  * them more easily.
  *
 ***********************************************************/
@@ -31,7 +31,7 @@
 /* A basis is defined such that if x is a 3 vector as expressed an unprimed cartesian coordinate
    frame, and if y is the same vector in some rotated frame, then
    x[i] = a[i][j] y[j]
-   Basis is defined in python.h
+   Basis is defined in sirocco.h
  */
 
 gsl_rng *rng = NULL;            // pointer to a global random number generator

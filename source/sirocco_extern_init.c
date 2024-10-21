@@ -6,7 +6,7 @@
 #include <time.h>
 #include "atomic.h"
 
-#include "python.h"
+#include "sirocco.h"
 
 
 int np_mpi_global;              ///< Global variable which holds the number of MPI processes
@@ -57,7 +57,7 @@ int NWAVE_NOW;                  ///< Either NWAVE_IONIZ or NWAVE_EXTRACT dependi
 plane_dummy plane_m2_near, plane_m2_far;
 
 DomainPtr zdom;                 ///< This is the array pointer that contains the domains
-int current_domain;             ///<  This integer is used by py_wind only
+int current_domain;             ///<  This integer is used by swind only
 
 struct geometry geo;
 
@@ -83,7 +83,7 @@ MacroPtr macromain;
 int size_Jbar_est, size_gamma_est, size_alpha_est;
 
 PhotPtr photmain;               /**< A pointer to all of the photons that have been created in a subcycle. Added to ease 
-                                   breaking the main routine of python into separate rooutines for inputs and 
+                                   breaking the main routine of sirocco into separate rooutines for inputs and 
                                    running the program */
 
 int nspectra;                   /**< After create_spectrum, the number of elements allocated for s, or
@@ -95,8 +95,8 @@ int nscat[MAXSCAT + 1], nres[MAXSCAT + 1], nstat[NSTAT];
 
 SpecPtr xxspec;
 
-int py_wind_min, py_wind_max, py_wind_delta, py_wind_project;
-double *aaa;                    ///< A pointer to an array used by py_wind
+int swind_min, swind_max, swind_delta, swind_project;
+double *aaa;                    ///< A pointer to an array used by swind
 
 struct Cdf cdf_ff;
 struct Cdf cdf_fb;
@@ -131,7 +131,7 @@ int xxxbound;
 
 struct rdpar_choices zz_spec;
 
-struct Import *imported_model;  ///<  MAX_DOM is defined in python.h and as such import.h has to be included after
+struct Import *imported_model;  ///<  MAX_DOM is defined in sirocco.h and as such import.h has to be included after
 
 
 double velocity_electron[3];    // velocity of the electron when thermal effects are included

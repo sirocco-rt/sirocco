@@ -10,7 +10,7 @@ Source
 The data comes directly from `Dere 2006, A&A, 466, 771 <https://www.aanda.org/articles/aa/pdf/2007/17/aa6728-06.pdf>`_ .  This paper gives  direct ionization and excitation-autoionization rate coefficients for many ions as a function  of temperature for Maxwellian electron distributions. 
 
 
-Translation to Python format
+Translation to SIROCCO format
 ============================
 
 
@@ -40,7 +40,7 @@ The rate coefficient R(T) is recovered from the scaled rate coefficient in the t
 
 where :math:`E_{1}` is the first exponential integral. In python we use the  gsl_sf_expint_E1 routine in gsl.
 
-Python structure
+SIROCCO structure
 ================
 
 This data is stored in the  dere_di_rate structure with members

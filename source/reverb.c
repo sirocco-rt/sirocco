@@ -14,7 +14,7 @@
 #include <errno.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 char delay_dump_file[LINELENGTH];
 int delay_dump_bank_size = 65535, delay_dump_bank_curr = 0;

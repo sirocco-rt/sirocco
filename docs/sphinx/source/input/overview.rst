@@ -1,7 +1,7 @@
 Overview
 ########
 
-Python uses a keyword-based parameter file to specify a model. Below is an example portion of a parameter file for a star system type (which must have the extension .pf). The parameters look as follows:
+SIROCCO uses a keyword-based parameter file to specify a model. Below is an example portion of a parameter file for a star system type (which must have the extension .pf). The parameters look as follows:
 
 .. code::
 
@@ -26,15 +26,15 @@ The comment generally specifies a set of valid choices or the units in which inf
 
 When a series of choices is presented, one does not need to enter the complete word, just enough to provide unique match to the choice.
 
-The user does not need to create a parameter .pf file before running Python. Invoking Python without a parameter file will cause Python to prompt the user for the necessary information to create a parameter file. The user can specfiy any name for the parameter file. The example below calls the filename 'my_new_model'
+The user does not need to create a parameter .pf file before running SIROCCO. Invoking SIROCCO without a parameter file will cause SIROCCO to prompt the user for the necessary information to create a parameter file. The user can specfiy any name for the parameter file. The example below calls the filename 'my_new_model'
 
-.. Instead, assuming one is not working from a template parameter file, one simply invokes Python.
+.. Instead, assuming one is not working from a template parameter file, one simply invokes SIROCCO.
 
 .. code:: console
 
    py my_new_model
 
-Python then queries the user for answers to a series of questions, creating in the process a pf file, my_new_model.pf,
+SIROCCO then queries the user for answers to a series of questions, creating in the process a pf file, my_new_model.pf,
 that can be edited and used in future runs.
 
 An example of a line presented to the user in interactive mode is:
@@ -47,7 +47,7 @@ There the number in the second set of parenthesis is a suggested value of the pa
 The user types in a new value and a carriage return, or, if the the suggested value seems appropriate,
 responds with a carriage return, in which case the suggested value will be used.
 
-The user can use the :code:`-i` switch when invoking Python. This indicates that Python should accumulate all of the necessary inputs, write out the parameter file, and exit, which is useful if one is not completely sure what one wants.
+The user can use the :code:`-i` switch when invoking SIROCCO. This indicates that SIROCCO should accumulate all of the necessary inputs, write out the parameter file, and exit, which is useful if one is not completely sure what one wants.
 
 .. code:: console
 
@@ -57,8 +57,8 @@ The user can use the :code:`-i` switch when invoking Python. This indicates that
 Changes in the input files as the code evolves
 ----------------------------------------------
 
-Occassionally, new input variables will be introduced into Python.  In this case, when one tries to run a parameter file 
-created with a previous version of Python in single processor mode, the program will query the user for the parameters that are missing, and then
+Occassionally, new input variables will be introduced into SIROCCO.  In this case, when one tries to run a parameter file 
+created with a previous version of SIROCCO in single processor mode, the program will query the user for the parameters that are missing, and then
 attempt to run the program as normal. 
 
 If the original name of the parameter file was :code:`test.pf`, the modified version of the parameter file will be written to  :code:`test.out.pf`, so

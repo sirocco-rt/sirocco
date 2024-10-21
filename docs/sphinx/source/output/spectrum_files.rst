@@ -1,10 +1,10 @@
 Spectra Files
 #############
 
-Python is intended to produce simulated spectra.  These spectra are all ascii tables intended to be accessible with software packages such as astropy.
+SIROCCO is intended to produce simulated spectra.  These spectra are all ascii tables intended to be accessible with software packages such as astropy.
 
 All of the ascii begin with commented headers that contain all of the parameters of associated with a run,
-along with the date of the run and the specific version of Python used to make the run.
+along with the date of the run and the specific version of SIROCCO used to make the run.
 In principle, if one still has access to any of the spectra, one can reproduce the entire run again.
 
 Broad band spectra are created from the last ionization cycle. (More accurately the broad band spectra are written out at the end of each ionization cycle, so one the program is finished one has the 
@@ -67,7 +67,7 @@ The remaining columns are:
   an ascii file that contains the final detailed spectra for the wavelengths of interest at a distance of **100 pc** on a linear frequency scale.  
   The units for the detailed spectra are determined by the input parameter Spectrum.type.
 
-  Photons bundles are generated in cycles in Python and the *.spec* file is actually written out at the end of each cycle
+  Photons bundles are generated in cycles in SIROCCO and the *.spec* file is actually written out at the end of each cycle
   as the program is running in the spectrum-generation phase of the program. So one can inspect the spectrum as it is building up.
 
   The beginning of the file (omitting the header) is as follows:

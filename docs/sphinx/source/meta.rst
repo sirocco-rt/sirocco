@@ -1,7 +1,7 @@
 Meta-documentation
 ##################
 
-How to document Python
+How to document SIROCCO
 ======================
 
 This documentation is written in **ReStructured Text**, and parsed by **Sphinx**.
@@ -12,7 +12,7 @@ Installing the documentation tools
 ----------------------------------
 
 This guide is produced using **Sphinx**.
-**Sphinx** is written in **python** and available from the **pip** package manager.
+**Sphinx** is written in SIROCCO and available from the **pip** package manager.
 We require the **Python 3** version of **Sphinx**. Install it, and the other modules required, as:
 
 .. code :: bash
@@ -91,7 +91,7 @@ When referring to a library or program name, render it in **bold** as:
 
 .. code :: rst
 
-    Though this program is called **Python**, it is written in **C**, using the **GSL** library.
+    Though this program is called *SIROCCO*, it is written in **C**, using the **GSL** library.
 
 Content of interest to developers but not users should be broken out into a callout as:
 
@@ -149,7 +149,7 @@ A definition list consists of titles followed by a definition block indented by 
 The headings, in the order we expect, are:
 
 Name
-  The parameter name, as used by Python input files.
+  The parameter name, as used by SIROCCO input files.
 
 Description
   A description of the parameter and its function.
@@ -286,7 +286,7 @@ Documenting Python Scripts
 
 The :doc:`py_progs` page is intended to document various python scripts contained within the py_progs folder. The aim is to do this using Sphinx's `autodoc extension <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_, invoked by adding ``sphinx.ext.autodoc`` to extensions list in the conf.py file. py_progs is also added to the path using ``sys.path.insert(0, '../../py_progs/')``.
 
-The above link contains full documentation of the commands. A module in py_progs can be documented by adding the following text to the rst file, where module.py is the name of the module you wish to document. 
+The above link contains full documentation of the commands. A module in py_progs can be documented by adding the following text to the rst file, where module.py is the name of the module you wish to document.
 
 .. code :: rst
 

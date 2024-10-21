@@ -14,7 +14,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 //OLD #include "recipes.h"
 
 
@@ -579,7 +579,7 @@ p_escape_from_tau (tau)
 {
   double escape;
 
-  /* TAU_MIN is defined in python.h */
+  /* TAU_MIN is defined in sirocco.h */
 
   if (tau < TAU_MIN)
     escape = 1.;
@@ -615,7 +615,7 @@ p_escape_from_tau (tau)
  * the energy of the photon bundle.
  *
  * ### Notes ###
- * It is called by trans_phot in python
+ * It is called by trans_phot in sirocco
  *
  **********************************************************/
 

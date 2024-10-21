@@ -16,8 +16,8 @@
 #include <unistd.h>
 
 #include "atomic.h"
-#include "python.h"
-#include "py_optd.h"
+#include "sirocco.h"
+#include "sirocco_optd.h"
 
 struct CommandlineArguments
 {

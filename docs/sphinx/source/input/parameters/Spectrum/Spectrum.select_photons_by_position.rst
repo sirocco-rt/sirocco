@@ -13,7 +13,7 @@ between photons that read the observer from the near or far side of
 the disk.
 
 *Note: This option is only available in extract mode. If one attempts to select
-photons by position in live or die mode. The Python will warn the user and exit.*
+photons by position in live or die mode. The SIROCCO will warn the user and exit.*
 
 Type
   Boolean (yes/no)

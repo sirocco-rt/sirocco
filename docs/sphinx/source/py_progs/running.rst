@@ -1,4 +1,4 @@
-Running Python
+Running SIROCCO
 --------------
 
 .. autosummary::
@@ -8,7 +8,7 @@ Running Python
     pf_grid
     run_many
 
-Several scripts have been developed to run **Python** and **Cloudy** simulations for comparison.
+Several scripts have been developed to run *SIROCCO* and **Cloudy** simulations for comparison.
 
 .. autosummary::
     :toctree: running

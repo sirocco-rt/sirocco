@@ -20,7 +20,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 const double MAXDIFF = VCHECK / VLIGHT;
 
@@ -514,7 +514,7 @@ select_continuum_scattering_process (kap_cont, kap_es, kap_ff, xplasma)
  * @details
  *
  * The routine calculates the bf opacity in the CMF.  It populates the external
- * array kappa_bf (in python.h), which stores kappa for each bf process.
+ * array kappa_bf (in sirocco.h), which stores kappa for each bf process.
  *
  * ### Notes ###
  * The routine allows for clumping, reducing kappa_bf by the filling

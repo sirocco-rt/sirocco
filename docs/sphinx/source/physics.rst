@@ -1,7 +1,7 @@
 Physics & Radiative Transfer
 ------------------------------
 
-Various physical concepts are incorporated into Python.  
+Various physical concepts are incorporated into SIROCCO.  
 Some of these are descibed below:
 
 .. toctree::

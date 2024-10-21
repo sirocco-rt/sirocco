@@ -1,7 +1,7 @@
 KWD biconical wind prescription
 ############################################################
 
-`Knigge, Woods & Drew (1995) <https://ui.adsabs.harvard.edu/abs/1995MNRAS.273..225K/abstract>`_ developed a parameterization for a bi-conical flow, which in slightly modified form is built into Python.  
+`Knigge, Woods & Drew (1995) <https://ui.adsabs.harvard.edu/abs/1995MNRAS.273..225K/abstract>`_ developed a parameterization for a bi-conical flow, which in slightly modified form is built into SIROCCO.  
 In this parameterization, the wind is envisioned to have 
 poloidal streamlines that all point to a position a distance d below the disk, as is
 shown below:
@@ -12,7 +12,7 @@ shown below:
 
 As described by KWD95, streamlines emerge throughout the entire disk, with the innermost 
 streamline just grazing the surface of the central object and the outermost streamline
-emerging from the outer radius of the disk.  In the current version of Python, while this
+emerging from the outer radius of the disk.  In the current version of SIROCCO, while this
 is the default choice, the wind region can be restricted to streamlines that arise from 
 between :math:`r_{min}` and :math:`r_{rmax}` as depicted by the above diagram.  For fixed values of  :math:`r_{min}` and 
 :math:`r_{rmax}`, the wind will tend to be more collimated the larger the value of d.

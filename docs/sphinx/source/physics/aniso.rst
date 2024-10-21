@@ -1,7 +1,7 @@
 Anisotropic Scattering
 --------------------------
 
-Python has a number of radiative transfer modes, controlled via the :doc:`/input/parameters/rt_ion/Line_transfer` keyword. Included in this mode is the treatment of line anisotropy; whether re-emission of a line photon is isotropic or not. When the scattering is isotropic, a new direction is simply chosen by choosing a random direction in the co-moving frame of the plasma. 
+SIROCCO has a number of radiative transfer modes, controlled via the :doc:`/input/parameters/rt_ion/Line_transfer` keyword. Included in this mode is the treatment of line anisotropy; whether re-emission of a line photon is isotropic or not. When the scattering is isotropic, a new direction is simply chosen by choosing a random direction in the co-moving frame of the plasma. 
 
 If anisotropic scattering is on, via one of the thermal trapping modes, the new direction is chosen according to a rejection method. The aim is to account for the fact the photon undergoes many interactions in the resonant zone due to the thermal width of the line, and finds it easier to escape along the direction in which the optical depth is lowest (where the velocity gradient is highest). Specifically, the code undergoes the following steps:
 

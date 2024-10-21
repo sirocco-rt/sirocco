@@ -15,9 +15,9 @@
 
 #include "../assert.h"
 
-/* we want to use the same photon and plane structures as defined in python.h */
+/* we want to use the same photon and plane structures as defined in sirocco.h */
 #include "../../atomic.h"
-#include "../../python.h"
+#include "../../sirocco.h"
 
 double
 test_ds_one_photon (struct photon *ptest, int force_positive_z)

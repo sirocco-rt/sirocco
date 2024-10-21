@@ -11,7 +11,7 @@ The file gfall.dat was used, though a few extra lines known to have been missing
 
 
 
-There are two main sources of data currently used in Python.
+There are two main sources of data currently used in SIROCCO.
 
 * Kurucz
 * Verner
@@ -22,11 +22,11 @@ We have also used a line list from Verner in the past
 
 
   
-Translation to Python format
+Translation to SIROCCO format
 ============================
-There are several steps to creating the data used in Python from that in gfall.dat, that are carried out by py_read_kurucz and py_link. The first routine reads the gfall.dat file and creates two output files, a file containing the lines and the associated such as the effective oscillatory strength and a file which contains information about the ion levels.  py_read_kurucz chooses only a portion of the Kurucz lines, namely those associated with ions with ionization potentials in a certain range and lines with gf factors exceeding a certain value. The second program py_link attempts to create a model ion with links between the levels and the ions.  Both of these routines are driven by .pf files, similar to what are used in python.  Examples of the .pf files are in the directory py_kurucz
+There are several steps to creating the data used in SIROCCO from that in gfall.dat, that are carried out by py_read_kurucz and py_link. The first routine reads the gfall.dat file and creates two output files, a file containing the lines and the associated such as the effective oscillatory strength and a file which contains information about the ion levels.  py_read_kurucz chooses only a portion of the Kurucz lines, namely those associated with ions with ionization potentials in a certain range and lines with gf factors exceeding a certain value. The second program py_link attempts to create a model ion with links between the levels and the ions.  Both of these routines are driven by .pf files, similar to what are used in python.  Examples of the .pf files are in the directory py_kurucz
 
-In practice we have not used these data for any Python publications. At some point early in the AGN project, NSH increased the number of lines, and generated lines\_linked\_ver\_2.dat and levels\_ver\_2.dat. I think this was because there was a small bug which meant the oscillator strength cut that was stated was not that which was applied.
+In practice we have not used these data for any SIROCCO publications. At some point early in the AGN project, NSH increased the number of lines, and generated lines\_linked\_ver\_2.dat and levels\_ver\_2.dat. I think this was because there was a small bug which meant the oscillator strength cut that was stated was not that which was applied.
 
 Data format
 ===========
@@ -68,13 +68,13 @@ one needs to index everything self-consistentl
 
 
 
-Python structure
+SIROCCO structure
 ================
 
 Line data is stored in the data structure **lines**
 
 Comments
 ========
-The version of gfall.dat that is used in Python is out of date, though whether this affects any of the lines actually used in python is unclear.  The website listed above has a link to newer versions of gfall.dat.
+The version of gfall.dat that is used in SIROCCO is out of date, though whether this affects any of the lines actually used in python is unclear.  The website listed above has a link to newer versions of gfall.dat.
 
 

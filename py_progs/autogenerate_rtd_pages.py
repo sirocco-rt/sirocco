@@ -228,11 +228,11 @@ def autogenerate_rtd_pages(output_folder):
     """
     Write the RTD files to disk and add them to git, then run sphinx-build to generate the docs.
     """
-    # html_folder = os.path.join(os.environ["PYTHON"], "docs", "html")
-    docs_folder = os.path.join(os.environ["PYTHON"], "docs")
+    # html_folder = os.path.join(os.environ["SIROCCO"], "docs", "html")
+    docs_folder = os.path.join(os.environ["SIROCCO"], "docs")
     dox_all = {}
 
-    par_folder=  os.path.join(os.environ["PYTHON"], "docs", "parameters")
+    par_folder=  os.path.join(os.environ["SIROCCO"], "docs", "parameters")
     print('Par folder',par_folder)
 
     dox_all = read_yaml(
@@ -296,8 +296,8 @@ def steer(argv):
     This is just a steering routine to enable better control of the program
     '''
 
-    outdir= os.path.join(os.environ["PYTHON"], "docs", "rst", "parameters")
-    xdir= os.path.join(os.environ["PYTHON"], "docs","sphinx")
+    outdir= os.path.join(os.environ["SIROCCO"], "docs", "rst", "parameters")
+    xdir= os.path.join(os.environ["SIROCCO"], "docs","sphinx")
 
     i=1
     while i< len(argv):

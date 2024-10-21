@@ -1,31 +1,31 @@
 Unit Test Framework
 ###################
 
-Unit tests are an excellent way to ensure that any code you write is robust and correct. To manage unit testing, Python
+Unit tests are an excellent way to ensure that any code you write is robust and correct. To manage unit testing, SIROCCO
 uses the `CUnit <https://gitlab.com/cunity/cunit>`_ test framework. Unit tests are run by using :code:`make check` in
-either the root directory of Python, or in the source/test directory.
+either the root directory of SIROCCO, or in the source/test directory.
 
 Installing CUnit
 ================
 
-Python has been tested to work with CUnit (and CUnity) versions newer than 2.1-3. A recent version of CUnit is provided
-in the :code:`$PYTHON/software` directory and can be installed as a static library by using the Makefile in Python's
+SIROCCO has been tested to work with CUnit (and CUnity) versions newer than 2.1-3. A recent version of CUnit is provided
+in the :code:`$SIROCCO/software` directory and can be installed as a static library by using the Makefile in SIROCCO's
 root directory. To build CUnit from source, you will need `CMake <https://cmake.org/>`_ installed, which is a modern
 build system for C and C++ projects.
 
-CUnit will be installed (as a static library) at the same time as GSL and Python during the first-time install, e.g.,
+CUnit will be installed (as a static library) at the same time as GSL and SIROCCO during the first-time install, e.g.,
 
 .. code:: bash
 
-    $ [$PYTHON] ./configure
-    $ [$PYTHON] make install
+    $ [$SIROCCO] ./configure
+    $ [$SIROCCO] make install
 
-It is also possible to install only CUnit, using the same Makefile, if Python and GSL are already installed on your
+It is also possible to install only CUnit, using the same Makefile, if SIROCCO and GSL are already installed on your
 system,
 
 .. code:: bash
 
-    $ [$PYTHON] make cunit
+    $ [$SIROCCO] make cunit
 
 If compilation of CUnit fails, it's more than likely that you could install a dynamic version of an older version of the
 library from your system's package manager, e.g.
@@ -43,15 +43,15 @@ Running Tests
 
 To run the tests, navigate into one of three directories,
 
-- :code:`$PYTHON`
-- :code:`$PYTHON/source`
-- :code:`$PYTHON/tests`
+- :code:`$SIROCCO`
+- :code:`$SIROCCO/source`
+- :code:`$SIROCCO/tests`
 
 Then run the command :code:`make check` which will compile and run the unit tests,
 
 .. code:: bash
 
-    $ [$PYTHON/source] make check
+    $ [$SIROCCO/source] make check
 
     CUnit - A unit testing framework for C - Version 3.2.7-cunity
      http://cunit.sourceforge.net/
@@ -103,10 +103,10 @@ using an assert which compares two floating point arrays to within a tolerance.
 
 It should be noted that this assertion is not part of the standard CUnit assertions. It is possible to make a new
 assertion by writing a macro (or function) which implements the base :code:`CU_assertImplementation` assert
-implementation. If you need to create your own assertion, these should be kept in :code:`$PYTHON/source/tests/assert.h`.
+implementation. If you need to create your own assertion, these should be kept in :code:`$SIROCCO/source/tests/assert.h`.
 
 .. code:: c
-    :caption: :code:`$PYTHON/source/tests/tests/test_matrix.c`
+    :caption: :code:`$SIROCCO/source/tests/tests/test_matrix.c`
 
     #include "assert.h"
 
@@ -185,7 +185,7 @@ test. :code:`CU_add_test` returns a pointer to the test in the suite. If for wha
 returned instead.
 
 .. code:: c
-    :caption: :code:`$PYTHON/source/tests/tests/test_matrix.c`
+    :caption: :code:`$SIROCCO/source/tests/tests/test_matrix.c`
 
     void create_matrix_test_suite(void) {
         /* Create a test suite - if suite can't be made, return error code */
@@ -209,7 +209,7 @@ unit tests, is shown in the code exert below. These functions should not take an
 indicate if everything went OK or not.
 
 .. code:: c
-    :caption: :code:`$PYTHON/source/tests/tests/test_matrix.c`
+    :caption: :code:`$SIROCCO/source/tests/tests/test_matrix.c`
 
 
 
@@ -231,7 +231,7 @@ function in the main function of the unit test framework, ensuring we do so afte
 initialized; this is done by the function  :code:`CU_initialize_registry`.
 
 .. code:: c
-    :caption: :code:`$PYTHON/source/tests/unit_test_main.c`
+    :caption: :code:`$SIROCCO/source/tests/unit_test_main.c`
 
     int main(int argc, char **argv) {
         /* Create the test registry */
@@ -269,18 +269,18 @@ Directory and structure
 -----------------------
 
 Unit tests should be kept in logically named files within the unit test directory located at
-:code:`$PYTHON/source/tests/tests`. Any file in this directory should be added to the unit test Makefile, which is
-located at :code:`$PYTHON/source/tests/Makefile`, specifically to the :code:`TEST_SOURCES` variable which is a list of
+:code:`$SIROCCO/source/tests/tests`. Any file in this directory should be added to the unit test Makefile, which is
+located at :code:`$SIROCCO/source/tests/Makefile`, specifically to the :code:`TEST_SOURCES` variable which is a list of
 all the source code required specifically for the unit test framework; this includes both the unit tests themselves and
 any other code required to, e.g., build and control the test registry. Prototypes for wrapper functions for creating
-test suites (which are called in the main function) should be placed in :code:`$PYTHON/source/tests/tests/tests.h`
-header file. Any data required for the tests should be kept in the data directory, :code:`$PYTHON/source/tests/data`, in
+test suites (which are called in the main function) should be placed in :code:`$SIROCCO/source/tests/tests/tests.h`
+header file. Any data required for the tests should be kept in the data directory, :code:`$SIROCCO/source/tests/data`, in
 appropriately organised directories as shown below.
 
 .. code:: bash
-    :caption: :code:`$PYTHON/source/tests`
+    :caption: :code:`$SIROCCO/source/tests`
 
-    $ tree $PYTHON/source/tests
+    $ tree $SIROCCO/source/tests
 
     ├── Makefile
     ├── assert.h
@@ -298,7 +298,7 @@ appropriately organised directories as shown below.
     │   └── tests.h
     └── unit_test_main.c
 
-We also need to include the Python source code we are testing in the :code:`PYTHON_SOURCES` variable of the Makefile. If
-there are any CUDA files required, these should be added to the :code:`CUDA_SOURCES` variable. In theory, we should only
-need to include the files containing the code we are testing. But in practise, we choose to instead include all of
-Python's source files (as it makes our lives easier) which increases compile time and the size of the final binary.
+We also need to include the SIROCCO source code we are testing in the :code:`SIROCCO_SOURCES` variable of the Makefile.
+If there are any CUDA files required, these should be added to the :code:`CUDA_SOURCES` variable. In theory, we should
+only need to include the files containing the code we are testing. But in practise, we choose to instead include all of
+SIROCCO's source files (as it makes our lives easier) which increases compile time and the size of the final binary.

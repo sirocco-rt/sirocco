@@ -1,10 +1,10 @@
 /***********************************************************/
-/** @file  py_wind_ion.c
+/** @file  swind_ion.c
  * @author ksl
  * @date   May, 2018
  *
- * @brief   This file contains various subroutines of py_wind.  
- * It is not part of python!
+ * @brief   This file contains various subroutines of swind.  
+ * It is not part of sirocco!
  *
  * 
  ***********************************************************/
@@ -15,7 +15,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/

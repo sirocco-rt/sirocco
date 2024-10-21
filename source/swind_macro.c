@@ -1,11 +1,11 @@
 
 /***********************************************************/
-/** @file  py_wind_macro.c
+/** @file  swind_macro.c
  * @author ksl
  * @date   January, 2018
  *
- * @brief  py_wind is a program which can be used to display various parameters of a wind
- * as calculated by python.  This file contains subroutines intended to
+ * @brief  swind is a program which can be used to display various parameters of a wind
+ * as calculated by sirocco.  This file contains subroutines intended to
  * display information about macro atoms
  * used
  *
@@ -17,7 +17,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/

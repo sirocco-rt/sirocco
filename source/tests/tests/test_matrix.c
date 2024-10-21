@@ -14,7 +14,7 @@
 #include <CUnit/CUnit.h>
 
 #include "../../atomic.h"
-#include "../../python.h"
+#include "../../sirocco.h"
 #include "../assert.h"
 
 #define BUFFER_LENGTH 512
@@ -167,10 +167,10 @@ get_solve_matrix_test_data (const char *a_path, const char *b_path, const char *
 static int
 call_invert_matrix (const char *test_name)
 {
-  const char *python_path = getenv ((const char *) "PYTHON");
-  if (python_path == NULL)
+  const char *sirocco_path = getenv ((const char *) "SIROCCO");
+  if (sirocco_path == NULL)
   {
-    CU_FAIL_FATAL ("$PYTHON has not been set");
+    CU_FAIL_FATAL ("$SIROCCO has not been set");
   }
 
   double *matrix;
@@ -178,8 +178,8 @@ call_invert_matrix (const char *test_name)
   char matrix_filepath[BUFFER_LENGTH];
   char inverse_filepath[BUFFER_LENGTH];
 
-  sprintf (matrix_filepath, "%s/source/tests/test_data/matrix/%s/matrix.txt", python_path, test_name);
-  sprintf (inverse_filepath, "%s/source/tests/test_data/matrix/%s/inverse.txt", python_path, test_name);
+  sprintf (matrix_filepath, "%s/source/tests/test_data/matrix/%s/matrix.txt", sirocco_path, test_name);
+  sprintf (inverse_filepath, "%s/source/tests/test_data/matrix/%s/inverse.txt", sirocco_path, test_name);
 
   int matrix_size;
   const int get_err = get_invert_matrix_test_data (matrix_filepath, inverse_filepath, &matrix, &inverse, &matrix_size);
@@ -221,10 +221,10 @@ call_invert_matrix (const char *test_name)
 int
 call_solve_matrix (const char *test_name)
 {
-  const char *python_path = getenv ((const char *) "PYTHON");
-  if (python_path == NULL)
+  const char *sirocco_path = getenv ((const char *) "SIROCCO");
+  if (sirocco_path == NULL)
   {
-    CU_FAIL_FATAL ("$PYTHON has not been set");
+    CU_FAIL_FATAL ("$SIROCCO has not been set");
   }
 
   double *matrix_a;
@@ -234,9 +234,9 @@ call_solve_matrix (const char *test_name)
   char vector_b_filepath[BUFFER_LENGTH];
   char vector_x_filepath[BUFFER_LENGTH];
 
-  sprintf (matrix_a_filepath, "%s/source/tests/test_data/matrix/%s/A.txt", python_path, test_name);
-  sprintf (vector_b_filepath, "%s/source/tests/test_data/matrix/%s/b.txt", python_path, test_name);
-  sprintf (vector_x_filepath, "%s/source/tests/test_data/matrix/%s/x.txt", python_path, test_name);
+  sprintf (matrix_a_filepath, "%s/source/tests/test_data/matrix/%s/A.txt", sirocco_path, test_name);
+  sprintf (vector_b_filepath, "%s/source/tests/test_data/matrix/%s/b.txt", sirocco_path, test_name);
+  sprintf (vector_x_filepath, "%s/source/tests/test_data/matrix/%s/x.txt", sirocco_path, test_name);
 
   int vector_size;
   const int get_err =

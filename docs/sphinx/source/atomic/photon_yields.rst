@@ -8,7 +8,7 @@ Source
 ======
 This data comes from `Kaastra and Mewe 1993, A&A, 97, 443 <http://articles.adsabs.harvard.edu/full/1993A%26AS...97..443K>`_ . The data is downloaded from the vizier site linked and put into a file called "fluorescent\_yield.data"
 
-Translation to Python format
+Translation to SIROCCO format
 ============================
 
 The translation takes place using the python script "kaastra_2_py.py". All identical to electron yield, but input file is "fluorescent_yield.data" and output is "kaastra_fluorescent_yield.data"
@@ -34,7 +34,7 @@ This is the data format of the electron yield data
 The data is linked to the correct inner shell photoionization cross section (and hence rate) via z, state, n shell and l subshell. The photon energy field is thew energy of the fluorescent photon in eV, and yield is the number of said photons emitted per ionization multiplied by :math:`10^4`.
 
 
-Python structure
+SIROCCO structure
 ================
 
 The data is stored in python in the inner_fluor_yield structure which contains

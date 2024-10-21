@@ -1,6 +1,6 @@
 
 /***********************************************************/
-/** @file  python.c
+/** @file  sirocco.c
  * @author ksl
  * @date   January, 2018
  *
@@ -18,7 +18,7 @@
 #include <gsl/gsl_errno.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 #include "models.h"
 
 #define NSPEC	20
@@ -135,7 +135,7 @@ main (argc, argv)
   verbosity = 3;
   Log_set_verbosity (verbosity);
 
-  /* initialise the advanced mode flags (all set to 0) which is a structure in python.h */
+  /* initialise the advanced mode flags (all set to 0) which is a structure in sirocco.h */
 
   init_advanced_modes ();
 
@@ -184,7 +184,7 @@ main (argc, argv)
 
 
   if (restart_stat == TRUE)     /* We want to continue a run. This is generally used
-                                   because we had to limit to runtime of python or we decided
+                                   because we had to limit to runtime of sirocco or we decided
                                    we needed more ionization or spectral cycles */
   {
     Log ("Continuing a previous run of %s \n", files.root);
@@ -193,7 +193,7 @@ main (argc, argv)
 
     if (wind_read (files.old_windsave) < 0)
     {
-      Error ("python: Unable to open %s\n", files.old_windsave);
+      Error ("sirocco: Unable to open %s\n", files.old_windsave);
       Exit (0);
     }
     w = wmain;
@@ -259,7 +259,7 @@ main (argc, argv)
 
       if (wind_read (files.old_windsave) < 0)
       {
-        Error ("python: Unable to open %s\n", files.old_windsave);
+        Error ("sirocco: Unable to open %s\n", files.old_windsave);
         Exit (0);
       }
 
@@ -303,7 +303,7 @@ main (argc, argv)
 
       if (!geo.star_radiation && !geo.disk_radiation && !geo.bl_radiation && !geo.wind_radiation && !geo.agn_radiation)
       {
-        Error ("python: No radiation sources so nothing to do but quit!\n");
+        Error ("sirocco: No radiation sources so nothing to do but quit!\n");
         Exit (0);
       }
 
@@ -337,7 +337,7 @@ main (argc, argv)
   zdom = realloc (zdom, sizeof (domain_dummy) * geo.ndomain);
   if (zdom == NULL)
   {
-    Error ("python: unable to re-allocate space for domain structure from %d domains to %d domains\n", MAX_DOM, geo.ndomain);
+    Error ("sirocco: unable to re-allocate space for domain structure from %d domains to %d domains\n", MAX_DOM, geo.ndomain);
     Exit (EXIT_FAILURE);
   }
 
@@ -489,7 +489,7 @@ main (argc, argv)
 
       if (geo.agn_spectype >= 0 && comp[geo.agn_spectype].nmods != 1)
       {
-        Error ("python: When using models with an AGN, there should be exactly 1 model, we have %i for spectrum cycles\n",
+        Error ("sirocco: When using models with an AGN, there should be exactly 1 model, we have %i for spectrum cycles\n",
                comp[geo.agn_ion_spectype].nmods);
         exit (0);
       }
@@ -545,7 +545,7 @@ main (argc, argv)
     cpar (files.new_pf);
   }
 
-  /* At this point, all inputs have been obtained at this point and the inputs have been copied to "mod.pf" or "python.pf"
+  /* At this point, all inputs have been obtained at this point and the inputs have been copied to "mod.pf" or "sirocco.pf"
    * If we have used, the -i flag, we quit; otherwise we continue on to run the model */
   if (modes.quit_after_inputs)
   {

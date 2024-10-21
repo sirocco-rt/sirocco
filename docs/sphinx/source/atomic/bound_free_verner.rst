@@ -15,12 +15,12 @@ There are three sources for this data
 - `Kaastra \& Mewe 1993 <http://adsabs.harvard.edu/abs/1993A\%26AS...97..443K>`_ :Electron and photon yield data
 
 
-Translation to Python format
+Translation to SIROCCO format
 ============================
 
 **Tabulation Process**
 
-The raw VFKY data comes in a series of fit parameters. We decided, circa Python 78, to tabulate this data instead. Partly, I think I because the on the fly method was time consuming (yes, computing all the pow() commands to commute the cross sections on the fly took a huge amount of time) and we decided that tabulating pre program was better than doing it in the program, so that everything was of the same format.
+The raw VFKY data comes in a series of fit parameters. We decided, circa SIROCCO 78, to tabulate this data instead. Partly, I think I because the on the fly method was time consuming (yes, computing all the pow() commands to commute the cross sections on the fly took a huge amount of time) and we decided that tabulating pre program was better than doing it in the program, so that everything was of the same format.
 
 The script which does this is progs/tabulate\_xs/photo\_xs.py -- it creates a file like photo\_vfky\_tabulated.data.
 
@@ -35,7 +35,7 @@ It then writes out the inner shell cross sections into "vfky_innershell_tab.data
 Data format
 ===========
 
-Explain the ascii format of the file which is read into Python
+Explain the ascii format of the file which is read into SIROCCO
 
 **VFKY_outershell_tab.data**
 
@@ -61,13 +61,13 @@ This data is linked to the relevant ion via z and state, islp and level are not 
 
 This data is linked to the relevant ion via z and state. the n_shell and l_subshell numbers are used to cross reference to the electron yield records. As above, the last record shows how many points are in the fit, and the data pairs making up the fit follow with the keyword InnerVY.
 
-Python structure
+SIROCCO structure
 ================
 
-Where the data is stored internally in Python
+Where the data is stored internally in SIROCCO
 
 
 Comments
 ========
 
-The manner in which this data is read into Python is a bit labyrinthine at the moment. The intention is to use a combination of VFKY and VY for all ground states, an
+The manner in which this data is read into SIROCCO is a bit labyrinthine at the moment. The intention is to use a combination of VFKY and VY for all ground states, an

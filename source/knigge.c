@@ -28,7 +28,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /// This is a variable required to do the integration of local mdot in KWD
@@ -315,7 +315,7 @@ At this point we have calculated the velocity in the xz plane, which
 is identical to the statement that we have calculated it in cylindrical coordinates.
 We now project back to xyz coordinates if necessary.
 
-In practice, the current version of python currently should never need to carry out
+In practice, the current version of sirocco currently should never need to carry out
 this projection.  However, it is needed, if we were to move to full 3d calculation and for certain
 test programs.
 

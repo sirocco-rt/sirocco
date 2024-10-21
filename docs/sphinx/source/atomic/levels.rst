@@ -2,7 +2,7 @@ Levels
 ######
 
 
-Once the element and ion data has been read into \textsc{Python}, the next step is to read in the level information.
+Once the element and ion data has been read into \textsc{SIROCCO}, the next step is to read in the level information.
 
 Source:
 =======
@@ -93,9 +93,9 @@ Since they quote J, one converts to g = 2J+1
 
 The ionization potential is not used, as it is redundant with the excitation energy which is, and the last column giving the configuration is also for information only.
 
-Python structure:
+SIROCCO structure:
 =================
-This data is held in Python in various fields in structure **config**.
+This data is held in SIROCCO in various fields in structure **config**.
 
 Comments:
 =========

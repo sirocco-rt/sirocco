@@ -1,7 +1,7 @@
 Coordinate grids
 ----------------
 
-Python supports 3 main coordinate gridding schemes, as well as one that is
+SIROCCO supports 3 main coordinate gridding schemes, as well as one that is
 tailored to handle vertically extended disks. These schemes are
 
 * 1-d spherical
@@ -10,12 +10,12 @@ tailored to handle vertically extended disks. These schemes are
 
 These options are controlled by the :doc:`/input/parameters/wind/Wind/Wind.coord_system` keyword. For vertically extended disks, a modified version of the a cylindrical schme is provided where the cells viewed along the x,z plane are parallelograms, so that the grid follows the disk surface.
 
-Although Python incorporates several models, such as the SV model for disk winds, that are continuous, the velocities and other proporites are placed on a grid, as part of the setup that goes on at the beginining of program execution.
+Although SIROCCO incorporates several models, such as the SV model for disk winds, that are continuous, the velocities and other proporites are placed on a grid, as part of the setup that goes on at the beginining of program execution.
 
 It is up to the user to choose an appropriate coordinate system and the number of grid points 
 to include in any particular run of the program.
 
-As implemented within Python, the cells are created with a logarithmic spacing, that is the cells are larger the further they are from the central source (or disk plane).  The one exception to this is that for polar coordinates, the angular separation of cells is fixed.  For imported models, on
+As implemented within SIROCCO, the cells are created with a logarithmic spacing, that is the cells are larger the further they are from the central source (or disk plane).  The one exception to this is that for polar coordinates, the angular separation of cells is fixed.  For imported models, on
 the other hand, the user sets the exact coordinate gridding.
 
 Obviously, the larger the coordinate grid, 100 x 100, say, compared to 30 x 30, the better the 
@@ -34,7 +34,7 @@ Partial cells
 As note above, parameterized models often have region of space that are in the wind and regions whch are not.  If one overlays, a coordinate grid 
 on such a model, there will be cells that cross edges of the wind.  These partial cells present particular problems.
 
-In Python, velocities are interpolated on the corners of wind cells, but densities are are calculated based on 
+In SIROCCO, velocities are interpolated on the corners of wind cells, but densities are are calculated based on 
 the average radiation field in a cell, and hence 
 ion densities are actually cell centered. As photons pass through a cell, they encounter resonances and the actuall opacities are 
 based on an interpolated value of the densities. This presents no particular problem in regions inside the wind, but it is an issue for partial cells.

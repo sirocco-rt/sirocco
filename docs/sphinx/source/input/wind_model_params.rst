@@ -1,7 +1,7 @@
 Wind Model Parameters
 ######################
 
-Python allows for various types of wind models, which are defined by the following parameters. This page focuses on the actual parameters in the file, but further description of the wind models and instructions on how to import models can be found under :doc:`Wind Models <../wind_models>`.
+SIROCCO allows for various types of wind models, which are defined by the following parameters. This page focuses on the actual parameters in the file, but further description of the wind models and instructions on how to import models can be found under :doc:`Wind Models <../wind_models>`.
 
 .. code::
 
@@ -16,7 +16,7 @@ Python allows for various types of wind models, which are defined by the followi
 for example a fast flow near the poles of a system, and a slow for near the disk.
 If the number of components exceeds 1, then the remaining questions relating to the wind will be posed multiple times.
 
-:ref:`Wind.type`: The wind models incorporated into Python currently are:
+:ref:`Wind.type`: The wind models incorporated into SIROCCO currently are:
 
 :ref:`SV`
   The Shlosman and Vitello parameterization of a bi-conical flow.
@@ -40,7 +40,7 @@ If the number of components exceeds 1, then the remaining questions relating to 
   A model of a thin shell useful for diagnostic studies.
 
 :ref:`Imported <Importing models>`
-  A general purpose mode for importing a wind from an ascii file (see also :doc:`Python Script documentation <../wind_models/importing_models>`).
+  A general purpose mode for importing a wind from an ascii file (see also :doc:`SIROCCO Script documentation <../wind_models/importing_models>`).
 
 
 :ref:`Wind.coord_system` is the coordinate system in which the wind is defined.

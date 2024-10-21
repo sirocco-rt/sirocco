@@ -12,7 +12,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /* External variables for use in matom */
 
@@ -25,7 +25,7 @@ int matom_cycle = -1;
 
 /**********************************************************/
 /**
- * @brief The core of the implementation of Macro Atoms in python
+ * @brief The core of the implementation of Macro Atoms in sirocco
  *
  * @param [in,out]  PhotPtr p   the packet at the point of activation and deactivation
  * @param [in,out]  int nres    the process which activates and deactivates the Macro Atom

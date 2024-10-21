@@ -24,7 +24,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 #include "fitsio.h"
 
 
@@ -583,7 +583,7 @@ xparse_command_line (argc, argv)
       {
         if (sscanf (argv[i + 1], "%s", dummy) != 1)
         {
-          printf ("python: Expected out_root after -out_root switch\n");
+          printf ("sirocco: Expected out_root after -out_root switch\n");
           exit (0);
         }
 
@@ -596,7 +596,7 @@ xparse_command_line (argc, argv)
       {
         if (sscanf (argv[i + 1], "%s", dummy) != 1)
         {
-          printf ("python: Expected a model file containing density, velocity and temperature after -model_file switch\n");
+          printf ("sirocco: Expected a model file containing density, velocity and temperature after -model_file switch\n");
           exit (0);
         }
         get_root (model_file, dummy);
@@ -625,7 +625,7 @@ xparse_command_line (argc, argv)
       }
       else if (strncmp (argv[i], "-", 1) == 0)
       {
-        printf ("python: Unknown switch %s\n", argv[i]);
+        printf ("sirocco: Unknown switch %s\n", argv[i]);
         exit (0);
       }
     }

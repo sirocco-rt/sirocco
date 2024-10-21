@@ -17,7 +17,7 @@
 #include "../assert.h"
 #include "../unit_test.h"
 #include "../../atomic.h"
-#include "../../python.h"
+#include "../../sirocco.h"
 
 /** *******************************************************************************************************************
  *
@@ -61,12 +61,12 @@ suite_init (void)
   char windsave_filepath[LINELENGTH];
 
   /* Check that the wind_save was generated in an earlier test */
-  const char *python_loc = get_python_env_variable ();
-  if (python_loc == NULL)
+  const char *sirocco_loc = get_sirocco_env_variable ();
+  if (sirocco_loc == NULL)
   {
     return EXIT_FAILURE;
   }
-  snprintf (windsave_filepath, LINELENGTH, "%s/source/tests/test_data/define_wind/restart_cv.wind_save", python_loc);
+  snprintf (windsave_filepath, LINELENGTH, "%s/source/tests/test_data/define_wind/restart_cv.wind_save", sirocco_loc);
   if (access (windsave_filepath, F_OK) == -1)
   {
     fprintf (stderr, "Failed to open %s for test\n", windsave_filepath);
@@ -90,12 +90,12 @@ suite_teardown (void)
   char windsave_filepath[LINELENGTH];
 
   /* Delete the test file */
-  const char *python_loc = get_python_env_variable ();
-  if (python_loc == NULL)
+  const char *sirocco_loc = get_sirocco_env_variable ();
+  if (sirocco_loc == NULL)
   {
     return EXIT_FAILURE;
   }
-  snprintf (windsave_filepath, LINELENGTH, "%s/source/tests/test_data/define_wind/restart_cv.wind_save", python_loc);
+  snprintf (windsave_filepath, LINELENGTH, "%s/source/tests/test_data/define_wind/restart_cv.wind_save", sirocco_loc);
   int err = remove (windsave_filepath);
   if (err != 0)
   {

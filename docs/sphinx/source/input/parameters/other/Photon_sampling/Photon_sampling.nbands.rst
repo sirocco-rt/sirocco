@@ -1,6 +1,6 @@
 Photon_sampling.nbands
 ======================
-Python uses stratified samplign to generate photons during the ionization phase.  This
+SIROCCO uses stratified samplign to generate photons during the ionization phase.  This
 parameter allows the user to define the number of bands for stratified sampling, if s/he
 wants to customize the bands used for the generation of photons
 

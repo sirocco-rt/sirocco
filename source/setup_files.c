@@ -14,7 +14,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 
 /**********************************************************/
@@ -37,7 +37,7 @@
  *
  * ### Notes ###
  *
- * @bug This routine was refactored out of python.c in an attempt
+ * @bug This routine was refactored out of sirocco.c in an attempt
  * to make that routine simpler, but it is not obvious that 
  * what done here actually makes sense. For example, although
  * the routine checks if the windsave file exists, and sets
@@ -97,7 +97,7 @@ init_log_and_windsave (restart_stat)
  *
  * @details
  * 
- * This names of the files python uses are stored in he filenames
+ * This names of the files sirocco uses are stored in he filenames
  * structure.  This routine uses the root of the .pf file to
  * create names for all of the files that Python will write and
  * stores them in the files structure
@@ -146,7 +146,7 @@ setup_created_files ()
 
 
   /* Now create the names of all the files which will be written.  Note that some files
-     have the same root as the input file, while others have a generic name of python.
+     have the same root as the input file, while others have a generic name of sirocco.
      This is intended so that files which you really want to keep have unique names, while
      those which are for short-term diagnostics are overwritten.   */
 
@@ -164,13 +164,13 @@ setup_created_files ()
   strcat (files.new_pf, ".out.pf");
 
 
-  strcpy (files.windrad, "python");
+  strcpy (files.windrad, "sirocco");
   strcpy (files.windsave, files.root);
   strcpy (files.specsave, files.root);
 
-  /* save python.phot and disk.diag files under diag_root folder */
+  /* save sirocco.phot and disk.diag files under diag_root folder */
   strcpy (files.phot, files.diagfolder);
-  strcat (files.phot, "python");
+  strcat (files.phot, "sirocco");
 
   sprintf (files.disk, "%.100s/%.100s", files.diagfolder, files.root);
 

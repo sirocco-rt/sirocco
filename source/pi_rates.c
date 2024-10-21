@@ -15,7 +15,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 struct topbase_phot *xtop;      //Topbase description of a photoionization x-section - this is the only type we use - tabulated.
 

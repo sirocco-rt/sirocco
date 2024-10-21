@@ -1,6 +1,6 @@
 Plotting
 ----------
-Several scripts have been developed to plot **Python** output files.
+Several scripts have been developed to plot *SIROCCO* output files.
 
 
 .. toctree::

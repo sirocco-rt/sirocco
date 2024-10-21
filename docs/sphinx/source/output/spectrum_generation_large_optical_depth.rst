@@ -53,7 +53,7 @@ Removing Photons due to Too Many Scatters
 =========================================
 
 As well as edge effects, flux can be lost due to photons being removed from the
-photon sample due to scattering too many times. In Python, when a photon has undergone
+photon sample due to scattering too many times. In SIROCCO, when a photon has undergone
 `MAXSCAT = 500` scatters, a photon is assumed to have become stuck in the wind
 and hence it is terminated and no longer tracked.
 

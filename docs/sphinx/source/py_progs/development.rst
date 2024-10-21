@@ -1,7 +1,7 @@
 Developer Tools
 ---------------
 
-Several scripts have been written to assist in developing and documenting **Python**.
+Several scripts have been written to assist in developing and documenting *SIROCCO*.
 
 
 Documentation

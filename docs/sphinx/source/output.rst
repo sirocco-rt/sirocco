@@ -1,7 +1,7 @@
 Outputs & Evaluation
 #####################
 
-Python produces a large number of files in both binary and ascii format. Tools exist to examine the binary files.
+SIROCCO produces a large number of files in both binary and ascii format. Tools exist to examine the binary files.
 
 
 .. toctree::

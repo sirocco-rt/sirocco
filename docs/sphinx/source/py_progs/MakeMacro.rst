@@ -8,9 +8,9 @@ To facillitate generation of data for MacroAtoms several routines exist, includi
 * MacroCombine.py
 
 These routines use data contained in a (local) Chianti repository and from TopBase to construct atomic data files that can be used to generate the atomic data
-needed for MacroAtoms.  Chiani is the primary source of data, but unfortunately for Python, it does not include photionization x-sections, and so these are obtained from TopBase.
+needed for MacroAtoms.  Chiani is the primary source of data, but unfortunately for SIROCCO, it does not include photionization x-sections, and so these are obtained from TopBase.
 
-**It should be emphacised at the outset that these routines, while they generate that can be read and used within in Python, they do not guaranteed that the Macro atom models are physically sensible.  In particular, it is easy to generate models that are overly complex or ones that do not include all of the sublevels of a particular ion**
+**It should be emphacised at the outset that these routines, while they generate that can be read and used within in SIROCCO, they do not guaranteed that the Macro atom models are physically sensible.  In particular, it is easy to generate models that are overly complex or ones that do not include all of the sublevels of a particular ion**
 
 
 Mechanics
@@ -34,7 +34,7 @@ If for example, one wishes to make C a macro atom, one needs to run MakeMacro as
  MakeMacro.py c_5 20
  MakeMacro.py c_6 20  True
 
-These commands create all of the files needed to make carbon a macro atom.  The number 20 implies that one wants to create 20 levels for each of the ions, and need not be the same for each of the ions.  This number should be larger than the number of levels one wants to ulitmately use with Python, and can be smaller. The extra command line option True for c_6 imples causes a bare C ion to be created for C
+These commands create all of the files needed to make carbon a macro atom.  The number 20 implies that one wants to create 20 levels for each of the ions, and need not be the same for each of the ions.  This number should be larger than the number of levels one wants to ulitmately use with SIROCCO, and can be smaller. The extra command line option True for c_6 imples causes a bare C ion to be created for C
 
 The files that will be created include:
 

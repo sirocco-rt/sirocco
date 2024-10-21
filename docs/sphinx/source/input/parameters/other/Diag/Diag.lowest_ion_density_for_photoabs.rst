@@ -1,6 +1,6 @@
 Diag.lowest_ion_density_for_photoabs
 ====================================
-For efficiency reasons, Python does not try to calculate photoabsorption
+For efficiency reasons, SIROCCO does not try to calculate photoabsorption
 for an ion with an extremly low density.  This advance parameter changes
 this density limit
 

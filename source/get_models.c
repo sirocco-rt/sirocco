@@ -48,7 +48,7 @@
 #include	<strings.h>
 #include	<string.h>
 #include 	"atomic.h"
-#include	"python.h"      //This needs to come before modlel.h so that what is in models.h is used
+#include	"sirocco.h"      //This needs to come before modlel.h so that what is in models.h is used
 #include    "models.h"
 #define    	BIG 1e32
 
@@ -299,7 +299,7 @@ get_models (modellist, npars, spectype)
 
 
   /* The next 3 lines set a normalization that is used by kslfit.  They are mostly
-   * not relevant to python, where comp[ncomp[.min[0] refers to a normalization for
+   * not relevant to sirocco, where comp[ncomp[.min[0] refers to a normalization for
    * a model.  I've kept this initialization for now */
   comp[ncomps].min[0] = 0;
   comp[ncomps].max[0] = 1000;

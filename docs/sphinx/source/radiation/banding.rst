@@ -36,7 +36,7 @@ be generated as most of the luminosity is generated at lower frequencies.
 It is possible to get around this problem by generating an increasingly large
 number of photons. But, this is computationally expensive and inefficient.
 
-In order to cope with cases this, Python implements *importance sampling* which
+In order to cope with cases this, SIROCCO implements *importance sampling* which
 effectively increases the number of photons which are sampled from specific 
 frequency bands considered important. Photons are now generated with the weight,
 
@@ -61,7 +61,7 @@ preferred sampling method.
 Available Sampling Schemes
 ==========================
 
-Python currently implements seven pre-defined frequency bands and and two
+SIROCCO currently implements seven pre-defined frequency bands and and two
 flexible *run time* banding schemes. The parameter used to define the photon
 sampling scheme is,
 
@@ -120,7 +120,7 @@ where the sum of the fractions for each band must be equal to or less than one.
 .. admonition :: Maximum Number of Bands
 
     Currently, a maximum of 20 frequency bands can be defined. If a user 
-    attemps to specify more than than 20 bands, Python will create an error
+    attemps to specify more than than 20 bands, SIROCCO will create an error
     message and fallback to using 20 bands.
 
 cloudy_test
@@ -147,7 +147,7 @@ many orders of magnitude.
 .. admonition :: Maximum Number of Bands
 
     Currently, a maximum of 20 frequency bands can be defined. If a user 
-    attemps to specify more than than 20 bands, Python will create an error
+    attemps to specify more than than 20 bands, SIROCCO will create an error
     message and fallback to using 20 bands.
 
 .. admonition :: Minimum Fraction

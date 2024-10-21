@@ -19,12 +19,12 @@ These values of :math:`\Upsilon` simply replace :math:`\Omega`.
 
 In the asbsence of data in this format, the Van Regemorter approximation is utilized.
 
-Translation to Python format
+Translation to SIROCCO format
 ============================
 
 It is necessary to link each line in our line list with the relevant electron collision strength. This is achieved using the python script "coll_stren_lookup.py" which first reads in the  "lines_linked_ver_2.py" line list, then attempts to work out which lines are which by comparing the energy and the oscillator strength of the line. If these match to within a factor of 10% then the code logs this as a possible match. If better matches come along, then the code adopts those instead.
 
-Each matched line get a line in the data file which is basically all of the line data for the matched line. This is to give Python the best chance of linking it up with the line internally.
+Each matched line get a line in the data file which is basically all of the line data for the matched line. This is to give SIROCCO the best chance of linking it up with the line internally.
 
 Data format
 ===========
@@ -66,10 +66,10 @@ and
 
 So, to get :math:`\Upsilon` for a given T, one converts T to x via the correct equation, then linearly interpolate between values of :math:`y(x)`, then convert back to :math:`\Upsilon`.
 
-Python structure
+SIROCCO structure
 ================
 
-The data is stored in Python in the Coll\_stren structure which has memebers
+The data is stored in SIROCCO in the Coll\_stren structure which has memebers
 
 
 - int n - internal index
@@ -105,7 +105,7 @@ There are addtional transition types in the Chianti database
 - 6 - Proton transitions
 
 
-The latter are not currently used in **Python**
+The latter are not currently used in *SIROCCO*
 
 Discussion of how Chianti handles transitions can be found in 
 `The CHIANTI upsilon files (ups and scups) <http://www.chiantidatabase.org/tech_reports/13_scups/chianti_report_13.pdf>`_

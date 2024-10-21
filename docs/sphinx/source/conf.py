@@ -58,7 +58,7 @@ sys.path.insert(0, os.path.abspath('../../../py_progs/py4py'))
 # -- Whether or not to include ToDo notes ---------------------------------
 todo_include_todos = True
 # -- GitHub repo for issues -----------------------------------------------
-issues_github_path = "agnwinds/python"
+issues_github_path = "sirocco-rt/sirocco"
 # -- Suppress warnings about autosectionlabel duplicates ------------------
 suppress_warnings = [
     'autosectionlabel.*',
@@ -77,7 +77,7 @@ templates_path = ['_templates']
 master_doc = 'index'
 
 # General information about the project.
-project = 'python'
+project = "SIROCCO"
 
 copyright = '2018-2024, Knox Long, Christian Knigge, Stuart Sim, Nick Higginbottom, James Matthews, Sam Mangham, Edward Parkinson, Nicolas Scepi, Austen Wallis, Amin Mosallanezhad'
 author = 'Knox Long, Christian Knigge, Stuart Sim, Nick Higginbottom, James Matthews, Sam Mangham, Edward Parkinson, Nicolas Scepi, Austen Wallis, Amin Mosallanezhad'
@@ -170,7 +170,7 @@ html_sidebars = {
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'pythondoc'
+htmlhelp_basename = "siroccodoc"
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -196,21 +196,14 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (
-        master_doc, 'python.tex', 'python Documentation',
-        author,
-        'manual'
-     ),
+    (master_doc, "sirocco.tex", "SIROCCO Documentation", author, "manual"),
 ]
 
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'python', 'python Documentation',
-     [author], 1)
-]
+man_pages = [(master_doc, "SIROCCO", "SIROCCO Documentation", [author], 1)]
 
 # -- Options for Texinfo output -------------------------------------------
 
@@ -218,7 +211,13 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'python', 'python Documentation',
-     author, 'python', 'One line description of project.',
-     'Miscellaneous'),
+    (
+        master_doc,
+        "SIROCCO",
+        "SIROCCO Documentation",
+        author,
+        "SIROCCO",
+        "One line description of project.",
+        "Miscellaneous",
+    ),
 ]

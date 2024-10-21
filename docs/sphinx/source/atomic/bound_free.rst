@@ -5,7 +5,7 @@ Bound Free (Overview)
 Source
 ======
 
-Photonization data in Python is gennerally obtained from two sources
+Photonization data in SIROCCO is gennerally obtained from two sources
 
 
 - The `Opacity project <http://cdsweb.u-strasbg.fr/topbase/topbase.html>`_. See also `Cunto et at 1993, A&A, 275, L5 <http://articles.adsabs.harvard.edu/full/1993A%26A...275L...5C>`_

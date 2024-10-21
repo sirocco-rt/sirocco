@@ -16,7 +16,7 @@
 #include <math.h>
 
 #include "atomic.h"
-#include "python.h"
+#include "sirocco.h"
 
 /* external variables set up so zbrent can solve for various variables  */
 

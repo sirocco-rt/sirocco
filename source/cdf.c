@@ -10,7 +10,7 @@
  *
  * CDFs can be generated either from a function using cdf_gen_from_func or from an array using
  * cdf gen_from_array.  The function or the array that is input are used as the proability densities
- * for the cdfs.  The cdfs are stored in a Cdf structure (See python.h)
+ * for the cdfs.  The cdfs are stored in a Cdf structure (See sirocco.h)
  *
  * The procedure is either
  * to call cdf_gen_from_func if you have a function whose probability distribution you
@@ -37,7 +37,7 @@
  * maintained in the cdfs for different generation methods.
  *
  * These routines should be kept SEPARATE from routines that require the Python specific
- * structures in python.h 
+ * structures in sirocco.h 
  *
  ***********************************************************/
 
@@ -53,7 +53,7 @@
 #include "math_struc.h"
 #include "math_proto.h"
 #include "log.h"
-//#include "python.h"
+//#include "sirocco.h"
 //#include "models.h"
 
 /// This is the initial value of PDFSTEPS
@@ -173,7 +173,7 @@ cdf_gen_from_func (cdf, func, xmin, xmax, njumps, jump)
   while (n < 3)
   {
     delta = gen_array_from_func (func, xmin, xmax, pdfsteps);
-    if (delta < 0.1 / FUNC_CDF) //FUNC_CDF is set in python.h - it is the number of steps we want in the final CDF
+    if (delta < 0.1 / FUNC_CDF) //FUNC_CDF is set in sirocco.h - it is the number of steps we want in the final CDF
       break;
     pdfsteps *= 10;
     n = n + 1;
@@ -919,7 +919,7 @@ int cdf_write_init = 0;
  *
  * This routine should really be parallelized so that it only
  * writes to a file from thread 0, but cdf.c has
- * been written so it can be removed from python as a whole, and
+ * been written so it can be removed from sirocco as a whole, and
  * tested separately
  *
  * ### Notes ###
