@@ -42,6 +42,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <gsl/gsl_errno.h>
+
 
 #include "atomic.h"
 #include "sirocco.h"
@@ -143,7 +145,7 @@ main (argc, argv)
 
   struct photon ptest;          //We need a test photon structure in order to compute t
 
-  FILE *fptr_hc, *fptr_drive, *fptr_ion, *fptr_spec, *fptr_pcon, *fptr_debug, *fptr_flux, *fptr_flux_theta, *fptr_flux_phi, *fptr_flux_r, *fopen ();  /*This is the file to communicate with zeus */
+  FILE *fptr_hc, *fptr_drive, *fptr_ion, *fptr_spec, *fptr_pcon, *fptr_debug, *fptr_flux, *fptr_flux_theta, *fptr_flux_phi, *fptr_flux_r, *fopen ();    /*This is the file to communicate with zeus */
   domain = geo.hydro_domain_number;
 
   /* Initialize  MPI, which is needed because some of the routines are MPI enabled */
@@ -166,7 +168,8 @@ main (argc, argv)
 
   /* MPI intialiazation is complete */
 
-
+  /* Disable GSL error handling, so we can handle errors ourselves */
+  gsl_set_error_handler_off ();
 
   strcpy (parameter_file, "NONE");
 
@@ -181,9 +184,13 @@ main (argc, argv)
   strcat (windsavefile, ".wind_save");
   strcat (outputfile, ".txt");
 
-
-/* Read in the wind file */
-
+  /* Allocate memory required for domain, and read in the wind file */
+  zdom = calloc (MAX_DOM, sizeof (domain_dummy));
+  if (zdom == NULL)
+  {
+    Error ("Failed to allocate memory for domain\n");
+    return (EXIT_FAILURE);
+  }
   if (wind_read (windsavefile) < 0)
   {
     Error ("swind: Could not open %s", windsavefile);
@@ -269,7 +276,7 @@ main (argc, argv)
   }
   else if (zdom[domain].coord_type == RTHETA)
   {
-    fprintf (fptr_drive, "i j rcen thetacen vol rho ne F_vis_x F_vis_y F_vis_z F_vis_mod F_UV_theta F_UV_phi F_UV_r F_UV_mod F_Xray_x F_Xray_y F_Xray_z F_Xray_mod es_f_x es_f_y es_f_z es_f_mod bf_f_x bf_f_y bf_f_z bf_f_mod\n");   //directional flux by band
+    fprintf (fptr_drive, "i j rcen thetacen vol rho ne F_vis_x F_vis_y F_vis_z F_vis_mod F_UV_theta F_UV_phi F_UV_r F_UV_mod F_Xray_x F_Xray_y F_Xray_z F_Xray_mod es_f_x es_f_y es_f_z es_f_mod bf_f_x bf_f_y bf_f_z bf_f_mod\n");     //directional flux by band
     fprintf (fptr_flux, "i j rcen thetacen F_vis_x F_vis_y F_vis_z F_vis_mod F_UV_x F_UV_y F_UV_z F_UV_mod F_Xray_x F_Xray_y F_Xray_z F_Xray_mod\n");   //directional flux by band
   }
 
@@ -305,9 +312,18 @@ main (argc, argv)
       nplasma = wmain[nwind].nplasma;
       wind_n_to_ij (domain, plasmamain[nplasma].nwind, &i, &j);
 
-      fprintf (fptr_flux_theta, "%3d %3d      %3d %10.3e %10.3e ", i, j, wmain[nwind].inwind, wmain[nwind].xcen[0], wmain[nwind].xcen[2]);  //output geometric things
-      fprintf (fptr_flux_phi, "%3d %3d      %3d %10.3e %10.3e ", i, j, wmain[nwind].inwind, wmain[nwind].xcen[0], wmain[nwind].xcen[2]);  //output geometric things
-      fprintf (fptr_flux_r, "%3d %3d      %3d %10.3e %10.3e ", i, j, wmain[nwind].inwind, wmain[nwind].xcen[0], wmain[nwind].xcen[2]);  //output geometric things
+      if (zdom[domain].coord_type == SPHERICAL || zdom[domain].coord_type == RTHETA)
+      {
+        fprintf (fptr_flux_theta, "%3d %3d      %3d %10.8e %10.8e ", i, j, wmain[nwind].inwind, wmain[nwind].rcen, wmain[nwind].thetacen / RADIAN);     //output geometric things
+        fprintf (fptr_flux_phi, "%3d %3d      %3d %10.8e %10.8e ", i, j, wmain[nwind].inwind, wmain[nwind].rcen, wmain[nwind].thetacen / RADIAN);       //output geometric things
+        fprintf (fptr_flux_r, "%3d %3d      %3d %10.8e %10.8e ", i, j, wmain[nwind].inwind, wmain[nwind].rcen, wmain[nwind].thetacen / RADIAN); //output geometric things
+      }
+      else if (zdom[domain].coord_type == CYLIND)
+      {
+        fprintf (fptr_flux_theta, "%3d %3d      %3d %10.3e %10.3e ", i, j, wmain[nwind].inwind, wmain[nwind].xcen[0], wmain[nwind].xcen[2]);    //output geometric things
+        fprintf (fptr_flux_phi, "%3d %3d      %3d %10.3e %10.3e ", i, j, wmain[nwind].inwind, wmain[nwind].xcen[0], wmain[nwind].xcen[2]);      //output geometric things
+        fprintf (fptr_flux_r, "%3d %3d      %3d %10.3e %10.3e ", i, j, wmain[nwind].inwind, wmain[nwind].xcen[0], wmain[nwind].xcen[2]);        //output geometric things
+      }
       for (ii = 0; ii < NFLUX_ANGLES; ii++)
       {
         fprintf (fptr_flux_theta, "%10.3e ", plasmamain[nplasma].F_UV_ang_theta_persist[ii]);

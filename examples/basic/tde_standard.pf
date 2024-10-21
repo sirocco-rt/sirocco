@@ -1,16 +1,16 @@
 System_type(star,cv,bh,agn,previous)                  agn
 
 ### Parameters for the Central Object
-Central_object.mass(msol)                  3e7
-Central_object.radius(cm)                  2.65e13
+Central_object.mass(msol)                  3e6
+Central_object.radius(cm)                  2.65e12
 
 ### Parameters for the Disk (if there is one)
-Disk.type(none,flat,vertically.extended)                 flat
+Disk.type(none,flat,vertically.extended,rmin>central.obj.rad)                 flat
 Disk.radiation(yes,no)                          yes
-Disk.rad_type_to_make_wind(bb,models)                   bb
+Disk.rad_type_to_make_wind(bb,models,mod_bb)                   bb
 Disk.temperature.profile(standard,readin)             standard
-Disk.mdot(msol/yr)                         0.01
-Disk.radmax(cm)                            1e15
+Disk.mdot(msol/yr)                         9.98e-03
+Disk.radmax(cm)                            1.00885e+14
 
 ### Parameters for Boundary Layer or the compact object in an X-ray Binary or AGN
 Central_object.radiation(yes,no)                   no
@@ -24,47 +24,48 @@ Wind.dim.in.z_or_theta.direction           100
 
 ### Parameters associated with photon number, cycles,ionization and radiative transfer options
 Photons_per_cycle                          5e7
-Ionization_cycles                          15
+Ionization_cycles                          25
 Spectrum_cycles                            5
 Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,fixed,matrix_bb,matrix_pow,matrix_est)           matrix_pow
 Line_transfer(pure_abs,pure_scat,sing_scat,escape_prob,thermal_trapping,macro_atoms_escape_prob,macro_atoms_thermal_trapping) macro_atoms_thermal_trapping
-Atomic_data                                data/h20_hetop_standard80.dat
+Matom_transition_mode(mc_jumps,matrix)               matrix
 Surface.reflection.or.absorption(reflect,absorb,thermalized.rerad)              reflect
 Wind_heating.extra_processes(none,adiabatic,nonthermal,both)            adiabatic
+Atomic_data                                data/h20_hetop_standard80.dat
 
 ### Parameters for Domain 0
-Wind.mdot(msol/yr)                         0.01
+Wind.mdot(msol/yr)                         9.98e-03
 SV.diskmin(units_of_rstar)                 1
-SV.diskmax(units_of_rstar)                 30
+SV.diskmax(units_of_rstar)                 3.80699e+01
 SV.thetamin(deg)                           20
 SV.thetamax(deg)                           65
-SV.mdot_r_exponent                         0
-SV.v_infinity(in_units_of_vescape          1
-SV.acceleration_length(cm)                 5e16
-SV.acceleration_exponent                   1.5
+SV.mdot_r_exponent                         2.0
+SV.v_infinity(in_units_of_vescape          0.3
+SV.acceleration_length(cm)                 8.856670e+14
+SV.acceleration_exponent                   4.000000
 SV.gamma(streamline_skew;1=usually)        1.0
 SV.v_zero_mode(fixed,sound_speed)          sound_speed
 SV.v_zero(multiple_of_sound_speed)         1
 Wind.radmax(cm)                            5e17
-Wind.t.init                                40000
+Wind.t.init                                35000
 Wind.filling_factor(1=smooth,<1=clumped)   0.1
 
 ### Parameters defining the spectra seen by observers
 
-Disk.rad_type_in_final_spectrum(bb,models,uniform)                   bb
+Disk.rad_type_in_final_spectrum(bb,models,uniform,mono,mod_bb)                   bb
 
-### The minimum and maximum wavelengths in the final spectra
-Spectrum.nwave                    10000
-Spectrum.wavemin(Angstroms)                100
-Spectrum.wavemax(Angstroms)                10000
+### The minimum and maximum wavelengths in the final spectra and the number of wavelength bins
+Spectrum.nwave                                10000
+Spectrum.wavemin(Angstroms)                    100
+Spectrum.wavemax(Angstroms)                  10000
 
 ### The observers and their location relative to the system
-Spectrum.no_observers                      5
-Spectrum.angle(0=pole)                     10
-Spectrum.angle(0=pole)                     35
-Spectrum.angle(0=pole)                     60
-Spectrum.angle(0=pole)                     75
-Spectrum.angle(0=pole)                     85
+Spectrum.no_observers                            5
+Spectrum.angle(0=pole)                           10
+Spectrum.angle(0=pole)                          35
+Spectrum.angle(0=pole)                          60
+Spectrum.angle(0=pole)                          75
+Spectrum.angle(0=pole)                          85
 Spectrum.live_or_die(live.or.die,extract)              extract
 Spectrum.type(flambda,fnu,basic)              flambda
 
@@ -72,4 +73,4 @@ Spectrum.type(flambda,fnu,basic)              flambda
 Reverb.type(none,photon,wind,matom)                 none
 
 ### Other parameters
-Photon_sampling.approach(T_star,cv,yso,AGN,tde_bb,min_max_freq,user_bands,cloudy_test,wide,logarithmic)                    agn
+Photon_sampling.approach(T_star,cv,yso,AGN,tde_bb,min_max_freq,user_bands,cloudy_test,wide,logarithmic)               tde_bb
