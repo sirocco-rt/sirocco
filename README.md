@@ -11,7 +11,7 @@ Documentation is hosted on [ReadTheDocs](http://sirocco-rt.readthedocs.io/en/dev
 
 [![C/C++ CI](https://github.com/sirocco-rt/sirocco/actions/workflows/build.yml/badge.svg)](https://github.com/sirocco-rt/sirocco/actions/workflows/build.yml)
 
-[![Documentation Status](https://readthedocs.org/projects/agnwinds/badge/?version=latest)](https://agnwinds.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/sirocco-rt/badge/?version=latest)](https://sirocco-rt.readthedocs.io/en/latest/?badge=latest)
 
 ## Installation
 
