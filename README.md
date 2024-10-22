@@ -1,4 +1,8 @@
-# SIROCCO
+<img src="https://github.com/user-attachments/assets/1f4b0865-251d-407f-821a-021f7a0beac8" alt="drawing" style="width:400px;"/>
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13969075.svg)](https://doi.org/10.5281/zenodo.13969075)
+[![C/C++ CI](https://github.com/sirocco-rt/sirocco/actions/workflows/build.yml/badge.svg)](https://github.com/sirocco-rt/sirocco/actions/workflows/build.yml)
+[![Documentation Status](https://readthedocs.org/projects/sirocco-rt/badge/?version=latest)](https://sirocco-rt.readthedocs.io/en/latest/?badge=latest)
 
 *Sirocco* (Simulating Ionization and Radiation in Outflows Created by Compact Objects) is a Monte Carlo radiative transfer code which uses the Sobolev approximation. The code was formerly known as Python and renamed in October 2024. It has been developed by Knox Long, Christian Knigge, Stuart Sim, Nick Higginbottom, James Matthews, Sam Manghamm Edward Parkinson, Mandy Hewitt and Nico Scepi. The code has been used for a variety of research projects invovling the winds of cataclysmic variables, young stellar objects, X-ray binaries and AGN.
 
@@ -6,12 +10,6 @@ The code is under active development, but we are looking for beta users to test 
 or James Matthews via james[dot]matthews[at]physics[dot]ox[dot]ac[dot]uk.
 
 Documentation is hosted on [ReadTheDocs](http://sirocco-rt.readthedocs.io/en/dev/).
-
-## CI \& Docs Build Status
-
-[![C/C++ CI](https://github.com/sirocco-rt/sirocco/actions/workflows/build.yml/badge.svg)](https://github.com/sirocco-rt/sirocco/actions/workflows/build.yml)
-
-[![Documentation Status](https://readthedocs.org/projects/sirocco-rt/badge/?version=latest)](https://sirocco-rt.readthedocs.io/en/latest/?badge=latest)
 
 ## Installation
 
@@ -21,7 +19,7 @@ If you want to obtain a stable (!) release, go to the [Releases](https://github.
 
 If you want to download the latest dev version, you can zip up the git repository by clicking on the zip icon to the right of the GitHub page. Aternatively, you can clone the repository using 
 
-    $ git clone https://github.com/agnwinds/python.git 
+    $ git clone https://github.com/sirocco-rt/sirocco.git 
 
 If you anticipate contributing to development we suggest forking the repository and submitting pull requests with any proposed changes.
 
@@ -46,16 +44,16 @@ also to download various model grids of spectra that have been used in conjuncti
 
 These can be downloaded as follows:
 
-    $ cd $SIROCCO; git clone https://github.com/agnwinds/xmod xmod 
+    $ cd $SIROCCO; git clone https://github.com/sirocco-rt/xmod xmod 
 
 (Previously, both the atomic data and the model grids were stored in a separate repository.  Users wishing
 to run older versions of the code pre-84b may need to download the 
 [old data repository](https://github.com/sirocco-rt/data)  This repository can be downloaded as follows
 
 
-    $ cd $SIROCCO; git clone https://github.com/agnwinds/data data
+    $ cd $SIROCCO; git clone https://github.com/sirocco-rt/data data
 
-Those users interested in the current version of Python should not need to do this)
+Those users interested in the current version of Sirocco should not need to do this)
 
 ## Running Sirocco
 
