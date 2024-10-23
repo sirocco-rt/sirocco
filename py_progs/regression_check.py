@@ -321,7 +321,6 @@ def get_other_directory(run1):
     run1
     '''
     x=glob('py*')
-    # x=glob('*/')
     dirs=[]
     modtime=[]
     for one in x:
@@ -330,15 +329,18 @@ def get_other_directory(run1):
             dirs.append(one)
             modtime.append(os.path.getmtime(one))
 
-    # print(dirs)
-    # print(modtime)
 
     dirs=numpy.array(dirs)
     modtime=numpy.array(modtime)
     iorder=numpy.argsort(modtime)
 
-    run2=dirs[iorder[len(dirs)-1]]
-    return run2
+
+    if len(dirs)>1:
+        run2=dirs[iorder[len(dirs)-1]]
+        return run2
+    else:
+        print('Could not find a second set of tests for a comparison')
+        return ''
 
         
 
@@ -366,8 +368,8 @@ def steer(argv):
 
     if run2=='':
         run2=get_other_directory(run1)
-
-
+        if run2=='':
+            return
 
     # Check that we have everthing we need and then run the check
 
@@ -377,6 +379,7 @@ def steer(argv):
     else:
         print('Not able to parse input line:',''.join(argv))
 
+    return
 
 
 
@@ -387,8 +390,6 @@ def steer(argv):
 if __name__ == "__main__":
     import sys
     if len(sys.argv)>1:
-        # doit(int(sys.argv[1]))
-        # doit(sys.argv[1])
         steer(sys.argv)
     else:
         print (__doc__)
