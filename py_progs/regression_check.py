@@ -320,7 +320,7 @@ def get_other_directory(run1):
     the regression directory that was most recently created that is not
     run1
     '''
-    x=glob('py*')
+    x=glob('py*')+glob('sirocco*')
     dirs=[]
     modtime=[]
     for one in x:
@@ -334,8 +334,10 @@ def get_other_directory(run1):
     modtime=numpy.array(modtime)
     iorder=numpy.argsort(modtime)
 
+    print('xx',dirs)
 
-    if len(dirs)>1:
+
+    if len(dirs)>0:
         run2=dirs[iorder[len(dirs)-1]]
         return run2
     else:
