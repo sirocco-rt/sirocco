@@ -25,9 +25,9 @@ windsave2table
   There are varrious options for how much data is to be printed out.  A summary of these can be
   obtained with code:`windsave2table -h`
 
-sirocco_wind
-  Executed from the command line with :code:`sirocco_wind rootname`
+swind
+  Executed from the command line with :code:`swind rootname`
 
   Allows the user to query for information about the model interactively.  The results can be written to ascii files for future reference
 
-  Again, there are various options, and a summary can be obtained with :code:`sirocco_wind -h`
+  Again, there are various options, and a summary can be obtained with :code:`swind -h`
