@@ -13,7 +13,7 @@ Level information can be derived from a variety of sources, by:
    * more commonly, for data abstracted from TopBase or Chianti
 
 
-Translation to python:
+Translation to SIROCCO:
 ======================
 
 
@@ -83,7 +83,7 @@ between ions, and so it includes the ionization energy of the lower level ioniza
 Note that the radiative rates are not used. The original intention was to use this to define the 
 difference between metastable and normal levels, with the expectation that if the level was metastable it 
 would be put in Boltzmann equilibrium with the ground state. 
-Right now python uses :math:`10^{15}` seconds, essentially a Hubble time to do this, but this portion of the 
+Right now SIROCCO uses :math:`10^{15}` seconds, essentially a Hubble time to do this, but this portion of the 
 code is not, according to ss, tested. 
 
 The primary source for this is usually the NIST database, although similar information is usually available in Chianti. 

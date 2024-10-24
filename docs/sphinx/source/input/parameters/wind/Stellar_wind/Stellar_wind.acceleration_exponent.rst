@@ -13,7 +13,7 @@ Values
   Greater than or equal to 0
 
 File
-  `stellar_wind.c <https://github.com/agnwinds/python/blob/master/source/stellar_wind.c>`_
+  `stellar_wind.c <https://github.com/sirocco-rt/sirocco/blob/master/source/stellar_wind.c>`_
 
 
 Parent(s)

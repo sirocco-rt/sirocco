@@ -9,7 +9,7 @@ Type
   Boolean (yes/no)
 
 File
-  `python.c <https://github.com/agnwinds/python/blob/master/source/python.c>`_
+  `sirocco.c <https://github.com/sirocco-rt/sirocco/blob/master/source/sirocco.c>`_
 
 
 Child(ren)

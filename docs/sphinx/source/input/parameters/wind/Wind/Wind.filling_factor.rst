@@ -11,7 +11,7 @@ Values
   :math:`0\lt f\le1`, where 1 is a fully smooth wind.
 
 File
-  `setup_domains.c <https://github.com/agnwinds/python/blob/master/source/setup_domains.c>`_
+  `setup_domains.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup_domains.c>`_
 
 
 Parent(s)

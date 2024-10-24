@@ -10,7 +10,7 @@ This data comes from `Verner, Barthel & Tytler, 1994, ApJ 108, 287. <http://arti
 
 
 
-Translation to python:
+Translation to SIROCCO:
 ======================
 
 The original data and the translation can be found in py\_verner.  A simple awkscript converts the downloaded data to SIROCCO format.

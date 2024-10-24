@@ -38,7 +38,7 @@ The data is linked to the correct inner shell photoionization cross section (and
 SIROCCO structure
 ================
 
-The data is stored in python in the inner_elec_yield structure which contains
+The data is stored in SIROCCO in the inner_elec_yield structure which contains
 
 - int nion - Index to the ion which was the parent of the inner shell ionization
 - int z, istate - element and ionization state of parent ion

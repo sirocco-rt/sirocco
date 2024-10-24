@@ -20,12 +20,12 @@ Values
     A system in which the central object is a supermassive black hole.
 
   previous
-    In this case, the user is starting from a previous python run. The user can either continue the
+    In this case, the user is starting from a previous SIROCCO run. The user can either continue the
     run or change some parameters associated with radiation sources.
 
 
 File
-  `python.c <https://github.com/agnwinds/python/blob/master/source/python.c>`_
+  `sirocco.c <https://github.com/sirocco-rt/sirocco/blob/master/source/sirocco.c>`_
 
 
 Child(ren)

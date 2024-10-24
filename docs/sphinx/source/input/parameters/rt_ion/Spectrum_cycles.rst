@@ -14,7 +14,7 @@ Type
   Integer
 
 File
-  `setup.c <https://github.com/agnwinds/python/blob/master/source/setup.c>`_
+  `setup.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup.c>`_
 
 
 Child(ren)

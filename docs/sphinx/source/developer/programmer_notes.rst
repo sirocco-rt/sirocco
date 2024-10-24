@@ -30,7 +30,7 @@ The main header files  are:
   strengths, photoionization cross-sections, elemental abundances, etc.  These data are
   read in at the beginning of the program (see atomicdata.c and other similarly named
   routines)
-* python.h - This contains the structures and other data that comprise the wind as well
+* sirocco.h - This contains the structures and other data that comprise the wind as well
   as the parameters of the model.  (This is fairly well-documented, or should be)
 
 
@@ -94,7 +94,7 @@ The portions of the routine that are parallelize are:
   the radiative transfer step in the detailed spectrum phase.
 
 
-MPI requires intialization. For python this is carried out in python.c.  Various subroutines make
+MPI requires intialization. For SIROCCO this is carried out in sirocco.c.  Various subroutines make
 use of MPI, and as a result, programmers need to be aware of this fact when they write auxiliary
 routines that use the various subroutines called by SIROCCO.
 
@@ -128,13 +128,13 @@ In the latest generations of gcc,  the standards for extenral variiables have be
 If one wishes to define an external variable, one must first declare it as eternal, and then one
 must initialize it outside a specific routine exactly in one place.
 
-The standard convention is that the variables are declared as external in a header file, e.g python.h,
-and then intialized in a separate .c file, e.g python_extern_init.c.   Unless, a variable is actually
+The standard convention is that the variables are declared as external in a header file, e.g sirocco.h,
+and then intialized in a separate .c file, e.g sirocco_extern_init.c.   Unless, a variable is actually
 initialized, no space will be allocated for the variable.
 
 So if variables are added (or subtracted), one must make a change both in the relavant .h file.
 
-Currently has three.c files atomic_extern_init.c, models_extern_init.c, python_extern_init.c
-corresponding to the three main .h files, atommic.h, models.h and python.h
+Currently has three.c files atomic_extern_init.c, models_extern_init.c, sirocco_extern_init.c
+corresponding to the three main .h files, atommic.h, models.h and sirocco.h
 
 

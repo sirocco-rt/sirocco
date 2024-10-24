@@ -241,7 +241,7 @@ The following code exert is an example of using the wrapper function to solve a 
 .. code:: c
     :caption: The API to solve a linear system hasn't changed
 
-    #include "python.h"
+    #include "sirocco.h"
 
     double *populations = malloc(nions * sizeof(*populations));
     double *ion_density = malloc(nions * sizeof(*populations));
@@ -269,7 +269,7 @@ Here is an example of using a similar wrapper function to calculate the inverse 
 .. code:: c
     :caption: The API has changed slightly for calculating the inverse, now that it has a wrapper function
 
-    #include "python.h"
+    #include "sirocco.h"
 
     double Q_matrix = malloc(matrix_size * matrix_size * sizeof(double));
     double Q_inverse = malloc(matrix_size * matrix_size * sizeof(double));
@@ -383,7 +383,7 @@ The steps for compiling and link GPU and CPU code are outlined below in pseudo-M
     $(CC) $(C_FLAGS) $(C_SOURCE) -c -o $(C_OBJECTS)
 
     # Link the CUDA and C object code and libraries together using the C compiler
-    $(CC) $(CUDA_OBJECTS) $(C_OBJECTS) -o python $(CUDA_LIBS) $(C_LIBS)
+    $(CC) $(CUDA_OBJECTS) $(C_OBJECTS) -o sirocco $(CUDA_LIBS) $(C_LIBS)
 
 These steps are effectively replicated in the Makefile :code:`$SIROCCO/source/Makefile`, where a deconstructed example is
 shown below.
@@ -409,8 +409,8 @@ shown below.
     endif
 
     # So to compile SIROCCO, we have something which looks vaguely like this. Note that
-    # we use the CUDA_OBJECTS recipe as a requirement for the python recipe. This CUSOLVER_STATUS_SUCCESS
+    # we use the CUDA_OBJECTS recipe as a requirement for the sirocco recipe. This CUSOLVER_STATUS_SUCCESS
     # the CUDA source to be compiled to object code *if* NVCC is defined
-    python: startup python.o $(python_objects) $(CUDA_OBJECTS)
-        $(CC) $(CFLAGS) python.o $(python_objects) $(CUDA_OBJECTS) $(kpar_objects) $(LDFLAGS) -o python
+   sirocco: startup sirocco.o $(sirocco_objects) $(CUDA_OBJECTS)
+        $(CC) $(CFLAGS) sirocco.o $(sirocco_objects) $(CUDA_OBJECTS) $(kpar_objects) $(LDFLAGS) -o sirocco
 
