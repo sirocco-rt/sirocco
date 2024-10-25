@@ -1,4 +1,4 @@
-<img src="https://github.com/user-attachments/assets/1f4b0865-251d-407f-821a-021f7a0beac8" alt="drawing" style="width:400px;"/>
+<img src="https://github.com/user-attachments/assets/1f262fb8-5f67-42df-ac5f-68ac7f792e15" alt="drawing" style="width:400px;"/>
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13969075.svg)](https://doi.org/10.5281/zenodo.13969075)
 [![C/C++ CI](https://github.com/sirocco-rt/sirocco/actions/workflows/build.yml/badge.svg)](https://github.com/sirocco-rt/sirocco/actions/workflows/build.yml)
