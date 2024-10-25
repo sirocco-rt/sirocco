@@ -4,7 +4,7 @@ Plotting \& Processing Outputs
 SIROCCO produces a large number of files in both binary and ascii format. Tools exist to examine the binary files.
 
 PySi 
-==============
+#####################################
 PySi, short for PySIROCCO, is a python package designed to interface with the SIROCCO code.
 It can be installed from its `own Github repository <https://github.com/sirocco-rt/pysi>`_ 
 under the sirocco-rt organisation. We recommend installing this package for reading code outputs.:
