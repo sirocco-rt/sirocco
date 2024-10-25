@@ -411,6 +411,6 @@ shown below.
     # So to compile SIROCCO, we have something which looks vaguely like this. Note that
     # we use the CUDA_OBJECTS recipe as a requirement for the sirocco recipe. This CUSOLVER_STATUS_SUCCESS
     # the CUDA source to be compiled to object code *if* NVCC is defined
-   sirocco: startup sirocco.o $(sirocco_objects) $(CUDA_OBJECTS)
+    sirocco: startup sirocco.o $(sirocco_objects) $(CUDA_OBJECTS)
         $(CC) $(CFLAGS) sirocco.o $(sirocco_objects) $(CUDA_OBJECTS) $(kpar_objects) $(LDFLAGS) -o sirocco
 

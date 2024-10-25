@@ -9,7 +9,7 @@ Obtained from The `Opacity project <http://cdsweb.u-strasbg.fr/topbase/topbase.h
 
 
 Translation to SIROCCO format
-============================
+======================================
 
 ksl - It's not clear that we are now making use of the topbase data in this way but my original attempt to incorporate topbase photoinization data into SIROCCO is contained in the directory topbase. Processing of these files was done by py_top_phot. My feeling is that we can replace these remarks with those that are more up to date, once Nick and James discuss this section, and delete any mention of my original attempt on this in the data-gen archive.
 
@@ -64,12 +64,12 @@ For the macro atom case, the indices relate to the energy levels, that is these 
 The TopBase energies are inaccurate and so generally adjustments are made using Chianti or some other source to fix up the energy levels.
 
 SIROCCO structure
-================
+==========================
 
 The data are stored in the Topbase_phot stucture which can be found in atomic.h
 
 Criteria for usage in SIROCCO run
-================================
+==========================================
 
 Data has to be read into SIROCCO in a logical order.  For a set of  phototionization x-sections to be accepted, the energy levels (or configuratios) must already have been defiend.  See :doc:`levels`
 

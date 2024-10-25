@@ -14,7 +14,7 @@ Level information can be derived from a variety of sources, by:
 
 
 Translation to SIROCCO:
-======================
+================================
 
 
 
@@ -94,7 +94,7 @@ Since they quote J, one converts to g = 2J+1
 The ionization potential is not used, as it is redundant with the excitation energy which is, and the last column giving the configuration is also for information only.
 
 SIROCCO structure:
-=================
+===========================
 This data is held in SIROCCO in various fields in structure **config**.
 
 Comments:

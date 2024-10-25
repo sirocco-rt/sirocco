@@ -4,11 +4,6 @@
 .. automodule:: add_param
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -18,15 +13,3 @@
       read_file
       read_table
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

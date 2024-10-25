@@ -16,7 +16,7 @@ There are three sources for this data
 
 
 Translation to SIROCCO format
-============================
+======================================
 
 **Tabulation Process**
 
@@ -62,7 +62,7 @@ This data is linked to the relevant ion via z and state, islp and level are not 
 This data is linked to the relevant ion via z and state. the n_shell and l_subshell numbers are used to cross reference to the electron yield records. As above, the last record shows how many points are in the fit, and the data pairs making up the fit follow with the keyword InnerVY.
 
 SIROCCO structure
-================
+==========================
 
 Where the data is stored internally in SIROCCO
 

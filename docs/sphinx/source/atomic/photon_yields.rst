@@ -9,7 +9,7 @@ Source
 This data comes from `Kaastra and Mewe 1993, A&A, 97, 443 <http://articles.adsabs.harvard.edu/full/1993A%26AS...97..443K>`_ . The data is downloaded from the vizier site linked and put into a file called "fluorescent\_yield.data"
 
 Translation to SIROCCO format
-============================
+======================================
 
 The translation takes place using the python script "kaastra_2_py.py". All identical to electron yield, but input file is "fluorescent_yield.data" and output is "kaastra_fluorescent_yield.data"
 
@@ -35,7 +35,7 @@ The data is linked to the correct inner shell photoionization cross section (and
 
 
 SIROCCO structure
-================
+==========================
 
 The data is stored in SIROCCO in the inner_fluor_yield structure which contains
 

@@ -11,7 +11,7 @@ This data comes from `Verner, Barthel & Tytler, 1994, ApJ 108, 287. <http://arti
 
 
 Translation to SIROCCO:
-======================
+================================
 
 The original data and the translation can be found in py\_verner.  A simple awkscript converts the downloaded data to SIROCCO format.
 
@@ -93,7 +93,7 @@ Note that only evident changed is the label, but in this case the number of nlte
 
 
 SIROCCO structure:
-=================
+===========================
 This data is held in SIROCCO in various fields in structures **elements** and **ions**.
 
 Comments:

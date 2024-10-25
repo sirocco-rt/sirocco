@@ -15,7 +15,7 @@ The free-free Gaunt factors are taken from  `Sutherland 1998, MNRAS, 300, 321. <
 The last file is the one we use to calculate free-free emission, since this in integrated gaunt factor over a population of electrons  with a Boltzmann distribution of velocities.  The other two files could be of use in the future should we wish to have gaunt factor corrections for the heating rates,in which case we should use the gffgu.dat data file. However generally speaking free-free heating is never important and there would be significant overhead in calculating a gaunt factor for each photon.
 
 Translation to SIROCCO
-=====================
+===============================
 The file is simply modified by hand to put a label "FF\_GAUNT" at the start of each data line and a hash at the start of each comment line.
 
 Datafile - gffint.dat:
@@ -49,7 +49,7 @@ where
 :math:`\Delta=\log(x)-\log(\gamma^2)`
 
 SIROCCO structure
-================
+==========================
 This data is held internally in SIROCCO in the structure **gaunt_total** which has members
 
 - log_gsqrd
