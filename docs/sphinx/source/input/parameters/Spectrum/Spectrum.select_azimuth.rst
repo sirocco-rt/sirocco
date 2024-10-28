@@ -16,7 +16,7 @@ Values
   Between 0, and 360 or -180 to 180
 
 File
-  `setup.c <https://github.com/agnwinds/python/blob/master/source/setup.c>`_
+  `setup.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup.c>`_
 
 
 Parent(s)

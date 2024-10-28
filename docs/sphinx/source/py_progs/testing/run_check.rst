@@ -4,11 +4,6 @@
 .. automodule:: run_check
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -24,15 +19,3 @@
       windsave2table
       xwindsave2table
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

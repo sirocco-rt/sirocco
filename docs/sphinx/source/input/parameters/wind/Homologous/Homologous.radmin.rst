@@ -14,7 +14,7 @@ Values
   Greater than or equal to :ref:`Central_object.radius`
 
 File
-  `homologous.c <https://github.com/agnwinds/python/blob/master/source/homologous.c>`_
+  `homologous.c <https://github.com/sirocco-rt/sirocco/blob/master/source/homologous.c>`_
 
 
 Parent(s)

@@ -13,7 +13,7 @@ Values
   Equal to or greater than :ref:`Central_object.radius`.
 
 File
-  `setup_disk.c <https://github.com/agnwinds/python/blob/master/source/setup_disk.c>`_
+  `setup_disk.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup_disk.c>`_
 
 Parent(s)
   * :ref:`Disk.type`: :code:`rmin>central.obj.rad`

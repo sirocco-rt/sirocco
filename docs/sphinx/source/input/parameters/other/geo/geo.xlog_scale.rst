@@ -9,7 +9,7 @@ Unit
   cm
 
 File
-  `setup_domains.c <https://github.com/agnwinds/python/blob/master/source/setup_domains.c>`_
+  `setup_domains.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup_domains.c>`_
 
 
 Parent(s)

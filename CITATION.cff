@@ -1,23 +1,23 @@
 cff-version: 1.2.0
-title: "Python"
-repository-code: https://github.com/agnwinds/python
-abstract: "A code for Monte Carlo simulation of radiative transfer & ionisation within astrophysical compact object systems."
-message: "If you use Python, please cite both the 2002 concept paper and the software release paper."
-version: 88a
-date-released: 2024-04-11
+title: "Sirocco"
+repository-code: https://github.com/sirocco-rt/sirocco
+abstract: "Simulating Ionization and Radiation in Outflows Created by Compact Objects"
+message: "If you use Sirocco, please cite both the 2002 concept paper and the software release paper."
+version: v0.1
+date-released: 2024-10-22
 doi: 10.1086/342879
 identifiers:
   - type: doi
     value: 10.1086/342879
-    description: "2002 concept paper for the Python project."
+    description: "2002 concept paper for the Sirocco project."
   - type: doi
     value: 10.1234/567890
     description: "[PLACEHOLDER] Software release paper for this software."
   - type: doi
     value: 10.1234/zenodo.5678
-    description: "[PLACEHOLDER] The Zenodo project DOI for the Python code."
+    description: "[PLACEHOLDER] The Zenodo project DOI for the Sirocco code."
 authors:
-  - name: The Python collaboration
+  - name: The Sirocco collaboration
   - family-names: Long
     given-names: Knox
     orcid: https://orcid.org/0000-0002-4134-864X

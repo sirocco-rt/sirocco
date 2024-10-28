@@ -15,7 +15,7 @@ Values
       The searchlight originates at a user determined location and angle along the disk.
 
 File
-  `diag.c <https://github.com/agnwinds/python/blob/master/source/diag.c>`_
+  `diag.c <https://github.com/sirocco-rt/sirocco/blob/master/source/diag.c>`_
 
 
 Parent(s)

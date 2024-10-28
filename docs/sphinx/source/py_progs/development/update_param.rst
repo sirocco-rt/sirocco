@@ -4,11 +4,6 @@
 .. automodule:: update_param
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -18,15 +13,3 @@
       main
       update_parameter
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

@@ -4,26 +4,9 @@
 .. automodule:: balmer_decrement
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
    
       BalmerTest
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

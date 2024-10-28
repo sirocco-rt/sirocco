@@ -16,7 +16,7 @@ Values
   nonthermal
    This is a very special option put in place for modelling FU Ori stars, and should be used with extreme caution.
 
-   This mode enables shock heating into the thermal balance of the wind. The shock heating is defined initally as a luminosity to be added to wind but is immediately converted to a luminosity per unit volume (:ref:`Wind_heating.extra_luminosity`). Since nearly all systems that we are dealing with have a star, we initialize the amount of extra heating as a fraction of the stellar luminosity. See `cooling.c <https://github.com/agnwinds/python/blob/master/source/>`_ :code:`shock_heating`.
+   This mode enables shock heating into the thermal balance of the wind. The shock heating is defined initally as a luminosity to be added to wind but is immediately converted to a luminosity per unit volume (:ref:`Wind_heating.extra_luminosity`). Since nearly all systems that we are dealing with have a star, we initialize the amount of extra heating as a fraction of the stellar luminosity. See `cooling.c <https://github.com/sirocco-rt/sirocco/blob/master/source/>`_ :code:`shock_heating`.
 
   both
     This is a very special option put in place for modelling FU Ori stars, and should be used with extreme caution.
@@ -25,7 +25,7 @@ Values
 
 
 File
-  `setup.c <https://github.com/agnwinds/python/blob/master/source/setup.c>`_
+  `setup.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup.c>`_
 
 
 Child(ren)

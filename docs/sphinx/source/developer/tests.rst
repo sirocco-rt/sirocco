@@ -151,16 +151,16 @@ implementation. If you need to create your own assertion, these should be kept i
     }
 
 
-.. admonition:: Including :code:`python.h` in your tests
+.. admonition:: Including :code:`sirocco.h` in your tests
 
-    If you need to access various structures or other things defined in :code:`python.h`, it is possible to include
+    If you need to access various structures or other things defined in :code:`sirocco.h`, it is possible to include
     the header file in your test source code as in the example below (there are some data structures which depend
     on values defined in :code:`atomic.h`),
 
     .. code:: c
 
         #include "../../atomic.h"
-        #include "../../python.h"
+        #include "../../sirocco.h"
 
     In some situations this might complicate compilation of the unit test. In those cases, it could be better to
     re-define anything you need in the source file for the unit test.

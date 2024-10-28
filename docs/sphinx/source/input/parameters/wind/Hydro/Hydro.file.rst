@@ -6,7 +6,7 @@ Type
   String
 
 File
-  `hydro_import.c <https://github.com/agnwinds/python/blob/master/source/hydro_import.c>`_
+  `hydro_import.c <https://github.com/sirocco-rt/sirocco/blob/master/source/hydro_import.c>`_
 
 
 Parent(s)

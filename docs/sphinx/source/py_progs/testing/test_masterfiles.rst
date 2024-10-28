@@ -4,11 +4,6 @@
 .. automodule:: test_masterfiles
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -17,15 +12,3 @@
       run_file
       run_test
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

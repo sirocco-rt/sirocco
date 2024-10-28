@@ -4,11 +4,6 @@
 .. automodule:: compare_ion
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -17,15 +12,3 @@
       edge
       xsmooth
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

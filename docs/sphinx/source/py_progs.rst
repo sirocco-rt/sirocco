@@ -1,7 +1,7 @@
-SIROCCO Scripts
+Python Scripts
 ################################
 
-There are several SIROCCO scripts written to prepare input for
+There are several python scripts written to prepare input for
 and analyse the output of SIROCCO.
 
 Some of the more useful scripts/modules are documented below.

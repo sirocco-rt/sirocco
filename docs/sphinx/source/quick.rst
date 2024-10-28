@@ -12,3 +12,4 @@ the inputs correspond to a plausible model of an astrophysical system.
 * :ref:`Creating the input file for SIROCCO <Inputs>`  -- Simple instructions how to set up a model interactively
 * :ref:`The files produced by SIROCCO <Outputs>`  -- A quick look at the output files
 * :ref:`Evaluation of the results <Evaluation>` -- A discussion of whether a model has run as required, or not
+* :ref:`Plotting \& Processing Outputs <plotting>` -- Some tutorials for plotting and processing outputs with PySi and other tools.

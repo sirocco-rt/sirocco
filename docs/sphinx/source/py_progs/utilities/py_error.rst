@@ -4,26 +4,9 @@
 .. automodule:: py_error
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
    
       doit
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

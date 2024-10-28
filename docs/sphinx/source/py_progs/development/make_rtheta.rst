@@ -4,11 +4,6 @@
 .. automodule:: make_rtheta
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -17,15 +12,3 @@
       gen_model
       get_inputs
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

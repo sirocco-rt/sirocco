@@ -16,7 +16,7 @@ Values
   Greater than :ref:`Central_object.cloudy.low_energy_break`
 
 File
-  `setup_star_bh.c <https://github.com/agnwinds/python/blob/master/source/setup_star_bh.c>`_
+  `setup_star_bh.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup_star_bh.c>`_
 
 
 Parent(s)

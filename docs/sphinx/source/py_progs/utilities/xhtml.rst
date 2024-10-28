@@ -4,11 +4,6 @@
 .. automodule:: xhtml
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -27,15 +22,3 @@
       table
       test
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

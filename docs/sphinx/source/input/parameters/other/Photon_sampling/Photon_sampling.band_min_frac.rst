@@ -13,7 +13,7 @@ Values
   Greater than 0 and should sum to less than 1 over all bands
 
 File
-  `bands.c <https://github.com/agnwinds/python/blob/master/source/bands.c>`_
+  `bands.c <https://github.com/sirocco-rt/sirocco/blob/master/source/bands.c>`_
 
 
 Parent(s)
