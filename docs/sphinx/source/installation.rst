@@ -70,7 +70,7 @@ You can then setup your symbolic links by running
 
 .. code:: bash
 
-    $ Setup_SIROCCO_Dir
+    $ Setup_Sirocco_Dir
 
 and run the code by typing, e.g.
 
