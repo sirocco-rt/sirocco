@@ -349,28 +349,6 @@ def doit(version='py',pf_dir='',out_dir='',np=3,switches='',outputfile='Summary.
     # placed here.  The special tests should generally be self
     # contained, that is to say one_liners here.
 	
-    #  Run a special test on hydro
-
-    # htest=0
-    # if os.path.exists(pf_dir+'/hydro'):
-    #     print("Hydro directory exists")
-    #     hydro_dir=pf_dir+'/hydro'
-    #     hydro_files=glob(hydro_dir+'/*')
-		
-    #     htest=1
-		
-    # if htest:
-    #     for one in hydro_files:
-    #         shutil.copy(one,'../'+out_dir)
-    #     py_hydro(version,outputfile)
-
-    py_hydro(version, pf_dir, outputfile)
-
-    # run a special macro-atom test -- XXX needs fixing 
-    # balmer_decrement.BalmerTest(glob(pf_dir+'/matom_balmer/balmer_test.pf', plotit=True)
-
-
-    # Return to the place where the code was made from
     os.chdir(cwd)
     return out_dir
 	
@@ -413,95 +391,6 @@ def run_cmds(commands,root_names,outputfile):
 	
 	
 	
-def py_hydro(version,pf_dir,outputfile):
-	
-    '''
-    This is a self contained script to perform specialised tests of
-    the py_hydro models. We need to run on one processor, otherwise
-    the test of the heatcool wont work - but its quick!
-
-    Notes:
-
-        This routine is run from within the current working directory,
-        which is the directory created earlier be doit
-
-    History:
-
-        1801  nsh
-            Development started
-        1802  ksl
-            Modified this routine so that it is more standalone
-            than previously.  Special regression tests need to
-            be isolated from the internal logic of doit so they
-            can be added/removed easily.
-        2908 kdl
-            Eliminated the checks for a difference in heating and
-            and cooling rates.  If this is important, a check of
-            these should be done in regression_checks, and the
-            check should be made between this run and a previous
-            run, not one against a file made in the distant past.
-    '''
-
-    out_dir=os.getcwd()
-
-    htest=0
-    hydro_dir=pf_dir+'/hydro'
-    if os.path.exists(hydro_dir):
-        print("\nHydro directory exists")
-        hydro_files=glob(hydro_dir+'/*')
-        htest=1
-    else:
-        print('The Hydro directory %s doues not appear to exist' % hydro_dir)
-        return
-		
-    if htest:
-        for one in hydro_files:
-            shutil.copy(one,out_dir)
-
-    root_name=['py_hydro']
-    hydro_command=['%s %s  >%s.stdout.txt' % (version,root_name[0]+'.pf',root_name[0])]
-    run_cmds(hydro_command,root_name,outputfile)
-	
-    cmd='cp py_hydro.wind_save py_hydro_restart.wind_save'
-    subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-
-    cmd='cp py_hydro.spec_save py_hydro_restart.spec_save'
-    subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-	
-#OLD    cmd='diff py_heatcool.dat model_heatcool.dat'
-#OLD    proc=subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-#OLD    stdout,stderr=proc.communicate()
-	
-#OLD    if len(stdout):
-#OLD        string="py_heatcool.dat has changed from model - important to investigate"
-#OLD    else:
-#OLD        string="py_heatcool.dat is unchanged - test passed"
-#OLD    print(string)
-#OLD    f1=open('Summary.txt','a')
-#OLD    f1.write('%s\n'% string)
-#OLD    f1.close()
-	
-		
-    root_name=['py_hydro_restart']
-    # hydro_command=['%s -z -r %s  >%s.stdout.txt' % (version,root_name[0]+'.pf',root_name[0])]
-    hydro_command=['%s -r %s  >%s.stdout.txt' % (version,root_name[0]+'.pf',root_name[0])]
-    run_cmds(hydro_command,root_name,outputfile)
-	
-#OLD    cmd='diff py_heatcool.dat model_restart_heatcool.dat'
-#OLD    proc=subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-#OLD    stdout,stderr=proc.communicate()
-	
-#OLD    if len(stdout):
-#OLD        string="restart py_heatcool.dat has changed from model - important to investigate"
-#OLD    else:
-#OLD        string="restart py_heatcool.dat is unchanged - test passed"
-#OLD    print(string)
-#OLD    f1=open('Summary.txt','a')
-#OLD    f1.write('%s\n'% string)
-#OLD    f1.close()
-
-
-    return
 
 
 
