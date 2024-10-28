@@ -215,7 +215,7 @@ wind_read (filename)
 
   if (stat (geo.atomic_filename, &file_stat))
   {
-    if (system ("Setup_Py_Dir"))
+    if (system ("Setup_Sirocco_Dir"))
     {
       Error ("Unable to open %s or create link for atomic data\n", geo.atomic_filename);
       Exit (1);
@@ -498,8 +498,9 @@ spec_read (filename)
     Exit (EXIT_FAILURE);
   }
 
-  Log ("Reading specfile %s with %d spectra and %d wavelength bins, created with sirocco version %s and currently using sirocco version %s\n",
-       filename, nspectra, NWAVE_EXTRACT, version, VERSION);
+  Log
+    ("Reading specfile %s with %d spectra and %d wavelength bins, created with sirocco version %s and currently using sirocco version %s\n",
+     filename, nspectra, NWAVE_EXTRACT, version, VERSION);
 
   /* First allocate space */
 
