@@ -906,7 +906,7 @@ setup_dfudge ()
 void
 setup_atomic_data (const char *atomic_filename)
 {
-  int rc;                       // Return code from running Setup_Py_Dir
+  int rc;                       // Return code from running Setup_Sirocco_Dir
   struct stat file_stat;        // Used to check the atomic data exists
   char answer[LINELENGTH];
 
@@ -924,19 +924,19 @@ setup_atomic_data (const char *atomic_filename)
   /*
    * Check that geo.atomic_filename exists - i.e. that the directory is readable
    * and in the directory Python is being executed from. If it isn't - then
-   * try to run Setup_Py_Dir. If both fail, then warn the user and exit Python
+   * try to run Setup_Sirocco_Dir. If both fail, then warn the user and exit Python
    */
 
   if (stat (atomic_filename, &file_stat))
   {
     Log ("Unable to open atomic masterfile %s\n", atomic_filename);
-    Log ("Running Setup_Py_Dir to try and fix the situation\n");
+    Log ("Running Setup_Sirocco_Dir to try and fix the situation\n");
     if (rank_global == 0)
     {
-      rc = system ("Setup_Py_Dir");
+      rc = system ("Setup_Sirocco_Dir");
       if (rc)
       {
-        Error ("Unable to open %s and run Setup_Py_Dir\n", atomic_filename);
+        Error ("Unable to open %s and run Setup_Sirocco_Dir\n", atomic_filename);
         Exit (1);
       }
     }
