@@ -63,7 +63,7 @@ To run Sirocco you need to add the following to your $PATH variable:
 
 You can then setup your symbolic links by running 
 
-    $ Setup_Py_Dir
+    $ Setup_Sirocco_Dir
 
 and run the code by typing, e.g.
 
