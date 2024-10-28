@@ -10,7 +10,7 @@ It can be installed from its `own Github repository <https://github.com/sirocco-
 under the sirocco-rt organisation. We recommend installing this package for reading code outputs.:
 isntructions to do so can be found in the README of that repository.
 
-.. admonition :: Warning to users
+.. admonition :: Warning to users! 
 
 These tutorials are not complete, and our approach to interfacing 
 with the code has not been uniform across the collaboration. Nevertheless, these 
@@ -23,3 +23,4 @@ with more detail on python scripts and packages provided in :ref:`the API docume
 .. nbgallery::
    plotting/plot_spectrum
    plotting/plot_wind
+   plotting/Convergence
