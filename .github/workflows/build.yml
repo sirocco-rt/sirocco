@@ -53,7 +53,7 @@ jobs:
     - name: Checking Sirocco compiled and can read in inputs correctly
       run: |
         cd $SIROCCO/examples/gh-workflow/
-        $SIROCCO/bin/Setup_Py_Dir
+        $SIROCCO/bin/Setup_Sirocco_Dir
         $SIROCCO/bin/sirocco -i cv_macro_benchmark
         $SIROCCO/bin/sirocco -i cv_standard
         $SIROCCO/bin/sirocco -i fiducial_agn
