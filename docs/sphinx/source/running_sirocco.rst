@@ -130,4 +130,4 @@ You can then run a specific installed version by replacing the SIROCCO executabl
 
   .. code :: bash
 
-    sirocco87a root.pf
+    sirocco-0.1 root.pf
