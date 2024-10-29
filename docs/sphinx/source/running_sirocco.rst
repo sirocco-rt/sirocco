@@ -97,22 +97,29 @@ which may be useful in certain special cases.  These include:
   are maintained as to the number of times the error occurred, but it is not printed
   to the diagnostic file. The default is 100 (per process)
 
--classic
+-f                    
+  Invoke a fixed temperature mode
+
+-nonrel
   Reverts to using v/c corrections for special relativity and eliminates work done to treat
   co-moving frames properly.  This is for testing, and is likely to be removed in the not
   too distant future.
 
--srclassic
-   Use SIROCCO with full special relativity for Doppler shits, etc., but do not include any co-moving frame effects.
+-sr_doppler_only
+  Use SIROCCO with full special relativity for Doppler shits, etc., but do not include any co-moving frame effects.
 
 -no-matrix-storage
-   Do not store macro-atom transition matrices if using the macro-atom line transfer and the matrix matom_transition_mode.
+  Do not store macro-atom transition matrices if using the macro-atom line transfer and the matrix matom_transition_mode.
 
 -ignore_partial_cells
-   Ignore wind cells that are only partially filled by the wind (This is now the default)
+  Ignore wind cells that are only partially filled by the wind (This is now the default)
 
 -include_partial_cells
-   Include wind cells that are only partially filled by the wind
+  Include wind cells that are only partially filled by the wind
+
+-xtest
+  Instead of running sirocco, call the routine xtest so that one can diagnose issues associted with the 
+  setup.  This is only useful to developers.
 
 Running Different Versions of SIROCCO
 =================================

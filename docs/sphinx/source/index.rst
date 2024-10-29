@@ -23,7 +23,7 @@ was intended for simulating the spectra of winds in cataclysmic variables. Since
 also been used to simulate the spectra of systems ranging from young stellar objects to AGN. 
 SIROCCO is named after the `Sirocco wind <https://en.wikipedia.org/wiki/Sirocco>`_, and also 
 stands for Simulating Ionization and Radiation in Outflows Created by Compact Objects. 
-```sirocco-0.1```, the version of the code in October 2024, is described by `Matthews, Long et al. <https://arxiv.org/abs/2410.19908>`_
+sirocco-0.1, the version of the code in October 2024, is described by `Matthews, Long et al. <https://arxiv.org/abs/2410.19908>`_
 
 The program is written in C and can be compiled on systems runining various flavors of linux, including macOS and the
 Windows Subsystem for Linux (WSL). The code is is available on `GitHub <https://github.com/sirocco-rt/sirocco>`_. Issues
