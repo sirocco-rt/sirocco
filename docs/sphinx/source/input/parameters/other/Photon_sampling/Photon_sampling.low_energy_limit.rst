@@ -14,7 +14,7 @@ Values
   Greater than 0
 
 File
-  `bands.c <https://github.com/agnwinds/python/blob/master/source/bands.c>`_
+  `bands.c <https://github.com/sirocco-rt/sirocco/blob/master/source/bands.c>`_
 
 
 Parent(s)

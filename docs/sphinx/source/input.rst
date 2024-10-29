@@ -3,7 +3,7 @@ Inputs
 
 A comprehensive section and lists of all possible parameter inputs for various models.
 
-**Overview** describes how python uses keywords for a .pf parameter file and how a user can create their own parameter files.
+**Overview** describes how SIROCCO uses keywords for a .pf parameter file and how a user can create their own parameter files.
 
 **System Description** describes the initial system parameters for a model with an example to indicate what .pf output looks like. 
 

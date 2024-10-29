@@ -27,7 +27,7 @@ Values
     * :ref:`KWD.rmax`
 
 File
-  `filename.c <https://github.com/agnwinds/python/blob/master/source/filename.c>`_
+  `filename.c <https://github.com/sirocco-rt/sirocco/blob/master/source/filename.c>`_
 
 Parent(s)
   * :ref:`System_type`: `agn`, `binary`

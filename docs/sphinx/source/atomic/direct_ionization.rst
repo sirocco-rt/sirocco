@@ -11,7 +11,7 @@ The data comes directly from `Dere 2006, A&A, 466, 771 <https://www.aanda.org/ar
 
 
 Translation to SIROCCO format
-============================
+======================================
 
 
 The data table is downloaded in its entirety  from the data table associated with the paper. All that happens is that the table is saved to a text file, and the keyword DI_DERE is just prepended to each row.
@@ -41,7 +41,7 @@ The rate coefficient R(T) is recovered from the scaled rate coefficient in the t
 where :math:`E_{1}` is the first exponential integral. In python we use the  gsl_sf_expint_E1 routine in gsl.
 
 SIROCCO structure
-================
+==========================
 
 This data is stored in the  dere_di_rate structure with members
 

@@ -272,43 +272,43 @@ run_indent:
 swind: startup $(swind_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(swind_objects) $(CUDA_OBJECTS) $(LDFLAGS) -o swind
 	cp $@ $(BIN)
-	mv $@ $(BIN)/swind$(VERSION)
+	mv $@ $(BIN)/swind-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 windsave2table: startup $(table_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(table_objects) $(CUDA_OBJECTS) $(LDFLAGS) -o windsave2table
 	cp $@ $(BIN)
-	mv $@ $(BIN)/windsave2table$(VERSION)
+	mv $@ $(BIN)/windsave2table-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 windsave2fits: startup $(windsave2fits_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(windsave2fits_objects) $(CUDA_OBJECTS) $(LDFLAGS) -lcfitsio -o windsave2fits 
 	cp $@ $(BIN)
-	mv $@ $(BIN)/windsave2fits$(VERSION)
+	mv $@ $(BIN)/windsave2fits-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 rad_hydro_files: startup $(rhf_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(rhf_objects) $(CUDA_OBJECTS) $(LDFLAGS) -o rad_hydro_files
 	cp $@ $(BIN)
-	mv $@ $(BIN)/rad_hydro_files$(VERSION)
+	mv $@ $(BIN)/rad_hydro_files-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 modify_wind: startup $(modify_wind_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(modify_wind_objects) $(CUDA_OBJECTS) $(LDFLAGS) -o modify_wind
 	cp $@ $(BIN)
-	mv $@ $(BIN)/modify_wind$(VERSION)
+	mv $@ $(BIN)/modify_wind-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 inspect_wind: startup $(inspect_wind_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(inspect_wind_objects) $(CUDA_OBJECTS) $(LDFLAGS)  -o inspect_wind
 	cp $@ $(BIN)
-	mv $@ $(BIN)/inspect_wind$(VERSION)
+	mv $@ $(BIN)/inspect_wind-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 sirocco_optd: startup $(sirocco_optd_obj) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(sirocco_optd_obj) $(CUDA_OBJECTS) $(LDFLAGS) -o $@
 	cp $@ $(BIN)
-	mv $@ $(BIN)/sirocco_optd$(VERSION)
+	mv $@ $(BIN)/sirocco_optd-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 # unit_tests allows one to test low level routines, but one must be aware that one needs to define

@@ -4,11 +4,6 @@
 .. automodule:: run_many
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -19,15 +14,3 @@
       run_one
       steer
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

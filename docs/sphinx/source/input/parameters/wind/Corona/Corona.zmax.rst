@@ -14,7 +14,7 @@ Values
   Greater than that the radius of the central object
 
 File
-  `corona.c <https://github.com/agnwinds/python/blob/master/source/corona.c>`_
+  `corona.c <https://github.com/sirocco-rt/sirocco/blob/master/source/corona.c>`_
 
 
 Parent(s)

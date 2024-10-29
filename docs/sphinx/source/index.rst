@@ -7,33 +7,43 @@
 SIROCCO - Simulating Ionization and Radiation in Outflows Created by Compact Objects
 ####################################################################################
 
---------------------------------------
-Radiative transfer and ionisation code
---------------------------------------
+.. figure:: images/logo.png
+    :width: 300px
 
 SIROCCO is a Monte-Carlo radiative transfer code designed to simulate the spectrum of biconical (or spherical)
-winds in disk systems.  It was origianally written by
+winds in disk systems.  It was formerly known as Python, and originally written by
 `Long and Knigge (2002) <https://ui.adsabs.harvard.edu/abs/2002ApJ...579..725L/abstract>`_ and
 was intended for simulating the spectra of winds in cataclysmic variables. Since then, it has
-also been used to simulate the spectra of systems ranging from young stellar objects to AGN.
+also been used to simulate the spectra of systems ranging from young stellar objects to AGN. 
+SIROCCO is named after the `Sirocco wind <https://en.wikipedia.org/wiki/Sirocco>`_, and also 
+stands for Simulating Ionization and Radiation in Outflows Created by Compact Objects. 
 
 The program is written in C and can be compiled on systems runining various flavors of linux, including macOS and the
 Windows Subsystem for Linux (WSL). The code is is available on `GitHub <https://github.com/sirocco-rt/sirocco>`_. Issues
-regarding the code and suggestions for improvement should be reported there.  We actively encourage other to make use of
+regarding the code and suggestions for improvement should be reported there.  We actively encourage others to make use of
 the code for their own science.  If anyone has questions about whether the code might be useful for a project, we
 encourage you to contact one of the authors of the code.
 
-
--------------
-Documentation
--------------
+---------------------------------------
+Documentation \& Publications
+---------------------------------------
 
 Various documentation exists:
 
 * A :doc:`Quick Guide <quick>` describing how to install and run SIROCCO (in a fairly mechanistic fashion).
+* More detailed documentation on this site and in the docs/sphinx/ folder of the repository. 
+* A code release paper, submitted in October 2024
+* Various PhD theses that describe the code in more detail: 
+    * Higginbottom, N (2014): `Modelling accretion disk winds in quasars <https://eprints.soton.ac.uk/368584/>`_, 
+    * Matthews, J. (2016): `Disc Winds Matter: Modelling Accretion And Outflow On All Scales <https://ui.adsabs.harvard.edu/abs/2016PhDT.......348M/abstract>`_, 
+    * Mangham, S. (2019): `The reverberation signatures of accretion disk winds in active galactic nuclei <https://eprints.soton.ac.uk/437717/>`_, 
+    * Parkinson, E. (2022): `Shining lights, even in death: modelling the optical and ultraviolet emission from tidal disruption events <https://eprints.soton.ac.uk/457482/>`_ . 
 
 For more information on how this page was generated and how to create documentation for SIROCCO,
 look at the page for :doc:`documentation on the documentation <meta>`.
+
+`This ADS library <https://ui.adsabs.harvard.edu/public-libraries/dRea2kBFSCmzAji_7yTK9Q>`_ contains a list of publications using SIROCCO to date. 
+
 
 -------
 Authors
@@ -54,7 +64,7 @@ Nick Higginbottom
   Department of Physics and Astronomy, University of Southampton, Southampton, SO17 1BJ, UK
 
 James Matthews
-  Institute of Astronomy, University of Cambridge, Cambridge, CB3 0HA, UK
+  Department of Physics, Astrophysics, University of Oxford, Denys Wilkinson Building, Keble Road, Oxford, OX1 3RH, UK
 
 Sam Mangham
   Department of Physics and Astronomy, University of Southampton, Southampton, SO17 1BJ, UK

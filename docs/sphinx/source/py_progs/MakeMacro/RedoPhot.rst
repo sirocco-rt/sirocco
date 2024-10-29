@@ -4,11 +4,6 @@
 .. automodule:: RedoPhot
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -20,15 +15,3 @@
       steer
       write_phot_tab
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

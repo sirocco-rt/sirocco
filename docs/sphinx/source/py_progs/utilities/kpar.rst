@@ -4,11 +4,6 @@
 .. automodule:: kpar
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -19,15 +14,3 @@
       read_file
       read_table
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

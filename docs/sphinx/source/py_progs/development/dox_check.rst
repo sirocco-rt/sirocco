@@ -4,26 +4,9 @@
 .. automodule:: dox_check
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
    
       doit
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

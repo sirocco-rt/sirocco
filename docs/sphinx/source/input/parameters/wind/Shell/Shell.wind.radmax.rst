@@ -13,7 +13,7 @@ Values
   Greater than :ref:`Shell.wind.radmin`
 
 File
-  `shell_wind.c <https://github.com/agnwinds/python/blob/master/source/shell_wind.c>`_
+  `shell_wind.c <https://github.com/sirocco-rt/sirocco/blob/master/source/shell_wind.c>`_
 
 
 Parent(s)

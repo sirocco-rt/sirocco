@@ -13,7 +13,7 @@ Values
   Greater than :ref:`Central_object.radius`
 
 File
-  `corona.c <https://github.com/agnwinds/python/blob/master/source/corona.c>`_
+  `corona.c <https://github.com/sirocco-rt/sirocco/blob/master/source/corona.c>`_
 
 
 Parent(s)

@@ -25,7 +25,7 @@ If the number of components exceeds 1, then the remaining questions relating to 
   A stellar-wind model. A fairly standard parameterization of a spherical outflow for a hot star.
 
 :ref:`hydro`
-  A special purpose mode used by the python collaboration for importing models from Zeus and Pluto. (Depreciated)
+  A special purpose mode used by the sirocco collaboration for importing models from Zeus and Pluto. (Depreciated)
 
 :ref:`Corona`
   A simple model for a corona above the disk.

@@ -41,7 +41,7 @@ Values
 
 
 File
-  `setup_reverb.c <https://github.com/agnwinds/python/blob/master/source/setup_reverb.c>`_
+  `setup_reverb.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup_reverb.c>`_
 
 
 Child(ren)

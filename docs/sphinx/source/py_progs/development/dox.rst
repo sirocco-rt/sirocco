@@ -4,11 +4,6 @@
 .. automodule:: dox
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -22,15 +17,3 @@
       read_table
       steer
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

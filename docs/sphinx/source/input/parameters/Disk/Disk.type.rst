@@ -17,7 +17,7 @@ Values
 
 
 File
-  `setup_disk.c <https://github.com/agnwinds/python/blob/master/source/setup_disk.c>`_
+  `setup_disk.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup_disk.c>`_
 
 
 Child(ren)
