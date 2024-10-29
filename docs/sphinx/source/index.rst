@@ -10,14 +10,11 @@ SIROCCO - Simulating Ionization and Radiation in Outflows Created by Compact Obj
 .. figure:: images/logo.png
     :width: 300px
 
-.. |Arxiv| image:: https://img.shields.io/badge/arXiv-2410.19908-b31b1b.svg
+.. image:: https://img.shields.io/badge/arXiv-2410.19908-b31b1b.svg?style=for-the-badge
    :target: https://arxiv.org/abs/2410.19908
 
-.. |Github| image:: https://img.shields.io/badge/Github-sirocco-4475A0.svg?style=for-the-badge&logo=github&logoColor=white
+.. image:: https://img.shields.io/badge/Github-sirocco-4475A0.svg?style=for-the-badge&logo=github&logoColor=white
    :target: https://github.com/sirocco-rt/sirocco
-
-.. |Code Zenodo DOI| image::(https://zenodo.org/badge/DOI/10.5281/zenodo.13969075.svg
-    :target: https://doi.org/10.5281/zenodo.13969075
 
 SIROCCO is a Monte-Carlo radiative transfer code designed to simulate the spectrum of biconical (or spherical)
 winds in disk systems.  It was formerly known as Python, and originally written by
