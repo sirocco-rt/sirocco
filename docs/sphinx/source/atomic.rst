@@ -24,7 +24,7 @@ it should be fairly clear from the code what the various routines do.
 The routines used to generate data for MacroAtoms are described in :doc:`Generating Macro Atom data <./py_progs/MakeMacro>`
 
 Choosing a dataset 
------------------------
+=====================
 The "masterfile" that determines what data will be read into SIROCCO is determined by the
 line in the parameter file, which will read something like::
 
@@ -35,11 +35,39 @@ be read in sequentially.
 
 All of the atomic data that comes as standard with SIROCCO is stored in the `xdata` directory (and its subdirectories) but users are not required to put their data
 there. Various experimental or testing dataset masterfiles are stored in the `zdata` directory. Symbolic links to these directories
-are setup by running `Setup_Py_Dir`.
+are setup by running `Setup_Sirocco_Dir`, such that :code:`data->$SIROCCO/xdata`.
 
-.. todo::
+The main **recommended data sets**, and their key attributes, are as follows. 
 
-    Add table of recommended data sets
+.. list-table:: 
+   :widths: 40 40 40 40 40
+   :header-rows: 1
+
+   * - Masterfile
+     - Macro-atoms
+     - 2-level atoms
+     - $n_{levels,H}$
+     - Notes
+   * - standard80
+     - *None*
+     - H,He,Metals
+     - -- 
+     - Classic mode standard
+   * - h20_hetop_standard80
+     - H,He
+     - Metals
+     - 20
+     - Hybrid macro mode standard
+   * - master_cno
+     - H, He, C, N, O
+     - Metals $Z>8$
+     - 20
+     - *Beta!*
+   * - fe17to27
+     - H, Fe
+     - He, Metals $Z<26$
+     - 10
+     - *Beta!*, good for X-ray Fe lines
 
 Data hierarchy and I/O 
 -----------------------
