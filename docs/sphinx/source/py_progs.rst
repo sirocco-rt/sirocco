@@ -1,10 +1,7 @@
 Python Scripts
 ################################
 
-Python Scripts
-################################
-
-SIROCCO can be analysed using the **PySI** package which can be found `on github <https://github.com/sirocco-rt/pysi>`_, with some example usage under :doc:`Plotting and Processing outputs <plotting.rst>`.
+SIROCCO can be analysed using the **PySI** package which can be found `on github <https://github.com/sirocco-rt/pysi>`_, with some example usage under :ref:`Plotting and Processing Outputs <plotting>`.
 
 There are also several python scripts written to prepare input for and analyse the output of SIROCCO. Some of the more useful scripts/modules are documented below, organised approximately by application. 
 
