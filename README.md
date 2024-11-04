@@ -10,7 +10,7 @@
 The code is under active development, but we are looking for beta users to test the code, and potentially use it for their own research. If you are interested in using Sirocco please contact Knox Long via long[at]stsci[dot]edu 
 or James Matthews via james[dot]matthews[at]physics[dot]ox[dot]ac[dot]uk.
 
-Documentation is hosted on [ReadTheDocs](http://sirocco-rt.readthedocs.io/en/dev/).
+Documentation is hosted on [ReadTheDocs](http://sirocco-rt.readthedocs.io/en/).
 
 ## Installation
 
@@ -71,6 +71,6 @@ and run the code by typing, e.g.
     $ sirocco root.pf
 
 
-Please see the [ReadTheDocs](http://sirocco-rt.readthedocs.io/en/dev/) or the docs folder for how to use the code. You will need sphinx installed to build the documentation yourself. 
+Please see the [ReadTheDocs](http://sirocco-rt.readthedocs.io/en/) or the docs folder for how to use the code. You will need sphinx installed to build the documentation yourself. 
 
 Any comments, email one of the addresses above.
