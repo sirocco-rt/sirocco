@@ -936,6 +936,8 @@ typedef struct plasma
 
   int nscat_es;                 /**<  The number of electrons scatters in the cell */
   int nscat_res;                /**<  The number of resonant line scatters in the cell */
+  int nscat_bf;                 /**< Number of bf scatters in the cell. (macro_only) */
+  int nscat_ff;                 /**< Number of ff scatters in the cell. (macro_only) */
 
   double mean_ds;               /**<  Mean photon path length in a cell. */
   int n_ds;                     /**<  Number of times a path lengyh was added; needed to compute mean_ds */

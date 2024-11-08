@@ -106,6 +106,8 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
         MPI_Pack (&cell->ntot_agn, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->nscat_es, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->nscat_res, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (&cell->nscat_bf, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (&cell->nscat_ff, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->mean_ds, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->n_ds, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->nrad, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
@@ -261,6 +263,8 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->ntot_agn, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->nscat_es, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->nscat_res, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->nscat_bf, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->nscat_ff, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->mean_ds, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->n_ds, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->nrad, 1, MPI_INT, MPI_COMM_WORLD);
@@ -634,6 +638,8 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
         MPI_Pack (&plasmamain[n_plasma].ntot_wind, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].ntot_agn, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].nscat_es, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
+        MPI_Pack (&plasmamain[n_plasma].nscat_bf, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
+        MPI_Pack (&plasmamain[n_plasma].nscat_ff, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].mean_ds, 1, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].n_ds, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].nrad, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
@@ -802,6 +808,8 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].ntot_wind, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].ntot_agn, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].nscat_es, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].nscat_bf, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].nscat_ff, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].mean_ds, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].n_ds, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].nrad, 1, MPI_INT, MPI_COMM_WORLD);
