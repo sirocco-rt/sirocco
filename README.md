@@ -3,13 +3,14 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13969075.svg)](https://doi.org/10.5281/zenodo.13969075)
 [![C/C++ CI](https://github.com/sirocco-rt/sirocco/actions/workflows/build.yml/badge.svg)](https://github.com/sirocco-rt/sirocco/actions/workflows/build.yml)
 [![Documentation Status](https://readthedocs.org/projects/sirocco-rt/badge/?version=latest)](https://sirocco-rt.readthedocs.io/en/latest/?badge=latest)
+[![arXiv](https://img.shields.io/badge/arXiv-2410.19908-b31b1b.svg)](https://arxiv.org/abs/2410.19908)
 
 *Sirocco* (Simulating Ionization and Radiation in Outflows Created by Compact Objects) is a Monte Carlo radiative transfer code which uses the Sobolev approximation. The code was formerly known as Python and renamed in October 2024. It has been developed by Knox Long, Christian Knigge, Stuart Sim, Nick Higginbottom, James Matthews, Sam Manghamm Edward Parkinson, Mandy Hewitt and Nico Scepi. The code has been used for a variety of research projects invovling the winds of cataclysmic variables, young stellar objects, X-ray binaries and AGN.
 
 The code is under active development, but we are looking for beta users to test the code, and potentially use it for their own research. If you are interested in using Sirocco please contact Knox Long via long[at]stsci[dot]edu 
 or James Matthews via james[dot]matthews[at]physics[dot]ox[dot]ac[dot]uk.
 
-Documentation is hosted on [ReadTheDocs](http://sirocco-rt.readthedocs.io/en/dev/).
+Documentation is hosted on [ReadTheDocs](http://sirocco-rt.readthedocs.io/en/).
 
 ## Installation
 
@@ -70,6 +71,6 @@ and run the code by typing, e.g.
     $ sirocco root.pf
 
 
-Please see the [ReadTheDocs](http://sirocco-rt.readthedocs.io/en/dev/) or the docs folder for how to use the code. You will need sphinx installed to build the documentation yourself. 
+Please see the [ReadTheDocs](http://sirocco-rt.readthedocs.io/en/) or the docs folder for how to use the code. You will need sphinx installed to build the documentation yourself. 
 
 Any comments, email one of the addresses above.
