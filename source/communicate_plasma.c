@@ -45,8 +45,13 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
 
   d_xsignal (files.root, "%-20s Begin communicating plasma grid\n", "NOK");
   const int n_cells_max = get_max_cells_per_rank (NPLASMA);
+//OLD  const int comm_buffer_size = calculate_comm_buffer_size (1 + n_cells_max * (1 + 20 + nphot_total + nions + NXBANDS + 2 * N_PHOT_PROC),
+//OLD                                                           n_cells_max * (71 + 11 * nions + nlte_levels + 2 * nphot_total + n_inner_tot +
+//OLD                                                                          11 * NXBANDS + NBINS_IN_CELL_SPEC + 6 * NFLUX_ANGLES +
+//OLD                                                                          N_DMO_DT_DIRECTIONS + 12 * NFORCE_DIRECTIONS));
+
   const int comm_buffer_size = calculate_comm_buffer_size (1 + n_cells_max * (1 + 20 + nphot_total + nions + NXBANDS + 2 * N_PHOT_PROC),
-                                                           n_cells_max * (71 + 11 * nions + nlte_levels + 2 * nphot_total + n_inner_tot +
+                                                           n_cells_max * (73 + 11 * nions + nlte_levels + 2 * nphot_total + n_inner_tot +
                                                                           11 * NXBANDS + NBINS_IN_CELL_SPEC + 6 * NFLUX_ANGLES +
                                                                           N_DMO_DT_DIRECTIONS + 12 * NFORCE_DIRECTIONS));
   char *comm_buffer = malloc (comm_buffer_size);
@@ -574,10 +579,12 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
 
   d_xsignal (files.root, "%-20s Begin communicating updated plasma properties\n", "NOK");
   const int n_cells_max = get_max_cells_per_rank (NPLASMA);
-  const int num_ints = 1 + n_cells_max * (20 + nphot_total + 2 * NXBANDS + 2 * N_PHOT_PROC + nions);
+  //OLD  const int num_ints = 1 + n_cells_max * (20 + nphot_total + 2 * NXBANDS + 2 * N_PHOT_PROC + nions);
+  const int num_ints = 1 + n_cells_max * (22 + nphot_total + 2 * NXBANDS + 2 * N_PHOT_PROC + nions);
   const int num_doubles =
     n_cells_max * (71 + 1 * 3 + 9 * 4 + 6 * NFLUX_ANGLES + 3 * NFORCE_DIRECTIONS + 9 * nions + 1 * nlte_levels + 3 * nphot_total +
                    1 * n_inner_tot + 9 * NXBANDS + 1 * NBINS_IN_CELL_SPEC);
+
   const int size_of_comm_buffer = calculate_comm_buffer_size (num_ints, num_doubles);
   char *const comm_buffer = malloc (size_of_comm_buffer);
 
