@@ -468,10 +468,9 @@ translate_in_wind (w, p, tau_scat, tau, nres)
     {
       xplasma->nscat_es++;
     }
-    if (p->nres == NRES_BF)
+    if (p->nres > NLINES)
     {
       xplasma->nscat_bf++;
-      printf ("got bf %d \n", xplasma->nscat_bf);
     }
 
     else if (p->nres > 0)
@@ -481,7 +480,6 @@ translate_in_wind (w, p, tau_scat, tau, nres)
     else if (p->nres == NRES_FF)
     {
       xplasma->nscat_ff++;
-      // printf ("got ff %d \n", xplasma->nscat_ff);
     }
 
 
