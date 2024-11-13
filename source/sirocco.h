@@ -141,7 +141,7 @@ extern int NWAVE_NOW;         /**< Either NWAVE_IONIZ or NWAVE_EXTRACT depending
                                 */
 #define NWAVE_MIN   100       /**< The minimum number of wavelength bins in during spectral cycles
                                */
-#define MAXSCAT    2000
+#define MAXSCAT    20000
 
 /* Define the structures */
 #include "math_struc.h"
