@@ -5,8 +5,6 @@
  *
  * @brief Functions for communicating wind properties
  *
- * @TODO: as much as this as possible should use non-blocking communication
- *
  ***********************************************************/
 
 #include <stdio.h>
@@ -19,7 +17,7 @@
 
 /**********************************************************/
 /**
- * @brief
+ * @brief Broadcast the wind grid, `wmain`, to all ranks
  *
  * @param [in] int n_start       The index of the first cell updated by this rank
  * @param [in] int n_stop        The index of the last cell updated by this rank
@@ -27,11 +25,14 @@
  *
  * @details
  *
- * The communication pattern is as outlined in broadcast_updated_plasma_properties.
+ * This function should only be called once, after grid initialisation.
  *
- * We do not communicate the Wind_Paths_Ptr fields as the code which initialises
- * and works entirely in serial, so there is no benefit to communicating between
- * ranks.
+ * The communication pattern and how the size of the communication buffer is
+ * determined is documented in
+ * $SIROCCO/docs/sphinx/source/developer/mpi_comms.rst.
+ * To communicate a new variable, the communication buffer needs to be made
+ * bigger and a new `MPI_Pack` and `MPI_Unpack` call need to be added. See the
+ * developer documentation for more details.
  *
  **********************************************************/
 
@@ -72,11 +73,19 @@ broadcast_wind_grid (const int n_start, const int n_stop, const int n_cells_rank
   MPI_Type_create_struct (count, block_lengths, block_offsets, block_types, &wcone_derived_type);
   MPI_Type_commit (&wcone_derived_type);
 
-  /* We also have to also account for some derived types */
+  /* Calculate the size of the communication buffer */
   const int n_cells_max = get_max_cells_per_rank (NDIM2);
+  const int num_ints = 5 * n_cells_max + 1;
+  const int num_doubles = n_cells_max * (13 + 3 * 3 + 1 * 9);   // *3 for x, xcen... *9 for v_grad
   MPI_Pack_size (n_cells_max, wcone_derived_type, MPI_COMM_WORLD, &bytes_wcone);
   const int comm_buffer_size = calculate_comm_buffer_size (1 + 5 * n_cells_max, n_cells_max * (13 + 3 * 3 + 1 * 9)) + bytes_wcone;
+
   char *comm_buffer = malloc (comm_buffer_size);
+  if (comm_buffer == NULL)
+  {
+    Error ("Unable to allocate memory for communication buffer in broadcast_wind_grid\n");
+    Exit (EXIT_FAILURE);
+  }
 
   for (current_rank = 0; current_rank < np_mpi_global; current_rank++)
   {
@@ -151,8 +160,8 @@ broadcast_wind_grid (const int n_start, const int n_stop, const int n_cells_rank
     }
   }
 
-  MPI_Type_free (&wcone_derived_type);
   free (comm_buffer);
+  MPI_Type_free (&wcone_derived_type);
   d_xsignal (files.root, "%-20s Finished communication of wind grid\n", "NOK");
 #endif
 }
