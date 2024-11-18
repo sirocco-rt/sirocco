@@ -5,8 +5,6 @@
  *
  * @brief Functions for communicating plasma properties
  *
- * @TODO: as much as this as possible should use non-blocking communication
- *
  ***********************************************************/
 
 #include <stdio.h>
@@ -19,7 +17,7 @@
 
 /**********************************************************/
 /**
- * @brief
+ * @brief Broadcast the (initialised) plasma grid to all ranks
  *
  * @param [in] int n_start       The index of the first cell updated by this rank
  * @param [in] int n_stop        The index of the last cell updated by this rank
@@ -27,7 +25,14 @@
  *
  * @details
  *
- * The communication pattern is as outlined in dated_plasma_properties.
+ * This should only be called once, after grid initialisation.
+ *
+ * The communication pattern and how the size of the communication buffer is
+ * determined is documented in
+ * $SIROCCO/docs/sphinx/source/developer/mpi_comms.rst.
+ * To communicate a new variable, the communication buffer needs to be made
+ * bigger and a new `MPI_Pack` and `MPI_Unpack` call need to be added. See the
+ * developer documentation for more details.
  *
  **********************************************************/
 
@@ -50,6 +55,12 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
                                                                           11 * NXBANDS + NBINS_IN_CELL_SPEC + 6 * NFLUX_ANGLES +
                                                                           N_DMO_DT_DIRECTIONS + 12 * NFORCE_DIRECTIONS));
   char *comm_buffer = malloc (comm_buffer_size);
+  if (comm_buffer == NULL)
+  {
+    Error ("broadcast_plasma_grid: Error in allocating memory for comm_buffer\n");
+    Exit (EXIT_FAILURE);
+  }
+
   for (current_rank = 0; current_rank < np_mpi_global; current_rank++)
   {
     position = 0;
@@ -376,12 +387,17 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
  *
  * @details
  *
- * The communication pattern is as outlined in dated_plasma_properties.
+ * The communication pattern and how the size of the communication buffer is
+ * determined is documented in
+ * $SIROCCO/docs/sphinx/source/developer/mpi_comms.rst.
+ * To communicate a new variable, the communication buffer needs to be made
+ * bigger and a new `MPI_Pack` and `MPI_Unpack` call need to be added. See the
+ * developer documentation for more details.
  *
  * ### Notes ###
  *
  * When this is called in wind update, there is redundant information being
- * communicated in `dated_plasma_properties` which communicates the exact (but
+ * communicated in `broadcast_updated_plasma_properties` which communicates the exact (but
  * probably incorrect) data this function does. A refactor to clean this up could
  * be done in the future to avoid the extra communication latency from
  * communicating the data twice.
@@ -401,6 +417,11 @@ broadcast_wind_luminosity (const int n_start, const int n_stop, const int n_cell
   const int n_cells_max = get_max_cells_per_rank (NPLASMA);
   const int comm_buffer_size = calculate_comm_buffer_size (1 + n_cells_max, 4 * n_cells_max);
   char *const comm_buffer = malloc (comm_buffer_size);
+  if (comm_buffer == NULL)
+  {
+    Error ("broadcast_wind_luminosity: Error in allocating memory for comm_buffer\n");
+    Exit (EXIT_FAILURE);
+  }
 
   for (current_rank = 0; current_rank < np_mpi_global; ++current_rank)
   {
@@ -454,12 +475,17 @@ broadcast_wind_luminosity (const int n_start, const int n_stop, const int n_cell
  *
  * @details
  *
- * The communication pattern is as outlined in dated_plasma_properties.
+ * The communication pattern and how the size of the communication buffer is
+ * determined is documented in
+ * $SIROCCO/docs/sphinx/source/developer/mpi_comms.rst.
+ * To communicate a new variable, the communication buffer needs to be made
+ * bigger and a new `MPI_Pack` and `MPI_Unpack` call need to be added. See the
+ * developer documentation for more details.
  *
  * ### Notes ###
  *
  * When this is called in wind update, there is redundant information being
- * communicated in `dated_plasma_properties` which communicates the exact (but
+ * communicated in `broadcast_updated_plasma_properties` which communicates the exact (but
  * probably incorrect) data this function does. A refactor to clean this up could
  * be done in the future to avoid the extra communication latency from
  * communicating the data twice.
@@ -479,6 +505,11 @@ broadcast_wind_cooling (const int n_start, const int n_stop, const int n_cells_r
   const int n_cells_max = get_max_cells_per_rank (NPLASMA);
   const int comm_buffer_size = calculate_comm_buffer_size (1 + n_cells_max, 9 * n_cells_max);
   char *const comm_buffer = malloc (comm_buffer_size);
+  if (comm_buffer == NULL)
+  {
+    Error ("broadcast_wind_cooling: Error in allocating memory for comm_buffer\n");
+    Exit (EXIT_FAILURE);
+  }
 
   for (current_rank = 0; current_rank < np_mpi_global; ++current_rank)
   {
@@ -535,26 +566,18 @@ broadcast_wind_cooling (const int n_start, const int n_stop, const int n_cells_r
 /**
  * @brief Communicate changing properties in the plasma cells between ranks.
  *
- * @param [in]  int n_start  the first cell this rank will communicate
- * @param [in]  int n_stop   the last cell this rank will communicate
+ * @param [in]  int n_start      the first cell this rank will communicate
+ * @param [in]  int n_stop       the last cell this rank will communicate
+ * @param [in]  int n_cells_rank the number of cells this rank will communicate
  *
  * @details
  *
- * This makes sure each rank has an updated plasma grid. The way the
- * communication is setup is as follows:
- *
- * - We create a loop over each MPI rank in the MPI_COMM_WORLD communicator
- * - If the loop variable is equal to the current rank, the subset of cells that
- *   rank worked on are packed into `comm_buffer` which is broadcast to all
- *   ranks.
- * - All other ranks unpack that data into the plasma cell.
- *
- * As well as the properties of the plasma cells, the number of cells
- * communicated and the cell numbers are also communicated. The size of the
- * comm buffer is currently the minimum size required. To communicate more data
- * you need to increase the size of the comm buffer.
- *
- * @TODO: we need to find out what data is not required
+ * The communication pattern and how the size of the communication buffer is
+ * determined is documented in
+ * $SIROCCO/docs/sphinx/source/developer/mpi_comms.rst.
+ * To communicate a new variable, the communication buffer needs to be made
+ * bigger and a new `MPI_Pack` and `MPI_Unpack` call need to be added. See the
+ * developer documentation for more details.
  *
  **********************************************************/
 
@@ -576,6 +599,11 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
                    1 * n_inner_tot + 9 * NXBANDS + 1 * NBINS_IN_CELL_SPEC);
   const int size_of_comm_buffer = calculate_comm_buffer_size (num_ints, num_doubles);
   char *const comm_buffer = malloc (size_of_comm_buffer);
+  if (comm_buffer == NULL)
+  {
+    Error ("broadcast_updated_plasma_properties: Error in allocating memory for comm_buffer\n");
+    Exit (EXIT_FAILURE);
+  }
 
   for (n_mpi = 0; n_mpi < np_mpi_global; n_mpi++)
   {
