@@ -1054,7 +1054,7 @@ kpkt (p, nres, escape, mode)
   }
   else if (destruction_choice < (mplasma->cooling_bftot + cooling_bbtot + mplasma->cooling_ff + mplasma->cooling_ff_lofreq))
   {
-    /*this is ff at a frequency that is so low frequency that it is not worth tracking further */
+/*this is ff at a frequency that is so low frequency that it is not worth tracking further */
     *escape = TRUE;
     *nres = NRES_FF;
     p->istat = P_LOFREQ_FF;
@@ -1065,7 +1065,7 @@ kpkt (p, nres, escape, mode)
   else if (destruction_choice <
            (mplasma->cooling_bftot + cooling_bbtot + mplasma->cooling_ff + mplasma->cooling_ff_lofreq + cooling_adiabatic))
   {
-    /* It is a k-packat that is destroyed by adiabatic cooling */
+/* It is a k-packat that is destroyed by adiabatic cooling */
 
     if (geo.adiabatic == 0 || mode == KPKT_MODE_CONTINUUM)
     {

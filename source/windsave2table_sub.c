@@ -154,8 +154,8 @@ create_master_table (ndom, rootname)
 {
   char filename[132];
   double *c[50], *converge;
-  char column_name[50][20];
-  char one_line[1024], start[1024], one_value[20];
+  char column_name[50][24];
+  char one_line[1024], start[1024], one_value[24];
   char name[132];               /* file name extension */
 
 
@@ -227,9 +227,21 @@ create_master_table (ndom, rootname)
   c[17] = get_one (ndom, "nioniz");
   strcpy (column_name[17], "nioniz");
 
+  c[18] = get_one (ndom, "nscat_es");
+  strcpy (column_name[18], "nscat_es");
+
+  c[19] = get_one (ndom, "nscat_res");
+  strcpy (column_name[19], "nscat_res");
+
+  c[20] = get_one (ndom, "nscat_ff");
+  strcpy (column_name[20], "nscat_ff");
+
+  c[21] = get_one (ndom, "nscat_bf");
+  strcpy (column_name[21], "nscat_bf");
+
 
   /* This should be the maxium number above +1 */
-  ncols = 18;
+  ncols = 22;
 
 
   converge = get_one (ndom, "converge");
@@ -1478,6 +1490,22 @@ get_one (ndom, variable_name)
       else if (strcmp (variable_name, "nioniz") == 0)
       {
         x[n] = plasmamain[nplasma].nioniz;
+      }
+      else if (strcmp (variable_name, "nscat_es") == 0)
+      {
+        x[n] = plasmamain[nplasma].nscat_es;
+      }
+      else if (strcmp (variable_name, "nscat_res") == 0)
+      {
+        x[n] = plasmamain[nplasma].nscat_res;
+      }
+      else if (strcmp (variable_name, "nscat_bf") == 0)
+      {
+        x[n] = plasmamain[nplasma].nscat_bf;
+      }
+      else if (strcmp (variable_name, "nscat_ff") == 0)
+      {
+        x[n] = plasmamain[nplasma].nscat_ff;
       }
       else if (strcmp (variable_name, "heat_shock") == 0)
       {

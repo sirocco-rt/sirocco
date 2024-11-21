@@ -425,14 +425,14 @@ calculate_ds (w, p, tau_scat, tau, nres, smax, istat)
  *
  *  * -1 implies electron scattering
  *  * -2 implies free-free
- *  * 0 or greater implies a specific photionization process was responsible (and 
- *  also that the program was operating in macro-atom mode.
+ *  * Greater that NLINES implies a specific photionization process was responsible  
  *
  * @details
  * This routine is called to determine which of several continuum proceseses
  * cause a photon to be scattered or absorbed.  In addition to electron scattering
  * and free-free absorption, the routine can identify which photoionization process
- * is implicated.
+ * is implicated assuming we are in macro-atom mode, when photoionization is considred
+ * as a scattering process..
  *
  * ### Notes ###
  *
@@ -443,10 +443,14 @@ calculate_ds (w, p, tau_scat, tau, nres, smax, istat)
  * which of the processes was responsible.  Data for the opacity due to
  * photonionization is passed remotely via the PlasmaPtr.
  *
- * In a program running in the two level approximation, only electron scattering
- * and ff and bf are treated as absorption processes.  In macro atom, ff and
- * photoionization are treated as a scattering 
- * processes.
+ * In a program running in the two level approximation, electron scattering
+ * and ff are treated as scattering processes; bf is treated as absorption processes
+ * and so in that case, the routine chooses between es and ff scatering.  
+ * In macro atom, ff and photoionization are treated as a scattering 
+ * processes, so any one of these can be returned
+ *
+ * In order to avoid confusion with bb processes, the bf option returns
+ * a value that is larger than NLINES.
  *
  **********************************************************/
 
