@@ -10,7 +10,7 @@
 The code is under active development, but we are looking for beta users to test the code, and potentially use it for their own research. If you are interested in using Sirocco please contact Knox Long via long[at]stsci[dot]edu 
 or James Matthews via james[dot]matthews[at]physics[dot]ox[dot]ac[dot]uk.
 
-Documentation is hosted on [ReadTheDocs](http://sirocco-rt.readthedocs.io/en/).
+Documentation is hosted on [ReadTheDocs]((https://sirocco-rt.readthedocs.io).
 
 ## Installation
 
