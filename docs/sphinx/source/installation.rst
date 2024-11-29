@@ -14,16 +14,22 @@ Installation
 SIROCCO and the various routines associated are set up in a self-contained directory structure.
 The basic directory structure and the data files that one needs to run SIROCCO need to be retrieved and compiled.
 
-If you want to obtain a stable (!) release, go to the `Releases <https://github.com/sirocco-rt/sirocco/releases/>`_ page.
-
-If you want to download the latest dev version, you can zip up the git repository by clicking on the zip icon to the right of the GitHub page.
-Alternatively, clone it directly as
+If you want to obtain a stable (!) release, go to the `Releases <https://github.com/sirocco-rt/sirocco/releases/>`_ page. 
+this version is usually fairly closely synced with the default :code:`main` branch, so you can also zip up the git repository by clicking on the zip icon to the right of the GitHub
+page or clone the repository directly:
 
 .. code:: bash
 
     $ git clone git@github.com:sirocco-rt/sirocco.git
 
-If you anticipate contributing to development we suggest Forking the repository and submitting pull requests with any proposed changes.
+Development work is typically merged into a development branch :code:`dev`
+If you want to download the latest :code:`dev` version, you can clone it as
+
+.. code:: bash
+
+    $ git clone -b dev git@github.com:sirocco-rt/sirocco.git
+
+If you anticipate contributing to development we suggest forking the repository and submitting pull requests with any proposed changes.
 
 Once you have the files, you need to cd to the new directory and set your environment variables
 
@@ -46,9 +52,8 @@ note that export syntax is for bash- for csh use
 
 The atomic data needed to run SIROCCO is included in the distribution.
 
-
 The source code for SIROCCO is under actively development and is updated fairly often. Normally, one does not need to redo the entire installation process, since this includes GSL setup.
-Instead, one can pull in changes and recompile the source code by running
+Instead, one can pull in changes, or make changes yourself, and recompile the source code by running
 
 .. code:: bash
 

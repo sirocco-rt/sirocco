@@ -5,8 +5,6 @@
  *
  * @brief Functions for communicating wind properties
  *
- * @TODO: as much as this as possible should use non-blocking communication
- *
  ***********************************************************/
 
 #include <stdio.h>

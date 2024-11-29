@@ -24,3 +24,4 @@ with more detail on python scripts and packages provided in :ref:`the API docume
    plotting/plot_spectrum
    plotting/plot_wind
    plotting/Convergence
+   plotting/ion-models
