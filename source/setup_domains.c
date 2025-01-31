@@ -295,7 +295,7 @@ get_wind_params (ndom)
    *
    * stellar, homologous, shell, corona
    *
-   * Note that we define the maximum wind radius elsewhere in Python, so we should
+   * Note that we define the maximum wind radius elsewhere in Sirocco, so we should
    * not check for the error condition here, as there is no reason to supply Wind.radmax
    * for an imported model.
    */

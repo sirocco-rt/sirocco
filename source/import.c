@@ -15,8 +15,8 @@
  * We assume all of the data, positions, velocities and importantly
  * densities are given at the grid points of the imported model.
  *
- * We then map these models into the structures that Python uses.
- * Most of the mapping is one-to-one, but Python wants the densities
+ * We then map these models into the structures that Sirocco uses.
+ * Most of the mapping is one-to-one, but Sirocco wants the densities
  * to be a the cell centers and not at the corners.
  *
  ***********************************************************/
@@ -144,7 +144,7 @@ import_set_wind_boundaries (ndom)
 
 /**********************************************************/
 /** 
- * @brief      Make the Python grid 
+ * @brief      Make the Sirocco grid 
  *
  * @param [in] WindPtr  w  The entire wind structure
  * @param [in] int  ndom   The domain for the imported model
@@ -252,7 +252,7 @@ import_velocity (ndom, x, v)
  * ### Notes ###
  * The routine is used to map densities from an imported model 
  * where we assume that the density is given at the grid points.
- * In Python, we want map the grid points to the edges of wind cells,
+ * In Sirocco, we want map the grid points to the edges of wind cells,
  * but we expect the densities to be given at the centers of the cells.
  *
  **********************************************************/

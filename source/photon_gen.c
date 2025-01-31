@@ -1075,7 +1075,7 @@ bl_init (lum_bl, t_bl, freqmin, freqmax, ioniz_or_extract, f)
  * photon distribution, specifically having to do with the ionizing
  * photons.  It is not entirely clear why this is where this is done
  *
- * 181009 - ksl - Previously, this routine caused Python to exit 
+ * 181009 - ksl - Previously, this routine caused Sirocco to exit 
  * if photon_checks produced more than a small number of errors. I
  * have removed this extreme measure but that does not mean that
  * photon checks should be ignored.

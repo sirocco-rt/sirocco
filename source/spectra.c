@@ -8,7 +8,7 @@
  * @brief
  *
  * The subroutines in this file handle allocating, incrementing, and writing out the
- * spectrum arrays for Python
+ * spectrum arrays for Sirocco
  *
 ***********************************************************/
 
@@ -830,7 +830,7 @@ spec_add_one (p, spec_type)
  * Normally s[0],s[1],and s[2] will be the escaping, scattered, and absorbed spectrum.
  * The rest will be those which have been "extracted".
  *
- * It is called multiple times. In Python, it is currently called at two different
+ * It is called multiple times. In Sirocco, it is currently called at two different
  * locations in the code, once at the
  * end of each ionization cycle  and at the end of each spectrum cycle.               
  * 
@@ -889,7 +889,7 @@ spectrum_summary (filename, nspecmin, nspecmax, select_spectype, renorm, loglin,
   }
 
   /* Construct and write a header string  for the output file */
-  fprintf (fptr, "# Python Version %s\n", VERSION);
+  fprintf (fptr, "# Sirocco Version %s\n", VERSION);
   fprintf (fptr, "# Git commit hash %s\n", GIT_COMMIT_HASH);
 
   get_time (string);

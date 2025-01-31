@@ -409,7 +409,7 @@ integ_fb (t, f1, f2, nion, fb_choice, mode)
  * 	single wind cell at a temperature t between the frequncy limits f1 and f2.
  * 	The energy lost is just the kinetic energy lost from the plasma
  * 	because it does not include the ionization potential
- * 	associated with each recombination.  Python tracks effectively the kinetic energy
+ * 	associated with each recombination.  Sirocco tracks effectively the kinetic energy
  * 	of the plasma (not the potential energy available if everything recombined).
  *
  * @param [in] PlasmaPtr  xplasma   The plasma cell of interest
@@ -915,11 +915,11 @@ int init_freebound_nfb;
  * @return     The routine generally returns 0
  *
  * @details
- * Python typically calculates photons in frequency ranges (in order
+ * Sirocco typically calculates photons in frequency ranges (in order
  * to enable stratified sampling).  For this to work, one needs
  * freebound emissivities and cooling rates corresponding to these
  * freqency ranges.  Since we retrun to the same frequency ranges every cycle,
- * Python stores the necessary information in structures.
+ * Sirocco stores the necessary information in structures.
  *
  * This routine is responsible for populating these structures, so
  * that they can be accessed later via the routine get_fb.
@@ -1727,7 +1727,7 @@ compare_doubles (const void *a, const void *b)
  *
  * ###Notes###
  * 
- * To improve the overall speed of Python, the routine generates
+ * To improve the overall speed of Sirocco, the routine generates
  * Mulitiple bf photons for a transition, and stores them in the 
  * matomxphot structure.  (It is not entirely clear that this
  * represents a signficant savings.)
