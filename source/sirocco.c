@@ -645,7 +645,11 @@ main (argc, argv)
 
 
   disk_init (geo.disk_rad_min, geo.disk_rad_max, geo.mstar, geo.disk_mdot, freqmin, freqmax, 0, &geo.f_disk);
-  qdisk_init (geo.disk_rad_min, geo.disk_rad_max, geo.mstar, geo.disk_mdot);
+
+  /* we should not call qdisk_init if we are restarting, see #1134 */
+  if (geo.run_type != RUN_TYPE_RESTART)
+    qdisk_init (geo.disk_rad_min, geo.disk_rad_max, geo.mstar, geo.disk_mdot);
+
   xsignal (files.root, "%-20s Finished initialization for %s\n", "NOK", files.root);
   check_time (files.root);
 
