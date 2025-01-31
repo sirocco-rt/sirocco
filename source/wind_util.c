@@ -4,7 +4,7 @@
  * @author ksl
  * @date   April, 2018
  *
- * @brief  These are very simple utilities within Python that do not
+ * @brief  These are very simple utilities within Sirocco that do not
  *   fall into a larger category like those in vector.
  *
  * ### Notes ###

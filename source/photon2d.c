@@ -62,7 +62,7 @@
  * On exit, the position of the photon will have been updated.
  *
  * ### Notes ###
- * Translate controls the flow of the photon through one grid cell.  In Python,
+ * Translate controls the flow of the photon through one grid cell.  In Sirocco,
  * there are additional possibilities since there are wind free regions.
  *
  * The routine first calls where_in_wind which returns the correct domain for a given position, or domain 0 if the
@@ -220,7 +220,7 @@ translate_in_space (pp)
  * 	the boudary applies.
  *
  * @details
- * Python defines the boundaries of the wind in term of the intersection
+ * Sirocco defines the boundaries of the wind in term of the intersection
  * of a biconical flow (defined by an inner and outer windcone) and
  * an inner and outer radius centered on the star.	 If the user is interested
  * in a biconical flow, he/she will most likely set the radii so that they

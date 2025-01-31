@@ -38,7 +38,7 @@
  *
  * @details
  * This is the main routine for running the ionization
- * cycles in Python
+ * cycles in Sirocco
  *
  * ### Notes ###
  *
@@ -120,7 +120,7 @@ calculate_ionization (restart_stat)
 
     xsignal (files.root, "%-20s Starting %3d of %3d ionization cycles \n", "NOK", geo.wcycle + 1, geo.wcycles);
 
-    Log ("!!Python: Beginning cycle %d of %d for defining wind\n", geo.wcycle + 1, geo.wcycles);
+    Log ("!!Sirocco: Beginning cycle %d of %d for defining wind\n", geo.wcycle + 1, geo.wcycles);
     Log_flush ();
 
     /* Initialize all of the arrays, etc, that need initialization for each cycle
@@ -169,7 +169,7 @@ calculate_ionization (restart_stat)
       }
     }
 
-    Log ("!!Python: %1.2e photons will be transported for cycle %i\n", (double) NPHOT, geo.wcycle + 1);
+    Log ("!!Sirocco: %1.2e photons will be transported for cycle %i\n", (double) NPHOT, geo.wcycle + 1);
 
     /* Create the photons that need to be transported through the wind
      *
@@ -445,7 +445,7 @@ calculate_ionization (restart_stat)
  *
  * @details
  * This is the main routine for calculation detailed
- * spectra in Python.
+ * spectra in Sirocco.
  *
  * ### Notes ###
  *

@@ -232,7 +232,7 @@ rtheta_make_grid (int ndom, WindPtr w)
  * @brief      defines the wind cones that are needed to calculate ds in a cell
  *
  * @param [in, out] int  ndom   The domain to populate with the cone structures
- * @param [in, out] WindPtr  w   The structure which defines the wind in Python
+ * @param [in, out] WindPtr  w   The structure which defines the wind in Sirocco
  * @return     Always returns 0
  *
  * @details

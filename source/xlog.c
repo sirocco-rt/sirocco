@@ -10,12 +10,12 @@
  *
  * Instead of using printf and fprintf statements throughout varius subroutines, the set of routines
  * here are intended to provide a standard interface to various diagnostic files, and to manage the interaction of 
- * logging with the various mpi threads that can exist when running Python in multiprocessor mode.  The routines
+ * logging with the various mpi threads that can exist when running Sirocco in multiprocessor mode.  The routines
  * also contain a verbosity mechanism to allow one to control how much information is written to the screen, and a 
  * mechanism to keep track of the number of times a particular error message has been generated.  The overall goal 
- * is to keep the log files produced by Python a manageable size.
+ * is to keep the log files produced by Sirocco a manageable size.
  *
- * Messages in Python runs are sent to the screen and to diagnostic files.  During multiprocessing runs, a diagnostic 
+ * Messages in Sirocco runs are sent to the screen and to diagnostic files.  During multiprocessing runs, a diagnostic 
  * file is opened for each thread.  With some exceptions, messages to the screen arise from thread 0.  
  * 		
  *  The routines that control what files are open and closed for logging are as follows.
@@ -39,7 +39,7 @@
  *  - Log_print_max(print_max)			Set the number of times a single error will be 
  * 	    output to the screen and the log file
  *
- *  The amount printed out is controlled by a command line switch -v (in Python).   The default value causes Shout, Log, 
+ *  The amount printed out is controlled by a command line switch -v (in Sirocco).   The default value causes Shout, Log, 
  *  and Error to be printed and logged, but not Log_silent Error_silent.  The default value is 5. If the value is raised 
  *  more data will be printed or logged.  
  *
@@ -642,7 +642,7 @@ error_count (char *format)
  *
  * ###Notes###
  *
- * This is printed out at the end of all Python runs.  When running in multiprocessor mode, 
+ * This is printed out at the end of all Sirocco runs.  When running in multiprocessor mode, 
  * the number of 
  * errors referes only to the errors that have occurred in that particular theread.
  *
@@ -822,7 +822,7 @@ Log_parallel (char *format, ...)
  * @param [in]   ...   The various values which fill out the format statement
  * @return     The number of characters sucessfully written
  *
- * Straight  printf and fprintf states are strongly discouraged in Python except
+ * Straight  printf and fprintf states are strongly discouraged in Sirocco except
  * as issued withing the routines here.  This routine preface an fprintf statement
  * with Dobug so such statements are issue to grep out of a log file, and in the code
  *
@@ -861,7 +861,7 @@ Debug (char *format, ...)
 
 /**********************************************************/
 /**
- *  @brief Wrapper function to exit MPI/Python.
+ *  @brief Wrapper function to exit MPI/Sirocco.
  *
  *  @param[in] int error_code. An integer classifying the error. Note that this
  *  number should be a non-zero integer.

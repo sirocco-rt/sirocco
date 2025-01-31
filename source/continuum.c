@@ -37,7 +37,7 @@ double old_t, old_g, old_freqmin, old_freqmax;
  * This is a routine that is used to select a function from a grid of spectra
  * stored in the model structure.  For the purpose of this routine, the
  * model grid is assumed to be based on two variables t (temperature) and
- * gravity (g).  This reflects the fact that most of the grids used in Python
+ * gravity (g).  This reflects the fact that most of the grids used in Sirocco
  * to date (e.g Kurucz models) are these kinds of grids.  The routine linearly
  * interpolates  on these two variables to produce a spectrum at the desired
  * t and g.  It then creates a comulative distribution of the portion of

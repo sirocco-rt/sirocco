@@ -36,7 +36,7 @@
  * @bug For reasons, which are currently unclear there are differences in the number of points
  * maintained in the cdfs for different generation methods.
  *
- * These routines should be kept SEPARATE from routines that require the Python specific
+ * These routines should be kept SEPARATE from routines that require the Sirocco specific
  * structures in sirocco.h 
  *
  ***********************************************************/

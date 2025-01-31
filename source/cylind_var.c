@@ -133,7 +133,7 @@ cylvar_ds_in_cell (ndom, p)
  * @brief      defines the cells in a cylindrical grid
  * 	when the disk is vertically extended.
  *
- * @param [in out] WindPtr  w   The structure which defines the wind in Python
+ * @param [in out] WindPtr  w   The structure which defines the wind in Sirocco
  * @param [in] int  ndom   The domain number of interest
  * @return     Always returns 0
  *
@@ -270,7 +270,7 @@ cylvar_make_grid (int ndom, WindPtr w)
  * 	arrays.
  *
  * @param [in] int  ndom   The domain number of interest
- * @param [in] WindPtr  w   The structure which defines the wind in Python
+ * @param [in] WindPtr  w   The structure which defines the wind in Sirocco
  * @return    Always returns 0
  *
  * @details

@@ -5,7 +5,7 @@
  * @date   July, 2020  
  *
  * @brief  Initialize the various structures that contain atomic
- * data in Python 
+ * data in Sirocco 
  * and other similar programs
  *
  ***********************************************************/

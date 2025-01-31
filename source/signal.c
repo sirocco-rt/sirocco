@@ -49,7 +49,7 @@
  * @param [in]   ...   The remaining inputs for the fprintf statement
  * @return     Always  returns 0
  *
- * If one cannot write to the .sig file, Python will exit
+ * If one cannot write to the .sig file, Sirocco will exit
  *
  * @details
  * 
@@ -145,7 +145,7 @@ xsignal (char *root, char *format, ...)
  * @param [in]   ...   The remaining inputs for the fprintf statement
  * @return     Always  returns 0
  *
- * If one cannot write to the .sig file, Python will exit
+ * If one cannot write to the .sig file, Sirocco will exit
  *
  * @details
  *
@@ -287,14 +287,14 @@ set_max_time (char *root, double t)
  * invoking check_time to record the status of the signal file
  *
  * Bug #518:
- * Previously Python would, on occasion, deadlock when calling this function.
+ * Previously Sirocco would, on occasion, deadlock when calling this function.
  * This was due to some MPI processes exceeding max_time whilst others did not,
  * resulting in some processes not exiting and continuing on with their work.
  * They would then try to communicate with other processes which have already
- * exited, get no response and then Python would deadlock. To avoid this happening,
+ * exited, get no response and then Sirocco would deadlock. To avoid this happening,
  * EP added an MPI_Allreduce operation to find return the largest execution time
  * for a thread. This is then used to check if time > max_time, and if so then
- * MPI is finalised and Python will exit.
+ * MPI is finalised and Sirocco will exit.
  *
  **********************************************************/
 
