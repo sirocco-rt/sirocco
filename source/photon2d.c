@@ -465,9 +465,23 @@ translate_in_wind (w, p, tau_scat, tau, nres)
     ds_current = calculate_ds (w, p, tau_scat, tau, nres, smax, &istat);
 
     if (p->nres == NRES_ES)
+    {
       xplasma->nscat_es++;
+    }
+    if (p->nres > NLINES)
+    {
+      xplasma->nscat_bf++;
+    }
+
     else if (p->nres > 0)
+    {
       xplasma->nscat_res++;
+    }
+    else if (p->nres == NRES_FF)
+    {
+      xplasma->nscat_ff++;
+    }
+
 
     /* We now increment the radiation field in the cell, translate the photon and wrap
      * things up.  For simple atoms, the routine radiation also reduces
