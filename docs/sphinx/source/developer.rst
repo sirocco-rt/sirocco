@@ -7,5 +7,6 @@ This page contains documentation intended for developers.
     :glob:
 
     developer/programmer_notes
+    developer/mpi_comms
     developer/cuda
     developer/tests

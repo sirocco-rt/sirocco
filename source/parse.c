@@ -26,7 +26,7 @@
  * @return      restart_stat   1 if restarting a previous model,
  * 0 in all other cases.
  *
- * Python has a fairly rich set of command line options, which
+ * Sirocco has a fairly rich set of command line options, which
  * are parsed by this routine
  *
  * The routine also creates the diag folder, which is where most
@@ -176,7 +176,7 @@ parse_command_line (argc, argv)
       else if (strcmp (argv[i], "--version") == 0)
       {
         /* give information about the sirocco version, such as commit hash */
-        Log ("Python Version %s \n", VERSION);  //54f -- ksl -- Now read from version.h
+        Log ("Sirocco Version %s \n", VERSION);  //54f -- ksl -- Now read from version.h
         Log ("Built from git commit hash %s\n", GIT_COMMIT_HASH);
         /* warn the user if there are uncommited changes */
         int git_diff_status = GIT_DIFF_STATUS;
@@ -188,7 +188,7 @@ parse_command_line (argc, argv)
       else if (strcmp (argv[i], "-xtest") == 0)
       {
         run_xtest = TRUE;
-        Log ("Run xstest, usually instead of normal Python.\n");
+        Log ("Run xstest, usually instead of normal Sirocco.\n");
         j = i;
       }
       else if (strcmp (argv[i], "-include_partial_cells") == 0)
@@ -262,7 +262,7 @@ parse_command_line (argc, argv)
       else if (strcmp (argv[i], "--version") == 0)
       {
         /* give information about the pyhon version, such as commit hash */
-        Log ("Python Version %s \n", VERSION);  //54f -- ksl -- Now read from version.h
+        Log ("Sirocco Version %s \n", VERSION);  //54f -- ksl -- Now read from version.h
         Log ("Built from git commit hash %s\n", GIT_COMMIT_HASH);
         /* warn the user if there are uncommited changes */
         int git_diff_status = GIT_DIFF_STATUS;
@@ -377,19 +377,19 @@ and the switches have the following meanings \n\
 Other switches exist but these are not intended for the general user.\n\
 These are largely diagnostic or for special cases. These include\n\
  -d                     Enable advanced/diagnostic inputs (normally for debugging purposes) \n\
-                        Python will then query the user for information about what to do with a series of \n\
+                        Sirocco will then query the user for information about what to do with a series of \n\
                         inputs beginning with @ \n\
  -e                     Change the maximum number of errors of one type (by default 100,000) before the program will quit\n\
  -e_write               Change the maximum number of errors of one type (by default 100) to print out before recording errors silently\n\
  -f                     Invoke a fixed temperature mode, used for runs with Zeus or Plutu \n\
- -z                     Invoke a special mode for that causes Python to start with a run from Zeus or Plutu\n\
+ -z                     Invoke a special mode for that causes Sirocco to start with a run from Zeus or Plutu\n\
  -p [range]             Vary the number of photons in ionization cycles logarthmically building up to the final value\n\
                         Range is in powers of 10, the difference beween the number of photons in the first cycle \n\
                         compared to the last. If range is missing, range is assumed to be 1, in which case the  \n\
                         number of photons will in the first cycle will be one order of magniude less than in the last cycle \n\
- -nonrel                Use Python in its old non-relativistic configuration, with linear Doppler shifts, etc., and where co-moving frame\n\
+ -nonrel                Use Sirocco in its old non-relativistic configuration, with linear Doppler shifts, etc., and where co-moving frame\n\
                         effects are not taken into account.\n\
- -sr_doppler_only       Use Python with full special relativity for Doppler shifts, etc., but do not include any co-moving frame\n\
+ -sr_doppler_only       Use Sirocco with full special relativity for Doppler shifts, etc., but do not include any co-moving frame\n\
                         effects.\n\
  -ignore_partial_cells  Ignore wind cells that are only partially filled by the wind (This is now the default)  \n\
  -include_partial_cells Include wind cells that are only partially filled by the wind   \n\

@@ -5,14 +5,14 @@
  * @date   April, 2018
  *
  * @brief  This file contains routines for allocating space for most
- * of the structures needed by Python.  These include 
+ * of the structures needed by Sirocco.  These include 
  * Wind and Plasma structures, and if using macro atoms, the
  * various structures rwquired for this.  The file also contains
  * a routine that maps grid cells in the wind to those in the 
  * Plasma structure, and vice versa.
  *
  *
- * The hierachy of stuctures that describe a model in Python 
+ * The hierachy of stuctures that describe a model in Sirocco 
  * are domains (which describe a region of the wind), wmain 
  * which contains basic information about the cells in each domain,
  * and plasmamain which contains more detailed information about
@@ -385,7 +385,7 @@ calloc_macro (nelem)
  * allocated in which the routine exits after an error message
  *
  * @details
- * To minimize the total amount of memory required by Python 
+ * To minimize the total amount of memory required by Sirocco 
  * in macromode, allocate memory for various arrays in macromain
  * which depend upon the number of ions which are treated as
  * macro atoms

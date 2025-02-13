@@ -3,13 +3,13 @@
  * @author ksl
  * @date   January, 2018
  *
- * @brief  Translate the keywords used in previous versions of Python to the current keywords
+ * @brief  Translate the keywords used in previous versions of Sirocco to the current keywords
  *
- * The input variable used in Python have evolved over time.  The routine provided hre
+ * The input variable used in Sirocco have evolved over time.  The routine provided hre
  * is intened to make it possible to associte a new keyword with one that was used in
- * an earlier version of Python.  As long as the keyword has simply been renamed then one
+ * an earlier version of Sirocco.  As long as the keyword has simply been renamed then one
  * can use a synomym to allow one to extact information from the old parameter file and translate
- * it so, one can use an old parmeter file with a new version of Python.
+ * it so, one can use an old parmeter file with a new version of Sirocco.
  *
  * It is important to note that this process cannot continue indefinitely because , one may want
  * to change keyword/parameters so that they are not simple rplacements.
@@ -217,7 +217,7 @@ are_synonym_lists_valid ()
  *   is an old version of the question being asked
  *
  * @param [in] char  new_question[]   The currnt keyword
- * @param [in] char  old_question[]   The keyword in an earlier version of Python
+ * @param [in] char  old_question[]   The keyword in an earlier version of Sirocco
  * @return  1 if the input line question is a synonym for
  *   the question we're trying to ask, else 0.
  *

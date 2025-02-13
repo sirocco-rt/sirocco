@@ -8,7 +8,7 @@
  * randomly oriented vectors
  *
  * These routines should be kept SEPARATE from routines that 
- * require the Python specific
+ * require the Sirocco specific
  * structures in sirocco.h so that it is possible to test 
  * them more easily.
  *

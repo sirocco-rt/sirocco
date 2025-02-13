@@ -10,8 +10,8 @@
  *
  * ### Notes ###
  *
- * The routines contained here are central to Python, and anyone
- * who wants to understand Python in general should spend time
+ * The routines contained here are central to Sirocco, and anyone
+ * who wants to understand Sirocco in general should spend time
  * understanding how they work
  *
  * There are two basic options associated with the routines.

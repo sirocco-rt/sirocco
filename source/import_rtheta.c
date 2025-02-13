@@ -64,7 +64,7 @@
  * Guard cells are required at the outer boundaries. 
  *
  * This routine assumes the same conventions as used elsewhere
- * in Python, that is that the positions and velocities are given
+ * in Sirocco, that is that the positions and velocities are given
  * at the edges of a cell, but that rho is given at the center.
  *
  **********************************************************/
@@ -286,7 +286,7 @@ import_rtheta_setup_boundaries (int ndom)
        * Now we need to check if this cell is within the currently set boundaries.
        * If it is not, then we must update the boundaries to accommodate these
        * cells as they have been marked inwind, and hence should be inwind when
-       * read into Python.
+       * read into Sirocco.
        */
 
       if (x_outer_next > rho_max)
@@ -458,7 +458,7 @@ rtheta_make_grid_import (w, ndom)
  *  way to do this.  
  *  
  *  This is consistent with the way velocities
- *  are treated throughout Python.
+ *  are treated throughout Sirocco.
  *
  **********************************************************/
 

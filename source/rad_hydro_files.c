@@ -55,7 +55,7 @@
  *
  * @param[in] int argc        The number of arguments in the command line
  * @param[in] char *argv[]    The command line arguments
- * @param[out] char root[]    The rootname of the Python simulation
+ * @param[out] char root[]    The rootname of the Sirocco simulation
  *
  * @return void
  *

@@ -5,7 +5,7 @@
  * @date   January, 2018
  *
  * @brief  This file contains main and various related routines
- * that are central to the operation of Python
+ * that are central to the operation of Sirocco
  *
  ***********************************************************/
 
@@ -26,7 +26,7 @@
 
 /**********************************************************/
 /**
- * @brief     The main routine for Python, which supervises the ingest of data defining a model, the initializtion
+ * @brief     The main routine for Sirocco, which supervises the ingest of data defining a model, the initializtion
  * of the model, and actual run of the model, and writing the data to the disk
  *
  *
@@ -38,9 +38,9 @@
  *
  * ### Notes ###
  *
- * The main routine of Python is fairly simple conceptually.  One gather the data, one allocates and intializes
+ * The main routine of Sirocco is fairly simple conceptually.  One gather the data, one allocates and intializes
  * all of the data structures, one runs the ionization cycles and one run the detalied spectral cycles.
- * The main ruoutin of Python supervises all of these things
+ * The main ruoutin of Sirocco supervises all of these things
  *
  * The main routine is complicated (mainly) due to the multiple ways a model can be run.
  *
@@ -50,7 +50,7 @@
  *  from the old model)
  *
  *  Additionally, there is logic associated with the fact that different types of models require different data.  An AGN for example does
- *  not have (the possibility of) a secondary star.  Most of the inputs from Python come from a parameter file, but Python also has a robust
+ *  not have (the possibility of) a secondary star.  Most of the inputs from Sirocco come from a parameter file, but Sirocco also has a robust
  *  set of command line switches (See parse_command_line).
  *
  *  Once all the inputs are obtained, the main routine calles routines to allocate data structures needed  to hold the model and to complete
@@ -153,7 +153,7 @@ main (argc, argv)
 
   /* Start logging of errors and comments */
 
-  Log ("!!Python Version %s \n", VERSION);      //54f -- ksl -- Now read from version.h
+  Log ("!!Sirocco Version %s \n", VERSION);      //54f -- ksl -- Now read from version.h
   Log ("!!Git commit hash %s\n", GIT_COMMIT_HASH);
 
   /* warn the user if there are uncommited changes */
@@ -162,7 +162,7 @@ main (argc, argv)
   if (git_diff_status > 0)
     Log ("!!Git: This version was compiled with %i files with uncommitted changes.\n", git_diff_status);
 
-  Log ("!!Python is running with %d processors\n", np_mpi_global);
+  Log ("!!Sirocco is running with %d processors\n", np_mpi_global);
   Log ("This is MPI task number %d (a total of %d tasks are running).\n", rank_global, np_mpi_global);
 
   Debug ("Debug statements are on. To turn off use lower verbosity (< 5).\n");
@@ -557,7 +557,7 @@ main (argc, argv)
 
   if (rdpar_check ())
   {
-    Log ("Some of the input have not been updated for the current version of Python.  Please correct and rerun\n");
+    Log ("Some of the input have not been updated for the current version of Sirocco.  Please correct and rerun\n");
     exit (0);
   }
 
@@ -645,7 +645,11 @@ main (argc, argv)
 
 
   disk_init (geo.disk_rad_min, geo.disk_rad_max, geo.mstar, geo.disk_mdot, freqmin, freqmax, 0, &geo.f_disk);
-  qdisk_init (geo.disk_rad_min, geo.disk_rad_max, geo.mstar, geo.disk_mdot);
+
+  /* we should not call qdisk_init if we are restarting, see #1134 */
+  if (geo.run_type != RUN_TYPE_RESTART)
+    qdisk_init (geo.disk_rad_min, geo.disk_rad_max, geo.mstar, geo.disk_mdot);
+
   xsignal (files.root, "%-20s Finished initialization for %s\n", "NOK", files.root);
   check_time (files.root);
 

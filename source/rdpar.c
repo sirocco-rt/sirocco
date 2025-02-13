@@ -77,7 +77,7 @@
  *  	parameter to a line in the structure from which it gets the parameter value.
  *  	The keywords can be in any order but once a line has been used, it is not
  *  	reused.  There can be multiple lines with the same keyword, as for example
- *  	is the case in Python when one wants to extract spectra from multiple angles
+ *  	is the case in Sirocco when one wants to extract spectra from multiple angles
  *  	
  *  	In noninteractive mode, if the second string in the file is "$" (or 
  *  	there is no second string, it will
@@ -1402,7 +1402,7 @@ rdchoice (question, answers, answer)
  * @return  0  
  *
  * Bascially the point of this is just to get a base or root name
- * for various files produced by Python.
+ * for various files produced by Sirocco.
  *
  * ###Notes###
  *
@@ -1491,7 +1491,7 @@ rdpar_set_mpi_rank (rank)
  *
  * ###Notes###
  *
- * In writing to log files, Python allows one to control the
+ * In writing to log files, Sirocco allows one to control the
  * amount of information which is wrtten out by defining a verbosity
  * level.  The rdpar routines (because they are intended to be
  * useful in other applications), have their own verbosity 

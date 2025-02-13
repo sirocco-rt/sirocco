@@ -8,7 +8,7 @@
  *
  * ### Notes ###
  *
- * Because the input and setup of Python is relatively complex,
+ * Because the input and setup of Sirocco is relatively complex,
  * we have over time moved much of this out of main into
  * subroutines, and we have generally tried to collect
  * related portion of the initialization into different setup
@@ -42,7 +42,7 @@
  *
  * ### Notes ###
  *
- * In general, cgs units are the working units for Python.  Thus all
+ * In general, cgs units are the working units for Sirocco.  Thus all
  * intialization should be converted to these units.
  *
  * @bug Currently init_geo is set up for CVs and Stars and not AGN.  We now
@@ -656,7 +656,7 @@ init_photons ()
   photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
   /* If the number of photons per cycle is changed, NPHOT can be less, so we define NPHOT_MAX
    * to the maximum number of photons that one can create.  NPHOT is used extensively with
-   * Python.  It is the NPHOT in a particular cycle, in a given thread.
+   * Sirocco.  It is the NPHOT in a particular cycle, in a given thread.
    */
 
   NPHOT_MAX = NPHOT;
@@ -923,8 +923,8 @@ setup_atomic_data (const char *atomic_filename)
 
   /*
    * Check that geo.atomic_filename exists - i.e. that the directory is readable
-   * and in the directory Python is being executed from. If it isn't - then
-   * try to run Setup_Sirocco_Dir. If both fail, then warn the user and exit Python
+   * and in the directory Sirocco is being executed from. If it isn't - then
+   * try to run Setup_Sirocco_Dir. If both fail, then warn the user and exit Sirocco
    */
 
   if (stat (atomic_filename, &file_stat))

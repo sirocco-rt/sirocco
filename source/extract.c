@@ -54,7 +54,7 @@
  * 	Pc/Pw=12 cos(theta)*(1+b cos(theta)/(3+2b) where b=1.5 corresponds to the
  * Eddington approximation.
  *
- * Usually, Python constructs a spectrum of all photons, but there are
+ * Usually, Sirocco constructs a spectrum of all photons, but there are
  * advanced options which allone to restrict the spectrum created to
  * those produced with a certain number of scatters or from photons
  * that arise from the above or below the disk.  extract enforces
@@ -432,7 +432,7 @@ extract (w, p, itype)
  *
  * ### Notes ###
  *
- * In Python, and in extract and transphot in particular, tau generally refers to the tau associated
+ * In Sirocco, and in extract and transphot in particular, tau generally refers to the tau associated
  * with scattering processes, and the weight contains the effect of dimunition of the energy of
  * the photon bundle due to pure absorption processes.  So, in extract, we add pp->w * exp(-tau)
  * to the spectrum.

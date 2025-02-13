@@ -459,7 +459,7 @@ spec_save (filename)
  *
  * ### Notes ###
  *
- * The first line of the file contains the Python version
+ * The first line of the file contains the Sirocco version
  * and the number of spectra to be read in
  * 
  * The program exits if the file does not exist
