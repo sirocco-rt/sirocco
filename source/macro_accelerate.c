@@ -808,7 +808,7 @@ f_kpkt_emit_accelerate (xplasma, freq_min, freq_max)
 
   /* JM 1511 -- Fix for issue 187. We need band limits for free free packet
      generation (see call to one_ff below) */
-  ff_freq_min = xband.f1[0];
+  ff_freq_min = 0.0;  // since #1128 the low frequency limit is always zero for free-free
   ff_freq_max = ALPHA_FF * xplasma->t_e / H_OVER_K;
 
   /* ksl This is a Bandaid for when the temperatures are very low */
@@ -887,30 +887,35 @@ f_kpkt_emit_accelerate (xplasma, freq_min, freq_max)
   /* consult issues #187, #492 regarding free-free */
   penorm += eprbs = mplasma->cooling_ff + mplasma->cooling_ff_lofreq;
 
-  total_ff_lofreq = total_free (xplasma, xplasma->t_e, 0, ff_freq_min);
+  //total_ff_lofreq = total_free (xplasma, xplasma->t_e, 0, ff_freq_min);
+  //total_ff = total_free (xplasma, xplasma->t_e, ff_freq_min, ff_freq_max);
   total_ff = total_free (xplasma, xplasma->t_e, ff_freq_min, ff_freq_max);
 
   /*
+   * Calculate the band-limited free-free luminosity by incrementing penorm_band. 
    * Do not increment penorm_band when the total free-free luminosity is zero
    */
+  if (total_ff > 0)
+    penorm_band += total_free (xplasma, xplasma->t_e, freq_min, freq_max) / total_ff * mplasma->cooling_ff;
 
-  if (freq_min > ff_freq_min)
-  {
-    if (total_ff > 0)
-      penorm_band += total_free (xplasma, xplasma->t_e, freq_min, freq_max) / total_ff * mplasma->cooling_ff;
-  }
-  else if (freq_max > ff_freq_min)
-  {
-    if (total_ff > 0)
-      penorm_band += total_free (xplasma, xplasma->t_e, ff_freq_min, freq_max) / total_ff * mplasma->cooling_ff;
-    if (total_ff_lofreq > 0)
-      penorm_band += total_free (xplasma, xplasma->t_e, freq_min, ff_freq_min) / total_ff_lofreq * mplasma->cooling_ff_lofreq;
-  }
-  else
-  {
-    if (total_ff_lofreq > 0)
-      penorm_band += total_free (xplasma, xplasma->t_e, freq_min, freq_max) / total_ff_lofreq * mplasma->cooling_ff_lofreq;
-  }
+  /* we used to have to do some extra stuff here due to low frequency free-free behaviour, see #1128 */
+  // if (freq_min > ff_freq_min)
+  // {
+  //   if (total_ff > 0)
+  //     penorm_band += total_free (xplasma, xplasma->t_e, freq_min, freq_max) / total_ff * mplasma->cooling_ff;
+  // }
+  // else if (freq_max > ff_freq_min)
+  // {
+  //   if (total_ff > 0)
+  //     penorm_band += total_free (xplasma, xplasma->t_e, ff_freq_min, freq_max) / total_ff * mplasma->cooling_ff;
+  //   if (total_ff_lofreq > 0)
+  //     penorm_band += total_free (xplasma, xplasma->t_e, freq_min, ff_freq_min) / total_ff_lofreq * mplasma->cooling_ff_lofreq;
+  // }
+  // else
+  // {
+  //   if (total_ff_lofreq > 0)
+  //     penorm_band += total_free (xplasma, xplasma->t_e, freq_min, freq_max) / total_ff_lofreq * mplasma->cooling_ff_lofreq;
+  // }
 
   penorm += eprbs = mplasma->cooling_adiabatic;
 
