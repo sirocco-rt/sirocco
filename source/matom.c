@@ -1185,7 +1185,7 @@ fake_matom_bb (p, nres, escape)
      The relative rates are then given by
      Einstein-A * escape probability  for radiative deactivations  and
      Collision de-excitation rate coeff. * electron density for where
-     The extra factor of (1 - exp (-h nu / k T)) is explained in KSL's notes on Python. It appears because we are
+     The extra factor of (1 - exp (-h nu / k T)) is explained in KSL's notes on Sirocco. It appears because we are
      using the "scattering fraction" formalism for simple ions.
 
    */

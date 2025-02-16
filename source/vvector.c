@@ -7,7 +7,7 @@
  *
  * @brief      A series of subroutines designed to carry out common 3 vector operations
  * 		
- * These routines should be kept SEPARATE from routines that require the Python specific
+ * These routines should be kept SEPARATE from routines that require the Sirocco specific
  * structures in sirocco.h
  *
  * Many of the simpler routines are intened to simplify the code, and are not complicated.

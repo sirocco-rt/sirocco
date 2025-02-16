@@ -26,7 +26,7 @@
  *
  * @details
  *  This is a totally uncommented routine for use 
- *  with Python to perform some specific diagnostic 
+ *  with Sirocco to perform some specific diagnostic 
  *  test
  *
  * ### Notes ###

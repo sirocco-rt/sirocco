@@ -361,8 +361,8 @@ create_plasma_grid (void)
  *
  * This function will create the coordinate grid depending on the type of the
  * wind or the coordinate type. For the imported, shell and hydro wind types,
- * Python has special functions to make the coordinate grid. For all other wind
- * types, Python uses a more generic approach to create the coordinate grid.
+ * Sirocco has special functions to make the coordinate grid. For all other wind
+ * types, Sirocco uses a more generic approach to create the coordinate grid.
  *
  **********************************************************/
 

@@ -380,7 +380,7 @@ bb_estimators_increment (one, p, tau_sobolev, dvds, nn)
  * next iteration.
  *
  * It is performed as part of the wind update stage
- * of Python. The estimators should only be changed during the ionisation
+ * of Sirocco. The estimators should only be changed during the ionisation
  * cycles - after that they should be fixed.
  * It also now computes the bf heating rate using the normalised
  * estimators. heat_tot and heat_photo are incremented but nothing else
@@ -691,7 +691,7 @@ total_bb_cooling (xplasma, t_e)
     {                           //It's a simple line - don't know the level populations
       // - just use a two-level-atom approach
 
-      //The cooling rate is computed using the scattering probability formalism in KSL's notes on Python.
+      //The cooling rate is computed using the scattering probability formalism in KSL's notes on Sirocco.
 
       two_level_atom (line_ptr, xplasma, &lower_density, &upper_density);
       coll_rate = q21 (line_ptr, t_e) * xplasma->ne * (1. - exp (-H_OVER_K * line_ptr->freq / t_e));
@@ -838,7 +838,7 @@ macro_bf_heating (xplasma, t_e)
  * calculations for the radiative excitation rate. This (energy) excitation
  * rate is multiplied by the destruction probability to get the heating. 
  * The destruction probability is obtained following the discussion in KSL's notes
- * on Python.
+ * on Sirocco.
  *
  **********************************************************/
 
