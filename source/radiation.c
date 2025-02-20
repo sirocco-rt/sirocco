@@ -734,6 +734,11 @@ pop_kappa_ff_array ()
   double gsqrd, gaunt, sum;
   int i, j;
 
+  if (gaunt_n_gsqrd == 0)
+  {
+    return (0);
+  }
+
 
   for (i = 0; i < NPLASMA; i++)
   {

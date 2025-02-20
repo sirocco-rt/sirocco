@@ -146,6 +146,20 @@ calculate_ionization (restart_stat)
 
     geo.n_ioniz = 0.0;
     geo.cool_tot_ioniz = 0.0;
+    geo.lum_star_back = 0;
+    geo.lum_disk_back = 0;
+
+
+    /* kbf_need determines how many & which bf processes one needs to consider. 
+     * It has to be recalculated evey time one changes
+     * freqmin and freqmax or ion densities.  pop_kappa_ff also deppends on
+     * the densities; it immmediately returns of associated data is not read in
+     */
+
+    kbf_need (freqmin, freqmax);
+    pop_kappa_ff_array ();
+
+
 
     if (!geo.wind_radiation || (geo.wcycle == 0 && geo.run_type != RUN_TYPE_PREVIOUS))
       iwind = -1;               /* Do not generate photons from wind */
@@ -183,13 +197,7 @@ calculate_ionization (restart_stat)
     define_phot (p, freqmin, freqmax, nphot_to_define, CYCLE_IONIZ, iwind, 1);
     photon_checks (p, freqmin, freqmax, "Check before transport");
 
-    /* Zero the arrays, and other variables that need to be zeroed after the photons are generated. */
-
-
-    geo.lum_star_back = 0;
-    geo.lum_disk_back = 0;
-
-    /* Prepare qdisk for recording photon pages */
+    /* Prepare qdisk for recording photon pages; recoords where photons were created on disk */
     qdisk_reinit (p);
 
 
@@ -203,20 +211,13 @@ calculate_ionization (restart_stat)
     Log ("!!sirocco: Total photon luminosity before transphot %18.12e\n", zz);
     Log_flush ();
 
-    /* kbf_need determines how many & which bf processes one needs to considere.  It was introduced
-     * as a way to speed up the program.  It has to be recalculated evey time one changes
-     * freqmin and freqmax
-     */
-
-    kbf_need (freqmin, freqmax);
-
-    /* NSH 22/10/12  This next call populates the prefactor for free free heating for each cell in the plasma array */
-    /* NSH 4/12/12  Changed so it is only called if we have read in gsqrd data */
-    if (gaunt_n_gsqrd > 0)
-      pop_kappa_ff_array ();
-
     /* Transport the photons through the wind */
     trans_phot (w, p, FALSE);
+
+    photon_checks (p, freqmin, freqmax, "Check after transport");
+    spectrum_create (p, geo.nangles, geo.select_extract);
+    Log ("!!sirocco: Number of ionizing photons %g lum of ionizing photons %g\n", geo.n_ioniz, geo.cool_tot_ioniz);
+
 
     /* Determine how much energy was absorbed in the wind. first zero counters. 
        There are counters for total energy absorbed and for each entry in the istat enum,
@@ -298,11 +299,6 @@ calculate_ionization (restart_stat)
          z_abs[P_ERROR] + z_abs[P_ERROR_MATOM] + z_abs[P_REPOSITION_ERROR]);
     if (geo.binary == TRUE)
       Log ("!!sirocco: luminosity lost by hitting the secondary %18.12e \n", z_abs[P_SEC]);
-
-
-    photon_checks (p, freqmin, freqmax, "Check after transport");
-    spectrum_create (p, geo.nangles, geo.select_extract);
-    Log ("!!sirocco: Number of ionizing photons %g lum of ionizing photons %g\n", geo.n_ioniz, geo.cool_tot_ioniz);
 
 
 #ifdef MPI_ON
