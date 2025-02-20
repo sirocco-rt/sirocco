@@ -361,8 +361,6 @@ int invert_matrix(double *matrix, double *inverted_matrix, int num_rows);
 /* matrix_ion.c */
 int matrix_ion_populations(PlasmaPtr xplasma, int mode);
 int populate_ion_rate_matrix(double rate_matrix[nions][nions], double pi_rates[nions], double inner_rates[n_inner_tot], double rr_rates[nions], double b_temp[nions], double xne, double nh1, double nh2);
-/* matrix_ion2.c */
-int matrix_ion_populations2(PlasmaPtr xplasma, int mode);
 /* models_extern_init.c */
 /* para_update.c */
 int get_parallel_nrange(int rank, int ntotal, int nproc, int *my_nmin, int *my_nmax);
@@ -537,6 +535,8 @@ int rtheta_is_cell_in_wind(int n);
 /* run.c */
 int calculate_ionization(int restart_stat);
 int make_spectra(int restart_stat);
+int stats_phot_pre(PhotPtr p, int nphot);
+int stats_phot_post(PhotPtr p, int nphot);
 /* saha.c */
 int nebular_concentrations(PlasmaPtr xplasma, int mode);
 int concentrations(PlasmaPtr xplasma, int mode);

@@ -48,10 +48,6 @@ int
 calculate_ionization (restart_stat)
      int restart_stat;
 {
-  int nn;
-  double zz, z_abs_all, z_abs_all_orig, z_orig[N_ISTAT], z_abs[N_ISTAT], z_else, z_else_orig;
-  double radiated[20], radiated_orig[20];
-  int nphot_istat[N_ISTAT];
   WindPtr w;
   PhotPtr p;
 
@@ -199,16 +195,8 @@ calculate_ionization (restart_stat)
 
     /* Prepare qdisk for recording photon pages; recoords where photons were created on disk */
     qdisk_reinit (p);
+    stats_phot_pre (p, NPHOT);
 
-
-
-    zz = 0.0;
-    for (nn = 0; nn < NPHOT; nn++)
-    {
-      zz += p[nn].w;
-    }
-
-    Log ("!!sirocco: Total photon luminosity before transphot %18.12e\n", zz);
     Log_flush ();
 
     /* Transport the photons through the wind */
@@ -218,87 +206,7 @@ calculate_ionization (restart_stat)
     spectrum_create (p, geo.nangles, geo.select_extract);
     Log ("!!sirocco: Number of ionizing photons %g lum of ionizing photons %g\n", geo.n_ioniz, geo.cool_tot_ioniz);
 
-
-    /* Determine how much energy was absorbed in the wind. first zero counters. 
-       There are counters for total energy absorbed and for each entry in the istat enum,
-       The second loop is for the energy radiated (i.e. that actually escapes) */
-    z_abs_all = z_else = z_abs_all_orig = z_else_orig = 0.0;
-    for (nn = 0; nn < N_ISTAT; nn++)
-    {
-      z_abs[nn] = 0.0;
-      z_orig[nn] = 0.0;
-      nphot_istat[nn] = 0;
-    }
-    for (nn = 0; nn < 20; nn++)
-    {
-      radiated[nn] = 0.0;
-      radiated_orig[nn] = 0.0;
-    }
-
-    /* loop over the different photon istats to determine where the luminosity went */
-    for (nn = 0; nn < NPHOT; nn++)
-    {
-
-      z_abs_all += p[nn].w;
-      z_abs_all_orig += p[nn].w_orig;
-
-      /* we want the istat to be >1 (not P_SCAT or P_INWIND) */
-      if (p[nn].istat < N_ISTAT)
-      {
-        z_abs[p[nn].istat] += p[nn].w;
-        z_orig[p[nn].istat] += p[nn].w_orig;
-        nphot_istat[p[nn].istat]++;
-      }
-      if (p[nn].istat == P_ESCAPE)
-      {
-        radiated[p[nn].origin] += p[nn].w;
-        radiated_orig[p[nn].origin] += p[nn].w_orig;
-      }
-      else
-      {
-        z_else += p[nn].w;
-        z_else_orig += p[nn].w_orig;
-      }
-    }
-
-    for (nn = 0; nn < N_ISTAT; nn++)
-    {
-      Log ("XXX stat %8d     %8d      %12.3e    %12.3e\n", nn, nphot_istat[nn], z_abs[nn], z_orig[nn]);
-    }
-    for (nn = 0; nn < 20; nn++)
-    {
-      Log ("XXX rad %8d     %12.3e    %12.3e\n", nn, radiated[nn], radiated_orig[nn]);
-    }
-    Log ("XXX  rad  abs_all  %12.3e    %12.3e\n", z_abs_all, z_abs_all_orig);
-    Log ("XXX  rad  else  l  %12.3e    %12.3e\n", z_else, z_else_orig);
-
-    Log
-      ("!!sirocco: luminosity (radiated or lost) after transphot %18.12e (absorbed or lost  %18.12e  %18.12e). \n",
-       z_abs_all, z_abs_all - zz, z_abs_all - z_abs_all_orig);
-    Log ("\n");
-    Log ("!!sirocco:  luminosity escaping                          %18.12e\n", z_abs[P_ESCAPE]);
-    Log ("!!sirocco: stellar photon luminosity escaping            %18.12e \n", radiated[PTYPE_STAR] + radiated[PTYPE_STAR_MATOM]);
-    Log ("!!sirocco: boundary layer photon luminosity escaping     %18.12e \n", radiated[PTYPE_BL] + radiated[PTYPE_BL_MATOM]);
-    Log ("!!sirocco: disk photon luminosity escaping               %18.12e \n", radiated[PTYPE_DISK] + radiated[PTYPE_DISK_MATOM]);
-    Log ("!!sirocco: wind photon luminosity escaping               %18.12e \n", radiated[PTYPE_WIND] + radiated[PTYPE_WIND_MATOM]);
-    Log ("!!sirocco: agn photon luminosity escaping                %18.12e \n", radiated[PTYPE_AGN] + radiated[PTYPE_AGN_MATOM]);
-    Log ("!!sirocco: luminosity lost by any process                %18.12e \n", z_else);
-    Log ("\n");
-    Log ("!!sirocco: luminosity lost by being completely absorbed  %18.12e \n", z_abs[P_ABSORB]);
-    Log ("!!sirocco: luminosity lost by too many scatters          %18.12e \n", z_abs[P_TOO_MANY_SCATTERS]);
-    Log ("!!sirocco: luminosity lost by hitting the central object %18.12e \n", z_abs[P_HIT_STAR]);
-    Log ("!!sirocco: luminosity lost by hitting the disk           %18.12e \n", z_abs[P_HIT_DISK]);
-    if (geo.rt_mode == RT_MODE_MACRO)
-    {
-      Log ("!!sirocco: luminosity lost by adiabatic kpkt destruction %18.12e number of packets %d\n", z_abs[P_ADIABATIC],
-           nphot_istat[P_ADIABATIC]);
-      Log ("!!sirocco: luminosity lost to low-frequency free-free    %18.12e number of packets %d\n", z_abs[P_LOFREQ_FF],
-           nphot_istat[P_LOFREQ_FF]);
-    }
-    Log ("!!sirocco: luminosity lost by errors                     %18.12e \n",
-         z_abs[P_ERROR] + z_abs[P_ERROR_MATOM] + z_abs[P_REPOSITION_ERROR]);
-    if (geo.binary == TRUE)
-      Log ("!!sirocco: luminosity lost by hitting the secondary %18.12e \n", z_abs[P_SEC]);
+    stats_phot_post (p, NPHOT);
 
 
 #ifdef MPI_ON
@@ -671,4 +579,159 @@ make_spectra (restart_stat)
 #endif
 
   return EXIT_SUCCESS;
+}
+
+
+
+
+/**********************************************************/
+/**
+ * @brief      calculates some statistics about 
+ * the original photons
+ *
+ * @param [in] PhotPtr p                                                     
+ * @param [in] nphot   
+ * @return     Always returns EXIT_SUCCESS
+ *
+ * @details
+ *
+ * ### Notes ###
+ *
+ **********************************************************/
+
+int
+stats_phot_pre (p, nphot)
+     PhotPtr p;
+     int nphot;
+{
+  int nn;
+  double zz;
+
+  zz = 0.0;
+  for (nn = 0; nn < NPHOT; nn++)
+  {
+    zz += p[nn].w;
+  }
+  Log ("!!sirocco: Total photon luminosity before transphot %18.12e\n", zz);
+
+  return (0);
+
+}
+
+/**********************************************************/
+/**
+ * @brief      calculates some statistics about what 
+ *  happened during trasport to the original photons
+ *
+ * @param [in] PhotPtr p                                                     
+ * @param [in] nphot   
+ * @return     Always returns EXIT_SUCCESS
+ *
+ * @details
+ *
+ * ### Notes ###
+ *
+ **********************************************************/
+
+int
+stats_phot_post (p, nphot)
+     PhotPtr p;
+     int nphot;
+{
+  int nn;
+  double zz, z_abs_all, z_abs_all_orig, z_orig[N_ISTAT], z_abs[N_ISTAT], z_else, z_else_orig;
+  double radiated[20], radiated_orig[20];
+  int nphot_istat[N_ISTAT];
+
+  zz = 0.0;
+  for (nn = 0; nn < nphot; nn++)
+  {
+    zz += p[nn].w;
+  }
+
+  Log ("!!sirocco: Total photon luminosity after transphot %18.12e\n", zz);
+
+  /* Determine how much energy was absorbed in the wind. first zero counters. 
+     There are counters for total energy absorbed and for each entry in the istat enum,
+     The second loop is for the energy radiated (i.e. that actually escapes) */
+  z_abs_all = z_else = z_abs_all_orig = z_else_orig = 0.0;
+  for (nn = 0; nn < N_ISTAT; nn++)
+  {
+    z_abs[nn] = 0.0;
+    z_orig[nn] = 0.0;
+    nphot_istat[nn] = 0;
+  }
+  for (nn = 0; nn < 20; nn++)
+  {
+    radiated[nn] = 0.0;
+    radiated_orig[nn] = 0.0;
+  }
+
+  /* loop over the different photon istats to determine where the luminosity went */
+  for (nn = 0; nn < NPHOT; nn++)
+  {
+
+    z_abs_all += p[nn].w;
+    z_abs_all_orig += p[nn].w_orig;
+
+    /* we want the istat to be >1 (not P_SCAT or P_INWIND) */
+    if (p[nn].istat < N_ISTAT)
+    {
+      z_abs[p[nn].istat] += p[nn].w;
+      z_orig[p[nn].istat] += p[nn].w_orig;
+      nphot_istat[p[nn].istat]++;
+    }
+    if (p[nn].istat == P_ESCAPE)
+    {
+      radiated[p[nn].origin] += p[nn].w;
+      radiated_orig[p[nn].origin] += p[nn].w_orig;
+    }
+    else
+    {
+      z_else += p[nn].w;
+      z_else_orig += p[nn].w_orig;
+    }
+  }
+
+  for (nn = 0; nn < N_ISTAT; nn++)
+  {
+    Log ("XXX stat %8d     %8d      %12.3e    %12.3e\n", nn, nphot_istat[nn], z_abs[nn], z_orig[nn]);
+  }
+  for (nn = 0; nn < 20; nn++)
+  {
+    Log ("XXX rad %8d     %12.3e    %12.3e\n", nn, radiated[nn], radiated_orig[nn]);
+  }
+  Log ("XXX  rad  abs_all  %12.3e    %12.3e\n", z_abs_all, z_abs_all_orig);
+  Log ("XXX  rad  else  l  %12.3e    %12.3e\n", z_else, z_else_orig);
+
+  Log
+    ("!!sirocco: luminosity (radiated or lost) after transphot %18.12e (absorbed or lost  %18.12e  %18.12e). \n",
+     z_abs_all, z_abs_all - zz, z_abs_all - z_abs_all_orig);
+  Log ("\n");
+  Log ("!!sirocco:  luminosity escaping                          %18.12e\n", z_abs[P_ESCAPE]);
+  Log ("!!sirocco: stellar photon luminosity escaping            %18.12e \n", radiated[PTYPE_STAR] + radiated[PTYPE_STAR_MATOM]);
+  Log ("!!sirocco: boundary layer photon luminosity escaping     %18.12e \n", radiated[PTYPE_BL] + radiated[PTYPE_BL_MATOM]);
+  Log ("!!sirocco: disk photon luminosity escaping               %18.12e \n", radiated[PTYPE_DISK] + radiated[PTYPE_DISK_MATOM]);
+  Log ("!!sirocco: wind photon luminosity escaping               %18.12e \n", radiated[PTYPE_WIND] + radiated[PTYPE_WIND_MATOM]);
+  Log ("!!sirocco: agn photon luminosity escaping                %18.12e \n", radiated[PTYPE_AGN] + radiated[PTYPE_AGN_MATOM]);
+  Log ("!!sirocco: luminosity lost by any process                %18.12e \n", z_else);
+  Log ("\n");
+  Log ("!!sirocco: luminosity lost by being completely absorbed  %18.12e \n", z_abs[P_ABSORB]);
+  Log ("!!sirocco: luminosity lost by too many scatters          %18.12e \n", z_abs[P_TOO_MANY_SCATTERS]);
+  Log ("!!sirocco: luminosity lost by hitting the central object %18.12e \n", z_abs[P_HIT_STAR]);
+  Log ("!!sirocco: luminosity lost by hitting the disk           %18.12e \n", z_abs[P_HIT_DISK]);
+  if (geo.rt_mode == RT_MODE_MACRO)
+  {
+    Log ("!!sirocco: luminosity lost by adiabatic kpkt destruction %18.12e number of packets %d\n", z_abs[P_ADIABATIC],
+         nphot_istat[P_ADIABATIC]);
+    Log ("!!sirocco: luminosity lost to low-frequency free-free    %18.12e number of packets %d\n", z_abs[P_LOFREQ_FF],
+         nphot_istat[P_LOFREQ_FF]);
+  }
+  Log ("!!sirocco: luminosity lost by errors                     %18.12e \n",
+       z_abs[P_ERROR] + z_abs[P_ERROR_MATOM] + z_abs[P_REPOSITION_ERROR]);
+  if (geo.binary == TRUE)
+    Log ("!!sirocco: luminosity lost by hitting the secondary %18.12e \n", z_abs[P_SEC]);
+
+
+  return (0);
 }
