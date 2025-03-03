@@ -4,6 +4,11 @@
 .. automodule:: regression_plot
 
    
+   
+   
+
+   
+   
    .. rubric:: Functions
 
    .. autosummary::
@@ -17,3 +22,15 @@
       read_table
       xsmooth
    
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
