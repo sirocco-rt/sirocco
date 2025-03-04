@@ -792,7 +792,7 @@ f_kpkt_emit_accelerate (xplasma, freq_min, freq_max)
   double ff_freq_min, ff_freq_max;
   double eprbs, eprbs_band, penorm, penorm_band;
   double flast, fthresh, bf_int_full, bf_int_inrange;
-  double total_ff_lofreq, total_ff;
+  double total_ff;
 
   penorm = 0.0;
   penorm_band = 0.0;
@@ -808,7 +808,7 @@ f_kpkt_emit_accelerate (xplasma, freq_min, freq_max)
 
   /* JM 1511 -- Fix for issue 187. We need band limits for free free packet
      generation (see call to one_ff below) */
-  ff_freq_min = 0.0;  // since #1128 the low frequency limit is always zero for free-free
+  ff_freq_min = 0.0;            // since #1128 the low frequency limit is always zero for free-free
   ff_freq_max = ALPHA_FF * xplasma->t_e / H_OVER_K;
 
   /* ksl This is a Bandaid for when the temperatures are very low */

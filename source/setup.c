@@ -926,20 +926,20 @@ setup_atomic_data (const char *atomic_filename)
    * and in the directory Sirocco is being executed from. If it isn't - then
    * try to run Setup_Sirocco_Dir. If both fail, then warn the user and exit Sirocco
    */
+  if (rank_global == 0)
+  {
+    rc = system ("Setup_Sirocco_Dir");
+    if (rc)
+    {
+      Error ("Unable to open %s and run Setup_Sirocco_Dir\n", atomic_filename);
+      Exit (1);
+    }
+  }
 
   if (stat (atomic_filename, &file_stat))
   {
     Log ("Unable to open atomic masterfile %s\n", atomic_filename);
     Log ("Running Setup_Sirocco_Dir to try and fix the situation\n");
-    if (rank_global == 0)
-    {
-      rc = system ("Setup_Sirocco_Dir");
-      if (rc)
-      {
-        Error ("Unable to open %s and run Setup_Sirocco_Dir\n", atomic_filename);
-        Exit (1);
-      }
-    }
   }
 
   get_atomic_data ((char *) atomic_filename);

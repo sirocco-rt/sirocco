@@ -193,7 +193,6 @@ wind_read (filename)
   int n, m;
   char header[LINELENGTH];
   char version[LINELENGTH];
-  struct stat file_stat;        // Used to check the atomic data exists
 
   if ((fptr = fopen (filename, "r")) == NULL)
   {
@@ -213,13 +212,10 @@ wind_read (filename)
    * with macro atoms, especially but likely to be a good idea ovrall
    */
 
-  if (stat (geo.atomic_filename, &file_stat))
+  if (system ("Setup_Sirocco_Dir"))
   {
-    if (system ("Setup_Sirocco_Dir"))
-    {
-      Error ("Unable to open %s or create link for atomic data\n", geo.atomic_filename);
-      Exit (1);
-    }
+    Error ("Unable to open %s or create link for atomic data\n", geo.atomic_filename);
+    Exit (1);
   }
 
   get_atomic_data (geo.atomic_filename);
