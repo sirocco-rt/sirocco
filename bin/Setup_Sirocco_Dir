@@ -1,48 +1,39 @@
 #! /bin/bash
 
-# Please make sure your $SIROCCO path is set up to use this script
+
+
+# please make sure your $SIROCCO path is setup to use this script
 top=$SIROCCO
 xdata=xdata
 xmod=xmod
 zdata=zdata
 
-# Function to check if a directory exists, is NOT a symlink, and contains files
-check_and_warn() {
-    if [ -d "$1" ] && [ ! -L "$1" ] && [ "$(ls -A "$1" 2>/dev/null)" ]; then
-        echo "Warning: $1 is a real directory and contains files. It will not be relinked."
-        return 1
-    fi
-    return 0
-}
-
-# Check and warn before attempting to remove directories (only if they are real directories with files)
-check_and_warn "data" || skip_data=true
-check_and_warn "xmod" || skip_xmod=true
-check_and_warn "zdata" || skip_zdata=true
-
-# Remove directories only if they are symlinks or empty directories
-if [ -z "$skip_data" ]; then
-    [ -L "data" ] || [ ! -d "data" ] && rm -rf data
+if [ -d "data" ]; then 
+    rm data
 fi
 
-if [ -z "$skip_xmod" ]; then
-    [ -L "xmod" ] || [ ! -d "xmod" ] && rm -rf xmod
+if [ -d "xmod" ]; then 
+    rm xmod
 fi
 
-if [ -z "$skip_zdata" ]; then
-    [ -L "zdata" ] || [ ! -d "zdata" ] && rm -rf zdata
+
+if [ -d "zdata" ]; then 
+    rm zdata
 fi
 
-# Create symbolic links only if target directories exist and were not skipped
-if [ ! -d "data" ] && [ -d "$top/$xdata" ]; then
+if [ -d "$top/$xdata" ]; then
     ln -s -f $top/$xdata data
 fi
 
-if [ ! -d "xmod" ] && [ -d "$top/$xmod" ]; then
+if [ -d "$top/$xmod" ]; then
     ln -s -f $top/$xmod xmod
 fi
 
-if [ ! -d "zdata" ] && [ -d "$top/$zdata" ]; then
+
+
+if [ -d "$top/$zdata" ]; then
     ln -s -f $top/$zdata zdata
 fi
+
+
 
