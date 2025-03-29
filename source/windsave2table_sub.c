@@ -261,44 +261,7 @@ create_master_table (ndom, rootname)
      * First assemble the header line
      */
 
-    sprintf (start, "%9s %9s %4s %6s %6s %9s %9s %9s ", "r", "rcen", "i", "inwind", "converge", "v_x", "v_y", "v_z");
-    strcpy (one_line, start);
-    n = 0;
-    while (n < ncols)
-    {
-      sprintf (one_value, "%9.9s ", column_name[n]);
-      strcat (one_line, one_value);
-
-      n++;
-    }
-    fprintf (fptr, "%s\n", one_line);
-
-
-    /* Now assemble the lines of the table */
-
-    for (i = 0; i < ndim2; i++)
-    {
-      //This line is different from the two d case
-      sprintf (start, "%9.3e %9.3e %4d %6d %8.0f %9.2e %9.2e %9.2e ",
-               wmain[nstart + i].r, wmain[nstart + i].rcen, i, wmain[nstart + i].inwind,
-               converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
-      strcpy (one_line, start);
-      n = 0;
-      while (n < ncols)
-      {
-        sprintf (one_value, "%9.2e ", c[n][i]);
-        strcat (one_line, one_value);
-        n++;
-      }
-      fprintf (fptr, "%s\n", one_line);
-    }
-  }
-  else if (zdom[ndom].coord_type == CYLIND)
-  {
-
-    /* First assemble the header line */
-
-    sprintf (start, "%8s %8s %8s %8s %4s %4s %6s %8s %9s %9s %9s ", "x", "z", "xcen", "zcen", "i", "j", "inwind", "converge", "v_x", "v_y",
+    sprintf (start, "%9s %9s %4s %5s %7s %6s %6s %9s %9s %9s ", "r", "rcen", "i", "nwind", "nplasma", "inwind", "converge", "v_x", "v_y",
              "v_z");
     strcpy (one_line, start);
     n = 0;
@@ -316,11 +279,10 @@ create_master_table (ndom, rootname)
 
     for (i = 0; i < ndim2; i++)
     {
-      wind_n_to_ij (ndom, nstart + i, &ii, &jj);
-      sprintf (start,
-               "%8.2e %8.2e %8.2e %8.2e %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
-               wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
-               jj, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
+      //This line is different from the two d case
+      sprintf (start, "%9.3e %9.3e %4d %5d %7d %6d %8.0f %9.2e %9.2e %9.2e ",
+               wmain[nstart + i].r, wmain[nstart + i].rcen, i, wmain[nstart + i].nwind, wmain[nstart + i].nplasma, wmain[nstart + i].inwind,
+               converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
@@ -332,13 +294,13 @@ create_master_table (ndom, rootname)
       fprintf (fptr, "%s\n", one_line);
     }
   }
-  else if (zdom[ndom].coord_type == RTHETA)
+  else if (zdom[ndom].coord_type == CYLIND)
   {
 
     /* First assemble the header line */
 
-    sprintf (start, "%8s %8s %8s %9s %8s %8s %8s %8s %4s %4s %6s %8s %9s %9s %9s ", "r", "theta", "r_cen", "theta_cen", "x", "z", "xcen",
-             "zcen", "i", "j", "inwind", "converge", "v_x", "v_y", "v_z");
+    sprintf (start, "%8s %8s %8s %8s %4s %4s %7s %7s %6s %8s %9s %9s %9s ", "x", "z", "xcen", "zcen", "i", "j", "nwind", "nplasma",
+             "inwind", "converge", "v_x", "v_y", "v_z");
     strcpy (one_line, start);
     n = 0;
     while (n < ncols)
@@ -357,10 +319,51 @@ create_master_table (ndom, rootname)
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
       sprintf (start,
-               "%8.2e %8.2e %8.2e %9.2e %8.2e %8.2e %8.2e %8.2e %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+               "%8.2e %8.2e %8.2e %8.2e %4d %4d %8d %6d %6d %8.0f %9.2e %9.2e %9.2e ",
+               wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
+               jj, wmain[nstart + i].nwind, wmain[nstart + i].nplasma, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0],
+               wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
+      strcpy (one_line, start);
+      n = 0;
+      while (n < ncols)
+      {
+        sprintf (one_value, "%9.2e ", c[n][i]);
+        strcat (one_line, one_value);
+        n++;
+      }
+      fprintf (fptr, "%s\n", one_line);
+    }
+  }
+  else if (zdom[ndom].coord_type == RTHETA)
+  {
+
+    /* First assemble the header line */
+
+    sprintf (start, "%8s %8s %8s %9s %8s %8s %8s %8s %4s %4s %7s %6s  %6s %8s %9s %9s %9s ", "r", "theta", "r_cen", "theta_cen", "x", "z",
+             "xcen", "zcen", "i", "j", "nwind", "iplasma", "inwind", "converge", "v_x", "v_y", "v_z");
+    strcpy (one_line, start);
+    n = 0;
+    while (n < ncols)
+    {
+      sprintf (one_value, "%9.9s ", column_name[n]);
+      strcat (one_line, one_value);
+
+      n++;
+    }
+    fprintf (fptr, "%s\n", one_line);
+
+
+    /* Now assemble the lines of the table */
+
+    for (i = 0; i < ndim2; i++)
+    {
+      wind_n_to_ij (ndom, nstart + i, &ii, &jj);
+      sprintf (start,
+               "%8.2e %8.2e %8.2e %9.2e %8.2e %8.2e %8.2e %8.2e %4d %4d %7d %7d %7d %8.0f %9.2e %9.2e %9.2e ",
                wmain[nstart + i].r, wmain[nstart + i].theta, wmain[nstart + i].rcen, wmain[nstart + i].thetacen,
                wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
-               jj, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
+               jj, wmain[nstart + i].nwind, wmain[nstart + i].nplasma, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0],
+               wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
