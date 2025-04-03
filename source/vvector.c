@@ -468,7 +468,7 @@ project_from_cyl_xyz (a, b, result)
 /** 
  * @brief      created an orthonomal basis from two vectors
  *
- * @param [in] double  u[]   the first of two vectors requiried to created a basis
+ * @param [in] double  u[]   the first of two vectors required to created a basis
  * @param [in] double  v[]   the second of two vectors needed to create a set of basis vectors
  * @param [out] struct basis *  basis_new   the new bais
  * @return   0  
@@ -479,6 +479,10 @@ project_from_cyl_xyz (a, b, result)
  *
  * ###Notes###
  *
+ * if u and v are parallel or anti-parallel, and error is issues,
+ * but the routine assumes then assumes  the v direction
+ * is unimportant, and creates an arbitrary vector  v that is
+ * used to create the basis
  *
  **********************************************************/
 
@@ -504,13 +508,32 @@ create_basis (u, v, basis_new)
     Log ("create_basis: v %e %e %e\n", v[0], v[1], v[2]);
     return (-1);
   }
-  if ((mu_x = dot (x, y)) > 1. - EPS)
+
+
+  mu_x = dot (x, y);
+  /* There are two bad possiblities, namely that mu_x is 1, or -1
+     in thiese two cases we need to one of the vectors to be different
+   */
+
+  if (fabs (mu_x) > 1. - EPS)
   {
-    Log ("Problem creating basis u,v parallel\n");
+    Log ("create_gasis: Problem creating basis u,v parallel\n");
     Log ("create_basis: u %e %e %e\n", u[0], u[1], u[2]);
     Log ("create_basis: v %e %e %e\n", v[0], v[1], v[2]);
-    return (-1);
+    Error ("create_basis: received two vectors which were parallel or anti-parallel\n");
+
+    y[1] += 0.5;
+    renorm (y, 1);
+    mu_x = dot (x, y);
+    if (fabs (mu_x) > 1. - EPS)
+    {
+      Error ("create_basis: Failed to fix problem with paralel vectors\n");
+      return (-1);
+    }
+
+
   }
+
   for (i = 0; i < 3; i++)
     y[i] -= mu_x * x[i];        /* y=y-dot(x,y)*x is orthogonal to x */
 

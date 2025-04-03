@@ -472,16 +472,30 @@ def doit(root='ixvel',outputfile='out.txt'):
     for one in complete_message:
         print(one)
 
-    xdim=how_many_dimensions('%s.master.txt' % root)
+    master_file='%s.master.txt' % root
+
+    if os.path.exists(master_file)==False:
+        master_file=master_file.replace('master','0.master')
+
+        try:
+            os.path.exists(master_file)
+            print('Warning: this run had multiple domains, reporting results for domain 0')
+        except:
+            print('Error: could not find master_file.txt')
+            return 
+
+
+    
+    xdim=how_many_dimensions(master_file)
 
     if xdim==2:
-        converge_plot=plot_wind.doit('%s.master.txt' % root,'converge',plot_dir='./diag_%s' % root)
-        te_plot=plot_wind.doit('%s.master.txt' % root,'t_e',plot_dir='./diag_%s' % root)
-        tr_plot=plot_wind.doit('%s.master.txt' % root,'t_r',plot_dir='./diag_%s' % root)
+        converge_plot=plot_wind.doit(master_file,'converge',plot_dir='./diag_%s' % root)
+        te_plot=plot_wind.doit(master_file,'t_e',plot_dir='./diag_%s' % root)
+        tr_plot=plot_wind.doit(master_file,'t_r',plot_dir='./diag_%s' % root)
     else:
-        converge_plot=plot_wind_1d.doit('%s.master.txt' % root,'converge',plot_dir='./diag_%s' % root)
-        te_plot=plot_wind_1d.doit('%s.master.txt' % root,'t_e',plot_dir='./diag_%s' % root)
-        tr_plot=plot_wind_1d.doit('%s.master.txt' % root,'t_r',plot_dir='./diag_%s' % root)
+        converge_plot=plot_wind_1d.doit(master_file,'converge',plot_dir='./diag_%s' % root)
+        te_plot=plot_wind_1d.doit(master_file,'t_e',plot_dir='./diag_%s' % root)
+        tr_plot=plot_wind_1d.doit(master_file,'t_r',plot_dir='./diag_%s' % root)
 
 
     converged,converging,t_r,t_e,hc=read_diag(root)

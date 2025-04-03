@@ -244,17 +244,18 @@ write_spectra_model_table (fitsfile *fptr)
   int i, j, k;
   int num_rows, num_cols;
   int nbands;
-  int *ichoice, *iplasma, *iband, *nxtot;
+  int *ichoice, *iplasma, *iwind, *iband, *nxtot;
   float *exp_w, *exp_temp, *pl_log_w, *pl_alpha;
 
   nbands = geo.nxfreq;
   num_rows = nbands * NPLASMA;
   printf ("xtest %d %d\n", nbands, NPLASMA);
-  num_cols = 8;                 // for now
+  num_cols = 9;                 // for now
   char *table_name = "spec_model";
 
   ichoice = calloc (num_rows, sizeof (int *));
   iplasma = calloc (num_rows, sizeof (int *));
+  iwind = calloc (num_rows, sizeof (int *));
   iband = calloc (num_rows, sizeof (int *));
   exp_w = calloc (num_rows, sizeof (float *));
   exp_temp = calloc (num_rows, sizeof (float *));
@@ -268,6 +269,7 @@ write_spectra_model_table (fitsfile *fptr)
     for (j = 0; j < nbands; j++)
     {
       iplasma[k] = i;
+      iwind[k] = plasmamain[i].nwind;
       iband[k] = j;
       ichoice[k] = plasmamain[i].spec_mod_type[j];
       exp_w[k] = plasmamain[i].exp_w[j];
@@ -283,9 +285,9 @@ write_spectra_model_table (fitsfile *fptr)
 
   int status = 0;
   // Define the names, formats, and units for each column
-  char *ttype[] = { "nplasma", "band", "spec_mod_type", "exp_w", "exp_temp", "pl_log_w", "pl_alpha", "nxtot" }; // Column names
-  char *tform[] = { "J", "J", "J", "E", "E", "E", "E", "J" };   // Formats: 'J' for integer, 'E' for float
-  char *tunit[] = { "", "", "", "", "", "", "", "" };   // Units
+  char *ttype[] = { "nplasma", "nwind", "band", "spec_mod_type", "exp_w", "exp_temp", "pl_log_w", "pl_alpha", "nxtot" };        // Column names
+  char *tform[] = { "J", "J", "J", "J", "E", "E", "E", "E", "J" };      // Formats: 'J' for integer, 'E' for float
+  char *tunit[] = { "", "", "", "", "", "", "", "", "" };       // Units
 
   // Create a new binary table extension
   if (fits_create_tbl (fptr, BINARY_TBL, num_rows, num_cols, ttype, tform, tunit, NULL, &status))
@@ -315,15 +317,23 @@ write_spectra_model_table (fitsfile *fptr)
   }
 
 
+  // Write the integer data to the first column
+  if (fits_write_col (fptr, TINT, 2, 1, 1, num_rows, iwind, &status))
+  {
+    fits_report_error (stderr, status);
+    return status;
+  }
+
+
   // Write the float data to the second column
-  if (fits_write_col (fptr, TINT, 2, 1, 1, num_rows, iband, &status))
+  if (fits_write_col (fptr, TINT, 3, 1, 1, num_rows, iband, &status))
   {
     fits_report_error (stderr, status);
     return status;
   }
 
   // Write the float data to the third  column
-  if (fits_write_col (fptr, TINT, 3, 1, 1, num_rows, ichoice, &status))
+  if (fits_write_col (fptr, TINT, 4, 1, 1, num_rows, ichoice, &status))
   {
     fits_report_error (stderr, status);
     return status;
@@ -331,7 +341,7 @@ write_spectra_model_table (fitsfile *fptr)
 
 
   // Write the float data to the fourth column
-  if (fits_write_col (fptr, TFLOAT, 4, 1, 1, num_rows, exp_w, &status))
+  if (fits_write_col (fptr, TFLOAT, 5, 1, 1, num_rows, exp_w, &status))
   {
     fits_report_error (stderr, status);
     return status;
@@ -340,7 +350,7 @@ write_spectra_model_table (fitsfile *fptr)
 
 
   // Write the float data to the fifth columnmn
-  if (fits_write_col (fptr, TFLOAT, 5, 1, 1, num_rows, exp_temp, &status))
+  if (fits_write_col (fptr, TFLOAT, 6, 1, 1, num_rows, exp_temp, &status))
   {
     fits_report_error (stderr, status);
     return status;
@@ -348,7 +358,7 @@ write_spectra_model_table (fitsfile *fptr)
 
 
   // Write the float data to the sixth  column
-  if (fits_write_col (fptr, TFLOAT, 6, 1, 1, num_rows, pl_log_w, &status))
+  if (fits_write_col (fptr, TFLOAT, 7, 1, 1, num_rows, pl_log_w, &status))
   {
     fits_report_error (stderr, status);
     return status;
@@ -356,14 +366,14 @@ write_spectra_model_table (fitsfile *fptr)
 
 
   // Write the float data to the seventh column
-  if (fits_write_col (fptr, TFLOAT, 7, 1, 1, num_rows, pl_alpha, &status))
+  if (fits_write_col (fptr, TFLOAT, 8, 1, 1, num_rows, pl_alpha, &status))
   {
     fits_report_error (stderr, status);
     return status;
   }
 
   // Write the integer data to the eightth column
-  if (fits_write_col (fptr, TINT, 8, 1, 1, num_rows, nxtot, &status))
+  if (fits_write_col (fptr, TINT, 9, 1, 1, num_rows, nxtot, &status))
   {
     fits_report_error (stderr, status);
     return status;
