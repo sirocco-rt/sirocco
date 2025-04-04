@@ -41,6 +41,8 @@ extern int rel_mode;                   /**< How doppler effects and co-moving fr
 
 extern int run_xtest;                  /**< Variable if TRUE causes a special test mode to be run */
 
+extern int xdev;                       /**< Variable if FALSE runs in a standard mode; if another number allows dev modes to execute */
+
 extern int NDIM2;                      /**< The total number of wind cells in wmain
                                          */
 extern int NPLASMA;                    /**< /The number of cells with non-zero volume or the size of plasma structure

@@ -176,7 +176,7 @@ parse_command_line (argc, argv)
       else if (strcmp (argv[i], "--version") == 0)
       {
         /* give information about the sirocco version, such as commit hash */
-        Log ("Sirocco Version %s \n", VERSION);  //54f -- ksl -- Now read from version.h
+        Log ("Sirocco Version %s \n", VERSION); //54f -- ksl -- Now read from version.h
         Log ("Built from git commit hash %s\n", GIT_COMMIT_HASH);
         /* warn the user if there are uncommited changes */
         int git_diff_status = GIT_DIFF_STATUS;
@@ -189,6 +189,12 @@ parse_command_line (argc, argv)
       {
         run_xtest = TRUE;
         Log ("Run xstest, usually instead of normal Sirocco.\n");
+        j = i;
+      }
+      else if (strcmp (argv[i], "-xdev") == 0)
+      {
+        xdev = TRUE;
+        Log ("Running with development switch turned on, instead of normal Sirocco.\n");
         j = i;
       }
       else if (strcmp (argv[i], "-include_partial_cells") == 0)
@@ -262,7 +268,7 @@ parse_command_line (argc, argv)
       else if (strcmp (argv[i], "--version") == 0)
       {
         /* give information about the pyhon version, such as commit hash */
-        Log ("Sirocco Version %s \n", VERSION);  //54f -- ksl -- Now read from version.h
+        Log ("Sirocco Version %s \n", VERSION); //54f -- ksl -- Now read from version.h
         Log ("Built from git commit hash %s\n", GIT_COMMIT_HASH);
         /* warn the user if there are uncommited changes */
         int git_diff_status = GIT_DIFF_STATUS;
@@ -352,7 +358,7 @@ help ()
 \n\
 This program simulates radiative transfer in a (biconical) CV, YSO, quasar, TDE or (spherical) stellar wind \n\
 \n\
-Usage:  py [-h] [-r] [-t time_max] [-v n] [--dry-run] [-i] [--version] [--rseed] [-p n_steps] [-nonrel] [-sr_doppler_only] xxx  or simply py \n\
+Usage:  sirocco [-h] [-r] [-t time_max] [-v n] [--dry-run] [-i] [--version] [--rseed] [-p n_steps] [-nonrel] [-sr_doppler_only] xxx  or simply sirocco \n\
 \n\
 where xxx is the rootname or full name of a parameter file, e. g. test.pf \n\
 \n\
@@ -397,7 +403,8 @@ These are largely diagnostic or for special cases. These include\n\
 \n\
  -xtest                 Instead of running sirocco, call the routine xtest so that one can diagnose issues associted with the \n\
                         setup.  This is only useful to devlopers \n\
-If one simply types py or pyZZ where ZZ is the version number, one is queried for a name \n\
+  -xdev                 Instead of running in the normal mode, run in a development mode being used for testing new options \n\
+If one simply types sirocco or sirroco-ZZ where ZZ is the version number, one is queried for a name \n\
 of the parameter file and inputs will be requested from the command line. \n\
 \n\
 \n\
