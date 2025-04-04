@@ -27,6 +27,8 @@ void skiplines(FILE *fptr, int nskip);
 int bands_init(int imode, struct xbands *band);
 int ion_bands_init(int mode, double freqmin, double freqmax, struct xbands *band);
 void check_appropriate_banding(struct xbands *band, int mode);
+/* bands_spec.c */
+void band_copy(void);
 /* bb.c */
 double planck(double t, double freqmin, double freqmax);
 double get_rand_pow(double x1, double x2, double alpha);
@@ -361,8 +363,6 @@ int invert_matrix(double *matrix, double *inverted_matrix, int num_rows);
 /* matrix_ion.c */
 int matrix_ion_populations(PlasmaPtr xplasma, int mode);
 int populate_ion_rate_matrix(double rate_matrix[nions][nions], double pi_rates[nions], double inner_rates[n_inner_tot], double rr_rates[nions], double b_temp[nions], double xne, double nh1, double nh2);
-/* matrix_ion2.c */
-int matrix_ion_populations2(PlasmaPtr xplasma, int mode);
 /* models_extern_init.c */
 /* para_update.c */
 int get_parallel_nrange(int rank, int ntotal, int nproc, int *my_nmin, int *my_nmax);

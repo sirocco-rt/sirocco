@@ -966,6 +966,16 @@ typedef struct plasma
   double j, ave_freq;           /**<  Mean (angle-averaged) total intensity, intensity-averaged frequency */
 
   /* Information related to spectral bands used for modelling */
+
+  double cell_spec_flux[NBINS_IN_CELL_SPEC];    /**< The array where the cell spectra are accumulated. */
+
+  /* ksl - for now this parallels the xband structure, but it is a bit unclear why two frequencies are needed */
+  int nbands;            /* The number of spectral bands for this cell */
+  double f1[NXBANDS+1]; /*Spectral band boundaries for this cell */
+  double f2[NXBANDS+1]; /*Spectral band boundaries for this cell */
+
+  /* The next section contains the results of chaacterizing the cell spectra */
+
   double xj[NXBANDS], xave_freq[NXBANDS];       /**<  Frequency limited versions of j and ave_freq */
   double fmin[NXBANDS], fmax[NXBANDS];         /**<  Minimum (Maximum) frequency photon observed in a band -
                                                  * this is incremented during photon flight */
@@ -992,7 +1002,6 @@ typedef struct plasma
   double exp_temp[NXBANDS];     /**<  The effective temperature of an exponential representation of the radiation field in a cell */
   double exp_w[NXBANDS];        /**<  The prefactor of an exponential representation of the radiation field in a cell */
 
-  double cell_spec_flux[NBINS_IN_CELL_SPEC];    /**< The array where the cell spectra are accumulated. */
 
 #define NFLUX_ANGLES 36 /**< The number of bins into which the directional flux is calculated */
 

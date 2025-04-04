@@ -153,7 +153,7 @@ main (argc, argv)
 
   /* Start logging of errors and comments */
 
-  Log ("!!Sirocco Version %s \n", VERSION);      //54f -- ksl -- Now read from version.h
+  Log ("!!Sirocco Version %s \n", VERSION);     //54f -- ksl -- Now read from version.h
   Log ("!!Git commit hash %s\n", GIT_COMMIT_HASH);
 
   /* warn the user if there are uncommited changes */
@@ -513,6 +513,8 @@ main (argc, argv)
   rdpar_comment ("Other parameters");
 
   bands_init (-1, &xband);
+  band_copy ();
+
   freqmin = xband.f1[0];
   freqmax = xband.f2[xband.nbands - 1];
 
