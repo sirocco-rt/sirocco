@@ -104,7 +104,7 @@ spectral_estimators (xplasma)
     if (xplasma->nxtot[n] <= 1) /* Catch the situation where there are only 1 or 0 photons in a band -
                                    we cannot reasonably try to model this situation */
     {
-      if (geo.xfreq[n] >= genmax || geo.xfreq[n + 1] <= genmin)
+      if (xplasma->f1[n] >= genmax || xplasma->f2[n] <= genmin)
       {
         /* The band is outside where photons were generated, so not very
            surprising that there are no photons - just generate a log */
@@ -152,18 +152,18 @@ spectral_estimators (xplasma)
          end of the band is 'surprisingly' empty then we wasume this is because absolutely
          no photons are here - its probably an edge so we should modify the model bands. */
 
-      dfreq = (geo.xfreq[n + 1] - geo.xfreq[n]) / sqrt (xplasma->nxtot[n]);     //This is a measure of the spacing between photons on average
-      if ((xplasma->fmin[n] - geo.xfreq[n]) < dfreq)    //If true, this check suggests that there are no edges
+      dfreq = (xplasma->f2[n] - xplasma->f1[n]) / sqrt (xplasma->nxtot[n]);     //This is a measure of the spacing between photons on average
+      if ((xplasma->fmin[n] - xplasma->f1[n]) < dfreq)  //If true, this check suggests that there are no edges
       {
-        spec_numin = geo.xfreq[n];      //Use the photon generation band edge to set the lower frequency band for the model
+        spec_numin = xplasma->f1[n];    //Use the photon generation band edge to set the lower frequency band for the model
       }
       else
       {
         spec_numin = xplasma->fmin[n];  //There may be an edge, use the lowest observed photon frequency for the lower nu band in the model
       }
-      if ((geo.xfreq[n + 1] - xplasma->fmax[n]) < dfreq)        //Repeat above but for upper band edge
+      if ((xplasma->f2[n] - xplasma->fmax[n]) < dfreq)  //Repeat above but for upper band edge
       {
-        spec_numax = geo.xfreq[n + 1];
+        spec_numax = xplasma->f2[n];
       }
       else
       {

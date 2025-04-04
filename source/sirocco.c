@@ -513,7 +513,6 @@ main (argc, argv)
   rdpar_comment ("Other parameters");
 
   bands_init (-1, &xband);
-  band_copy ();
 
   freqmin = xband.f1[0];
   freqmax = xband.f2[xband.nbands - 1];
@@ -609,6 +608,9 @@ main (argc, argv)
   {
     define_wind ();
   }
+
+  /* Now that the wind is defined we can copy th bands information */
+  band_copy ();
 
   Log ("DFUDGE set to %e based on geo.rmax\n", DFUDGE);
 

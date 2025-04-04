@@ -37,7 +37,7 @@
  * 
  * Increments the estimators that allow one to construct a crude
  * spectrum in each cell of the wind.  The frequency intervals
- * in which the spectra are constructed are in geo.xfreq. This information
+ * in which the spectra are constructed are defined for each Plasama element. This information
  * is used in different ways (or not at all) depending on the ionization mode.
  *
  * It also records the various parameters intended to describe the radiation field, 
@@ -126,9 +126,9 @@ update_banded_estimators (xplasma, p, ds, w_ave, ndom)
      as energy packets are indisivible in macro atom mode */
 
 
-  for (i = 0; i < geo.nxfreq; i++)
+  for (i = 0; i < xplasma->nbands; i++)
   {
-    if (geo.xfreq[i] < p->freq && p->freq <= geo.xfreq[i + 1])
+    if (xplasma->f1[i] < p->freq && p->freq <= xplasma->f2[i])
     {
       xplasma->xave_freq[i] += p->freq * w_ave * ds;    /* frequency weighted by weight and distance */
       xplasma->xsd_freq[i] += p->freq * p->freq * w_ave * ds;   /* input to allow standard deviation to be calculated */
@@ -616,7 +616,7 @@ normalise_simple_estimators (xplasma)
     {
       radiation_temperature = xplasma->t_r = PLANCK * xplasma->ave_freq / (BOLTZMANN * 3.832);
     }
-    else 
+    else
     {
       radiation_temperature = xplasma->t_r =
         estimate_temperature_from_mean_frequency (xplasma->ave_freq, xband.f1[0], xband.f2[xband.nbands - 1], radiation_temperature);
