@@ -573,6 +573,7 @@ struct geometry
 
   double cell_log_freq_min, cell_log_freq_max, cell_delta_lfreq;        /**< Parameters defining freqency intervals for cell spectra.
                                                                            These are defined as logarithmic frequency intervals */
+  double cell_freq[NBINS_IN_CELL_SPEC +1];  
 
 
   /* The next set pf variables assign a SPECTYPE (see above) for

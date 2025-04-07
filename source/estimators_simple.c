@@ -582,7 +582,7 @@ int
 normalise_simple_estimators (xplasma)
      PlasmaPtr xplasma;
 {
-  int i, nwind;
+  int i, j, nwind;
   double radiation_temperature, nh, wtest;
   double volume_obs, invariant_volume_time;
   double electron_density_obs;
@@ -647,10 +647,57 @@ normalise_simple_estimators (xplasma)
     xplasma->w = 0;
   }
 
+  /* Temporary location for constructing estimators from speectra */
+
+
+  if (xdev == TRUE)
+  {
+
+    j = 0;
+    for (i = 0; i < xplasma->nbands; i++)
+    {
+      xplasma->xave_freq[i] = 0;
+      xplasma->xsd_freq[i] = 0;
+      xplasma->xj[i] = 0;
+      xplasma->nxtot[i] = 0;
+      xplasma->fmin[i] = geo.cell_freq[NBINS_IN_CELL_SPEC];
+      xplasma->fmax[i] = geo.cell_freq[0];
+
+      while (geo.cell_freq[j] < xplasma->f2[i] && j < NBINS_IN_CELL_SPEC)
+      {
+        double ave_freq;
+        if (xplasma->cell_spec_flux[j] > 0)
+        {
+          ave_freq = 0.5 * (geo.cell_freq[j + 1] + geo.cell_freq[j]);
+          xplasma->xave_freq[i] += ave_freq * xplasma->cell_spec_flux[j];
+          xplasma->xsd_freq[i] += ave_freq * ave_freq * xplasma->cell_spec_flux[j];
+          xplasma->xj[i] += xplasma->cell_spec_flux[j];
+          xplasma->nxtot[i]++;
+          if (ave_freq < xplasma->fmin[i])
+          {
+            xplasma->fmin[i] = ave_freq;
+          }
+          if (ave_freq > xplasma->fmax[i])
+          {
+            xplasma->fmax[i] = ave_freq;
+          }
+        }
+        j++;
+      }
+
+    }
+
+  }
+
+
+
+
+  /* End of temporary work on constructing estimators */
+
   /* Normalize and otherwise complete the information gathered about the 
      coarse spectra used for generation of spectral models */
 
-  for (i = 0; i < geo.nxfreq; i++)
+  for (i = 0; i < xplasma->nbands; i++)
   {
     if (xplasma->nxtot[i] > 0)
     {
