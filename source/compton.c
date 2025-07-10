@@ -113,11 +113,11 @@ compton_scatter (p)
 
 
   lorentz_transform (p, p, velocity_electron);
-  if (modes.save_extract_photons)
-    save_photons (p, "BeforeC");
+//  if (modes.save_extract_photons)
+//    save_photons (p, "BeforeC");
   compton_dir (p);
-  if (modes.save_extract_photons)
-    save_photons (p, "AfterC");
+//  if (modes.save_extract_photons)
+//    save_photons (p, "AfterC");
   rescale (velocity_electron, -1, vel);
   lorentz_transform (p, p, vel);
 

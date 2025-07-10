@@ -402,6 +402,8 @@ extract (w, p, itype)
     }
 
     /* If one has reached this point, we extract the photon and increment the spectrum */
+    if (modes.save_extract_photons)
+      save_photons (&pp, "EXT_FIN");
 
 
     extract_one (w, &pp, n);
