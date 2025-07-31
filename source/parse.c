@@ -298,13 +298,13 @@ parse_command_line (argc, argv)
 
     sprintf (dummy, "_%02d.diag", rank_global);
 
-    sprintf (files.diag, "%.50s/%.50s%.50s", files.diagfolder, files.root, dummy);
+    sprintf (files.diag, "%.100s/%.100s%.100s", files.diagfolder, files.root, dummy);
 
     /* Also set the names for extra diagnostics in case these are needed. */
 
     sprintf (dummy, "_%02d.ext.txt", rank_global);
 
-    sprintf (files.extra, "%.50s%.50s", files.root, dummy);
+    sprintf (files.extra, "%.100s%.100s", files.root, dummy);
 
 
 
