@@ -1681,7 +1681,7 @@ struct filenames
   char tprofile[LINELENGTH];    /**< non standard tprofile fname */
   char phot[LINELENGTH];        /**< photfile e.g. sirocco.phot */
   char windrad[LINELENGTH];     /**< wind rad file */
-  char extra[LINELENGTH];       /**< extra diagnositcs file opened by init_extra_diagnostics */
+  char extra[LINELENGTH];       /**< extra diagnositics file opened by init_extra_diagnostics */
 };
 
 extern struct filenames files;
