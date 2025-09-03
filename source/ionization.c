@@ -125,6 +125,21 @@ ion_abundances (PlasmaPtr xplasma, int mode)
 
     convergence (xplasma);
   }
+  else if (mode == IONMODE_MATRIX_MULTISHOT)
+  {
+/*  This is a new development mode
+    spectral_estimators does the work of getting banded W and alpha. Then oneshot gets called. */
+
+    spectral_estimators (xplasma);
+    update_old_plasma_variables (xplasma);
+    int kkk;
+    for (kkk = 0; kkk < 10; kkk++)
+    {
+      ireturn = one_shot (xplasma, NEBULARMODE_MATRIX_SPECTRALMODEL);
+    }
+
+    convergence (xplasma);
+  }
   else
   {
     Error ("ion_abundances: Could not calculate abundances for mode %d\n", mode);
