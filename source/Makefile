@@ -263,8 +263,10 @@ table_objects = windsave2table.o $(sirocco_objects) # windsave2table_sub.o is al
 rhf_objects = rad_hydro_files.o $(sirocco_objects)
 modify_wind_objects = modify_wind.o $(sirocco_objects)
 inspect_wind_objects = inspect_wind.o $(sirocco_objects)
+inspect_wind_objects = inspect_wind.o $(sirocco_objects)
 sirocco_optd_obj = sirocco_optd.o sirocco_optd_output.o sirocco_optd_trans.o sirocco_optd_util.o sirocco_optd_extern_init.o $(sirocco_objects)
 windsave2fits_objects = windsave2fits.o $(sirocco_objects)
+test_cooling_objects = test_cooling.o $(sirocco_objects)
 
 run_indent:
 	../py_progs/run_indent.py -all_no_headers
@@ -303,6 +305,13 @@ inspect_wind: startup $(inspect_wind_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(inspect_wind_objects) $(CUDA_OBJECTS) $(LDFLAGS)  -o inspect_wind
 	cp $@ $(BIN)
 	mv $@ $(BIN)/inspect_wind-$(VERSION)
+	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
+
+
+test_cooling: startup $(test_cooling_objects) $(CUDA_OBJECTS)
+	$(CC) $(CFLAGS) $(test_cooling_objects) $(CUDA_OBJECTS) $(LDFLAGS)  -o test_cooling 
+	cp $@ $(BIN)
+	mv $@ $(BIN)/test_cooling-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 sirocco_optd: startup $(sirocco_optd_obj) $(CUDA_OBJECTS)
