@@ -919,6 +919,8 @@ typedef struct plasma
   double heat_ind_comp;         /**<  The induced compton heatingfor the cell */
   double heat_lines_macro, heat_photo_macro;    /**<  bb and bf heating due to macro atoms. Subset of heat_lines
                                                    and heat_photo. SS June 04. */
+  double cool_lines_macro, cool_bf_macro;    /**<  bb and bf cooling due to macro atoms. Subset of heat_lines
+                                                   and heat_photo. SS June 04. */
   double heat_photo, heat_z;    /**< photoionization heating total and of metals */
   double heat_auger;            /**<  photoionization heating due to inner shell ionizations */
   double heat_ch_ex;
