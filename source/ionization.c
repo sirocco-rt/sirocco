@@ -142,10 +142,12 @@ ion_abundances (PlasmaPtr xplasma, int mode)
   }
   else if (mode == IONMODE_MATRIX_MULTISHOT)
   {
+    spectral_estimators (xplasma);
+    update_old_plasma_variables (xplasma);
+    ireturn = xshot (xplasma, mode);
 
-    Error ("ion_abundances: Could not calculate abundances for mode %d\n yet", mode);
-    Exit (EXIT_FAILURE);
-    exit (EXIT_FAILURE);        // avoids compiler warnings about return being uninitialized
+    convergence (xplasma);
+
   }
   else
   {
@@ -376,6 +378,111 @@ check_convergence (void)
 
 /* An externall pointer reference used by zero_emit.  */
 PlasmaPtr xxxplasma;
+
+/**********************************************************/
+/**
+ * @brief      calculates new densities of ions in a single element of the wind
+ * 	after (usually) having found the
+ * 	temperature which matches heating and cooling for the previous
+ * 	densities
+ *
+ * @param [in,out] PlasmaPtr  xplasma   The plasma cell of interest
+ * @param [in] int  mode   A switch describing what ionization mode to use in determinging the
+ * densities
+ * @return     Always returns 0
+ *
+ * @details
+ * This routine attempts to match heating and cooling in the wind element!
+ * To do this it calls calc_te.  Based on the returned value of te, the
+ * routine then calculates densities for various ions in the cell.  The densities
+ * in xplasma are updated.
+ *
+ * ### Notes ###
+ *
+ *
+ * Special exceptions are made for Zeus; it is not clear why this is necessary
+ *
+ * Some of the complication in this routine reflects the fact that we have
+ * two sets of definitions, one for IONMODES and one for NEBULARMODES. 
+ * The later governs how the routine nebular_concentrations works.
+ *
+ **********************************************************/
+
+int
+xshot (PlasmaPtr xplasma, int mode)
+{
+  double te_old, te_new;
+  double gain;
+
+
+
+  gain = xplasma->gain;
+
+  te_old = xplasma->t_e;
+
+  if (modes.zeus_connect == TRUE || modes.fixed_temp == TRUE)
+  {
+    te_new = te_old;            //We don't want to change the temperature
+    xxxplasma = xplasma;
+    zero_emit (te_old);         //But we do still want to compute all heating and cooling rates
+  }
+  else                          //Find a new teperature where heating and cooling match
+  {
+    te_new = calc_te (xplasma, 0.7 * te_old, 1.3 * te_old);     //compute the new t_e - no limits on where it can go
+    xplasma->t_e = (1 - gain) * te_old + gain * te_new; /*Allow the temperature to move by a fraction gain towards
+                                                           the equilibrium temperature */
+
+    /* NSH 130722 - NOTE - at this stage, the cooling terms are still those computed from
+     * the 'ideal' t_e, not the new t_e - this may be worth investigatiing. */
+    if (xplasma->t_e > TMAX)    //check to see if we have maxed out the temperature.
+    {
+      xplasma->t_e = TMAX;
+    }
+    zero_emit (xplasma->t_e);   //Get the heating and cooling rates correctly for the new temperature
+  }
+
+
+
+/* Modes in the driving routines are not identical to those in nebular concentrations.
+The next lines are an attempt to mediate this problem.  It might be better internally
+at least to define a flag for using one shot, and have the modes take on the
+meaning in nebular concentrations.
+*/
+
+  if (mode == IONMODE_ML93)
+    mode = NEBULARMODE_ML93;    // This is weird, why not continue
+  else if (mode <= 1 || mode == 5 || mode > 10)
+  {
+    /* There is no mode 5 at present  - SIM + two new modes in Feb 2012  + mode 5 now removed */
+
+    Error ("one_shot: Sorry, Charlie, don't know how to process mode %d\n", mode);
+    Exit (0);
+  }
+
+  if (xplasma->t_r > 10.)
+  {                             /* Then modify to an on the spot approx */
+    if (nebular_concentrations (xplasma, mode))
+    {
+      Error ("ionization_on_the_spot: nebular_concentrations failed to converge\n");
+      Error ("ionization_on_the_spot: j %8.2e t_e %8.2e t_r %8.2e w %8.2e nphot %i\n", xplasma->j, xplasma->t_e, xplasma->t_r, xplasma->w,
+             xplasma->ntot);
+    }
+    if (xplasma->ne < 0 || VERY_BIG < xplasma->ne)
+    {
+      Error ("ionization_on_the_spot: ne = %8.2e out of range\n", xplasma->ne);
+    }
+  }
+  else
+  {
+    Error ("ionization_on_the_spot: t_r exceptionally small %g\n", xplasma->t_r);
+    Exit (0);
+  }
+
+
+  return (0);
+}
+
+
 
 
 /**********************************************************/

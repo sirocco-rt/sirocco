@@ -28,16 +28,22 @@ double lspec_numin, lspec_numax;
 
 /**********************************************************/
 /**
- * @brief      Calculate the parameters of a model for J_nu in a cell
+ * @brief      Create a model for J_nu in a cell, based on the photons that have passed through a ceell
  *
  * @param [in] PlasmaPtr  xplasma   Pointer to the a specific element in the plasma structure
  * @return     0 if successful
  *
  * @details
- * This routine uses the mean frequency (calculated during photon
- * transport) find a power law model and an exponential model.
- * It then uses the standard deviation to decide which is best.
- * The routine is called from ionization.c
+ *
+ * The purpose of this routine is to try to create a model of the
+ * spectrum of photons passing through the cell, based on estimators
+ * that have been constructed during photon passages in predefined 
+ * bands.  
+ * 
+ * This routine uses the intensity (xj) mean frequency (xave_freq) calculated during photon
+ * to find a power law model and an exponential model.
+ * It then uses the standard deviation (xsd_freq) to decide which is best.
+ * 
  * The results are stored in parameters in the PlasmaPtr structure
  * in variables, such as spec_mod_type, pl_alpah, pl_log,exp_temp, etc.
  *
@@ -340,7 +346,6 @@ spectral_estimators (xplasma)
         xplasma->fmax_mod[n] = spec_numin;
       }
 
-      Log_silent ("NSH In cell %i, band %i, the best model is %i\n", xplasma->nplasma, n, xplasma->spec_mod_type[n]);
     }                           //End of loop that does things if there are more than zero photons in the band.
 
   }                             //End of loop over bands

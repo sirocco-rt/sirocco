@@ -979,14 +979,14 @@ typedef struct plasma
   double f1[NXBANDS+1]; /*Spectral band boundaries for this cell */
   double f2[NXBANDS+1]; /*Spectral band boundaries for this cell */
 
-  /* The next section contains the results of chaacterizing the cell spectra */
+  /* The next section contains the results of chaacterizing the cell spectra, see spectral_estimators to see how this is used */
 
   double xj[NXBANDS], xave_freq[NXBANDS];       /**<  Frequency limited versions of j and ave_freq */
   double fmin[NXBANDS], fmax[NXBANDS];         /**<  Minimum (Maximum) frequency photon observed in a band -
                                                  * this is incremented during photon flight */
   double fmin_mod[NXBANDS], fmax_mod[NXBANDS];  /**<  Minimum (Maximum) frequency of the band-limited model
                                                   *  after allowing possibility that the observed limit,
-                                                  *  is primarily due to photon statistics. See epectral_estimators.c */
+                                                  *  is primarily due to photon statistics. */
   double xsd_freq[NXBANDS];     /**<  The standard deviation of the frequency in the band */
   int nxtot[NXBANDS];           /**<  The total number of photon passages in frequency bands */
 

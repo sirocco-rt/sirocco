@@ -295,6 +295,7 @@ void update_old_plasma_variables(PlasmaPtr xplasma);
 int ion_abundances(PlasmaPtr xplasma, int mode);
 int convergence(PlasmaPtr xplasma);
 int check_convergence(void);
+int xshot(PlasmaPtr xplasma, int mode);
 int one_shot(PlasmaPtr xplasma, int mode);
 double calc_te(PlasmaPtr xplasma, double tmin, double tmax);
 double zero_emit(double t);
