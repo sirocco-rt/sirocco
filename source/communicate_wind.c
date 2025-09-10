@@ -75,8 +75,8 @@ broadcast_wind_grid (const int n_start, const int n_stop, const int n_cells_rank
 
   /* Calculate the size of the communication buffer */
   const int n_cells_max = get_max_cells_per_rank (NDIM2);
-  const int num_ints = 5 * n_cells_max + 1;
-  const int num_doubles = n_cells_max * (13 + 3 * 3 + 1 * 9);   // *3 for x, xcen... *9 for v_grad
+  // const int num_ints = 5 * n_cells_max + 1;
+  // const int num_doubles = n_cells_max * (13 + 3 * 3 + 1 * 9);   // *3 for x, xcen... *9 for v_grad
   MPI_Pack_size (n_cells_max, wcone_derived_type, MPI_COMM_WORLD, &bytes_wcone);
   const int comm_buffer_size = calculate_comm_buffer_size (1 + 5 * n_cells_max, n_cells_max * (13 + 3 * 3 + 1 * 9)) + bytes_wcone;
 

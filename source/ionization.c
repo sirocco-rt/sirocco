@@ -48,7 +48,7 @@ update_old_plasma_variables (PlasmaPtr xplasma)
  * used to calculate the abundances.
  *
  * @details
- * The intent is that the routine ion_abundances is the steering routine for
+ * This routine, ion_abundances, is the steering routine for
  * all calculations of the abundances
  *
  * ### Notes ###
@@ -139,6 +139,13 @@ ion_abundances (PlasmaPtr xplasma, int mode)
     }
 
     convergence (xplasma);
+  }
+  else if (mode == IONMODE_MATRIX_MULTISHOT)
+  {
+
+    Error ("ion_abundances: Could not calculate abundances for mode %d\n yet", mode);
+    Exit (EXIT_FAILURE);
+    exit (EXIT_FAILURE);        // avoids compiler warnings about return being uninitialized
   }
   else
   {
@@ -379,7 +386,7 @@ PlasmaPtr xxxplasma;
  * 	densities
  *
  * @param [in,out] PlasmaPtr  xplasma   The plasma cell of interest
- * @param [in] int  mode   A switch describing what approximation to use in determinging the
+ * @param [in] int  mode   A switch describing what ionization mode to use in determinging the
  * densities
  * @return     Always returns 0
  *
@@ -393,6 +400,10 @@ PlasmaPtr xxxplasma;
  *
  *
  * Special exceptions are made for Zeus; it is not clear why this is necessary
+ *
+ * Some of the complication in this routine reflects the fact that we have
+ * two sets of definitions, one for IONMODES and one for NEBULARMODES. 
+ * The later governs how the routine nebular_concentrations works.
  *
  **********************************************************/
 
@@ -408,13 +419,13 @@ one_shot (PlasmaPtr xplasma, int mode)
 
   te_old = xplasma->t_e;
 
-  if (modes.zeus_connect == 1 || modes.fixed_temp == 1)
+  if (modes.zeus_connect == TRUE || modes.fixed_temp == TRUE)
   {
     te_new = te_old;            //We don't want to change the temperature
     xxxplasma = xplasma;
     zero_emit (te_old);         //But we do still want to compute all heating and cooling rates
   }
-  else                          //Do things to normal way - look for a new temperature
+  else                          //Find a new teperature where heating and cooling match
   {
     te_new = calc_te (xplasma, 0.7 * te_old, 1.3 * te_old);     //compute the new t_e - no limits on where it can go
     xplasma->t_e = (1 - gain) * te_old + gain * te_new; /*Allow the temperature to move by a fraction gain towards
