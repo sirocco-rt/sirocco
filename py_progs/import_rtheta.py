@@ -152,6 +152,7 @@ def doit(root='rtheta',outputfile=''):
 
     gamma=1./numpy.sqrt(1-(v/C)**2)
     xdata['rho']*=gamma
+    xdata['rho'].format='.2e'
     
     print (xdata)
 
