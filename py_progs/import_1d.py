@@ -147,6 +147,7 @@ def doit(root='star',outputfile=''):
 
     gamma=1./numpy.sqrt(1-(xdata['v']/C)**2)
     xdata['rho']*=gamma
+    xdata['rho'].format='.2e'
 
     
     print (xdata)

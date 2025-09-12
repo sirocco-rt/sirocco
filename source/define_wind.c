@@ -314,7 +314,7 @@ create_plasma_grid (void)
     if (ierr != 0)
     {
       Error
-        ("wind_define after ion_abundances: cell %d rho %8.2e t_r %8.2 t_e %8.2e w %8.2e\n",
+        ("wind_define after ion_abundances: cell %d rho %8.2e t_r %8.2e t_e %8.2e w %8.2e\n",
          n_plasma, plasmamain[n_plasma].rho, plasmamain[n_plasma].t_r, plasmamain[n_plasma].t_e, plasmamain[n_plasma].w);
     }
 

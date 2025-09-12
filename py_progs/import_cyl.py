@@ -133,6 +133,7 @@ def doit(root='cv',outputfile=''):
 
     gamma=1./numpy.sqrt(1-(v/C)**2)
     xdata['rho']*=gamma
+    xdata['rho'].format='.2e'
 
 
     
