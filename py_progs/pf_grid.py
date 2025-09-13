@@ -15,7 +15,7 @@ Usage:
 
 Description:  
 
-    This program was written for creating grids of models with  Python
+    This program was written for creating grids of models with  
     python, although it should work with any .pf file in the case where one
     wants to run a grid of models.  As an example this should be a reasonable way
     to do much of the setup work for runing a bunch of ISM calculations.
@@ -29,7 +29,7 @@ Description:
     will ask the user to give the values of each of the variables to grid. 
 
     The format of the inputs is very specific, and not particularly user-friendly! 
-    (The lines are read with the input or in Python 3 the raw_input command in python, 
+    (The lines are read with the input or using the raw_input command in python, 
     the scripting language'.  
     
     The two possibities that are supported by the program are:
@@ -90,7 +90,7 @@ History:
     0709    ksl
         Coded and debugged
     1701    ksl
-        Updated for Python3.  It should be backward compatible.  I have partially
+        Updated for python3.  It should be backward compatible.  I have partially
         but not completely updated the style to the way I would write this program
         today.
 
