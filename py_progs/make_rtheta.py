@@ -1,38 +1,45 @@
 #!/usr/bin/env python 
 
 '''
-Create a simple rtheta model file.
+Create a simple rtheta import file that can be used
+with Sirocco.
 
 Synopsis:  
 
-    Create a model which can be imported into
-    Python of an rtheta grid, with either
-    either equal angles in theta or angles
+    Create an import file of an rtheta (polar) grid)
+    with either angles in theta or angles
     set so that the size of cells at a single
     radius is the same
 
 
-Command line usage (if any):
+Command line usage:
 
     usage::
 
         make_rtheta.py file.pf
 
+    where file.pf is a parameter file that gives 
+    the information needed to create the grid. 
+    
+    If this file does not exist then one will be 
+    asked for the necessary information, and the
+    parameter file will be created (for future use).
+
 Description:  
 
-    The routine reads inputs from a parameter file,
-    or from the screen, and produces a spherically
+    The routine produces a spherically
     expanding wind on an r-theta grid, that can
-    be imported into Python.  
+    be imported into Sirocco.  
 
     The model is intended for testing various aspects of
-    python, rather than being a model that is
+    Sirocco, rather than being a model that is
     physically realistic.  
 
-    Specifically, although the model has  a
-    velocity that increases linear from an 
-    inner to an outer radius, this is a unifrom
-    density model
+    Specifically, although the model has a
+    velocity that increases linearly from an 
+    inner to an outer radius. 
+
+    The file that is created has a uniform density
 
     The rtheta grid can be one that has equal 
     angle bins, or one where the angular bins
@@ -40,11 +47,13 @@ Description:
     cells at a particular radius are essentiall
     constant.
 
-    The routine does not read a Python .pf file
-    so to make use of it with a Python run,
-    one needs to make sure the inputs to the
-    Python run are consistent with what is 
-    generated here.
+    Warning: The routine does not read or create 
+    a Sirocco .pf file
+
+    To make use of the file produced here, one
+    needs to create an Sirocco pf file that uses
+    the import option and has a coordinate sytem
+    type of polar
 
 
 Primary routines:
@@ -63,7 +72,7 @@ Notes:
     It would be straightfoward to adapt this
     routine to produce a real stellar wind
     model with parameters that are consistent
-    with what is used in Python.
+    with what is used in Sirocco.
                                        
 History:
 

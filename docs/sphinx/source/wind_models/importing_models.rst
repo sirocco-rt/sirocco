@@ -75,6 +75,7 @@ read into SIROCCO.
 To read in a grid of this type, the following columns are required for each cell:
 
 * i                        :  the element number for each cell
+* inwind                   :  a flag indicating whether the cell is in the wind or not
 * :math:`r`                :  the radial coordinate in CGS
 * :math:`v_{r}`            :  the radial velocity in CGS
 * :math:`\rho`             :  the mass density in CGS
