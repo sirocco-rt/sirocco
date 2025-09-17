@@ -4,6 +4,11 @@
 .. automodule:: MacroCombine
 
    
+   
+   
+
+   
+   
    .. rubric:: Functions
 
    .. autosummary::
@@ -21,3 +26,15 @@
       write_phot
       xguess
    
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

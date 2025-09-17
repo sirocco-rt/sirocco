@@ -541,6 +541,8 @@ int rtheta_is_cell_in_wind(int n);
 /* run.c */
 int calculate_ionization(int restart_stat);
 int make_spectra(int restart_stat);
+int stats_phot_pre(PhotPtr p, int nphot);
+int stats_phot_post(PhotPtr p, int nphot);
 /* saha.c */
 int nebular_concentrations(PlasmaPtr xplasma, int mode);
 int concentrations(PlasmaPtr xplasma, int mode);

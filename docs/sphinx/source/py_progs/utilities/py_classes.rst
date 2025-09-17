@@ -4,6 +4,15 @@
 .. automodule:: py_classes
 
    
+   
+   
+
+   
+   
+   
+
+   
+   
    .. rubric:: Classes
 
    .. autosummary::
@@ -15,3 +24,11 @@
       specclass
       spectotclass
    
+   
+
+   
+   
+   
+
+
+

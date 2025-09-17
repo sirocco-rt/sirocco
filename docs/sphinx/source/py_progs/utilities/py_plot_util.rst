@@ -4,6 +4,11 @@
 .. automodule:: py_plot_util
 
    
+   
+   
+
+   
+   
    .. rubric:: Functions
 
    .. autosummary::
@@ -17,3 +22,15 @@
       smooth
       wind_to_masked
    
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -4,6 +4,11 @@
 .. automodule:: regression_nsh
 
    
+   
+   
+
+   
+   
    .. rubric:: Functions
 
    .. autosummary::
@@ -15,3 +20,15 @@
       steer
       sum_errors
    
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
