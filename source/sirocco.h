@@ -1242,9 +1242,6 @@ extern int size_Jbar_est, size_gamma_est, size_alpha_est;
 #define IONMODE_MATRIX_ESTIMATORS 10    /**<  matrix solver spectral model based on pi rates from photons passing trhough cell */
 #define IONMODE_MATRIX_MULTISHOT       11    /**<  A test mode, based on power lawo, but allowing for multiple attempts to 
                                                * get the ion balance and t_e.  This is under development */
-#define IONMODE_MATRIX_BOOST        12    /**<  A test mode, based on power lawo, but which matches heating and cooling
-                                             * while updating abundances for each temperature. 
-                                             * This is under development. */
 
 // and the corresponding modes in nebular_concentrations
 #define NEBULARMODE_TR 0        /**< LTE using t_r */
