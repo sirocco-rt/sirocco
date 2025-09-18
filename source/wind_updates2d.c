@@ -149,6 +149,7 @@ wind_update (WindPtr w)
     }
 
     /* Calculate the densities in various ways depending on the ioniz_mode */
+    Log ("XXXXX  updating %3d %3d\n", geo.wcycle, n_plasma);
     ion_abundances (&plasmamain[n_plasma], geo.ioniz_mode);
   }
 

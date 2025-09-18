@@ -1,12 +1,11 @@
 # This file allows one to specify switches to be used in the regression tests.
-# py 1d_sn.pf
-py -ignore_partial_cells agn_macro_matrix.pf
-py -include_partial_cells agn_macro_partial.pf 
-py -ignore_partial_cells agn_macro.pf 
-py -ignore_partial_cells agn_simple.pf
-# py cv.pf
-# py -classic cv_kur.pf
-# py cv_vert.pf
-# py star.pf
-# py two.pf
-# py cv_standard_import.pf
+# sirocco 1d_sn.pf
+sirocco agn_macro_matrix.pf
+sirocco agn_macro_multi.pf 
+sirocco agn_macro.pf 
+sirocco agn_simple.pf
+# sirocco cv.pf
+# sirocco cv_vert.pf
+# sirocco star.pf
+# sirocco two.pf
+# sirocco cv_standard_import.pf

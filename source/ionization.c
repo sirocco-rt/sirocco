@@ -133,9 +133,17 @@ ion_abundances (PlasmaPtr xplasma, int mode)
     spectral_estimators (xplasma);
     update_old_plasma_variables (xplasma);
     int kkk;
-    for (kkk = 0; kkk < 10; kkk++)
+    double xte[MAX_MULTISHOT + 1];
+
+    for (kkk = 0; kkk < MAX_MULTISHOT; kkk++)
     {
       ireturn = one_shot (xplasma, NEBULARMODE_MATRIX_SPECTRALMODEL);
+      xte[kkk] = xplasma->t_e;
+    }
+
+    for (kkk = 0; kkk < MAX_MULTISHOT; kkk++)
+    {
+      Log ("XXXXX %5d %10.3e\n", kkk, xte[kkk]);
     }
 
     convergence (xplasma);
@@ -407,16 +415,16 @@ one_shot (PlasmaPtr xplasma, int mode)
   double gain;
 
 
-
   gain = xplasma->gain;
 
   te_old = xplasma->t_e;
 
   if (modes.zeus_connect == TRUE || modes.fixed_temp == TRUE)
   {
-    te_new = te_old;            //We don't want to change the temperature
+    // Special handling for rad_hydro wher we don not want temperature uptdated.
+    te_new = te_old;
     xxxplasma = xplasma;
-    zero_emit (te_old);         //But we do still want to compute all heating and cooling rates
+    zero_emit (te_old);
   }
   else                          //Find a new teperature where heating and cooling match
   {
@@ -424,8 +432,6 @@ one_shot (PlasmaPtr xplasma, int mode)
     xplasma->t_e = (1 - gain) * te_old + gain * te_new; /*Allow the temperature to move by a fraction gain towards
                                                            the equilibrium temperature */
 
-    /* NSH 130722 - NOTE - at this stage, the cooling terms are still those computed from
-     * the 'ideal' t_e, not the new t_e - this may be worth investigatiing. */
     if (xplasma->t_e > TMAX)    //check to see if we have maxed out the temperature.
     {
       xplasma->t_e = TMAX;
@@ -434,40 +440,14 @@ one_shot (PlasmaPtr xplasma, int mode)
   }
 
 
-
-/* Modes in the driving routines are not identical to those in nebular concentrations.
-The next lines are an attempt to mediate this problem.  It might be better internally
-at least to define a flag for using one shot, and have the modes take on the
-meaning in nebular concentrations.
-*/
-
-  if (mode == IONMODE_ML93)
-    mode = NEBULARMODE_ML93;    // This is weird, why not continue
-  else if (mode <= 1 || mode == 5 || mode > 10)
+  if (nebular_concentrations (xplasma, mode))
   {
-    /* There is no mode 5 at present  - SIM + two new modes in Feb 2012  + mode 5 now removed */
-
-    Error ("one_shot: Sorry, Charlie, don't know how to process mode %d\n", mode);
-    Exit (0);
+    Error ("one_shot: nebular_concentrations failed to converge\n");
+    Error ("one_shot: j %8.2e t_e %8.2e t_r %8.2e w %8.2e nphot %i\n", xplasma->j, xplasma->t_e, xplasma->t_r, xplasma->w, xplasma->ntot);
   }
-
-  if (xplasma->t_r > 10.)
-  {                             /* Then modify to an on the spot approx */
-    if (nebular_concentrations (xplasma, mode))
-    {
-      Error ("ionization_on_the_spot: nebular_concentrations failed to converge\n");
-      Error ("ionization_on_the_spot: j %8.2e t_e %8.2e t_r %8.2e w %8.2e nphot %i\n", xplasma->j, xplasma->t_e, xplasma->t_r, xplasma->w,
-             xplasma->ntot);
-    }
-    if (xplasma->ne < 0 || VERY_BIG < xplasma->ne)
-    {
-      Error ("ionization_on_the_spot: ne = %8.2e out of range\n", xplasma->ne);
-    }
-  }
-  else
+  if (xplasma->ne < 0 || VERY_BIG < xplasma->ne)
   {
-    Error ("ionization_on_the_spot: t_r exceptionally small %g\n", xplasma->t_r);
-    Exit (0);
+    Error ("one_shot: ne = %8.2e out of range\n", xplasma->ne);
   }
 
 
