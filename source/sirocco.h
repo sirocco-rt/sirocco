@@ -1144,8 +1144,6 @@ typedef struct matom_photon_store
 } matom_photon_store_dummy, *MatomPhotStorePtr;
 
 extern MatomPhotStorePtr matomphotstoremain;
-//OLD #define MATOM_BF_PDF 1000       /**< number of points to use in a macro atom bf PDF
-//OLD                                   */
 
 
 /*******************************MACRO STRUCTURE*****************************/
@@ -1162,17 +1160,17 @@ typedef struct macro
      NLTE_LEVELS) and then by the upward bound-bound jumps from that level
      (the NBBJUMPS) (SS) */
 
-  double *jbar_old;
+  double *jbar_old;  /**<The normalized version of jbar; the _old is a misnomer */ 
 
   double *gamma; /**< This is similar to the jbar but for bound-free transitions. It records the
      appropriate photoionisation rate co-efficient. (SS) */
 
-  double *gamma_old;
+  double *gamma_old; /**< The normalized version of gamma */
 
   double *gamma_e; /**< This is Leon's gamma_e: very similar to gamma but energy weighted. Needed
      for division of photoionisation energy into excitation and k-packets. (SS) */
 
-  double *gamma_e_old;
+  double *gamma_e_old; /**<The normalized version of gamma_e */
 
   double *alpha_st; /**< Same as gamma but for stimulated recombination rather than photoionisation. (SS) */
 
@@ -1180,7 +1178,7 @@ typedef struct macro
 
   double *alpha_st_e; /**< Same as gamma_e but for stimulated recombination rather than photoionisation. (SS) */
 
-  double *alpha_st_e_old;
+  double *alpha_st_e_old;  /**< The normalized version of alpha_st_e */
 
   double *recomb_sp; /**< Spontaneous recombination. (SS) */
 
