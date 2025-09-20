@@ -593,10 +593,15 @@ init_observers ()
  * @return     Generally returns 0
  *
  * @details
- * ??? DESCRIPTION ???
+ *
+ * The routine reads the input variables associated with the
+ * number of photons per cycle, the number of ionization 
+ * cycles and the number of spectral cycle
  *
  * ### Notes ###
  * The routine also allocates memory for the photon structure.
+ * (for each thread) 
+ * 
  * If the routine is unable to allocate this membory, the routine
  * will exit.
  *
