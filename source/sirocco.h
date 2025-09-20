@@ -12,7 +12,8 @@
 extern int np_mpi_global;      /**< Global variable which holds the number of MPI processes
                                 */
 
-extern int rank_global;
+extern int rank_global;       /**<Global variable which holds the rank of the active MPI process
+                                */
 
 extern int verbosity;          /**< verbosity level for printing out information. 0 low, 10 is high
                                  */
@@ -1349,6 +1350,8 @@ typedef struct photon
 }
 p_dummy, *PhotPtr;
 
+
+
 #define NRES_ES (-1)
 #define NRES_FF (-2)
 #define NRES_NOT_SET (-3)
@@ -1357,6 +1360,8 @@ p_dummy, *PhotPtr;
 extern PhotPtr photmain;               /**< A pointer to all of the photons that have been created in a subcycle. Added to ease
                                         breaking the main routine of sirocco into separate rooutines for inputs and
                                         running the program */
+
+extern int photmain_allocated;        /**<A variable to indicated that phot_main has been allcated.  TRUE/FALSE */
 
 /**************************************SPECTRUM STRUCTURE ***********************/
     /* The next section defines the spectrum arrays.  The spectrum structure contains

@@ -164,7 +164,13 @@ free_photons (void)
 {
   free (photstoremain);
   free (matomphotstoremain);
-  free (photmain);
+  Log ("ZZZ Releasing photmain  %d\n", photmain_allocated);
+  Log_flush ();
+  if (photmain != NULL && photmain_allocated == TRUE)
+  {
+    free (photmain);
+    photmain_allocated = FALSE;
+  }
 }
 
 /**********************************************************/

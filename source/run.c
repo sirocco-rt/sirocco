@@ -85,6 +85,7 @@ calculate_ionization (restart_stat)
      With a little more logic, this could  be put inside the ioniation loop. */
 
   photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
+  photmain_allocated = TRUE;
   /* If the number of photons per cycle is changed, NPHOT can be less, so we define NPHOT_MAX
    * to the maximum number of photons that one can create.  NPHOT is used extensively with
    * Sirocco.  It is the NPHOT in a particular cycle, in a given thread.
@@ -107,6 +108,7 @@ calculate_ionization (restart_stat)
   }
 
   free (photmain);
+  photmain_allocated = FALSE;
   /* End of the test */
 
 
@@ -155,6 +157,7 @@ calculate_ionization (restart_stat)
   {                             /* This allows you to build up photons in bunches */
 
     photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
+    photmain_allocated = TRUE;
 
     if (geo.wcycle == cycle_start)
     {
@@ -254,7 +257,10 @@ calculate_ionization (restart_stat)
     Log ("!!sirocco: Number of ionizing photons %g lum of ionizing photons %g\n", geo.n_ioniz, geo.cool_tot_ioniz);
 
     stats_phot_post (p, NPHOT);
+
     free (photmain);
+    photmain_allocated = FALSE;
+
     if (geo.wcycle == cycle_start)
     {
       print_memory_usage ("First Ionization Cycles (after freeing Photons)");
@@ -482,6 +488,7 @@ make_spectra (restart_stat)
    * were calculated for the wind
    */
   photmain = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
+  photmain_allocated = TRUE;
 
   if (geo.pcycle == 0)
   {
@@ -637,6 +644,12 @@ make_spectra (restart_stat)
   if (rank_global == 0 && geo.reverb != REV_NONE)
     delay_dump_combine (np_mpi_global); // Combine results if necessary
 #endif
+
+
+//  Log ("Holly molley Knox %d", photmain_allocated);
+//  Log_flush ();
+//  free (photmain);
+//  photmain_allocated = FALSE;
 
   return EXIT_SUCCESS;
 }

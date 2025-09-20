@@ -86,6 +86,7 @@ int size_Jbar_est, size_gamma_est, size_alpha_est;
 PhotPtr photmain;               /**< A pointer to all of the photons that have been created in a subcycle. Added to ease 
                                    breaking the main routine of sirocco into separate rooutines for inputs and 
                                    running the program */
+int photmain_allocated;        /**<A variable to indicated that phot_main has been allcated.  TRUE/FALSE */
 
 int nspectra;                   /**< After create_spectrum, the number of elements allocated for s, or
                                    alternatively the number of spectra one has to work with.  Note that
