@@ -55,11 +55,14 @@ calculate_ionization (restart_stat)
   double freqmin, freqmax, x;
   long nphot_to_define, nphot_min;
   int iwind;
+  int cycle_start;
 
 
   /* Save the the windfile before the first ionization cycle in order to
    * allow investigation of issues that may have arisen at the very beginning
    */
+
+  print_memory_usage ("Before Begining of Ionization Cycles (and Photon Generatio)");
 
 #ifdef MPI_ON
   if (rank_global == 0)
@@ -70,9 +73,45 @@ calculate_ionization (restart_stat)
   }
 #endif
 
+#ifdef MPI_ON
+  Log ("Photons per cycle per MPI task will be %d\n", NPHOT / np_mpi_global);
+  NPHOT /= np_mpi_global;
+#endif
+
+  NPHOT_MAX = NPHOT;
+
+  /* Allocate the memory for the photon structure now that NPHOT is established */
+  /* What is here is just a test, that we can allocate and then deallocate photmain.
+     With a little more logic, this could  be put inside the ioniation loop. */
+
+  photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
+  /* If the number of photons per cycle is changed, NPHOT can be less, so we define NPHOT_MAX
+   * to the maximum number of photons that one can create.  NPHOT is used extensively with
+   * Sirocco.  It is the NPHOT in a particular cycle, in a given thread.
+   */
 
 
-  p = photmain;
+  if (p == NULL)
+  {
+    Error ("init_photons: There is a problem in allocating memory for the photon structure\n");
+    Exit (0);
+  }
+  else
+  {
+    /* large photon numbers can cause problems / runs to crash. Report to use (see #209) */
+    Log
+      ("Allocated %10d bytes for each of %5d elements of photon structure totaling %10.1f Mb \n",
+       sizeof (p_dummy), NPHOT, 1.e-6 * NPHOT * sizeof (p_dummy));
+    if ((NPHOT * sizeof (p_dummy)) > 1e9)
+      Error ("Over 1 GIGABYTE of photon structure allocated. Could cause serious problems.\n");
+  }
+
+  free (photmain);
+  /* End of the test */
+
+
+
+//OLD  p = photmain;
   w = wmain;
 
   freqmin = xband.f1[0];
@@ -111,8 +150,16 @@ calculate_ionization (restart_stat)
     modes.load_rng = FALSE;
   }
 
+  cycle_start = geo.wcycle;
   while (geo.wcycle < geo.wcycles)
   {                             /* This allows you to build up photons in bunches */
+
+    photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
+
+    if (geo.wcycle == cycle_start)
+    {
+      print_memory_usage ("Beging of the first Ionization Cycles (after Photon Generatio)");
+    }
 
     xsignal (files.root, "%-20s Starting %3d of %3d ionization cycles \n", "NOK", geo.wcycle + 1, geo.wcycles);
 
@@ -207,6 +254,11 @@ calculate_ionization (restart_stat)
     Log ("!!sirocco: Number of ionizing photons %g lum of ionizing photons %g\n", geo.n_ioniz, geo.cool_tot_ioniz);
 
     stats_phot_post (p, NPHOT);
+    free (photmain);
+    if (geo.wcycle == cycle_start)
+    {
+      print_memory_usage ("First Ionization Cycles (after freeing Photons)");
+    }
 
 
 #ifdef MPI_ON
@@ -240,6 +292,10 @@ calculate_ionization (restart_stat)
 
     wind_update (w);
     Log ("Completed ionization cycle %d :  The elapsed TIME was %f\n", geo.wcycle + 1, timer ());
+    if (geo.wcycle == cycle_start)
+    {
+      print_memory_usage ("First Ionization Cycles (after wind_update)");
+    }
 
 #ifdef MPI_ON
     /* Do an MPI reduce to get the spectra all gathered to the master thread */
@@ -321,6 +377,7 @@ calculate_ionization (restart_stat)
 
     check_time (files.root);
     Log_flush ();               /*Flush the logfile */
+//OLD    free (photmain);
 
   }                             // End of Cycle loop
 
@@ -331,8 +388,10 @@ calculate_ionization (restart_stat)
   /* SWM - Evaluate wind paths for last iteration */
   if (geo.reverb == REV_WIND || geo.reverb == REV_MATOM)
   {
-    wind_paths_evaluate (w, rank_global);
+//OLD    wind_paths_evaluate (w, rank_global);
+    wind_paths_evaluate (w);
   }
+
 
   return (0);
 }
@@ -422,6 +481,7 @@ make_spectra (restart_stat)
    * and in the somewhat abnormal case where additional ionization cycles
    * were calculated for the wind
    */
+  photmain = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
 
   if (geo.pcycle == 0)
   {

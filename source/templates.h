@@ -385,7 +385,7 @@ double r_draw_from_path_histogram(Wind_Paths_Ptr PathPtr);
 int wind_paths_gen_phot(WindPtr wind, PhotPtr pp);
 int line_paths_gen_phot(WindPtr wind, PhotPtr pp, int nres);
 int wind_paths_evaluate_single(Wind_Paths_Ptr paths);
-int wind_paths_evaluate(WindPtr wind, int i_rank);
+int wind_paths_evaluate(WindPtr wind);
 int wind_paths_dump(WindPtr wind, int rank_global);
 int wind_paths_output_dump(WindPtr wind, int i_rank);
 int wind_paths_point_index(int i, int j, int k, int i_top, DomainPtr dom);
@@ -708,6 +708,7 @@ int create_spec_table(int ndom, char rootname[]);
 int create_detailed_cell_spec_table(int ncell, char rootname[]);
 int create_big_detailed_spec_table(int ndom, char *rootname);
 /* xlog.c */
+void print_memory_usage(const char *label);
 int Log_init(char *filename);
 int Log_append(char *filename);
 void Log_close(void);
@@ -728,6 +729,9 @@ int Log_set_mpi_rank(int rank, int n_mpi);
 int Log_parallel(char *format, ...);
 int Debug(char *format, ...);
 void Exit(int error_code);
+void print_platform_info(void);
+void print_linux_detailed_memory(void);
+void print_memory_usage(const char *label);
 /* xtest.c */
 int xtest(void);
 /* zeta.c */

@@ -23,6 +23,7 @@ int rdpar_set_mpi_rank(int rank);
 int rdpar_set_verbose(int vlevel);
 int rdpar_check(void);
 /* xlog.c */
+void print_memory_usage(const char *label);
 int Log_init(char *filename);
 int Log_append(char *filename);
 void Log_close(void);
@@ -43,6 +44,9 @@ int Log_set_mpi_rank(int rank, int n_mpi);
 int Log_parallel(char *format, ...);
 int Debug(char *format, ...);
 void Exit(int error_code);
+void print_platform_info(void);
+void print_linux_detailed_memory(void);
+void print_memory_usage(const char *label);
 /* synonyms.c */
 int get_question_name_length(char question[]);
 int are_synonym_lists_valid(void);

@@ -610,7 +610,7 @@ init_observers ()
 PhotPtr
 init_photons ()
 {
-  PhotPtr p;
+//OLD PhotPtr p;
 
   /* Although Photons_per_cycle is really an integer,
      read in as a double so it is easier for input
@@ -626,10 +626,10 @@ init_photons ()
   }
 
 
-#ifdef MPI_ON
-  Log ("Photons per cycle per MPI task will be %d\n", NPHOT / np_mpi_global);
-  NPHOT /= np_mpi_global;
-#endif
+//OLD #ifdef MPI_ON
+//OLD   Log ("Photons per cycle per MPI task will be %d\n", NPHOT / np_mpi_global);
+//OLD   NPHOT /= np_mpi_global;
+//OLD #endif
 
   rdint ("Ionization_cycles", &geo.wcycles);
 
@@ -656,33 +656,34 @@ init_photons ()
     Log ("After that, the windsave file will be written to disk but then the program will exit\n");
   }
 
-  /* Allocate the memory for the photon structure now that NPHOT is established */
+//OLD  /* Allocate the memory for the photon structure now that NPHOT is established */
+//OLD
+//OLD  photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
+//OLD  /* If the number of photons per cycle is changed, NPHOT can be less, so we define NPHOT_MAX
+//OLD   * to the maximum number of photons that one can create.  NPHOT is used extensively with
+//OLD   * Sirocco.  It is the NPHOT in a particular cycle, in a given thread.
+//OLD   */
 
-  photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
-  /* If the number of photons per cycle is changed, NPHOT can be less, so we define NPHOT_MAX
-   * to the maximum number of photons that one can create.  NPHOT is used extensively with
-   * Sirocco.  It is the NPHOT in a particular cycle, in a given thread.
-   */
-
-  NPHOT_MAX = NPHOT;
+//OLF  NPHOT_MAX = NPHOT;
 
 
-  if (p == NULL)
-  {
-    Error ("init_photons: There is a problem in allocating memory for the photon structure\n");
-    Exit (0);
-  }
-  else
-  {
-    /* large photon numbers can cause problems / runs to crash. Report to use (see #209) */
-    Log
-      ("Allocated %10d bytes for each of %5d elements of photon structure totaling %10.1f Mb \n",
-       sizeof (p_dummy), NPHOT, 1.e-6 * NPHOT * sizeof (p_dummy));
-    if ((NPHOT * sizeof (p_dummy)) > 1e9)
-      Error ("Over 1 GIGABYTE of photon structure allocated. Could cause serious problems.\n");
-  }
+//OLD  if (p == NULL)
+//OLD  {
+//OLD    Error ("init_photons: There is a problem in allocating memory for the photon structure\n");
+//OLD    Exit (0);
+//OLD  }
+//OLD  else
+//OLD  {
+//OLD    /* large photon numbers can cause problems / runs to crash. Report to use (see #209) */
+//OLD    Log
+//OLD      ("Allocated %10d bytes for each of %5d elements of photon structure totaling %10.1f Mb \n",
+//OLD       sizeof (p_dummy), NPHOT, 1.e-6 * NPHOT * sizeof (p_dummy));
+//OLD    if ((NPHOT * sizeof (p_dummy)) > 1e9)
+//OLD      Error ("Over 1 GIGABYTE of photon structure allocated. Could cause serious problems.\n");
+//OLD  }
 
-  return (p);
+//OLD return (p);
+  return (0);
 }
 
 
