@@ -164,13 +164,13 @@ free_photons (void)
 {
   free (photstoremain);
   free (matomphotstoremain);
-  Log ("ZZZ Releasing photmain  %d\n", photmain_allocated);
   Log_flush ();
-  if (photmain != NULL && photmain_allocated == TRUE)
-  {
-    free (photmain);
-    photmain_allocated = FALSE;
-  }
+//  if (photmain != NULL && photmain_allocated == TRUE)
+//  {
+//    Log ("CCC - Releasing photmain as part of janitor process\n");
+//    free (photmain);
+//    photmain_allocated = FALSE;
+//  }
 }
 
 /**********************************************************/

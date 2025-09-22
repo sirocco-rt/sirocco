@@ -84,8 +84,11 @@ calculate_ionization (restart_stat)
   /* What is here is just a test, that we can allocate and then deallocate photmain.
      With a little more logic, this could  be put inside the ioniation loop. */
 
-  photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
+  //OLD photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
+  photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT + 1);
   photmain_allocated = TRUE;
+  Log ("CCC - Allocated photmain for memory check with NPHOT set to %d\n", NPHOT);
+
   /* If the number of photons per cycle is changed, NPHOT can be less, so we define NPHOT_MAX
    * to the maximum number of photons that one can create.  NPHOT is used extensively with
    * Sirocco.  It is the NPHOT in a particular cycle, in a given thread.
@@ -109,6 +112,7 @@ calculate_ionization (restart_stat)
 
   free (photmain);
   photmain_allocated = FALSE;
+  Log ("CCC - Freed  photmain after memory check\n");
   /* End of the test */
 
 
@@ -156,8 +160,10 @@ calculate_ionization (restart_stat)
   while (geo.wcycle < geo.wcycles)
   {                             /* This allows you to build up photons in bunches */
 
-    photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
+    // photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
+    photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT + 1);
     photmain_allocated = TRUE;
+    Log ("CCC - Allocated photmain for wcycle %d with NPHOT of %d\n", geo.wcycle, NPHOT);
 
     if (geo.wcycle == cycle_start)
     {
@@ -260,6 +266,7 @@ calculate_ionization (restart_stat)
 
     free (photmain);
     photmain_allocated = FALSE;
+    Log ("CCC - freed photmain at end of of %d cycles\n", geo.wcycle);
 
     if (geo.wcycle == cycle_start)
     {
@@ -487,8 +494,10 @@ make_spectra (restart_stat)
    * and in the somewhat abnormal case where additional ionization cycles
    * were calculated for the wind
    */
-  photmain = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
+  // photmain = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
+  photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT + 1);
   photmain_allocated = TRUE;
+  Log ("CCC - Allocated photmain at beginning of detailed spectrum, with NPHOt %d\n", NPHOT);
 
   if (geo.pcycle == 0)
   {
@@ -646,10 +655,16 @@ make_spectra (restart_stat)
 #endif
 
 
-//  Log ("Holly molley Knox %d", photmain_allocated);
-//  Log_flush ();
-//  free (photmain);
-//  photmain_allocated = FALSE;
+
+  Log ("CCC - ready to free  photmain at end of of %d spectral cycles\n", geo.pcycle);
+  Log_flush ();
+
+  free (photmain);
+  photmain_allocated = FALSE;
+
+  Log ("CCC - freed photmain at end of of %d spectral cycles\n", geo.pcycle);
+  Log_flush ();
+
 
   return EXIT_SUCCESS;
 }

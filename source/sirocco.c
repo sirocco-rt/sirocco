@@ -786,12 +786,12 @@ main (argc, argv)
   Log ("Information about luminosities and apparent fluxes due to various portions of the system:\n");
   phot_status ();
 
-  Log ("ZZZZZZZZZZZZZZ  Cleaning any loose ends %d\n", photmain_allocated);
 
   clean_on_exit ();
-  Log_close ();
 
   print_memory_usage ("After program is complete");
+  Log_close ();
+
 
   return (0);
 }

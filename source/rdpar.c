@@ -418,7 +418,7 @@ check_and_fix_string (char *s)
   }
 
   // If we reach here, no '\0' within LINELEN
-  Error ("Warning: no terminator within %d characters, forcing termination.\n", LINELEN);
+  Error ("Warning: no string terminator within %d characters, adding termination.\n", LINELEN);
   s[LINELEN - 1] = '\0';        // force termination at the end
   Log ("Corrected String: %s\n", s);
 
