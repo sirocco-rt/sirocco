@@ -784,6 +784,7 @@ main (argc, argv)
   phot_status ();
 
   clean_on_exit ();
+  Log_close ();
 
   return (0);
 }

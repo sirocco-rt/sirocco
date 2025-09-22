@@ -75,6 +75,7 @@ read into SIROCCO.
 To read in a grid of this type, the following columns are required for each cell:
 
 * i                        :  the element number for each cell
+* inwind                   :  a flag indicating whether the cell is in the wind or not
 * :math:`r`                :  the radial coordinate in CGS
 * :math:`v_{r}`            :  the radial velocity in CGS
 * :math:`\rho`             :  the mass density in CGS
@@ -282,8 +283,18 @@ for cylindrical coordinates, one would run:
 
 At that point, you can test this import file, by modifying the first .pf file to
 import mode (imported). Running SIROCCO on this file, will result in your being
-asked the name of the import file, and give you a "baseline" to import the
-hydrodynamical simulation to work.
+asked the name of the import file, and give you a "baseline" for any modications
+one might want to make to the file, such as setting the electron or radation 
+temperature differently.
+
+.. warning::
+   If you use astropy or other routines to modify an import file and create a
+   new one, be sure to check that all of
+   the variables in the file remain reasonable.  In particular, we have 
+   observed a tendency, when using astropy tables, to find that rho is set
+   to 0.0.  The solution in that case is to specify the output format
+   for the offending column or columns.
+
 
 Note that one should not assume that spectra produced by the original run of
 SIROCCO and the run of the imported model will be identical. There are several

@@ -302,9 +302,9 @@ wind_update (WindPtr w)
   Log ("wind_update: note, errors from mean intensity can be high in a working model\n");
   Log
     ("wind_update: can be a problem with photon numbers if there are also errors from spectral_estimators and low photon number warnings\n");
-  Log ("wind_update: mean_intensity: %8.4e occurrences, this cycle, this thread of 'no model exists in a band'\n", nerr_no_Jmodel);
+  Log ("wind_update: mean_intensity: %8d occurrences, this cycle, this thread of 'no model exists in a band'\n", nerr_no_Jmodel);
   Log
-    ("wind_update: mean intensity: %8.4e occurrences, this cycle, this thread of 'photon freq is outside frequency range of spectral model'\n",
+    ("wind_update: mean intensity: %8d occurrences, this cycle, this thread of 'photon freq is outside frequency range of spectral model'\n",
      nerr_Jmodel_wrong_freq);
 
   /* zero the counters which record diagnostics from the function mean_intensity */
