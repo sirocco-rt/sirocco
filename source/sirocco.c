@@ -789,6 +789,7 @@ main (argc, argv)
   Log ("ZZZZZZZZZZZZZZ  Cleaning any loose ends %d\n", photmain_allocated);
 
   clean_on_exit ();
+  Log_close ();
 
   print_memory_usage ("After program is complete");
 

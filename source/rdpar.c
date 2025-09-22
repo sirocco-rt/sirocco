@@ -402,6 +402,28 @@ rdpar_init ()
 }
 
 
+// Ensure string is properly terminated within LINELEN
+char *
+check_and_fix_string (char *s)
+{
+  if (s == NULL)
+    return NULL;
+
+  for (size_t i = 0; i < LINELEN; i++)
+  {
+    if (s[i] == '\0')
+    {
+      return s;                 // already valid
+    }
+  }
+
+  // If we reach here, no '\0' within LINELEN
+  Error ("Warning: no terminator within %d characters, forcing termination.\n", LINELEN);
+  s[LINELEN - 1] = '\0';        // force termination at the end
+  Log ("Corrected String: %s\n", s);
+
+  return s;
+}
 
 /**********************************************************/
 /** 
@@ -1212,6 +1234,8 @@ string2int (word, string_choices, string_values, string_answer)
 
 
 
+  check_and_fix_string (choices);
+  check_and_fix_string (values);
   nchoices = sscanf (choices, "%s %s %s %s %s %s %s %s %s %s", xs[0], xs[1], xs[2], xs[3], xs[4], xs[5], xs[6], xs[7], xs[8], xs[9]);
   nchoices =
     sscanf (values, "%d %d %d %d %d %d %d %d %d %d", &xv[0], &xv[1], &xv[2], &xv[3], &xv[4], &xv[5], &xv[6], &xv[7], &xv[8], &xv[9]);

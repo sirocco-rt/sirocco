@@ -777,19 +777,20 @@ num_recomb (xplasma, t_e, mode)
 
 /**********************************************************/
 /**
- * @brief      calculates either the free_bound emissivity at a specific frequency or 
- * depending on inputs, the recombination rate 
+ * @brief      calculates either (a) the free_bound emissivity at a specific frequency or 
+ * (b) the emissivity w/out the threshold energy, or (c) the recombination rate 
  *
  * @param [in] PlasmaPtr  xplasma   A plasma cell
  * @param [in] double  t   The temperature at which to calculate the emisivity
  * @param [in] double  freq   The frequency at which to calculate the emissivity
- * @param [in] int  ion_choice   Either the total or the emissivity for a specific ion
+ * @param [in] int  ion_choice   Calculate values for a single ion or the total for all ions
  * @param [in] int  fb_choice   determines whether what is returned is the emissivity a specific frecuency 0
- * @return     The returns depend on fb_choice
+ * @return     The calculated value is returned 
  *
- * If ion_choice is a number less than the number of ions then the value returned for that specific
- * ion.  However if ion_choice is set to the number of ions or greater, the the value returned is 
- * for the sum of all the ions.  
+ * If ion_choice is a number less than the number of ions then the value returned will be for that specific
+ * ion.  However if ion_choice is set to the number of ions, the the value returned is 
+ * for the sum of all the ions.  If ion_choice is greater than the number of ions, the progam
+ * will exit
  *
  *
  * The choices are:
@@ -812,11 +813,11 @@ num_recomb (xplasma, t_e, mode)
 
 double
 fb (xplasma, t, freq, ion_choice, fb_choice)
-     PlasmaPtr xplasma;         // A cell with all its associated density data
-     double t;                  // The temperature at which to calculate the emissivity
-     double freq;               // The frequency at which to calculate the emissivity
-     int ion_choice;            // Selects which ions the emissivity is to be calculated for (see above)
-     int fb_choice;             // 0=emissivity in the standard sense, 1 heat loss from electons, 2 number of photons
+     PlasmaPtr xplasma;
+     double t;
+     double freq;
+     int ion_choice;
+     int fb_choice;
 {
   int n;
   double fnu, x;
@@ -832,7 +833,7 @@ fb (xplasma, t, freq, ion_choice, fb_choice)
   else if (ion_choice == nions) // Get the total emissivity
   {
     nion_min = 0;
-    nion_max = nions;
+    nion_max = nions - 1;       /* Because recombination is from the n+1 ion */
   }
   else
   {
@@ -882,7 +883,6 @@ fb (xplasma, t, freq, ion_choice, fb_choice)
       }
 
 
-
     }
 
 
@@ -891,7 +891,7 @@ fb (xplasma, t, freq, ion_choice, fb_choice)
     fnu += xplasma->density[nion + 1] * x;      // nion+1, the ion doing the recombining
   }
 
-  fnu *= xplasma->ne;           // Correct from specific emissivity to the total fb emissivity
+  fnu *= xplasma->ne;           /* Convert from specific emissivity to the total fb emissivity. */
 
   return (fnu);
 
