@@ -4,11 +4,6 @@
 .. automodule:: retro
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -27,15 +22,3 @@
       run_one
       xsmooth
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

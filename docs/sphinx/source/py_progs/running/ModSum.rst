@@ -4,11 +4,6 @@
 .. automodule:: ModSum
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -19,15 +14,3 @@
       get_status
       make_master
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

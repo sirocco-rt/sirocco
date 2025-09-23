@@ -4,11 +4,6 @@
 .. automodule:: CompareAtomic
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -17,15 +12,3 @@
       doit
       xread
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

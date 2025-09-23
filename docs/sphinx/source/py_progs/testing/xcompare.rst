@@ -4,11 +4,6 @@
 .. automodule:: xcompare
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -23,15 +18,3 @@
       xplot
       xsmooth
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-
