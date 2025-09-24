@@ -149,6 +149,7 @@ wind_update (WindPtr w)
     }
 
     /* Calculate the densities in various ways depending on the ioniz_mode */
+    Log ("XXXXX  updating %3d %3d\n", geo.wcycle, n_plasma);
     ion_abundances (&plasmamain[n_plasma], geo.ioniz_mode);
   }
 
@@ -301,9 +302,9 @@ wind_update (WindPtr w)
   Log ("wind_update: note, errors from mean intensity can be high in a working model\n");
   Log
     ("wind_update: can be a problem with photon numbers if there are also errors from spectral_estimators and low photon number warnings\n");
-  Log ("wind_update: mean_intensity: %8.4e occurrences, this cycle, this thread of 'no model exists in a band'\n", nerr_no_Jmodel);
+  Log ("wind_update: mean_intensity: %8d occurrences, this cycle, this thread of 'no model exists in a band'\n", nerr_no_Jmodel);
   Log
-    ("wind_update: mean intensity: %8.4e occurrences, this cycle, this thread of 'photon freq is outside frequency range of spectral model'\n",
+    ("wind_update: mean intensity: %8d occurrences, this cycle, this thread of 'photon freq is outside frequency range of spectral model'\n",
      nerr_Jmodel_wrong_freq);
 
   /* zero the counters which record diagnostics from the function mean_intensity */
@@ -641,8 +642,8 @@ init_plasma_rad_properties (void)
       plasmamain[i].xj[j] = 0.0;
       plasmamain[i].xave_freq[j] = 0.0;
       plasmamain[i].xsd_freq[j] = 0.0;
-      plasmamain[i].fmin[j] = geo.xfreq[j + 1]; /* Set the minium frequency to the max frequency in the band */
-      plasmamain[i].fmax[j] = geo.xfreq[j];     /* Set the maximum frequency to the min frequency in the band */
+      plasmamain[i].fmin[j] = plasmamain[i].f2[j];      /* Set the minium frequency to the max frequency in the band */
+      plasmamain[i].fmax[j] = plasmamain[i].f1[j];      /* Set the maximum frequency to the min frequency in the band */
     }
     for (j = 0; j < NBINS_IN_CELL_SPEC; ++j)
     {
@@ -819,11 +820,11 @@ shell_output_wind_update_diagnostics (double xsum, double psum, double fsum, dou
       nshell = wmain[zdom[ndom].nstart + 1].nplasma;
       n = plasmamain[nshell].nwind;
       WindPtr w = &wmain[n];
-      for (i = 0; i < geo.nxfreq; i++)
+      for (i = 0; i < plasmamain[nshell].nbands; i++)
       {                         /*loop over number of bands */
         Log
           ("Band %i f1 %e f2 %e model %i pl_alpha %f pl_log_w %e exp_t %e exp_w %e\n",
-           i, geo.xfreq[i], geo.xfreq[i + 1],
+           i, plasmamain[nshell].f1[i], plasmamain[nshell].f2[i],
            plasmamain[nshell].spec_mod_type[i],
            plasmamain[nshell].pl_alpha[i], plasmamain[nshell].pl_log_w[i], plasmamain[nshell].exp_temp[i], plasmamain[nshell].exp_w[i]);
       }

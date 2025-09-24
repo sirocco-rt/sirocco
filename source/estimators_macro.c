@@ -235,7 +235,7 @@ bf_estimators_increment (one, p, ds)
   /* JM 2402 note that previously we incorrectly included Compton processes in kpkt_abs, which could lead to large 
      amounts of radiation coming out incorrectly in other k->r channels in spectral cycles */
   xplasma->kpkt_abs += heat_contribution;
-     
+
 
 
   /* Now for contribution to heating due to compton processes. (JM, Sep 013) */
@@ -678,6 +678,7 @@ total_bb_cooling (xplasma, t_e)
   double coll_rate, rad_rate;
 
   total = 0;                    // initialise
+  xplasma->cool_lines_macro = 0;
   for (i = 0; i < nlines; i++)
   {
     line_ptr = &line[i];
@@ -686,6 +687,7 @@ total_bb_cooling (xplasma, t_e)
       //the upper and lower level populations
       lower_density = den_config (xplasma, line_ptr->nconfigl);
       cool_contribution = (lower_density * q12 (line_ptr, t_e)) * xplasma->ne * xplasma->vol * line_ptr->freq * PLANCK;
+      xplasma->cool_lines_macro += cool_contribution;
     }
     else
     {                           //It's a simple line - don't know the level populations

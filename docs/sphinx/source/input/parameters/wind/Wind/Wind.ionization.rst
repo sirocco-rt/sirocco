@@ -49,6 +49,16 @@ Values
     through a cell.  There is no attempt to model the spectrum. Invert the rate matrix equation to
     calculate the ionization.
 
+  matrix_multi
+    Similar to matrix_pow, except in this case a more aggessive approach to reaching
+    ion state/temperature balance is attempted.  With matrix_pow and the various other
+    matrix methods, a single attempt is made to balance heating and cooling and then
+    a new ionization state is calculate based on the derived electron temperature.  With
+    this method, an interation is performed, with this process being carried out multiple
+    times. Currently number of iterations is fixed and set by the parameter NEBULARMODE_MATRIX_MULTISHOT
+    which can be found in sirrocco.h.  This mode was developed to accelerate convergence in
+    dense plasmas, but is still regarded as somewhat experimental as of 2025 Sept.  
+
 
 File
   `setup.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup.c>`_

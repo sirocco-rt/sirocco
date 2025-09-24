@@ -530,11 +530,18 @@ wind_paths_evaluate_single (Wind_Paths_Ptr paths)
  * ###Notes###
  * 26/2/15	-	Written by SWM
  * 24/7/15	-	Removed frequency
+ * 25/9/20      -       Get rank internally
 *****************************************************************/
 int
-wind_paths_evaluate (WindPtr wind, int i_rank)
+wind_paths_evaluate (WindPtr wind)
 {
+
+
   int i, j;
+  int i_rank;
+
+  i_rank = rank_global;
+
   for (i = 0; i < geo.ndim2; i++)
   {                             //For each cell in the wind
     if (wind[i].inwind >= 0)

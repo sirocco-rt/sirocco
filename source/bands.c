@@ -609,6 +609,11 @@ bands_init (imode, band)
   geo.cell_log_freq_max = log10 (band->f2[band->nbands - 1]);
   geo.cell_delta_lfreq = (geo.cell_log_freq_max - geo.cell_log_freq_min) / NBINS_IN_CELL_SPEC;
 
+  for (ii = 0; ii <= NBINS_IN_CELL_SPEC; ii++)
+  {
+    geo.cell_freq[ii] = pow (10., (geo.cell_log_freq_min + ii * geo.cell_delta_lfreq));
+  }
+
   return (0);
 }
 
