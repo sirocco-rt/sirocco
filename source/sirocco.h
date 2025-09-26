@@ -969,7 +969,10 @@ typedef struct plasma
 #define MEAN_INTENSITY_ESTIMATOR_MODEL 2
 
   double *cool_dr_ion;
+  double time_norm;             /**<The time associated unnormalized estimators have been accumulated in this cell,
+                                  1 if for just this ionization cycle  */
   double j, ave_freq;           /**<  Mean (angle-averaged) total intensity, intensity-averaged frequency */
+  double j_norm, ave_freq_norm;           /**<  Mean (angle-averaged) total intensity, intensity-averaged frequency */
 
   /* Information related to spectral bands used for modelling */
 
@@ -983,12 +986,14 @@ typedef struct plasma
   /* The next section contains the results of chaacterizing the cell spectra, see spectral_estimators to see how this is used */
 
   double xj[NXBANDS], xave_freq[NXBANDS];       /**<  Frequency limited versions of j and ave_freq */
+  double xj_norm[NXBANDS], xave_freq_norm[NXBANDS];       /**<  Frequency limited versions of j and ave_freq */
   double fmin[NXBANDS], fmax[NXBANDS];         /**<  Minimum (Maximum) frequency photon observed in a band -
                                                  * this is incremented during photon flight */
   double fmin_mod[NXBANDS], fmax_mod[NXBANDS];  /**<  Minimum (Maximum) frequency of the band-limited model
                                                   *  after allowing possibility that the observed limit,
                                                   *  is primarily due to photon statistics. */
   double xsd_freq[NXBANDS];     /**<  The standard deviation of the frequency in the band */
+  double xsd_freq_norm[NXBANDS];     /**<  The standard deviation of the frequency in the band */
   int nxtot[NXBANDS];           /**<  The total number of photon passages in frequency bands */
 
   enum spec_mod_type_enum
@@ -1030,6 +1035,9 @@ typedef struct plasma
   double j_direct, j_scatt;     /**<  Mean intensity due to direct photons and scattered photons.
                                  Direct photons include photons created in the wind in simple mode. */
   double ip_direct, ip_scatt;   /**<  Ionization parameter due  to direct photons and scattered photons. See ip */
+  double j_direct_norm, j_scatt_norm;     /**<  Mean intensity due to direct photons and scattered photons.
+                                 Direct photons include photons created in the wind in simple mode. */
+  double ip_direct_norm, ip_scatt_norm;   /**<  Ionization parameter due  to direct photons and scattered photons. See ip */
   double max_freq;              /**<   The maximum frequency photon seen in this cell */
   double cool_tot;              /**< The total cooling in a cell */
   /* The total luminosity of all processes in the cell, basically the emissivity of the cell times it volume. Not the same
