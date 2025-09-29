@@ -1243,6 +1243,7 @@ extern int size_Jbar_est, size_gamma_est, size_alpha_est;
                                                * get the ion balance and t_e.  This is under development */
 
 #define MAX_MULTISHOT  10  /**< Maximum number of iterations in MULTISHOT Mode */
+#define DELTA_MULTISHOT  0.01  /**<Fractional change in temperarute to stop interations in MULTISHOT Mode*/
 
 // and the corresponding modes in nebular_concentrations
 #define NEBULARMODE_TR 0        /**< LTE using t_r */
