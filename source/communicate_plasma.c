@@ -60,10 +60,11 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
 
   // New as of 250928
   const int comm_buffer_size = calculate_comm_buffer_size (1 + n_cells_max * (1 + 20 + nphot_total + nions + NXBANDS + 2 * N_PHOT_PROC),
-                                                           n_cells_max * (80 + 1 * (NBINS_IN_CELL_SPEC) + 6 * (NFLUX_ANGLES) +
+                                                           n_cells_max * (10 + 80 + 1 * (NBINS_IN_CELL_SPEC) + 6 * (NFLUX_ANGLES) +
                                                                           12 * (NFORCE_DIRECTIONS) + 14 * (NXBANDS) +
                                                                           1 * (N_DMO_DT_DIRECTIONS) + 1 * (n_inner_tot) + 11 * (nions) +
                                                                           1 * (nlte_levels) + 2 * (nphot_total)));
+
 
   char *comm_buffer = malloc (comm_buffer_size);
   if (comm_buffer == NULL)
@@ -238,8 +239,17 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
         MPI_Pack (&cell->converging, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->ip, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->xi, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        if (n_plasma == n_start)
+        {
+          if (position * (n_stop - n_start) > comm_buffer_size)
+          {
+            Error ("communciate_plasma: comm_buffer_size (%d) less than needed %d\n", comm_buffer_size, position * (n_stop - n_start));
+            Exit (EXIT_FAILURE);
+          }
+        }
       }
     }
+
 
     MPI_Bcast (comm_buffer, comm_buffer_size, MPI_PACKED, current_rank, MPI_COMM_WORLD);
     position = 0;
