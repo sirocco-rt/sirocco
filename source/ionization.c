@@ -132,18 +132,29 @@ ion_abundances (PlasmaPtr xplasma, int mode)
 
     spectral_estimators (xplasma);
     update_old_plasma_variables (xplasma);
-    int kkk;
+    int kkk, jjj;
     double xte[MAX_MULTISHOT + 1];
+    double delta[MAX_MULTISHOT + 1];
 
     for (kkk = 0; kkk < MAX_MULTISHOT; kkk++)
     {
       ireturn = one_shot (xplasma, NEBULARMODE_MATRIX_SPECTRALMODEL);
       xte[kkk] = xplasma->t_e;
+      if (kkk > 1)
+      {
+        delta[kkk] = (xte[kkk] - xte[kkk - 1]) / (0.5 * (xte[kkk] + xte[kkk - 1]));
+        if (fabs (delta[kkk]) < DELTA_MULTISHOT)
+          break;
+      }
+      else
+      {
+        delta[kkk] = 1.0;
+      }
     }
 
-    for (kkk = 0; kkk < MAX_MULTISHOT; kkk++)
+    for (jjj = 0; jjj < kkk; jjj++)
     {
-      Log ("XXXXX %5d %10.3e\n", kkk, xte[kkk]);
+      Log ("XXXXX %5d %10.3e %8.3f\n", jjj, xte[jjj], delta[jjj]);
     }
 
     convergence (xplasma);
