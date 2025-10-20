@@ -641,15 +641,21 @@ calc_te (PlasmaPtr xplasma, double tmin, double tmax)
   xplasma->heat_tot += xplasma->heat_lines_macro;
   xplasma->heat_lines += xplasma->heat_lines_macro;
 
-  /* Similaryly for macro_atom_bf_heating */
+  /* Similarly for macro_atom_bf_heating, for both photoionization 
+     and three body recombination components */
 
   xplasma->heat_tot -= xplasma->heat_photo_macro;
   xplasma->heat_photo -= xplasma->heat_photo_macro;
+  xplasma->heat_tot -= xplasma->heat_qrecomb_macro;
+  xplasma->heat_photo -= xplasma->heat_qrecomb_macro;
 
-  xplasma->heat_photo_macro = macro_bf_heating (xplasma, xplasma->t_e);
+  xplasma->heat_photo_macro = macro_photo_heating (xplasma, xplasma->t_e);
+  xplasma->heat_qrecomb_macro = macro_qrecomb_heating (xplasma, xplasma->t_e);
 
   xplasma->heat_tot += xplasma->heat_photo_macro;
   xplasma->heat_photo += xplasma->heat_photo_macro;
+  xplasma->heat_tot += xplasma->heat_qrecomb_macro;
+  xplasma->heat_photo += xplasma->heat_qrecomb_macro;
 
 
   return (xplasma->t_e);
@@ -702,7 +708,7 @@ zero_emit (double t)
 {
   double difference;
 
-  /*Original method */
+  /* Original method */
   xxxplasma->t_e = t;
 
 
@@ -715,22 +721,28 @@ zero_emit (double t)
   xxxplasma->heat_tot += xxxplasma->heat_lines_macro;
   xxxplasma->heat_lines += xxxplasma->heat_lines_macro;
 
+  /* Similarly for macro_atom_bf_heating, recompute for both photoionization 
+     and three body recombination components */
+
   xxxplasma->heat_tot -= xxxplasma->heat_photo_macro;
   xxxplasma->heat_photo -= xxxplasma->heat_photo_macro;
+  xxxplasma->heat_tot -= xxxplasma->heat_qrecomb_macro;
+  xxxplasma->heat_photo -= xxxplasma->heat_qrecomb_macro;
 
-  xxxplasma->heat_photo_macro = macro_bf_heating (xxxplasma, t);
+  xxxplasma->heat_photo_macro = macro_photo_heating (xxxplasma, t);
+  xxxplasma->heat_qrecomb_macro = macro_qrecomb_heating (xxxplasma, t);
 
   xxxplasma->heat_tot += xxxplasma->heat_photo_macro;
   xxxplasma->heat_photo += xxxplasma->heat_photo_macro;
+  xxxplasma->heat_tot += xxxplasma->heat_qrecomb_macro;
+  xxxplasma->heat_photo += xxxplasma->heat_qrecomb_macro;
 
-  /* Finished macro atom corrections */
 
+  /* Finished macro atom corrections. Now compute the total cooling and heating - cooling */
 
   cooling (xxxplasma, t);
 
   difference = xxxplasma->heat_tot + xxxplasma->heat_shock - xxxplasma->cool_tot;
-
-
 
   return (difference);
 }

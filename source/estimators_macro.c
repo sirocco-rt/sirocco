@@ -539,10 +539,14 @@ normalise_macro_estimators (PlasmaPtr xplasma)
   xplasma->heat_tot += heat_contribution;
 
   /* Get the bf heating contributions here too. (SS June 04) */
+  /* JM Oct 2025 -- we now separate out three body recombination and photoionization heating */
+  /* so that we can track them separately */
 
-  xplasma->heat_photo += heat_contribution = macro_bf_heating (xplasma, xplasma->t_e);
+  xplasma->heat_photo += heat_contribution = macro_photo_heating (xplasma, xplasma->t_e);
   xplasma->heat_photo_macro = heat_contribution;
-  xplasma->heat_tot += heat_contribution;
+
+  xplasma->heat_photo += heat_contribution = macro_qrecomb_heating (xplasma, xplasma->t_e);
+  xplasma->heat_qrecomb_macro = heat_contribution;
 
   /* finally, check if we have any places where stimulated recombination wins over
      photoionization */
@@ -763,27 +767,25 @@ macro_bb_heating (xplasma, t_e)
 
 /**********************************************************/
 /**
- * @brief computes the total heating due to bf transitions for macro atoms.
+ * @brief computes the total heating due to photoionization for macro atoms.
  *
  * @param [in] PlasmaPtr  xplasma  
  * @param [in] double t_e   electron temperature
  * @return total 
  *
  * @details
- * computes the total heating due to bf transitions for macro atoms. 
- * The heating in simple ions
- * is taken care of elsewhere. 
+ * computes the total heating due to bf transitions for macro atoms, not including the three body recombination part. 
+ * The heating in simple ions is taken care of elsewhere. 
  * It is used by the heating/cooling calculation to get the temperature.
- *
  **********************************************************/
 
 double
-macro_bf_heating (xplasma, t_e)
+macro_photo_heating (xplasma, t_e)
      PlasmaPtr xplasma;
      double t_e;
 {
   double heat_contribution;
-  double total, upper_density, lower_density;
+  double total, lower_density;
   int i, j;
   double q_recomb ();
   MacroPtr mplasma;
@@ -804,6 +806,44 @@ macro_bf_heating (xplasma, t_e)
          mplasma->gamma_old[xconfig[i].bfu_indx_first +
                             j]) * PLANCK * phot_top[xconfig[i].bfu_jump[j]].freq[0] * lower_density * xplasma->vol;
 
+      total += heat_contribution;
+    }
+  }
+
+  return (total);
+}
+
+
+/**********************************************************/
+/**
+ * @brief computes the total heating due to threebody recombination bf transitions for macro atoms.
+ *
+ * @param [in] PlasmaPtr  xplasma  
+ * @param [in] double t_e   electron temperature
+ * @return total 
+ *
+ * @details
+ * computes the total heating due to the three body recombination part for macro atoms. 
+ * The heating in simple ions is taken care of elsewhere. 
+ * It is used by the heating/cooling calculation to get the temperature.
+ **********************************************************/
+
+double
+macro_qrecomb_heating (xplasma, t_e)
+     PlasmaPtr xplasma;
+     double t_e;
+{
+  double heat_contribution;
+  double total, upper_density;
+  int i, j;
+
+  total = 0;                    // initialise
+
+  for (i = 0; i < nlte_levels; i++)
+  {
+    for (j = 0; j < xconfig[i].n_bfu_jump; j++)
+    {
+      heat_contribution = 0.0;
       /* Three body recombination part. */
       upper_density = den_config (xplasma, phot_top[xconfig[i].bfu_jump[j]].uplev);
       heat_contribution +=

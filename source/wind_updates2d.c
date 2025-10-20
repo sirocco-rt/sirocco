@@ -332,15 +332,17 @@ wind_update (WindPtr w)
     ("!!wind_update: Wind cooling     %8.2e (recomb %8.2e ff %8.2e compton %8.2e DR %8.2e DI %8.2e lines %8.2e adiabatic %8.2e) after update\n",
      cool_sum, geo.cool_rr, geo.lum_ff, geo.cool_comp, geo.cool_dr, geo.cool_di, geo.lum_lines, geo.cool_adiabatic);
 
-  if (modes.use_upweighting_of_simple_macro_atoms)
-  {
-    /* If we have "indivisible packet" mode on but are using the
-       upweighting scheme for simple atoms then we report the flows into and out of the ion pool */
-    if (geo.rt_mode == RT_MODE_MACRO)
-    {
-      report_bf_simple_ionpool ();
-    }
-  }
+  // if (geo.rt_mode == RT_MODE_MACRO)
+  // {
+  //   Log
+  //     ("!!wind_update: macro-atom heating: lines %8.2e  photoionization %8.2e three body recomb %8.2e\n",
+  //      geo.heat_lines_macro, geo.heat_rr_macro, geo.heat_photo_macro, geo.heat_qrecomb_macro);
+
+  //   if (modes.use_upweighting_of_simple_macro_atoms)
+  //     {
+  //       report_bf_simple_ionpool ();
+  //     }
+  // }
 
   /* report a warning if the induced Compton heating is greater than 10% of the heating, see #1016 */
   if (icsum >= (0.1 * xsum))
