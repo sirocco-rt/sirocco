@@ -50,15 +50,14 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
 
   d_xsignal (files.root, "%-20s Begin communicating plasma grid\n", "NOK");
   const int n_cells_max = get_max_cells_per_rank (NPLASMA);
-//OLD  const int comm_buffer_size = calculate_comm_buffer_size (1 + n_cells_max * (1 + 20 + nphot_total + nions + NXBANDS + 2 * N_PHOT_PROC),
-//OLD                                                           n_cells_max * (71 + 11 * nions + nlte_levels + 2 * nphot_total + n_inner_tot +
-//OLD                                                                          11 * NXBANDS + NBINS_IN_CELL_SPEC + 6 * NFLUX_ANGLES +
-//OLD                                                                          N_DMO_DT_DIRECTIONS + 12 * NFORCE_DIRECTIONS));
 
-  const int comm_buffer_size = calculate_comm_buffer_size (1 + n_cells_max * (1 + 20 + nphot_total + nions + NXBANDS + 2 * N_PHOT_PROC),
-                                                           n_cells_max * (73 + 11 * nions + nlte_levels + 2 * nphot_total + n_inner_tot +
-                                                                          11 * NXBANDS + NBINS_IN_CELL_SPEC + 6 * NFLUX_ANGLES +
-                                                                          N_DMO_DT_DIRECTIONS + 12 * NFORCE_DIRECTIONS));
+  const int num_ints = 1 + n_cells_max * (1 + 22 + nphot_total + nions + NXBANDS + 2 * N_PHOT_PROC);
+  const int num_doubles = n_cells_max * (71 + 11 * nions + nlte_levels + 2 * nphot_total + n_inner_tot +
+                                         11 * NXBANDS + NBINS_IN_CELL_SPEC + 6 * NFLUX_ANGLES +
+                                         N_DMO_DT_DIRECTIONS + 12 * NFORCE_DIRECTIONS);
+
+
+  const int comm_buffer_size = calculate_comm_buffer_size (num_ints, num_doubles);
   char *comm_buffer = malloc (comm_buffer_size);
   if (comm_buffer == NULL)
   {
