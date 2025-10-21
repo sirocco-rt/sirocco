@@ -112,7 +112,7 @@ def get_levels(ion="h_1", nlevels=10):
 
     The excitation energy has to be conistent across ions
     
-    Python can read the astropy table for levels directly,
+    Sirocco can read the astropy table for levels directly,
     so normally one would write this to a file
     """
     print('get_levels: Getting levels for %s and nlevels %s' % (ion,nlevels))
@@ -362,7 +362,7 @@ def get_lines(ion="h_4", nlevels=10):
     are known
 
     There are some lines in the Chianti database that have 0 wavelength.
-    These are all strictly forbidden lines, but Python still needs a
+    These are all strictly forbidden lines, but Sirocco still needs a
     wavelength to calculate the collision x-section in the absence 
     of Burgess-style collision data, so we fill in the wavelength
     from the upper and lower level energies in this case, and issue
@@ -475,7 +475,7 @@ def get_lines(ion="h_4", nlevels=10):
 # We have to first get the data from TopBase and then we have to format it propoerly
 #
 # There is a search form on the web page, but you can also retrieve the files directly with wget.  
-# The formats are slightly different, and so converting them to Python nputs is also going to be a
+# The formats are slightly different, and so converting them to Sirocco inputs is also going to be a
 # bit different, but this allows one to retrieve things without going through a web page.
 
 
@@ -552,7 +552,7 @@ def get_phot(ion="c_4"):
 
 def make_phot(ion="c_4",macro=True):
     """
-    Read a retrieved TopBase file and make a Python-Photon file
+    Read a retrieved TopBase file and make a Sirocco-Photon file
     
     Note that althought the TopBase data on Vizier does not use
     astronomical notation, we changed the naming convention
@@ -728,7 +728,7 @@ def make_phot(ion="c_4",macro=True):
 # The hard part here is getting the levels to be right.  If I understand Keara's notes, there are fewer sets of
 # photoinzation x-sections in top base than there are in Chianti, and so often one needs to have the same set
 # of x-section data for multiple Chianti levels, and when you do this you have to right the data out multiple times.
-# because Python expects a photionzation x-section for each level
+# because Sirocco expects a photionzation x-section for each level
 #
 # Alternatively, I suspect you can combine some of the levels into a single simpler level, if you know how to modify
 # various factors, e.g g, and you make some kind of assumption about what you need to do interms of adding f together.
@@ -859,7 +859,7 @@ def write_phot(ion="c_4",outdir='./Adata'):
 
 # # Get the collision data from Chianti
 
-# Generating the collision data files is not entirely straightforward, because we have to match the collision data to the levels, and the source of the level information may not have been Chianti.  The collision data contained in Chianti (and in fact the only type of collision data that Python understnds) uses the so called Burgess approximation, basically a spline fit to the x-sections which is valid up to a certain maximum temperature.
+# Generating the collision data files is not entirely straightforward, because we have to match the collision data to the levels, and the source of the level information may not have been Chianti.  The collision data contained in Chianti (and in fact the only type of collision data that Sirocco understnds) uses the so called Burgess approximation, basically a spline fit to the x-sections which is valid up to a certain maximum temperature.
 #
 # A valid file begins like
 #
@@ -887,7 +887,7 @@ def get_collisions(ion="h_1", nlev=20,outdir='./Adata'):
     that as far as I can determine the scups file does not contain collisionl information 
     for collisional ionization
     
-    Currently in Python collisions are tightly tied to the lines that are going to be used
+    Currently in Sirocco collisions are tightly tied to the lines that are going to be used
     in a dataset.  The information about line information is used as a mechanism to identify
     the collision x-section.  (This probably dates back to simple atoms, where lines are used
     for radiative transfer and levels are used in calculating densities of upper level states,

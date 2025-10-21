@@ -4,7 +4,7 @@
 Create a 1-d spherical `.pf` file from a `windsave2table` file.
 
 Read the master file produced by windsave2table for a 1d spherical
-model and produce a file which can be imported into Python
+model and produce a file which can be imported into Sirocco
 
 
 Command line usage (if any):
@@ -16,7 +16,7 @@ Command line usage (if any):
 Description:  
 
    The routine is intended to provide examples of the types
-   of files Python can read, and to allow regression tests
+   of files Sirocco can read, and to allow regression tests
    for importing models
 
 Primary routines:
@@ -26,7 +26,7 @@ Primary routines:
 Notes:
 
     Windsave2table saves the values of rho in the CMF frame,
-    but Python expects models to be in the observer frame
+    but Sirocco  expects models to be in the observer frame
     so this routine corrects for this.
                                        
 
@@ -141,12 +141,13 @@ def doit(root='star',outputfile=''):
 
     data['v']=v
 
-    xdata=data['i','r','v','rho','t_e']
+    xdata=data['i','inwind','r','v','rho','t_e','t_r']
 
     C=2.997925e10
 
     gamma=1./numpy.sqrt(1-(xdata['v']/C)**2)
     xdata['rho']*=gamma
+    xdata['rho'].format='.2e'
 
     
     print (xdata)
@@ -168,7 +169,6 @@ def doit(root='star',outputfile=''):
 if __name__ == "__main__":
     import sys
     if len(sys.argv)>1:
-        # doit(int(sys.argv[1]))
         doit(sys.argv[1])
     else:
         print (__doc__)

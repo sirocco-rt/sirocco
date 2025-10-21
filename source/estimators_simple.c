@@ -37,7 +37,7 @@
  * 
  * Increments the estimators that allow one to construct a crude
  * spectrum in each cell of the wind.  The frequency intervals
- * in which the spectra are constructed are in geo.xfreq. This information
+ * in which the spectra are constructed are defined for each Plasama element. This information
  * is used in different ways (or not at all) depending on the ionization mode.
  *
  * It also records the various parameters intended to describe the radiation field, 
@@ -126,9 +126,9 @@ update_banded_estimators (xplasma, p, ds, w_ave, ndom)
      as energy packets are indisivible in macro atom mode */
 
 
-  for (i = 0; i < geo.nxfreq; i++)
+  for (i = 0; i < xplasma->nbands; i++)
   {
-    if (geo.xfreq[i] < p->freq && p->freq <= geo.xfreq[i + 1])
+    if (xplasma->f1[i] < p->freq && p->freq <= xplasma->f2[i])
     {
       xplasma->xave_freq[i] += p->freq * w_ave * ds;    /* frequency weighted by weight and distance */
       xplasma->xsd_freq[i] += p->freq * p->freq * w_ave * ds;   /* input to allow standard deviation to be calculated */
@@ -582,7 +582,7 @@ int
 normalise_simple_estimators (xplasma)
      PlasmaPtr xplasma;
 {
-  int i, nwind;
+  int i, j, nwind;
   double radiation_temperature, nh, wtest;
   double volume_obs, invariant_volume_time;
   double electron_density_obs;
@@ -616,7 +616,7 @@ normalise_simple_estimators (xplasma)
     {
       radiation_temperature = xplasma->t_r = PLANCK * xplasma->ave_freq / (BOLTZMANN * 3.832);
     }
-    else 
+    else
     {
       radiation_temperature = xplasma->t_r =
         estimate_temperature_from_mean_frequency (xplasma->ave_freq, xband.f1[0], xband.f2[xband.nbands - 1], radiation_temperature);
@@ -647,10 +647,57 @@ normalise_simple_estimators (xplasma)
     xplasma->w = 0;
   }
 
+  /* Temporary location for constructing estimators from speectra */
+
+
+  if (xdev == TRUE)
+  {
+
+    j = 0;
+    for (i = 0; i < xplasma->nbands; i++)
+    {
+      xplasma->xave_freq[i] = 0;
+      xplasma->xsd_freq[i] = 0;
+      xplasma->xj[i] = 0;
+      xplasma->nxtot[i] = 0;
+      xplasma->fmin[i] = geo.cell_freq[NBINS_IN_CELL_SPEC];
+      xplasma->fmax[i] = geo.cell_freq[0];
+
+      while (geo.cell_freq[j] < xplasma->f2[i] && j < NBINS_IN_CELL_SPEC)
+      {
+        double ave_freq;
+        if (xplasma->cell_spec_flux[j] > 0)
+        {
+          ave_freq = 0.5 * (geo.cell_freq[j + 1] + geo.cell_freq[j]);
+          xplasma->xave_freq[i] += ave_freq * xplasma->cell_spec_flux[j];
+          xplasma->xsd_freq[i] += ave_freq * ave_freq * xplasma->cell_spec_flux[j];
+          xplasma->xj[i] += xplasma->cell_spec_flux[j];
+          xplasma->nxtot[i]++;
+          if (ave_freq < xplasma->fmin[i])
+          {
+            xplasma->fmin[i] = ave_freq;
+          }
+          if (ave_freq > xplasma->fmax[i])
+          {
+            xplasma->fmax[i] = ave_freq;
+          }
+        }
+        j++;
+      }
+
+    }
+
+  }
+
+
+
+
+  /* End of temporary work on constructing estimators */
+
   /* Normalize and otherwise complete the information gathered about the 
      coarse spectra used for generation of spectral models */
 
-  for (i = 0; i < geo.nxfreq; i++)
+  for (i = 0; i < xplasma->nbands; i++)
   {
     if (xplasma->nxtot[i] > 0)
     {

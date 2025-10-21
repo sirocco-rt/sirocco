@@ -72,7 +72,7 @@ import_1d (ndom, filename)
 {
   FILE *fptr;
   char line[LINELENGTH];
-  int n, icell, ncell;
+  int n, icell, inwind, ncell;
   double r, v_r, mass_rho, t_r, t_e;
 
   Log ("Reading a 1d model %s\n", filename);
@@ -86,7 +86,7 @@ import_1d (ndom, filename)
   ncell = 0;
   while (fgets (line, LINELENGTH, fptr) != NULL)
   {
-    n = sscanf (line, " %d %le %le %le %le %le", &icell, &r, &v_r, &mass_rho, &t_e, &t_r);
+    n = sscanf (line, " %d %d %le %le %le %le %le", &icell, &inwind, &r, &v_r, &mass_rho, &t_e, &t_r);
     if (n < READ_NO_TEMP_1D)
     {
       continue;
@@ -94,6 +94,7 @@ import_1d (ndom, filename)
     else
     {
       imported_model[ndom].i[ncell] = icell;
+      imported_model[ndom].inwind[ncell] = inwind;
       imported_model[ndom].r[ncell] = r;
       imported_model[ndom].v_r[ncell] = v_r;
       imported_model[ndom].mass_rho[ncell] = mass_rho;

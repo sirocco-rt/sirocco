@@ -103,11 +103,6 @@ import regression_check
 def sum_errors(root='1d_sn'):
     '''
     This sums the errors from various threads
-
-    Note that this effectively duplicates a routine
-    py_error which James wrote, but in Python 3
-
-
     '''
     diag_files=glob('diag_%s/%s_*.diag' % (root,root))
 

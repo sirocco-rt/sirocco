@@ -911,6 +911,7 @@ photo_gen_star (p, r, t, weight, f1, f2, spectype, istart, nphot)
   {
     Error ("photo_gen_star: Cannot generate photons if freqmax %g < freqmin %g\n", f2, f1);
   }
+  Log ("photo_gen_star creates nphot %5d photons from %5d to %5d \n", nphot, istart, iend);
   Log_silent ("photo_gen_star creates nphot %5d photons from %5d to %5d \n", nphot, istart, iend);
   freqmin = f1;
   freqmax = f2;

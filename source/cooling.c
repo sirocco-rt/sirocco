@@ -146,7 +146,8 @@ xtotal_emission (one, f1, f2)
   {
     if (geo.rt_mode == RT_MODE_MACRO)   //Switch for macro atoms (SS)
     {
-      xplasma->cool_rr = total_fb_matoms (xplasma, t_e, f1, f2) + total_fb (xplasma, t_e, f1, f2, FB_REDUCED, OUTER_SHELL);     //outer shellrecombinations
+      xplasma->cool_bf_macro = total_fb_matoms (xplasma, t_e, f1, f2);
+      xplasma->cool_rr = xplasma->cool_bf_macro + total_fb (xplasma, t_e, f1, f2, FB_REDUCED, OUTER_SHELL);     //outer shellrecombinations
       //The first term here is the fb cooling due to macro ions and the second gives
       //the fb cooling due to simple ions.
       //total_fb has been modified to exclude recombinations treated using macro atoms.

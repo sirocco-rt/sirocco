@@ -68,7 +68,7 @@ main (argc, argv)
      int argc;
      char *argv[];
 {
-  WindPtr w;
+//OLD  WindPtr w;
 
   double freqmin, freqmax;
   int n;
@@ -127,6 +127,7 @@ main (argc, argv)
 
   rel_mode = REL_MODE_FULL;
   run_xtest = FALSE;
+  xdev = FALSE;
   NWAVE_MAX = (int) NWAVE_IONIZ;
 
   /* Set the verbosity level for logging.  To get more info raise the verbosity level to a higher number. To
@@ -153,7 +154,7 @@ main (argc, argv)
 
   /* Start logging of errors and comments */
 
-  Log ("!!Sirocco Version %s \n", VERSION);      //54f -- ksl -- Now read from version.h
+  Log ("!!Sirocco Version %s \n", VERSION);     //54f -- ksl -- Now read from version.h
   Log ("!!Git commit hash %s\n", GIT_COMMIT_HASH);
 
   /* warn the user if there are uncommited changes */
@@ -196,7 +197,7 @@ main (argc, argv)
       Error ("sirocco: Unable to open %s\n", files.old_windsave);
       Exit (0);
     }
-    w = wmain;
+    //OLD w = wmain;
 
     geo.run_type = RUN_TYPE_RESTART;
 
@@ -265,7 +266,7 @@ main (argc, argv)
 
       geo.run_type = RUN_TYPE_PREVIOUS;
 
-      w = wmain;
+//OLD w = wmain;
       geo.wcycle = 0;
       geo.pcycle = 0;
       geo.model_count = 0;
@@ -513,6 +514,7 @@ main (argc, argv)
   rdpar_comment ("Other parameters");
 
   bands_init (-1, &xband);
+
   freqmin = xband.f1[0];
   freqmax = xband.f2[xband.nbands - 1];
 
@@ -608,6 +610,9 @@ main (argc, argv)
     define_wind ();
   }
 
+  /* Now that the wind is defined we can copy th bands information */
+  band_copy ();
+
   Log ("DFUDGE set to %e based on geo.rmax\n", DFUDGE);
 
   if (modes.zeus_connect == 1)  //We have restarted, but are in zeus connect mode, so we want to update density, temp and velocities
@@ -620,7 +625,7 @@ main (argc, argv)
   /* this routine checks, somewhat crudely, if the grid is well enough resolved */
   check_grid ();
 
-  w = wmain;
+//OLD  w = wmain;
   if (modes.extra_diagnostics)
   {
     init_extra_diagnostics ();
@@ -691,18 +696,21 @@ main (argc, argv)
 
 /* XXXX - END OF CYCLE TO CALCULATE THE IONIZATION OF THE WIND */
   Log (" Completed wind creation.  The elapsed TIME was %f\n", timer ());
-  /* Evaluate wind paths for last iteration */
-  if (geo.reverb == REV_WIND || geo.reverb == REV_MATOM)
-  {                             //If this is a mode in which we keep wind arrays, update them
-    wind_paths_evaluate (w, my_rank);
-  }
+
+// Next lines were  moved to calculate ionization; they should not be needed here.  ksl 250920
+//OLD  /* Evaluate wind paths for last iteration */
+//OLD  if (geo.reverb == REV_WIND || geo.reverb == REV_MATOM)
+//OLD  {                             //If this is a mode in which we keep wind arrays, update them
+//OLD//OLD    wind_paths_evaluate (w, my_rank);
+//OLD    wind_paths_evaluate (w);
+//OLD  }
 
 /* XXXX - THE CALCULATION OF A DETAILED SPECTRUM IN A SPECIFIC REGION OF WAVELENGTH SPACE */
 
   freqmax = VLIGHT / (geo.swavemin * 1.e-8);
   freqmin = VLIGHT / (geo.swavemax * 1.e-8);
 
-  /* Perform the initilizations required to handle macro-atoms during the detailed
+  /* Perform the initializations required to handle macro-atoms during the detailed
      calculation of the spectrum.
 
      Next lines turns off macro atom estimators and other portions of the code that are
@@ -778,7 +786,12 @@ main (argc, argv)
   Log ("Information about luminosities and apparent fluxes due to various portions of the system:\n");
   phot_status ();
 
+
   clean_on_exit ();
+
+  print_memory_usage ("After program is complete");
+  Log_close ();
+
 
   return (0);
 }

@@ -12,7 +12,8 @@
 extern int np_mpi_global;      /**< Global variable which holds the number of MPI processes
                                 */
 
-extern int rank_global;
+extern int rank_global;       /**<Global variable which holds the rank of the active MPI process
+                                */
 
 extern int verbosity;          /**< verbosity level for printing out information. 0 low, 10 is high
                                  */
@@ -40,6 +41,8 @@ extern int verbosity;          /**< verbosity level for printing out information
 extern int rel_mode;                   /**< How doppler effects and co-moving frames are  */
 
 extern int run_xtest;                  /**< Variable if TRUE causes a special test mode to be run */
+
+extern int xdev;                       /**< Variable if FALSE runs in a standard mode; if another number allows dev modes to execute */
 
 extern int NDIM2;                      /**< The total number of wind cells in wmain
                                          */
@@ -571,6 +574,7 @@ struct geometry
 
   double cell_log_freq_min, cell_log_freq_max, cell_delta_lfreq;        /**< Parameters defining freqency intervals for cell spectra.
                                                                            These are defined as logarithmic frequency intervals */
+  double cell_freq[NBINS_IN_CELL_SPEC +1];  
 
 
   /* The next set pf variables assign a SPECTYPE (see above) for
@@ -916,6 +920,8 @@ typedef struct plasma
   double heat_ind_comp;         /**<  The induced compton heatingfor the cell */
   double heat_lines_macro, heat_photo_macro;    /**<  bb and bf heating due to macro atoms. Subset of heat_lines
                                                    and heat_photo. SS June 04. */
+  double cool_lines_macro, cool_bf_macro;    /**<  bb and bf cooling due to macro atoms. Subset of heat_lines
+                                                   and heat_photo. SS June 04. */
   double heat_photo, heat_z;    /**< photoionization heating total and of metals */
   double heat_auger;            /**<  photoionization heating due to inner shell ionizations */
   double heat_ch_ex;
@@ -966,12 +972,22 @@ typedef struct plasma
   double j, ave_freq;           /**<  Mean (angle-averaged) total intensity, intensity-averaged frequency */
 
   /* Information related to spectral bands used for modelling */
+
+  double cell_spec_flux[NBINS_IN_CELL_SPEC];    /**< The array where the cell spectra are accumulated. */
+
+  /* ksl - for now this parallels the xband structure, but it is a bit unclear why two frequencies are needed */
+  int nbands;            /* The number of spectral bands for this cell */
+  double f1[NXBANDS+1]; /*Spectral band boundaries for this cell */
+  double f2[NXBANDS+1]; /*Spectral band boundaries for this cell */
+
+  /* The next section contains the results of chaacterizing the cell spectra, see spectral_estimators to see how this is used */
+
   double xj[NXBANDS], xave_freq[NXBANDS];       /**<  Frequency limited versions of j and ave_freq */
   double fmin[NXBANDS], fmax[NXBANDS];         /**<  Minimum (Maximum) frequency photon observed in a band -
                                                  * this is incremented during photon flight */
   double fmin_mod[NXBANDS], fmax_mod[NXBANDS];  /**<  Minimum (Maximum) frequency of the band-limited model
                                                   *  after allowing possibility that the observed limit,
-                                                  *  is primarily due to photon statistics. See epectral_estimators.c */
+                                                  *  is primarily due to photon statistics. */
   double xsd_freq[NXBANDS];     /**<  The standard deviation of the frequency in the band */
   int nxtot[NXBANDS];           /**<  The total number of photon passages in frequency bands */
 
@@ -992,7 +1008,6 @@ typedef struct plasma
   double exp_temp[NXBANDS];     /**<  The effective temperature of an exponential representation of the radiation field in a cell */
   double exp_w[NXBANDS];        /**<  The prefactor of an exponential representation of the radiation field in a cell */
 
-  double cell_spec_flux[NBINS_IN_CELL_SPEC];    /**< The array where the cell spectra are accumulated. */
 
 #define NFLUX_ANGLES 36 /**< The number of bins into which the directional flux is calculated */
 
@@ -1130,8 +1145,6 @@ typedef struct matom_photon_store
 } matom_photon_store_dummy, *MatomPhotStorePtr;
 
 extern MatomPhotStorePtr matomphotstoremain;
-//OLD #define MATOM_BF_PDF 1000       /**< number of points to use in a macro atom bf PDF
-//OLD                                   */
 
 
 /*******************************MACRO STRUCTURE*****************************/
@@ -1148,17 +1161,17 @@ typedef struct macro
      NLTE_LEVELS) and then by the upward bound-bound jumps from that level
      (the NBBJUMPS) (SS) */
 
-  double *jbar_old;
+  double *jbar_old;  /**<The normalized version of jbar; the _old is a misnomer */ 
 
   double *gamma; /**< This is similar to the jbar but for bound-free transitions. It records the
      appropriate photoionisation rate co-efficient. (SS) */
 
-  double *gamma_old;
+  double *gamma_old; /**< The normalized version of gamma */
 
   double *gamma_e; /**< This is Leon's gamma_e: very similar to gamma but energy weighted. Needed
      for division of photoionisation energy into excitation and k-packets. (SS) */
 
-  double *gamma_e_old;
+  double *gamma_e_old; /**<The normalized version of gamma_e */
 
   double *alpha_st; /**< Same as gamma but for stimulated recombination rather than photoionisation. (SS) */
 
@@ -1166,7 +1179,7 @@ typedef struct macro
 
   double *alpha_st_e; /**< Same as gamma_e but for stimulated recombination rather than photoionisation. (SS) */
 
-  double *alpha_st_e_old;
+  double *alpha_st_e_old;  /**< The normalized version of alpha_st_e */
 
   double *recomb_sp; /**< Spontaneous recombination. (SS) */
 
@@ -1225,7 +1238,12 @@ extern int size_Jbar_est, size_gamma_est, size_alpha_est;
 #define IONMODE_ML93 3          /**<  Lucy Mazzali */
 #define IONMODE_MATRIX_BB 8     /**<  matrix solver BB model */
 #define IONMODE_MATRIX_SPECTRALMODEL 9  /**< matrix solver spectral model based on power laws */
-#define IONMODE_MATRIX_ESTIMATORS 10    /**<  matrix solver spectral model based on power laws */
+#define IONMODE_MATRIX_ESTIMATORS 10    /**<  matrix solver spectral model based on pi rates from photons passing trhough cell */
+#define IONMODE_MATRIX_MULTISHOT       11    /**<  A test mode, based on power lawo, but allowing for multiple attempts to 
+                                               * get the ion balance and t_e.  This is under development */
+
+#define MAX_MULTISHOT  10  /**< Maximum number of iterations in MULTISHOT Mode */
+#define DELTA_MULTISHOT  0.01  /**<Fractional change in temperarute to stop interations in MULTISHOT Mode*/
 
 // and the corresponding modes in nebular_concentrations
 #define NEBULARMODE_TR 0        /**< LTE using t_r */
@@ -1237,7 +1255,7 @@ extern int size_Jbar_est, size_gamma_est, size_alpha_est;
 #define NEBULARMODE_PAIRWISE_SPECTRALMODEL 7    /**< pairwise spectral models (power law or expoentials) */
 #define NEBULARMODE_MATRIX_BB 8 /**<  matrix solver BB model */
 #define NEBULARMODE_MATRIX_SPECTRALMODEL 9      /**< matrix solver spectral model */
-#define NEBULARMODE_MATRIX_ESTIMATORS 10        /**<  matrix solver spectral model */
+#define NEBULARMODE_MATRIX_ESTIMATORS 10        /**<  matrix solver spectral model, but based on calculating PI rates from photon passages */
 
 #define NEBULARMODE_MATRIX_MULTISHOT   11    /**<  matrix solver spectral model based on power laws which
                                           * updates T_e multiple times before arriving at a final
@@ -1333,6 +1351,8 @@ typedef struct photon
 }
 p_dummy, *PhotPtr;
 
+
+
 #define NRES_ES (-1)
 #define NRES_FF (-2)
 #define NRES_NOT_SET (-3)
@@ -1341,6 +1361,8 @@ p_dummy, *PhotPtr;
 extern PhotPtr photmain;               /**< A pointer to all of the photons that have been created in a subcycle. Added to ease
                                         breaking the main routine of sirocco into separate rooutines for inputs and
                                         running the program */
+
+extern int photmain_allocated;        /**<A variable to indicated that phot_main has been allcated.  TRUE/FALSE */
 
 /**************************************SPECTRUM STRUCTURE ***********************/
     /* The next section defines the spectrum arrays.  The spectrum structure contains
@@ -1768,7 +1790,7 @@ extern struct rdpar_choices zz_spec;
  * refer to how many columns are in the data file and what will be read in.
  */
 
-#define READ_NO_TEMP_1D          4
+#define READ_NO_TEMP_1D          5
 #define READ_ELECTRON_TEMP_1D    (READ_NO_TEMP_1D + 1)
 #define READ_BOTH_TEMP_1D        (READ_NO_TEMP_1D + 2)
 

@@ -602,6 +602,36 @@ xalpha_sp (cont_ptr, xplasma, ichoice)
 }
 
 
+
+/**********************************************************/
+/**
+ * @brief the matom estimator for the spontaneous recombination rate.
+ *
+ * @param [in] struct topbase_phot cont_ptr pointer to calculate
+ * @param [in] struct PlasmaPtr xplasma the plasma cell of interesest
+ * @param [in] int ichoice one of several types or rates to calculate
+ *
+ * @return the recombination rate is returned
+ *
+ * @details
+ * The rate is given by
+ *
+ *    (4 pi /c2) (gu/gl) (h2/2 pi m k T)^(3/2)
+ * times the integral of   a(nu) nu2 exp [(chi- h nu)/kT].
+ *
+ * The choices are
+ * * ichoice = 0   --> spontanous recombination
+ * * ichoice = 1   --> energy weighted recombination
+ * * ichoice = 2   --> the difference between energy_weighted and spontaneous
+ *
+ * ###Notes###
+ *
+ * This basically coumputs integrals similar to eqn 13 of Lucy 2003
+ *
+ *  Energy weighted means that the integrand has an extra factor nu/nu_threshold
+ *  The difference case is (nu-nu_threshold)/nu_threhold
+***********************************************************/
+
 double
 alpha_sp (cont_ptr, xplasma, ichoice)
      struct topbase_phot *cont_ptr;

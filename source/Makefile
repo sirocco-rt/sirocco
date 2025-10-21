@@ -117,7 +117,7 @@ ifeq (D,$(firstword $(MAKECMDGOALS)))
 # use pg when you want to use gprof the profiler
 # to use profiler make with arguments "make D sirocco"
 # this can be altered to whatever is best
-	CFLAGS = -std=gnu99 -g -pg -Wl,-Ttext-segment=0x68000000 -Wall -Werror $(EXTRA_FLAGS) -I$(INCLUDE) $(MPI_FLAG) ${CUDA_FLAG}
+	CFLAGS = -std=gnu99 -g -pg -O0 -Wl,-Ttext-segment=0x68000000 -Wall -Werror $(EXTRA_FLAGS) -I$(INCLUDE) $(MPI_FLAG) ${CUDA_FLAG}
 	FFLAGS = -g -pg
 	PRINT_VAR = DEBUGGING, -g -pg -Wl,-Ttext-segment=0x68000000 -Wall flags
 	XDEBUG = True
@@ -147,7 +147,7 @@ LDFLAGS+= -L$(LIB) -lm -lgsl -lgslcblas $(CUDA_LIBS)
 #Note that version should be a single string without spaces.
 
 
-VERSION = 1.1
+VERSION = 1.2
 
 
 
@@ -194,7 +194,7 @@ foo: foo.o signal.o time.o
 # For reasons that are unclear to me. get_models.c cannot be included in the sources.
 # Problems occur due to the prototypes that are generated. Same for kpar_source it seems.
 sirocco_source = agn.c anisowind.c atomic_extern_init.c atomicdata.c atomicdata_init.c  \
-	atomicdata_sub.c bands.c bb.c bilinear.c brem.c cdf.c charge_exchange.c communicate_macro.c  \
+	atomicdata_sub.c bands.c bands_spec.c bb.c bilinear.c brem.c cdf.c charge_exchange.c communicate_macro.c  \
 	communicate_plasma.c communicate_spectra.c communicate_wind.c compton.c continuum.c cooling.c corona.c  \
 	cv.c cylind_var.c cylindrical.c define_wind.c density.c diag.c dielectronic.c direct_ion.c  \
 	disk.c disk_init.c disk_photon_gen.c emission.c estimators_macro.c estimators_simple.c  \
@@ -263,8 +263,10 @@ table_objects = windsave2table.o $(sirocco_objects) # windsave2table_sub.o is al
 rhf_objects = rad_hydro_files.o $(sirocco_objects)
 modify_wind_objects = modify_wind.o $(sirocco_objects)
 inspect_wind_objects = inspect_wind.o $(sirocco_objects)
+inspect_wind_objects = inspect_wind.o $(sirocco_objects)
 sirocco_optd_obj = sirocco_optd.o sirocco_optd_output.o sirocco_optd_trans.o sirocco_optd_util.o sirocco_optd_extern_init.o $(sirocco_objects)
 windsave2fits_objects = windsave2fits.o $(sirocco_objects)
+test_cooling_objects = test_cooling.o $(sirocco_objects)
 
 run_indent:
 	../py_progs/run_indent.py -all_no_headers
@@ -303,6 +305,13 @@ inspect_wind: startup $(inspect_wind_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(inspect_wind_objects) $(CUDA_OBJECTS) $(LDFLAGS)  -o inspect_wind
 	cp $@ $(BIN)
 	mv $@ $(BIN)/inspect_wind-$(VERSION)
+	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
+
+
+test_cooling: startup $(test_cooling_objects) $(CUDA_OBJECTS)
+	$(CC) $(CFLAGS) $(test_cooling_objects) $(CUDA_OBJECTS) $(LDFLAGS)  -o test_cooling 
+	cp $@ $(BIN)
+	mv $@ $(BIN)/test_cooling-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 sirocco_optd: startup $(sirocco_optd_obj) $(CUDA_OBJECTS)

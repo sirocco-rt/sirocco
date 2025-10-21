@@ -91,6 +91,8 @@
 #include <math.h>
 
 #include "log.h"
+#include <sys/resource.h>
+#include <unistd.h>
 
 #define LINELENGTH 256
 #define NERROR_MAX 500          // Number of different errors that are recorded
@@ -910,4 +912,141 @@ Exit (int error_code)
   error_summary ("summary prior to abort");
   exit (error_code);
 #endif
+}
+
+
+// Platform detection
+#ifdef __APPLE__
+#define PLATFORM_MAC 1
+#define PLATFORM_LINUX 0
+#elif __linux__
+#define PLATFORM_MAC 0
+#define PLATFORM_LINUX 1
+#else
+#define PLATFORM_MAC 0
+#define PLATFORM_LINUX 0
+#endif
+
+void
+print_platform_info ()
+{
+  if (PLATFORM_MAC)
+  {
+    Log ("SYS-Running on macOS\n");
+  }
+  else if (PLATFORM_LINUX)
+  {
+    Log ("SYS-Running on Linux\n");
+  }
+  else
+  {
+    Log ("SYS-Running on unknown platform\n");
+  }
+}
+
+void
+print_linux_detailed_memory ()
+{
+  FILE *file = fopen ("/proc/self/status", "r");
+  char line[256];
+
+  if (!file)
+  {
+    Log ("Error: Could not open /proc/self/status\n");
+    return;
+  }
+
+  Log ("SYS---- Detailed Linux Memory Information ---\n");
+
+  while (fgets (line, sizeof (line), file))
+  {
+    // Current memory usage
+    if (strncmp (line, "VmRSS:", 6) == 0)
+    {
+      Log ("SYS-Current Physical Memory (RSS): %s", line + 6);
+    }
+    if (strncmp (line, "VmSize:", 7) == 0)
+    {
+      Log ("SYS-Current Virtual Memory Size: %s", line + 7);
+    }
+    if (strncmp (line, "VmPeak:", 7) == 0)
+    {
+      Log ("SYS-Peak Virtual Memory Size: %s", line + 7);
+    }
+    if (strncmp (line, "VmHWM:", 6) == 0)
+    {
+      Log ("SYS-Peak Physical Memory (RSS): %s", line + 6);
+    }
+    if (strncmp (line, "VmData:", 7) == 0)
+    {
+      Log ("SYS-Data Segment Size: %s", line + 7);
+    }
+    if (strncmp (line, "VmStk:", 6) == 0)
+    {
+      Log ("SYS-Stack Size: %s", line + 6);
+    }
+    if (strncmp (line, "VmExe:", 6) == 0)
+    {
+      Log ("SYS-Executable Size: %s", line + 6);
+    }
+    if (strncmp (line, "Threads:", 8) == 0)
+    {
+      Log ("SYS-Number of Threads: %s", line + 8);
+    }
+  }
+
+  fclose (file);
+  Log ("SYS-----------------------------------------\n");
+}
+
+
+/**********************************************************/
+/**
+ *  @brief Get memory usange at the  current time
+ *
+ *  @param[in] chr*  label  A string which labels where in 
+ * code we are
+ *
+ *  @details
+ *
+ *  ### Notes ###
+ *
+ *
+ **********************************************************/
+
+void
+print_memory_usage (const char *label)
+{
+  struct rusage usage;
+  getrusage (RUSAGE_SELF, &usage);
+
+  Log ("\nSYS-=== Memory Usage: %s ===\n", label);
+
+  if (PLATFORM_MAC)
+  {
+    // On macOS, ru_maxrss is in bytes
+    Log ("SYS-Peak RSS (macOS): %.2f MB (%ld bytes)\n", usage.ru_maxrss / (1024.0 * 1024.0), usage.ru_maxrss);
+  }
+  else if (PLATFORM_LINUX)
+  {
+    // On Linux, ru_maxrss is in kilobytes
+    Log ("SYS-Peak RSS (Linux): %.2f MB (%ld KB)\n", usage.ru_maxrss / 1024.0, usage.ru_maxrss);
+
+    // Provide detailed Linux information
+    print_linux_detailed_memory ();
+  }
+  else
+  {
+    // Unknown platform - assume Linux behavior
+    Log ("SYS-Peak RSS (Unknown platform): %.2f MB (%ld KB)\n", usage.ru_maxrss / 1024.0, usage.ru_maxrss);
+  }
+
+  // Additional rusage information available on both platforms
+  // Cast to long for portable formatting
+  Log ("SYS-User CPU time: %ld.%06ld seconds\n", (long) usage.ru_utime.tv_sec, (long) usage.ru_utime.tv_usec);
+  Log ("SYS-System CPU time: %ld.%06ld seconds\n", (long) usage.ru_stime.tv_sec, (long) usage.ru_stime.tv_usec);
+  Log ("SYS-Page faults (no I/O): %ld\n", usage.ru_minflt);
+  Log ("SYS-Page faults (with I/O): %ld\n", usage.ru_majflt);
+
+  Log ("SYS-===============================\n");
 }

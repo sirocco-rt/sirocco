@@ -19,7 +19,7 @@ Command line usage (if any):
 Description:  
 
     This routine allows one to create examples of files
-    that can be imported into Python.  It is intended
+    that can be imported into Sirocco.  It is intended
     to be useful for creating examples, and for regression
     testing
 
@@ -30,7 +30,7 @@ Primary routines:
 Notes:
 
     Windsave2table saves the values of rho in the CMF frame,
-    but Python expects models to be in the observer frame
+    but Sirocco  expects models to be in the observer frame
     so this routine corrects for this.
                                        
 History:
@@ -144,7 +144,7 @@ def doit(root='rtheta',outputfile=''):
     data=read_table(filename)
 
 
-    xdata=data['i','j','inwind','r','theta','v_x','v_y','v_z','rho','t_r']
+    xdata=data['i','j','inwind','r','theta','v_x','v_y','v_z','rho','t_e','t_r']
 
     C=2.997925e10
 
@@ -152,6 +152,7 @@ def doit(root='rtheta',outputfile=''):
 
     gamma=1./numpy.sqrt(1-(v/C)**2)
     xdata['rho']*=gamma
+    xdata['rho'].format='.2e'
     
     print (xdata)
 
@@ -160,10 +161,6 @@ def doit(root='rtheta',outputfile=''):
     ascii.write(xdata,outputfile,format='fixed_width_two_line',overwrite=True)
 
     return
-
-
-    
-
 
 
 
