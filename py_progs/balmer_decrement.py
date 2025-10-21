@@ -11,7 +11,7 @@ Usage:
 	* `python balmer_decrement.py  -h` for help
 
 Requirements:
-	py_wind
+	swind
 	numpy 
 	matplotlib 
 	py_plot_util, py_read_output from $SIROCCO/py_progs in the python path
@@ -41,7 +41,7 @@ TOLERANCE = 0.3
 def BalmerTest(root, plotit=True):
 	'''
 	runs tests of of the Balmer decrement for a one zone 
-	thin shell Python model. Involves running py_wind on
+	thin shell Python model. Involves running swind on
 	a wind_save file and reading some output files. Compares
 	to Osterbrock values.
 	'''
@@ -58,21 +58,21 @@ def BalmerTest(root, plotit=True):
 
 	# run py wind. pass the command to run for situations in CI where we can't get the path working
 	swind_cmd = "{}/bin/swind".format(SIROCCO)
-	isys, logfile_contents = util.run_py_wind(root, cmds=cmds, py_wind_cmd = swind_cmd, return_output = True)
+	isys, logfile_contents = util.run_swind(root, cmds=cmds, swind_cmd = swind_cmd, return_output = True)
 	print (isys)
 
 	# these could be in principle be used to check absolute emissivity values 
-	# ne = rd.read_pywind("{}.ne.dat".format(root), mode="1d")[2][1]
-	# vol = rd.read_pywind("{}.vol.dat".format(root), mode="1d")[2][1]
-	# nh1 = rd.read_pywind("{}.ioncH1.dat".format(root), mode="1d")[2][1]
-	# nh2 = rd.read_pywind("{}.ioncH2.dat".format(root), mode="1d")[2][1]
+	# ne = rd.read_swind("{}.ne.dat".format(root), mode="1d")[2][1]
+	# vol = rd.read_swind("{}.vol.dat".format(root), mode="1d")[2][1]
+	# nh1 = rd.read_swind("{}.ioncH1.dat".format(root), mode="1d")[2][1]
+	# nh2 = rd.read_swind("{}.ioncH2.dat".format(root), mode="1d")[2][1]
 	# nprot = nh1 + nh2
 
 	# read the emissivities
 	try:
 		ratios = np.zeros(nlevels)
 		for i in range(nlevels):
-			ratios[i] = rd.read_pywind("{}.lev{}_emiss.dat".format(root,i+3), mode="1d")[2][1]
+			ratios[i] = rd.read_swind("{}.lev{}_emiss.dat".format(root,i+3), mode="1d")[2][1]
 	except FileNotFoundError:
 		print("Error reading swind output. Logfile follows...")
 		print (logfile_contents)

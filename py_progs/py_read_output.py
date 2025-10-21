@@ -147,10 +147,10 @@ def read_spectrum_to_class (filename, new=True):
     return spectrum
 
 
-def read_pywind_summary(filename, return_inwind=False, mode="2d"):
+def read_swind_summary(filename, return_inwind=False, mode="2d"):
 
     '''
-    read a py_wind output file using np array reshaping and manipulation
+    read a swind output file using np array reshaping and manipulation
 
     Parameters             
         filename : file or str
@@ -184,10 +184,10 @@ def read_pywind_summary(filename, return_inwind=False, mode="2d"):
 
 
 
-def read_pywind(filename, return_inwind=False, mode="2d", complete=True):
+def read_swind(filename, return_inwind=False, mode="2d", complete=True):
 
     '''
-    read a py_wind output file using np array reshaping and manipulation
+    read a swind output file using np array reshaping and manipulation
 
     Parameters            
         filename : file or str
@@ -397,7 +397,7 @@ def read_emissivity ( root ):
 def thinshell_read ( root ):
     
     '''
-    Read py_wind output filename for thin shell models with one cell
+    Read swind output filename for thin shell models with one cell
     '''
     
     inp = open(root, 'r')
