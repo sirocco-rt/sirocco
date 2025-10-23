@@ -536,7 +536,6 @@ normalise_macro_estimators (PlasmaPtr xplasma)
 
   xplasma->heat_lines += heat_contribution = macro_bb_heating (xplasma, xplasma->t_e);
   xplasma->heat_lines_macro = heat_contribution;
-  xplasma->heat_tot += heat_contribution;
 
   /* Get the bf heating contributions here too. (SS June 04) */
   /* JM Oct 2025 -- we now separate out three body recombination and photoionization heating */
@@ -547,6 +546,9 @@ normalise_macro_estimators (PlasmaPtr xplasma)
 
   xplasma->heat_photo += heat_contribution = macro_qrecomb_heating (xplasma, xplasma->t_e);
   xplasma->heat_qrecomb_macro = heat_contribution;
+
+  /* ensure the total heating is incremented too, for line and bound-free */
+  xplasma->heat_tot += xplasma->heat_lines_macro + xplasma->heat_photo_macro + xplasma->heat_qrecomb_macro;
 
   /* finally, check if we have any places where stimulated recombination wins over
      photoionization */

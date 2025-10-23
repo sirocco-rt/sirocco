@@ -55,6 +55,7 @@ wind_update (WindPtr w)
   double xsum, psum, fsum, lsum, csum, icsum, ausum, chexsum;
   double cool_sum, lum_sum, radiated_luminosity_sum;    //1706 - the total cooling and luminosity of the wind
   double apsum, aausum, abstot; //Absorbed photon energy from PI and auger
+  double macro_photo_sum, macro_qrecomb_sum;
   double flux_persist_scale;
   double volume;
   double dt_r, dt_e;
@@ -149,7 +150,6 @@ wind_update (WindPtr w)
     }
 
     /* Calculate the densities in various ways depending on the ioniz_mode */
-    Log ("XXXXX  updating %3d %3d\n", geo.wcycle, n_plasma);
     ion_abundances (&plasmamain[n_plasma], geo.ioniz_mode);
   }
 
@@ -221,6 +221,7 @@ wind_update (WindPtr w)
   aausum = 0.0;
   abstot = 0.0;
   chexsum = 0.0;
+  macro_photo_sum = macro_qrecomb_sum = 0.0;
 
   /* Each rank now has updated plasma cells (temperature, ion abundances, heat/cool rates, etc.), so we can now find
    * out what the max d_t is in the wind and also sum up properties to find the total/global values */
@@ -269,6 +270,9 @@ wind_update (WindPtr w)
     apsum += plasmamain[n_plasma].abs_photo;
     aausum += plasmamain[n_plasma].abs_auger;
     chexsum += plasmamain[n_plasma].heat_ch_ex;
+
+    macro_photo_sum += plasmamain[n_plasma].heat_photo_macro;
+    macro_qrecomb_sum += plasmamain[n_plasma].heat_qrecomb_macro;
   }
 
   /* We can now calculate the average of the t */
@@ -332,17 +336,15 @@ wind_update (WindPtr w)
     ("!!wind_update: Wind cooling     %8.2e (recomb %8.2e ff %8.2e compton %8.2e DR %8.2e DI %8.2e lines %8.2e adiabatic %8.2e) after update\n",
      cool_sum, geo.cool_rr, geo.lum_ff, geo.cool_comp, geo.cool_dr, geo.cool_di, geo.lum_lines, geo.cool_adiabatic);
 
-  // if (geo.rt_mode == RT_MODE_MACRO)
-  // {
-  //   Log
-  //     ("!!wind_update: macro-atom heating: lines %8.2e  photoionization %8.2e three body recomb %8.2e\n",
-  //      geo.heat_lines_macro, geo.heat_rr_macro, geo.heat_photo_macro, geo.heat_qrecomb_macro);
+  if (geo.rt_mode == RT_MODE_MACRO)
+  {
+    Log ("!!wind_update: macro-atom bf heating: photoionization %8.2e three body recomb %8.2e\n", macro_photo_sum, macro_qrecomb_sum);
 
-  //   if (modes.use_upweighting_of_simple_macro_atoms)
-  //     {
-  //       report_bf_simple_ionpool ();
-  //     }
-  // }
+    if (modes.use_upweighting_of_simple_macro_atoms)
+    {
+      report_bf_simple_ionpool ();
+    }
+  }
 
   /* report a warning if the induced Compton heating is greater than 10% of the heating, see #1016 */
   if (icsum >= (0.1 * xsum))
