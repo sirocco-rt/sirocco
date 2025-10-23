@@ -521,15 +521,17 @@ create_heat_table (ndom, rootname)
   c[27] = get_one (ndom, "heat_photo_macro");
   strcpy (column_name[27], "ht_ph_macro");
 
+  c[28] = get_one (ndom, "heat_qrecomb_macro");
+  strcpy (column_name[28], "ht_qr_macro");
 
-  c[28] = get_one (ndom, "cool_lines_macro");
-  strcpy (column_name[28], "cl_ln_macro");
+  c[29] = get_one (ndom, "cool_lines_macro");
+  strcpy (column_name[29], "cl_ln_macro");
 
-  c[29] = get_one (ndom, "cool_bf_macro");
-  strcpy (column_name[29], "cl_ph_macro");
+  c[30] = get_one (ndom, "cool_bf_macro");
+  strcpy (column_name[30], "cl_ph_macro");
 
   /* This should be the maximum number above +1 */
-  ncols = 30;
+  ncols = 31;
 
 
   converge = get_one (ndom, "converge");
