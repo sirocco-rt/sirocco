@@ -403,6 +403,28 @@ rdpar_init ()
 
 
 // Ensure string is properly terminated within LINELEN
+
+/**********************************************************/
+/** 
+ * @brief      check is a string is properly terminateds are processed.
+ *
+ * @param [in] char  *s           the string to check              
+
+ * @return     the string after checking whether it ends with \0 as expected
+ *
+ *
+ * ###Notes###
+ *
+ * This routine checks is a string is properly terminated within LINELEN, if not 
+ * it adds \0 to the string and issues an error.
+ *
+ * This routine was created to fix an issue with string2int.  The problem
+ * should be fixed there so this error should not occur.  ksl has left the
+ * routine mainly so that the problem re-occurs, one knows how to detect
+ * it.  The problem was revealed in 2025, uwing valgrind.
+ *
+ **********************************************************/
+
 char *
 check_and_fix_string (char *s)
 {
@@ -418,7 +440,7 @@ check_and_fix_string (char *s)
   }
 
   // If we reach here, no '\0' within LINELEN
-  Error ("Warning: no string terminator within %d characters, adding termination.\n", LINELEN);
+  Error ("Error: no string terminator within %d characters, adding termination.\n", LINELEN);
   s[LINELEN - 1] = '\0';        // force termination at the end
   Log ("Corrected String: %s\n", s);
 
@@ -1183,7 +1205,11 @@ string2int (word, string_choices, string_values, string_answer)
   char choices[LINELEN];
   char values[LINELEN];
   int ivalue, matched, ibest;
+  int len_choices, len_values;  /* Store the lengths */
 
+  /* Store lengths before modifying */
+  len_choices = strlen (string_choices);
+  len_values = strlen (string_values);
 
 
   /*Blank out the arrays we will be using here */
@@ -1232,10 +1258,15 @@ string2int (word, string_choices, string_values, string_answer)
   }
 
 
+  /* Add proper termination to both strings */
+  choices[len_choices] = '\0';  /* Null-terminate choices */
+  values[len_values] = '\0';    /* Null-terminate values */
 
 
+  /* Next two lines should no longer be necessary, as stings are now properly terminated */
   check_and_fix_string (choices);
   check_and_fix_string (values);
+
   nchoices = sscanf (choices, "%s %s %s %s %s %s %s %s %s %s", xs[0], xs[1], xs[2], xs[3], xs[4], xs[5], xs[6], xs[7], xs[8], xs[9]);
   nchoices =
     sscanf (values, "%d %d %d %d %d %d %d %d %d %d", &xv[0], &xv[1], &xv[2], &xv[3], &xv[4], &xv[5], &xv[6], &xv[7], &xv[8], &xv[9]);
