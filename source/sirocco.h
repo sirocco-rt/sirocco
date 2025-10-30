@@ -942,6 +942,7 @@ typedef struct plasma
 
   double cool_lines_macro, cool_bf_macro;    /* bb and bf cooling due to macro atoms. */
   double heat_qrecomb_macro;    /**<  The heating due to macro atom 3-body recombinations, added Oct 2025 */ 
+  double cool_di_macro;         /**<  direct/collisional ionization cooling due to macro atoms */
   double heat_photo, heat_z;    /**< photoionization heating total and of metals */
   double heat_auger;            /**<  photoionization heating due to inner shell ionizations */
   double heat_ch_ex;

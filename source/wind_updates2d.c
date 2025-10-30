@@ -55,7 +55,8 @@ wind_update (WindPtr w)
   double xsum, psum, fsum, lsum, csum, icsum, ausum, chexsum;
   double cool_sum, lum_sum, radiated_luminosity_sum;    //1706 - the total cooling and luminosity of the wind
   double apsum, aausum, abstot; //Absorbed photon energy from PI and auger
-  double macro_photo_sum, macro_qrecomb_sum;
+  double heat_macro_photo_sum, heat_macro_qrecomb_sum, heat_macro_lines_sum;
+  double cool_macro_photo_sum, cool_macro_di_sum, cool_macro_lines_sum;
   double flux_persist_scale;
   double volume;
   double dt_r, dt_e;
@@ -221,7 +222,8 @@ wind_update (WindPtr w)
   aausum = 0.0;
   abstot = 0.0;
   chexsum = 0.0;
-  macro_photo_sum = macro_qrecomb_sum = 0.0;
+  heat_macro_photo_sum = heat_macro_qrecomb_sum = heat_macro_lines_sum = 0.0;
+  cool_macro_photo_sum = cool_macro_di_sum = cool_macro_lines_sum = 0.0;
 
   /* Each rank now has updated plasma cells (temperature, ion abundances, heat/cool rates, etc.), so we can now find
    * out what the max d_t is in the wind and also sum up properties to find the total/global values */
@@ -271,8 +273,12 @@ wind_update (WindPtr w)
     aausum += plasmamain[n_plasma].abs_auger;
     chexsum += plasmamain[n_plasma].heat_ch_ex;
 
-    macro_photo_sum += plasmamain[n_plasma].heat_photo_macro;
-    macro_qrecomb_sum += plasmamain[n_plasma].heat_qrecomb_macro;
+    heat_macro_photo_sum += plasmamain[n_plasma].heat_photo_macro;
+    heat_macro_qrecomb_sum += plasmamain[n_plasma].heat_qrecomb_macro;
+    heat_macro_lines_sum += plasmamain[n_plasma].heat_lines_macro;
+    cool_macro_photo_sum += plasmamain[n_plasma].cool_bf_macro;
+    cool_macro_lines_sum += plasmamain[n_plasma].cool_lines_macro;
+    cool_macro_di_sum += plasmamain[n_plasma].cool_di_macro;
   }
 
   /* We can now calculate the average of the t */
@@ -338,7 +344,10 @@ wind_update (WindPtr w)
 
   if (geo.rt_mode == RT_MODE_MACRO)
   {
-    Log ("!!wind_update: macro-atom bf heating: photoionization %8.2e three body recomb %8.2e\n", macro_photo_sum, macro_qrecomb_sum);
+    Log ("!!wind_update: macro-atom heating: photoionization %8.2e three body recomb %8.2e lines %8.2e\n", heat_macro_photo_sum,
+         heat_macro_qrecomb_sum, heat_macro_lines_sum);
+    Log ("!!wind_update: macro-atom cooling: photoionization %8.2e collisional ionization %8.2e lines %8.2e\n", cool_macro_photo_sum,
+         cool_macro_di_sum, cool_macro_lines_sum);
 
     if (modes.use_upweighting_of_simple_macro_atoms)
     {

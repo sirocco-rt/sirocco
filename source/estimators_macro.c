@@ -636,12 +636,6 @@ total_fb_matoms (xplasma, t_e, f1, f2)
            - mplasma->alpha_st_old[xconfig[i].bfu_indx_first + j]
            - alpha_sp (cont_ptr, xplasma, 0)) * PLANCK * phot_top[xconfig[i].bfu_jump[j]].freq[0] * density * xplasma->ne * xplasma->vol;
 
-        /* Now add the collisional ionization term. */
-        density = den_config (xplasma, cont_ptr->nlev);
-        cool_contribution +=
-          q_ioniz (cont_ptr, t_e) * density * xplasma->ne * PLANCK * phot_top[xconfig[i].bfu_jump[j]].freq[0] * xplasma->vol;
-
-        /* That's the bf cooling contribution. */
         total += cool_contribution;
       }
     }
@@ -652,6 +646,59 @@ total_fb_matoms (xplasma, t_e, f1, f2)
 
   return (total);
 }
+
+
+/**********************************************************/
+/**
+ * @brief      computes the cooling rate due to collisional ionization in macro-atoms 
+ *
+ * @param [in] PlasmaPtr  xplasma 
+ * @param [in] double  t_e  electron temperature
+ * @param [in] double  f1  lower frequency
+ * @param [in] double  f2  upper frequency
+ * @return total
+ *
+ * @details
+ * computes the cooling rate due to collisional ionization in macro-atoms 
+ * 
+ **********************************************************/
+
+double
+cooling_di_matoms (xplasma, t_e, f1, f2)
+     PlasmaPtr xplasma;
+     double t_e;
+     double f1, f2;
+{
+  double cool_contribution;
+  double t_e_store;
+  struct topbase_phot *cont_ptr;
+  double total, density;
+  int i, j;
+
+  total = 0;
+
+  if (geo.macro_simple == FALSE)        //allow for "only-simple" calculations (SS May04)
+  {
+    for (i = 0; i < nlte_levels; i++)
+    {
+      for (j = 0; j < xconfig[i].n_bfu_jump; j++)
+      {
+        /* Need the density for the lower level in the ionization process. */
+        cont_ptr = &phot_top[xconfig[i].bfu_jump[j]];
+
+        /* Now add the collisional ionization term. */
+        density = den_config (xplasma, cont_ptr->nlev);
+        cool_contribution =
+          q_ioniz (cont_ptr, t_e) * density * xplasma->ne * PLANCK * phot_top[xconfig[i].bfu_jump[j]].freq[0] * xplasma->vol;
+
+        total += cool_contribution;
+      }
+    }
+  }
+
+  return (total);
+}
+
 
 /**********************************************************/
 /**
