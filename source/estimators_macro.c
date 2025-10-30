@@ -398,7 +398,7 @@ int
 normalise_macro_estimators (PlasmaPtr xplasma)
 {
   double invariant_volume_time;
-  int i, j, nlev_upper;
+  int i, j, nlev_upper, n;
   double stimfac, line_freq, stat_weight_ratio;
   double heat_contribution, lower_density, upper_density;
   WindPtr one;
@@ -563,6 +563,16 @@ normalise_macro_estimators (PlasmaPtr xplasma)
   mplasma->kpkt_rates_known = FALSE;
   mplasma->matrix_rates_known = FALSE;
 
+  /* record a total energy flow into macro-atoms, by summing over all matom_abs contributions */
+  for (i = 0; i < nlevels_macro; i++)
+  {
+    mplasma->energy_flow_in = 0.0;
+    for (n = 0; n < NPLASMA; n++)
+    {
+      mplasma->energy_flow_in += mplasma->matom_abs[i];
+    }
+  }
+
   return (0);
 }
 
@@ -603,7 +613,6 @@ total_fb_matoms (xplasma, t_e, f1, f2)
   struct topbase_phot *cont_ptr;
   double total, density;
   int i, j;
-  double q_ioniz ();
   MacroPtr mplasma;
 
   mplasma = &macromain[xplasma->nplasma];
@@ -670,7 +679,6 @@ cooling_di_matoms (xplasma, t_e, f1, f2)
      double f1, f2;
 {
   double cool_contribution;
-  double t_e_store;
   struct topbase_phot *cont_ptr;
   double total, density;
   int i, j;

@@ -1211,6 +1211,9 @@ typedef struct macro
 
   double *matom_abs; /**< This is the energy absorbed by the macro atom levels - recorded during the ionization
      cycles and used to get matom_emiss (SS) */
+  
+  double energy_flow_out, energy_flow_in; /**< Total energy flow in/out of macro atom levels in cell during ionization cycles */
+  
 
   /* This portion of the macro structure  is not written out by windsave */
   int kpkt_rates_known;

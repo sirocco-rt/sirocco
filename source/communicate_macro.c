@@ -409,7 +409,7 @@ reduce_macro_atom_estimators (void)
   gamma_helper = calloc (sizeof (double), NPLASMA * 4 * size_gamma_est);
   alpha_helper = calloc (sizeof (double), NPLASMA * 2 * size_alpha_est);
   level_helper = calloc (sizeof (double), NPLASMA * nlevels_macro);
-  cell_helper = calloc (sizeof (double), 8 * NPLASMA);
+  cell_helper = calloc (sizeof (double), 10 * NPLASMA);
   cooling_bf_helper = calloc (sizeof (double), NPLASMA * 2 * nphot_total);
   cooling_bb_helper = calloc (sizeof (double), NPLASMA * nlines);
 
@@ -417,7 +417,7 @@ reduce_macro_atom_estimators (void)
   gamma_helper2 = calloc (sizeof (double), NPLASMA * 4 * size_gamma_est);
   alpha_helper2 = calloc (sizeof (double), NPLASMA * 2 * size_alpha_est);
   level_helper2 = calloc (sizeof (double), NPLASMA * nlevels_macro);
-  cell_helper2 = calloc (sizeof (double), 8 * NPLASMA);
+  cell_helper2 = calloc (sizeof (double), 10 * NPLASMA);
   cooling_bf_helper2 = calloc (sizeof (double), NPLASMA * 2 * nphot_total);
   cooling_bb_helper2 = calloc (sizeof (double), NPLASMA * nlines);
 
@@ -436,7 +436,8 @@ reduce_macro_atom_estimators (void)
     cell_helper[mpi_i + 5 * NPLASMA] = macromain[mpi_i].cooling_ff / np_mpi_global;
     cell_helper[mpi_i + 6 * NPLASMA] = macromain[mpi_i].cooling_ff_lofreq / np_mpi_global;
     cell_helper[mpi_i + 7 * NPLASMA] = macromain[mpi_i].cooling_adiabatic / np_mpi_global;
-
+    cell_helper[mpi_i + 8 * NPLASMA] = macromain[mpi_i].energy_flow_out / np_mpi_global;
+    cell_helper[mpi_i + 9 * NPLASMA] = macromain[mpi_i].energy_flow_in / np_mpi_global;
 
 
     for (n = 0; n < nlevels_macro; n++)
@@ -477,7 +478,7 @@ reduce_macro_atom_estimators (void)
 
   /* because in the above loop we have already divided by number of processes, we can now do a sum
      with MPI_Reduce, passing it MPI_SUM as an argument. This will give us the mean across threads */
-  MPI_Allreduce (cell_helper, cell_helper2, NPLASMA * 8, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce (cell_helper, cell_helper2, NPLASMA * 10, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (level_helper, level_helper2, NPLASMA * nlevels_macro, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (jbar_helper, jbar_helper2, NPLASMA * size_Jbar_est, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (gamma_helper, gamma_helper2, NPLASMA * 4 * size_gamma_est, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -501,6 +502,8 @@ reduce_macro_atom_estimators (void)
     macromain[mpi_i].cooling_ff = cell_helper2[mpi_i + 5 * NPLASMA];
     macromain[mpi_i].cooling_ff_lofreq = cell_helper2[mpi_i + 6 * NPLASMA];
     macromain[mpi_i].cooling_adiabatic = cell_helper2[mpi_i + 7 * NPLASMA];
+    macromain[mpi_i].energy_flow_out = cell_helper2[mpi_i + 8 * NPLASMA];
+    macromain[mpi_i].energy_flow_in = cell_helper2[mpi_i + 9 * NPLASMA];
 
 
     for (n = 0; n < nlevels_macro; n++)

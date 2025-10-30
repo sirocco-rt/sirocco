@@ -531,10 +531,16 @@ create_heat_table (ndom, rootname)
   strcpy (column_name[30], "cl_ph_macro");
 
   c[31] = get_one (ndom, "cool_di_macro");
-  strcpy (column_name[30], "cl_di__macro");
+  strcpy (column_name[31], "cl_di_macro");
+
+  c[32] = get_one (ndom, "energy_in_macro");
+  strcpy (column_name[32], "e_in_macro");
+
+  c[33] = get_one (ndom, "energy_out_macro");
+  strcpy (column_name[33], "e_out_macro");
 
   /* This should be the maximum number above +1 */
-  ncols = 32;
+  ncols = 34;
 
 
   converge = get_one (ndom, "converge");
@@ -1556,6 +1562,14 @@ get_one (ndom, variable_name)
       else if (strcmp (variable_name, "cool_di_macro") == 0)
       {
         x[n] = plasmamain[nplasma].cool_di_macro;
+      }
+      else if (strcmp (variable_name, "energy_in_macro") == 0)
+      {
+        x[n] = macromain[nplasma].energy_flow_in;
+      }
+      else if (strcmp (variable_name, "energy_out_macro") == 0)
+      {
+        x[n] = macromain[nplasma].energy_flow_out;
       }
       else if (strcmp (variable_name, "gain") == 0)
       {

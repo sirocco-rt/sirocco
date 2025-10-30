@@ -57,6 +57,7 @@ wind_update (WindPtr w)
   double apsum, aausum, abstot; //Absorbed photon energy from PI and auger
   double heat_macro_photo_sum, heat_macro_qrecomb_sum, heat_macro_lines_sum;
   double cool_macro_photo_sum, cool_macro_di_sum, cool_macro_lines_sum;
+  double macro_energy_in, macro_energy_out;
   double flux_persist_scale;
   double volume;
   double dt_r, dt_e;
@@ -224,6 +225,7 @@ wind_update (WindPtr w)
   chexsum = 0.0;
   heat_macro_photo_sum = heat_macro_qrecomb_sum = heat_macro_lines_sum = 0.0;
   cool_macro_photo_sum = cool_macro_di_sum = cool_macro_lines_sum = 0.0;
+  macro_energy_in = macro_energy_out = 0.0;
 
   /* Each rank now has updated plasma cells (temperature, ion abundances, heat/cool rates, etc.), so we can now find
    * out what the max d_t is in the wind and also sum up properties to find the total/global values */
@@ -279,6 +281,8 @@ wind_update (WindPtr w)
     cool_macro_photo_sum += plasmamain[n_plasma].cool_bf_macro;
     cool_macro_lines_sum += plasmamain[n_plasma].cool_lines_macro;
     cool_macro_di_sum += plasmamain[n_plasma].cool_di_macro;
+    macro_energy_in += macromain[n_plasma].energy_flow_in;
+    macro_energy_out += macromain[n_plasma].energy_flow_out;
   }
 
   /* We can now calculate the average of the t */
@@ -348,6 +352,7 @@ wind_update (WindPtr w)
          heat_macro_qrecomb_sum, heat_macro_lines_sum);
     Log ("!!wind_update: macro-atom cooling: photoionization %8.2e collisional ionization %8.2e lines %8.2e\n", cool_macro_photo_sum,
          cool_macro_di_sum, cool_macro_lines_sum);
+    Log ("!!wind_update: macro-atom energy flow: in %8.2e out %8.2e\n", macro_energy_in, macro_energy_out);
 
     if (modes.use_upweighting_of_simple_macro_atoms)
     {
@@ -729,6 +734,9 @@ init_macro_rad_properties (void)
 
     plasmamain[n_plasma].kpkt_emiss = 0.0;
     plasmamain[n_plasma].kpkt_abs = 0.0;
+
+    macromain[n_plasma].energy_flow_out = 0.0;
+    macromain[n_plasma].energy_flow_in = 0.0;
 
     for (macro_level = 0; macro_level < nlevels_macro; ++macro_level)
     {
