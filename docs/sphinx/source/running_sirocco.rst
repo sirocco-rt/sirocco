@@ -1,5 +1,5 @@
 Running SIROCCO
-##############
+######################
 
 The normal way to run SIROCCO is simply to enter
 
@@ -122,7 +122,7 @@ which may be useful in certain special cases.  These include:
   setup.  This is only useful to developers.
 
 Running Different Versions of SIROCCO
-=================================
+=========================================
 
 Once you have SIROCCO up and running, you can also install and run different versions of SIROCCO. This is particularly useful if you want to run and compare an older model from a previous paper or how the outputs have evolved.
 

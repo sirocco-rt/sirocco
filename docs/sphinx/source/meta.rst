@@ -2,7 +2,7 @@ Meta-documentation
 ##################
 
 How to document SIROCCO
-======================
+=================================
 
 This documentation is written in **ReStructured Text**, and parsed by **Sphinx**.
 A general guide to **ReStructured Text** can be found `here <http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html>`_.

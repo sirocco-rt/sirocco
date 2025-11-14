@@ -63,7 +63,7 @@ Instead, one can pull in changes, or make changes yourself, and recompile the so
 which will compile the main program. The program plus full set of auxiliary programs (such as windsave2table and py_wind, see below) can be compiled using :code:`make all`.
 
 Running SIROCCO
-==============
+====================
 
 To run SIROCCO you need to add the following to your $PATH variable:
 
@@ -103,7 +103,7 @@ where  -np followed by a number designates the number of threads assigned.
 
 
 Auxiliary programs
-------------------
+--------------------------
 
 There are two programs that are useful for extracting information about models
 
@@ -120,7 +120,7 @@ The two files are run as follows
 Brief descriptions of command line options for running these routines can obtained using a -h switch
 
 SIROCCO scripts
---------------
+----------------------
 
 There are a number of python scripts that can be used to plot results
 from a SIROCCO run.  These are not particularly well documented and many have been developed

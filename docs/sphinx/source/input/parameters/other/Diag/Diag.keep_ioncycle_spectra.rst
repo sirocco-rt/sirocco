@@ -1,5 +1,5 @@
 Diag.keep_ioncycle_spectra
-================
+================================
 
 Decide whether or not to keep a copy of the log_spec_tot file after
 each spectral cycle in order to track the changes as the

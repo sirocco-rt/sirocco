@@ -17,6 +17,6 @@ The resulting output file can be found `here <../../pydocs/doc_index.html>`_.
 
 .. toctree::
     :maxdepth: 2
-    :glob:
+    :glob:  
 
     py_progs/*

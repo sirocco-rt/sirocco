@@ -52,9 +52,8 @@ Notes:
 History:
 
 231013 ksl Coding begun
-240910 ksl Updated to add collisions to the process and to get the
-            correct format for the output photometry files
-
+240910 ksl Updated to add collisions to the process and to get the correct 
+format for the output photometry files
 '''
 
 import sys

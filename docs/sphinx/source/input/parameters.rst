@@ -17,7 +17,7 @@ A top-level parameter overview when initialising a .pf file. These parameters ar
    parameters/*
 
 Primary .pf Parameters
-********************
+***************************
 
 * :ref:`System_type`
 

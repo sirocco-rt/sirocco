@@ -11,7 +11,6 @@ Utility, I/O and Imports
     py_error
     py_plot_util
     py_read_output
-    hydro_2_python
     kpar
     watchdog
     xhtml
