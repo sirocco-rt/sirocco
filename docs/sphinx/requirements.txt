@@ -12,4 +12,5 @@ sqlalchemy
 jinja2==3.1.4
 sphinx_gallery
 pyhdf
-sphinx-autoapi==3.1.1
+sphinx-autoapi
+git+https://github.com/sirocco-rt/pysi.git@main#egg=pysi

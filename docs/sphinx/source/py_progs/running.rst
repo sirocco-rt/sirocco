@@ -1,5 +1,5 @@
 Running SIROCCO
---------------
+--------------------
 
 .. autosummary::
     :toctree: running

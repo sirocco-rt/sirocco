@@ -6,6 +6,7 @@ bin/rad_hydro*
 bin/inspect_wind*
 bin/modify_wind*
 
+
 # Run files
 *.spec*
 *.pf.old
@@ -105,6 +106,7 @@ source/templates.h.old
 *.sig
 *.out.pf
 logfile
+*.wind_save
 
 # IDE files
 .idea/

@@ -244,7 +244,7 @@ Maximum and Minimum Wind Radius
 The maximum and minimum spherical extent of the wind is calculated automatically
 by SIROCCO, and does not take into account guard cells when it is doing this.
 
-Generating example inputs for testing and familiarizing oneself with SIROCCO's import capability
+Generating example inputs for testing and familiarizing oneself with SIROCCO imports
 ===============================================================================================
 
 If one is trying to use the import capability of SIROCCO for the first time,
