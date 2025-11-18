@@ -4,7 +4,7 @@ pysi
 PySi, short for PySIROCCO, is a python package designed to interface with the SIROCCO code.
 It can be installed from its `own Github repository <https://github.com/sirocco-rt/pysi>`_ 
 under the sirocco-rt organisation. Here is the API documentation; 
-see also :doc:`Plotting and Processing Outputs <plotting>` for some example usage.
+see also :doc:`Tutorials \& Plotting <plotting>` for some example usage.
 
 pysi.wind 
 =================
@@ -37,13 +37,6 @@ pysi.sim
 pysi.math 
 =================
 .. automodule:: pysi.math
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pysi.console
-=================
-.. automodule:: pysi.console
    :members:
    :undoc-members:
    :show-inheritance:
