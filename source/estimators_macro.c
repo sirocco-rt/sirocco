@@ -564,13 +564,10 @@ normalise_macro_estimators (PlasmaPtr xplasma)
   mplasma->matrix_rates_known = FALSE;
 
   /* record a total energy flow into macro-atoms, by summing over all matom_abs contributions */
+  mplasma->energy_flow_in = 0.0;
   for (i = 0; i < nlevels_macro; i++)
   {
-    mplasma->energy_flow_in = 0.0;
-    for (n = 0; n < NPLASMA; n++)
-    {
-      mplasma->energy_flow_in += mplasma->matom_abs[i];
-    }
+    mplasma->energy_flow_in += mplasma->matom_abs[i];
   }
 
   return (0);
