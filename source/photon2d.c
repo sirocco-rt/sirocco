@@ -142,7 +142,8 @@ int
 translate_in_space (pp)
      PhotPtr pp;
 {
-  double ds, delta, s, smax, prhosq;
+  //OLD double ds, delta, s, smax, prhosq;
+  double ds, delta, s, smax;
   int ndom, ndom_next;
   struct photon ptest;
 
@@ -165,10 +166,29 @@ translate_in_space (pp)
      * wind cell
      */
 
-    prhosq = (pp->x[0] * pp->x[0]) + (pp->x[1] * pp->x[1]);
+    double qmin, qmax, qval;
+    if (zdom[ndom].coord_type == RTHETA || zdom[ndom].coord_type == SPHERICAL)
+    {
+      qval = (pp->x[0] * pp->x[0]) + (pp->x[1] * pp->x[1]) + (pp->x[2] * pp->x[2]);
+      qmin = zdom[ndom].rmin * zdom[ndom].rmin;
+      qmax = zdom[ndom].rmax * zdom[ndom].rmax;
 
-    if ((prhosq > (zdom[ndom].wind_rhomin_at_disk * zdom[ndom].wind_rhomin_at_disk)) &&
-        (prhosq < (zdom[ndom].wind_rhomax_at_disk * zdom[ndom].wind_rhomax_at_disk)))
+    }
+    else
+    {
+      qval = (pp->x[0] * pp->x[0]) + (pp->x[1] * pp->x[1]);
+      qmin = (zdom[ndom].wind_rhomin_at_disk * zdom[ndom].wind_rhomin_at_disk);
+      qmax = (zdom[ndom].wind_rhomax_at_disk * zdom[ndom].wind_rhomax_at_disk);
+
+    }
+
+
+//OLD    prhosq = (pp->x[0] * pp->x[0]) + (pp->x[1] * pp->x[1]);
+
+//OLD    if ((prhosq > (zdom[ndom].wind_rhomin_at_disk * zdom[ndom].wind_rhomin_at_disk)) &&
+//OLD        (prhosq < (zdom[ndom].wind_rhomax_at_disk * zdom[ndom].wind_rhomax_at_disk)))
+
+    if (qval > qmin && qval < qmax)
     {
       stuff_phot (pp, &ptest);
       ds = 0.0;
