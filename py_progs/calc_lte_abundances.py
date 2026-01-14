@@ -4,30 +4,31 @@
 
 Synopsis:
 
-Calculate ion abundances using Sirocco atomic data and the Saha equation.
+Calculate LTE ion abundances using Sirocco atomic data and the Saha equation.
 
 
 Command line usage:
 
-    usage: calc_ion_abundances.py [-h] [-v] masterfile temperature nh
+    usage: calc_lte_abundances.py [-h] [-v] masterfile temperature nh
 
     Examples:
-        calc_ion_abundances.py standard80.dat 10000 1e10
-        calc_ion_abundances.py standard80.dat 50000 1e8 -v
+        calc_lte_abundances.py data/standard80.dat 10000 1e10
+        calc_lte_abundances.py data/standard80.dat 50000 1e8 -v
 
 Description:
 
     This script calculates ionization equilibrium using the Saha equation,
     following the approach in Sirocco's saha.c. It reads atomic data from
-    a masterfile (e.g., standard80.dat) and computes ion fractions for a
-    given temperature and hydrogen number density.
+    a masterfile and computes ion fractions for a given temperature and
+    hydrogen number density.
 
-    The masterfile should be in the xdata/ directory. Before running, ensure
-    that Setup_Sirocco_Dir has been run to create the necessary symlinks.
+    Before running, ensure that Setup_Sirocco_Dir has been run to create
+    the necessary symlinks so that file paths in the masterfile are valid.
 
 Primary routines:
 
-    steer           Processes command line options and calls calc_ionization
+    steer           Processes command line options and calls do_one
+    do_one          Loads data, runs calculation, prints and returns results
     calc_ionization Performs the ionization calculation, returns results as
                     a list of dictionaries suitable for conversion to a Table
     read_atomicdata Reads atomic data from a masterfile
@@ -35,7 +36,7 @@ Primary routines:
 Notes:
 
     Results are returned as a list of dictionaries with keys:
-        element, z, ion, istate, density, fraction
+        element, z, ion, istate, density, fraction, ne
 
     This can be converted to an astropy Table:
         from astropy.table import Table
@@ -113,8 +114,7 @@ class Level:
 class AtomicData:
     """Container for all atomic data."""
 
-    def __init__(self, sirocco_dir: str):
-        self.sirocco_dir = sirocco_dir
+    def __init__(self):
         self.elements: Dict[int, Element] = {}  # keyed by atomic number z
         self.ions: List[Ion] = []
         self.levels: List[Level] = []
@@ -125,50 +125,29 @@ class AtomicData:
         Parse masterfile to get list of data files.
 
         Args:
-            masterfile: Path to masterfile (relative to xdata/ or absolute)
+            masterfile: Path to masterfile
 
         Returns:
             List of data file paths
         """
-        # Resolve masterfile path
-        if os.path.isabs(masterfile):
-            master_path = masterfile
-        else:
-            # Try xdata directory
-            master_path = os.path.join(self.sirocco_dir, 'xdata', masterfile)
-            if not os.path.exists(master_path):
-                master_path = masterfile
-
         data_files = []
         missing_files = []
 
-        with open(master_path, 'r') as f:
+        with open(masterfile, 'r') as f:
             for line in f:
                 line = line.strip()
                 # Skip comments and empty lines
                 if not line or line.startswith('#'):
                     continue
 
-                # Try path relative to sirocco_dir first (works if Setup_Sirocco_Dir was run)
-                # The masterfile uses paths like "data/atomic/..." which become
-                # symlinks to xdata/atomic/... after running Setup_Sirocco_Dir
-                data_path = os.path.join(self.sirocco_dir, line)
-
-                if os.path.exists(data_path):
-                    data_files.append(data_path)
+                if os.path.exists(line):
+                    data_files.append(line)
                 else:
                     missing_files.append(line)
 
-        # If files are missing, warn user about Setup_Sirocco_Dir
-        if missing_files and not data_files:
-            print(f"Warning: Could not find atomic data files.")
-            print(f"The masterfile references paths like 'data/atomic/...'")
-            print(f"Please run Setup_Sirocco_Dir from your working directory to create")
-            print(f"the necessary symlinks, or run this script from $SIROCCO directory.")
-            print(f"\n  cd {self.sirocco_dir}")
-            print(f"  ./bin/Setup_Sirocco_Dir")
-            print(f"\nMissing files (first 5):")
-            for f in missing_files[:5]:
+        if missing_files:
+            print(f"Warning: Could not find the following files:")
+            for f in missing_files:
                 print(f"  {f}")
 
         return data_files
@@ -278,25 +257,17 @@ class AtomicData:
                 ion.nlevels += 1
 
 
-def read_atomicdata(masterfile: str, sirocco_dir: str = None) -> AtomicData:
+def read_atomicdata(masterfile: str) -> AtomicData:
     """
     Read atomic data from a masterfile.
 
     Args:
-        masterfile: Path to masterfile (e.g., 'standard80.dat')
-        sirocco_dir: Path to Sirocco root directory (default: $SIROCCO or inferred)
+        masterfile: Path to masterfile (e.g., 'data/standard80.dat')
 
     Returns:
         AtomicData object with loaded data
     """
-    if sirocco_dir is None:
-        if 'SIROCCO' in os.environ:
-            sirocco_dir = os.environ['SIROCCO']
-        else:
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            sirocco_dir = os.path.dirname(script_dir)
-
-    data = AtomicData(sirocco_dir)
+    data = AtomicData()
     data_files = data.parse_masterfile(masterfile)
 
     for filepath in data_files:
@@ -534,7 +505,7 @@ def do_one(masterfile, temperature, nh, verbose=False):
     This is the main routine to call from scripts.
 
     Args:
-        masterfile: Path to masterfile (e.g., 'standard80.dat')
+        masterfile: Path to masterfile (e.g., 'data/standard80.dat')
         temperature: Temperature in Kelvin
         nh: Hydrogen number density in cm^-3
         verbose: Print convergence and loading information
@@ -547,23 +518,11 @@ def do_one(masterfile, temperature, nh, verbose=False):
             from astropy.table import Table
             t = Table(results)
     """
-    # Determine Sirocco directory
-    if 'SIROCCO' in os.environ:
-        sirocco_dir = os.environ['SIROCCO']
-    else:
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        sirocco_dir = os.path.dirname(script_dir)
-
-    if not os.path.exists(os.path.join(sirocco_dir, 'xdata')):
-        print(f"Error: Cannot find xdata directory in {sirocco_dir}")
-        print("Set SIROCCO environment variable or run from Sirocco directory")
-        return []
-
     # Load atomic data
     if verbose:
-        print(f"Loading atomic data from {sirocco_dir}")
+        print(f"Loading atomic data from {masterfile}")
 
-    data = read_atomicdata(masterfile, sirocco_dir)
+    data = read_atomicdata(masterfile)
 
     if verbose:
         print(f"Loaded {len(data.elements)} elements, {len(data.ions)} ions, {len(data.levels)} levels")
@@ -584,10 +543,9 @@ def steer(argv):
     Args:
         argv: Command line arguments (sys.argv)
     """
-    masterfile = 'standard80.dat'
     verbose = False
 
-    if len(argv) < 3:
+    if len(argv) < 4:
         print(__doc__)
         return
 
@@ -607,16 +565,13 @@ def steer(argv):
             positional.append(argv[i])
         i += 1
 
-    # Expect: masterfile temperature nh  OR  temperature nh
+    # Expect: masterfile temperature nh
     if len(positional) >= 3:
         masterfile = positional[0]
         temperature = float(positional[1])
         nh = float(positional[2])
-    elif len(positional) == 2:
-        temperature = float(positional[0])
-        nh = float(positional[1])
     else:
-        print("Error: Need temperature and nh (and optionally masterfile)")
+        print("Error: Need masterfile, temperature, and nh")
         print(__doc__)
         return
 
