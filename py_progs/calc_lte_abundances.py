@@ -531,7 +531,8 @@ def do_one(masterfile, temperature, nh, verbose=False):
     results = calc_ionization(data, temperature, nh, verbose=verbose)
 
     # Print results
-    print_results(results, temperature, nh)
+    if verbose:
+        print_results(results, temperature, nh)
 
     return results
 
@@ -575,7 +576,7 @@ def steer(argv):
         print(__doc__)
         return
 
-    do_one(masterfile, temperature, nh, verbose=verbose)
+    results=do_one(masterfile, temperature, nh, verbose=verbose)
 
 
 # Next lines permit one to run the routine from the command line
