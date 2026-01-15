@@ -61,6 +61,30 @@ whereas the for Macro Atoms we have::
 
 The columns are similar in the two cases.
 
+Matching Level Types to Ion Types
+=================================
+
+The level data type must match the ion definition:
+
+* **IonV (simple atoms)**: Use ``Level`` or ``LevTop`` format
+* **IonM (macro atoms)**: Use ``LevMacro`` format
+
+Since SIROCCO reads atomic data sequentially, once an ion is defined as IonM (macro atom),
+any subsequent simple atom level data (LevTop, Level) for that ion in later files will
+simply be ignored. Similarly, if an ion is defined as IonV, any subsequent LevMacro
+entries for that ion will be ignored.
+
+For example, if using the h20_hetop_standard80.dat masterfile where H and He are macro atoms:
+
+* H and He ions are defined with ``IonM`` in h20_hetop_standard80_elem_ions.dat
+* H levels come from ``LevMacro`` entries in h20_levels.dat
+* He levels come from ``LevMacro`` entries in he_top_levels.dat
+* The topbase_levels_h.dat file (which contains ``LevTop`` entries) is not included,
+  because those entries would be ignored for macro atom H ions
+
+Column Descriptions
+===================
+
 Each level is described by an element number and ion number and a level number.  
 In the macro-atom case the level number is unique; in the simple atom case the combination of iSLP and the level number are unique.  
  

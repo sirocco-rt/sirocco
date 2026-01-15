@@ -110,6 +110,26 @@ command::
 
 which prints out an ascii version of the input data that was used.)
 
+Simple Atoms vs Macro Atoms
+---------------------------
+
+SIROCCO supports two treatments for ions:
+
+* **Simple atoms** (IonV): Two-level atom approximation, using LevTop/Level data
+* **Macro atoms** (IonM): Full multi-level treatment, using LevMacro data
+
+The ion declaration (IonV or IonM) determines which level data format is used.
+Since atomic data is read sequentially, once an ion is defined as IonM, any subsequent
+simple atom data (LevTop, Level) for that ion in later files will be ignored, and vice versa.
+When building a masterfile, ensure consistency:
+
+1. If an ion is ``IonV``, include files with ``LevTop`` or ``Level`` entries for that ion
+2. If an ion is ``IonM``, include files with ``LevMacro`` entries for that ion
+
+This is why, for example, h20_hetop_standard80.dat includes h20_levels.dat (LevMacro for H)
+but does not include topbase_levels_h.dat (LevTop for H) - those entries would be ignored
+since H is defined as a macro atom.
+
 More information on the various types of input data can be found below:
 
 .. toctree::

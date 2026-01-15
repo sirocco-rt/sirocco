@@ -88,8 +88,19 @@ a macro atom, but He is to be treated as a simple atom, this file would become::
     IonV   He   2   2   2   54.41800 1000   10     1s(2S_{1/2})
     IonV   He   2   3   1 1.0000e+20   1   1     Bare
 
-Note that only evident changed is the label, but in this case the number of nlte levels, and not the number of levels  is what is important.  
+Note that only evident changed is the label, but in this case the number of nlte levels, and not the number of levels  is what is important.
 
+.. warning::
+
+   The choice of IonV vs IonM has important implications for which level and line data
+   is used. Since SIROCCO reads atomic data sequentially, once an ion is defined as IonM
+   (macro atom), any subsequent simple atom data (LevTop, Level) for that ion in later
+   files will be ignored. Similarly, if an ion is defined as IonV (simple atom), any
+   subsequent macro atom data (LevMacro) for that ion will be ignored.
+
+   This means that a masterfile should be consistent: if H is defined as IonM, then
+   hydrogen level data should come from LevMacro entries (e.g., in h20_levels.dat),
+   not from LevTop entries (e.g., in topbase_levels_h.dat).
 
 
 SIROCCO structure:
