@@ -133,6 +133,9 @@ class AtomicData:
         data_files = []
         missing_files = []
 
+        # Get directory of masterfile to resolve relative paths
+        masterfile_dir = os.path.dirname(os.path.abspath(masterfile))
+
         with open(masterfile, 'r') as f:
             for line in f:
                 line = line.strip()
@@ -140,10 +143,15 @@ class AtomicData:
                 if not line or line.startswith('#'):
                     continue
 
+                # Try the path as-is first, then relative to masterfile directory
                 if os.path.exists(line):
                     data_files.append(line)
                 else:
-                    missing_files.append(line)
+                    alt_path = os.path.join(masterfile_dir, line)
+                    if os.path.exists(alt_path):
+                        data_files.append(alt_path)
+                    else:
+                        missing_files.append(line)
 
         if missing_files:
             print(f"Warning: Could not find the following files:")
@@ -238,6 +246,10 @@ class AtomicData:
 
     def _build_indices(self):
         """Build indices for fast lookup."""
+        # Sort ions by (z, istate) to ensure they are contiguous by element
+        # and in order of ionization state
+        self.ions.sort(key=lambda ion: (ion.z, ion.istate))
+
         for i, ion in enumerate(self.ions):
             self.ion_index[(ion.z, ion.istate)] = i
 
@@ -257,12 +269,13 @@ class AtomicData:
                 ion.nlevels += 1
 
 
-def read_atomicdata(masterfile: str) -> AtomicData:
+def read_atomicdata(masterfile: str, verbose: bool = False) -> AtomicData:
     """
     Read atomic data from a masterfile.
 
     Args:
         masterfile: Path to masterfile (e.g., 'data/standard80.dat')
+        verbose: Print debug information
 
     Returns:
         AtomicData object with loaded data
@@ -270,10 +283,24 @@ def read_atomicdata(masterfile: str) -> AtomicData:
     data = AtomicData()
     data_files = data.parse_masterfile(masterfile)
 
+    if verbose:
+        print(f"Found {len(data_files)} data files to load")
+
     for filepath in data_files:
         data._read_data_file(filepath)
 
     data._build_indices()
+
+    if verbose:
+        print(f"\nLoaded elements: {sorted(data.elements.keys())}")
+        for z in sorted(data.elements.keys()):
+            elem = data.elements[z]
+            print(f"  Z={z} ({elem.name}): firstion={elem.firstion}, nions={elem.nions}, abun={elem.abun:.3e}")
+        print(f"\nTotal ions loaded: {len(data.ions)}")
+        # Show first few ions
+        for i, ion in enumerate(data.ions[:10]):
+            print(f"  Ion[{i}]: z={ion.z}, istate={ion.istate}, name={ion.name}, g={ion.g}, ip_ev={ion.ip_ev:.2f}")
+
     return data
 
 
@@ -300,7 +327,8 @@ def _calculate_partition_functions(data: AtomicData, temperature: float):
         ion.partition = max(z_partition, ion.g)
 
 
-def _saha_equation(data: AtomicData, ne: float, temperature: float, nh: float) -> List[float]:
+def _saha_equation(data: AtomicData, ne: float, temperature: float, nh: float,
+                   verbose: bool = False) -> List[float]:
     """Calculate ion densities using the Saha equation."""
     xsaha = SAHA_CONST * pow(temperature, 1.5)
     kt = BOLTZMANN * temperature
@@ -309,6 +337,8 @@ def _saha_equation(data: AtomicData, ne: float, temperature: float, nh: float) -
 
     for z, elem in data.elements.items():
         if elem.firstion < 0:
+            if verbose and z <= 2:
+                print(f"  Element z={z} ({elem.name}): skipped (firstion={elem.firstion})")
             continue
 
         first = elem.firstion
@@ -333,11 +363,22 @@ def _saha_equation(data: AtomicData, ne: float, temperature: float, nh: float) -
             densities[nion] = densities[nion - 1] * b
             total += densities[nion]
 
+            if verbose and z <= 2:
+                print(f"  {elem.name}: istate {prev_ion.istate}->{curr_ion.istate}, "
+                      f"b={b:.3e}, ip={prev_ion.ip_ev:.2f}eV, "
+                      f"Z_prev={prev_ion.partition:.2f}, Z_curr={curr_ion.partition:.2f}")
+
         if total > 0:
             norm = nh * elem.abun / total
             for nion in range(first, last):
                 densities[nion] *= norm
                 densities[nion] = max(densities[nion], DENSITY_MIN)
+
+            if verbose and z <= 2:
+                print(f"  {elem.name}: total={total:.3e}, norm={norm:.3e}")
+                for nion in range(first, last):
+                    ion = data.ions[nion]
+                    print(f"    {ion.name} (istate={ion.istate}): density={densities[nion]:.3e}")
 
     return densities
 
@@ -406,7 +447,8 @@ def calc_ionization(data: AtomicData, temperature: float, nh: float,
 
     # Iterate to convergence
     for iteration in range(MAXITERATIONS):
-        densities = _saha_equation(data, ne, t, nh)
+        # Only print verbose Saha details on first iteration
+        densities = _saha_equation(data, ne, t, nh, verbose=(verbose and iteration == 0))
         ne_new = _get_electron_density(data, densities)
         ne_new = max(ne_new, DENSITY_MIN)
 
@@ -423,6 +465,18 @@ def calc_ionization(data: AtomicData, temperature: float, nh: float,
         ne = (ne + ne_new) / 2.0
     else:
         print(f"Warning: Failed to converge after {MAXITERATIONS} iterations")
+
+    # Debug: print hydrogen information
+    if verbose and 1 in data.elements:
+        h_elem = data.elements[1]
+        print(f"\nHydrogen debug info:")
+        print(f"  H firstion index: {h_elem.firstion}, nions: {h_elem.nions}")
+        if h_elem.firstion >= 0:
+            for i in range(h_elem.firstion, h_elem.firstion + h_elem.nions):
+                ion = data.ions[i]
+                print(f"  Ion[{i}]: z={ion.z}, istate={ion.istate}, name={ion.name}, "
+                      f"g={ion.g}, ip_ev={ion.ip_ev:.2f}, partition={ion.partition:.3f}, "
+                      f"density={densities[i]:.3e}")
 
     # Build results list
     results = []
@@ -482,6 +536,7 @@ def print_results(results: List[Dict], temperature: float, nh: float):
     print(f"Temperature:        {temperature:.2e} K")
     print(f"H number density:   {nh:.2e} cm^-3")
     print(f"Electron density:   {ne:.2e} cm^-3")
+    print(f"ne/nh ratio:        {ne/nh:.3f}")
     print("=" * 70)
 
     current_element = None
@@ -494,7 +549,8 @@ def print_results(results: List[Dict], temperature: float, nh: float):
             print(f"{'Ion':<10} {'State':<8} {'Density (cm^-3)':<18} {'Fraction':<12}")
             print("-" * 50)
 
-        if row['fraction'] > 1e-10:
+        # Always print hydrogen, otherwise filter by fraction
+        if row['z'] == 1 or row['fraction'] > 1e-10:
             print(f"{row['ion']:<10} {row['istate']:<8} {row['density']:<18.3e} {row['fraction']:<12.4e}")
 
 
@@ -522,7 +578,7 @@ def do_one(masterfile, temperature, nh, verbose=False):
     if verbose:
         print(f"Loading atomic data from {masterfile}")
 
-    data = read_atomicdata(masterfile)
+    data = read_atomicdata(masterfile, verbose=verbose)
 
     if verbose:
         print(f"Loaded {len(data.elements)} elements, {len(data.ions)} ions, {len(data.levels)} levels")
@@ -544,7 +600,7 @@ def steer(argv):
     Args:
         argv: Command line arguments (sys.argv)
     """
-    verbose = False
+    verbose = True 
 
     if len(argv) < 4:
         print(__doc__)
