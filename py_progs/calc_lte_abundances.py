@@ -96,6 +96,7 @@ class Ion:
     g: float                 # Ground state statistical weight
     ip: float                # Ionization potential in ergs
     ip_ev: float             # Ionization potential in eV (for reference)
+    is_macro: bool = False   # True if this is a macro atom (IonM)
     firstlevel: int = -1     # Index to first level
     nlevels: int = 0         # Number of levels
     partition: float = 1.0   # Partition function
@@ -109,6 +110,7 @@ class Level:
     g: float                 # Statistical weight
     ex: float                # Excitation energy in ergs
     ex_ev: float             # Excitation energy in eV (for reference)
+    is_macro: bool = False   # True if this is a macro atom level (LevMacro)
 
 
 class AtomicData:
@@ -176,9 +178,10 @@ class AtomicData:
 
                 if keyword == 'Element':
                     self._parse_element(parts)
-                elif keyword == 'IonV' or keyword == 'IonM':
-                    # IonM is macro atom format, but has same structure for our purposes
-                    self._parse_ion(parts)
+                elif keyword == 'IonV':
+                    self._parse_ion(parts, is_macro=False)
+                elif keyword == 'IonM':
+                    self._parse_ion(parts, is_macro=True)
                 elif keyword == 'LevTop':
                     self._parse_level_topbase(parts)
                 elif keyword == 'LevMacro':
@@ -201,8 +204,13 @@ class AtomicData:
             name=name, z=z, abun=abun, atomic_weight=atomic_weight
         )
 
-    def _parse_ion(self, parts: List[str]):
-        """Parse IonV line."""
+    def _parse_ion(self, parts: List[str], is_macro: bool = False):
+        """Parse IonV or IonM line.
+
+        Args:
+            parts: Split line from data file
+            is_macro: True if this is a macro atom (IonM), False for simple atom (IonV)
+        """
         if len(parts) < 6:
             return
 
@@ -216,7 +224,7 @@ class AtomicData:
         if ip_ev > 1e15:
             ip = 0.0
 
-        ion = Ion(name=name, z=z, istate=istate, g=g, ip=ip, ip_ev=ip_ev)
+        ion = Ion(name=name, z=z, istate=istate, g=g, ip=ip, ip_ev=ip_ev, is_macro=is_macro)
         self.ions.append(ion)
 
     def _parse_level_topbase(self, parts: List[str]):
@@ -248,7 +256,7 @@ class AtomicData:
         g = float(parts[6])      # statistical weight
         ex = ex_ev * EV2ERGS
 
-        level = Level(z=z, istate=istate, g=g, ex=ex, ex_ev=ex_ev)
+        level = Level(z=z, istate=istate, g=g, ex=ex, ex_ev=ex_ev, is_macro=True)
         self.levels.append(level)
 
     def _parse_level(self, parts: List[str]):
@@ -326,20 +334,31 @@ def read_atomicdata(masterfile: str, verbose: bool = False) -> AtomicData:
 
 
 def _calculate_partition_functions(data: AtomicData, temperature: float):
-    """Calculate partition functions for all ions."""
+    """Calculate partition functions for all ions.
+
+    For macro atoms (IonM), only LevMacro levels are used.
+    For simple atoms (IonV), only LevTop/Level levels are used.
+    """
     kt = BOLTZMANN * temperature
 
     for i, ion in enumerate(data.ions):
         z_partition = ion.g
         ground_ex = 0.0
 
+        # Filter levels: macro ions use macro levels, simple ions use simple levels
         for level in data.levels:
             if level.z == ion.z and level.istate == ion.istate:
+                # Only use levels that match the ion's macro/simple status
+                if level.is_macro != ion.is_macro:
+                    continue
                 if level.ex < ground_ex or ground_ex == 0.0:
                     ground_ex = level.ex
 
         for level in data.levels:
             if level.z == ion.z and level.istate == ion.istate:
+                # Only use levels that match the ion's macro/simple status
+                if level.is_macro != ion.is_macro:
+                    continue
                 if level.ex > ground_ex:
                     delta_e = level.ex - ground_ex
                     if delta_e < 10 * kt:
