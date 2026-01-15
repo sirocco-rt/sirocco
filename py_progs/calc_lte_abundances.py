@@ -176,10 +176,13 @@ class AtomicData:
 
                 if keyword == 'Element':
                     self._parse_element(parts)
-                elif keyword == 'IonV':
+                elif keyword == 'IonV' or keyword == 'IonM':
+                    # IonM is macro atom format, but has same structure for our purposes
                     self._parse_ion(parts)
                 elif keyword == 'LevTop':
                     self._parse_level_topbase(parts)
+                elif keyword == 'LevMacro':
+                    self._parse_level_macro(parts)
                 elif keyword == 'Level':
                     self._parse_level(parts)
 
@@ -225,6 +228,24 @@ class AtomicData:
         istate = int(parts[2])
         ex_ev = float(parts[6])
         g = float(parts[7])
+        ex = ex_ev * EV2ERGS
+
+        level = Level(z=z, istate=istate, g=g, ex=ex, ex_ev=ex_ev)
+        self.levels.append(level)
+
+    def _parse_level_macro(self, parts: List[str]):
+        """Parse LevMacro line (macro atom format).
+
+        Format: LevMacro z istate lvl energy ex_energy g rate description
+        Example: LevMacro 1 1 1 -13.59843 0.000000 2 1.00e+21 () n=1
+        """
+        if len(parts) < 7:
+            return
+
+        z = int(parts[1])
+        istate = int(parts[2])
+        ex_ev = float(parts[5])  # excitation energy in eV
+        g = float(parts[6])      # statistical weight
         ex = ex_ev * EV2ERGS
 
         level = Level(z=z, istate=istate, g=g, ex=ex, ex_ev=ex_ev)
