@@ -298,13 +298,12 @@ class AtomicData:
                 ion.nlevels += 1
 
 
-def read_atomicdata(masterfile: str, verbose: bool = False) -> AtomicData:
+def read_atomicdata(masterfile: str) -> AtomicData:
     """
     Read atomic data from a masterfile.
 
     Args:
         masterfile: Path to masterfile (e.g., 'data/standard80.dat')
-        verbose: Print debug information
 
     Returns:
         AtomicData object with loaded data
@@ -312,24 +311,10 @@ def read_atomicdata(masterfile: str, verbose: bool = False) -> AtomicData:
     data = AtomicData()
     data_files = data.parse_masterfile(masterfile)
 
-    if verbose:
-        print(f"Found {len(data_files)} data files to load")
-
     for filepath in data_files:
         data._read_data_file(filepath)
 
     data._build_indices()
-
-    if verbose:
-        print(f"\nLoaded elements: {sorted(data.elements.keys())}")
-        for z in sorted(data.elements.keys()):
-            elem = data.elements[z]
-            print(f"  Z={z} ({elem.name}): firstion={elem.firstion}, nions={elem.nions}, abun={elem.abun:.3e}")
-        print(f"\nTotal ions loaded: {len(data.ions)}")
-        # Show first few ions
-        for i, ion in enumerate(data.ions[:10]):
-            print(f"  Ion[{i}]: z={ion.z}, istate={ion.istate}, name={ion.name}, g={ion.g}, ip_ev={ion.ip_ev:.2f}")
-
     return data
 
 
@@ -367,8 +352,7 @@ def _calculate_partition_functions(data: AtomicData, temperature: float):
         ion.partition = max(z_partition, ion.g)
 
 
-def _saha_equation(data: AtomicData, ne: float, temperature: float, nh: float,
-                   verbose: bool = False) -> List[float]:
+def _saha_equation(data: AtomicData, ne: float, temperature: float, nh: float) -> List[float]:
     """Calculate ion densities using the Saha equation."""
     xsaha = SAHA_CONST * pow(temperature, 1.5)
     kt = BOLTZMANN * temperature
@@ -377,8 +361,6 @@ def _saha_equation(data: AtomicData, ne: float, temperature: float, nh: float,
 
     for z, elem in data.elements.items():
         if elem.firstion < 0:
-            if verbose and z <= 2:
-                print(f"  Element z={z} ({elem.name}): skipped (firstion={elem.firstion})")
             continue
 
         first = elem.firstion
@@ -403,22 +385,11 @@ def _saha_equation(data: AtomicData, ne: float, temperature: float, nh: float,
             densities[nion] = densities[nion - 1] * b
             total += densities[nion]
 
-            if verbose and z <= 2:
-                print(f"  {elem.name}: istate {prev_ion.istate}->{curr_ion.istate}, "
-                      f"b={b:.3e}, ip={prev_ion.ip_ev:.2f}eV, "
-                      f"Z_prev={prev_ion.partition:.2f}, Z_curr={curr_ion.partition:.2f}")
-
         if total > 0:
             norm = nh * elem.abun / total
             for nion in range(first, last):
                 densities[nion] *= norm
                 densities[nion] = max(densities[nion], DENSITY_MIN)
-
-            if verbose and z <= 2:
-                print(f"  {elem.name}: total={total:.3e}, norm={norm:.3e}")
-                for nion in range(first, last):
-                    ion = data.ions[nion]
-                    print(f"    {ion.name} (istate={ion.istate}): density={densities[nion]:.3e}")
 
     return densities
 
@@ -432,8 +403,7 @@ def _get_electron_density(data: AtomicData, densities: List[float]) -> float:
     return max(ne, DENSITY_MIN)
 
 
-def calc_ionization(data: AtomicData, temperature: float, nh: float,
-                    verbose: bool = False) -> List[Dict]:
+def calc_ionization(data: AtomicData, temperature: float, nh: float) -> List[Dict]:
     """
     Calculate ionization equilibrium for given conditions.
 
@@ -443,7 +413,6 @@ def calc_ionization(data: AtomicData, temperature: float, nh: float,
         data: AtomicData object from read_atomicdata()
         temperature: Temperature in Kelvin
         nh: Hydrogen number density in cm^-3
-        verbose: Print convergence information
 
     Returns:
         List of dictionaries with keys:
@@ -482,41 +451,20 @@ def calc_ionization(data: AtomicData, temperature: float, nh: float,
 
     ne = max(ne, 1e-6)
 
-    if verbose:
-        print(f"Initial ne estimate: {ne:.3e} cm^-3")
-
     # Iterate to convergence
     for iteration in range(MAXITERATIONS):
-        # Only print verbose Saha details on first iteration
-        densities = _saha_equation(data, ne, t, nh, verbose=(verbose and iteration == 0))
+        densities = _saha_equation(data, ne, t, nh)
         ne_new = _get_electron_density(data, densities)
         ne_new = max(ne_new, DENSITY_MIN)
 
         rel_error = abs(ne - ne_new) / ne_new if ne_new > 0 else 1.0
 
-        if verbose and iteration % 10 == 0:
-            print(f"  Iteration {iteration}: ne = {ne_new:.3e}, rel_error = {rel_error:.3e}")
-
         if rel_error < FRACTIONAL_ERROR or ne_new < 1e-6:
-            if verbose:
-                print(f"Converged after {iteration + 1} iterations")
             break
 
         ne = (ne + ne_new) / 2.0
     else:
         print(f"Warning: Failed to converge after {MAXITERATIONS} iterations")
-
-    # Debug: print hydrogen information
-    if verbose and 1 in data.elements:
-        h_elem = data.elements[1]
-        print(f"\nHydrogen debug info:")
-        print(f"  H firstion index: {h_elem.firstion}, nions: {h_elem.nions}")
-        if h_elem.firstion >= 0:
-            for i in range(h_elem.firstion, h_elem.firstion + h_elem.nions):
-                ion = data.ions[i]
-                print(f"  Ion[{i}]: z={ion.z}, istate={ion.istate}, name={ion.name}, "
-                      f"g={ion.g}, ip_ev={ion.ip_ev:.2f}, partition={ion.partition:.3f}, "
-                      f"density={densities[i]:.3e}")
 
     # Build results list
     results = []
@@ -594,7 +542,7 @@ def print_results(results: List[Dict], temperature: float, nh: float):
             print(f"{row['ion']:<10} {row['istate']:<8} {row['density']:<18.3e} {row['fraction']:<12.4e}")
 
 
-def do_one(masterfile, temperature, nh, verbose=False):
+def do_one(masterfile, temperature, nh):
     """
     Calculate ionization equilibrium for given conditions.
 
@@ -604,7 +552,6 @@ def do_one(masterfile, temperature, nh, verbose=False):
         masterfile: Path to masterfile (e.g., 'data/standard80.dat')
         temperature: Temperature in Kelvin
         nh: Hydrogen number density in cm^-3
-        verbose: Print convergence and loading information
 
     Returns:
         List of dictionaries with keys:
@@ -614,22 +561,8 @@ def do_one(masterfile, temperature, nh, verbose=False):
             from astropy.table import Table
             t = Table(results)
     """
-    # Load atomic data
-    if verbose:
-        print(f"Loading atomic data from {masterfile}")
-
-    data = read_atomicdata(masterfile, verbose=verbose)
-
-    if verbose:
-        print(f"Loaded {len(data.elements)} elements, {len(data.ions)} ions, {len(data.levels)} levels")
-
-    # Run calculation
-    results = calc_ionization(data, temperature, nh, verbose=verbose)
-
-    # Print results
-    if verbose:
-        print_results(results, temperature, nh)
-
+    data = read_atomicdata(masterfile)
+    results = calc_ionization(data, temperature, nh)
     return results
 
 
@@ -640,8 +573,6 @@ def steer(argv):
     Args:
         argv: Command line arguments (sys.argv)
     """
-    verbose = True 
-
     if len(argv) < 4:
         print(__doc__)
         return
@@ -653,8 +584,6 @@ def steer(argv):
         if argv[i] == '-h' or argv[i] == '--help':
             print(__doc__)
             return
-        elif argv[i] == '-v' or argv[i] == '--verbose':
-            verbose = True
         elif argv[i][0] == '-':
             print(f'Error: Unknown switch --- {argv[i]}')
             return
@@ -672,7 +601,8 @@ def steer(argv):
         print(__doc__)
         return
 
-    results=do_one(masterfile, temperature, nh, verbose=verbose)
+    results = do_one(masterfile, temperature, nh)
+    print_results(results, temperature, nh)
 
 
 # Next lines permit one to run the routine from the command line
