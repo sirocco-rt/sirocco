@@ -158,6 +158,23 @@ calculate_ionization (restart_stat)
   while (geo.wcycle < geo.wcycles)
   {                             /* This allows you to build up photons in bunches */
 
+    /* If we are using photon speed up mode then the number of photons varies by cycle in the
+     * ionization phase.  We set this up here
+     */
+
+    if (modes.photon_speedup)
+    {
+      nphot_min = NPHOT_MAX / pow (10., PHOT_RANGE);
+
+      x = log10 (NPHOT_MAX / nphot_min) / (geo.wcycles - 1);
+      NPHOT = nphot_min * pow (10., (x * geo.wcycle));
+      if (NPHOT > NPHOT_MAX)
+      {
+        NPHOT = NPHOT_MAX;
+      }
+    }
+
+
     photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT + 1);
     photmain_allocated = TRUE;
     Log ("CCC - Allocated photmain for wcycle %d with NPHOT of %d\n", geo.wcycle, NPHOT);
@@ -214,23 +231,6 @@ calculate_ionization (restart_stat)
       iwind = -1;               /* Do not generate photons from wind */
     else
       iwind = 1;                /* Create wind photons and force a reinitialization of wind parms */
-
-
-    /* If we are using photon speed up mode then the number of photons varies by cycle in the
-     * ionization phase.  We set this up here
-     */
-
-    if (modes.photon_speedup)
-    {
-      nphot_min = NPHOT_MAX / pow (10., PHOT_RANGE);
-
-      x = log10 (NPHOT_MAX / nphot_min) / (geo.wcycles - 1);
-      NPHOT = nphot_min * pow (10., (x * geo.wcycle));
-      if (NPHOT > NPHOT_MAX)
-      {
-        NPHOT = NPHOT_MAX;
-      }
-    }
 
     Log ("!!Sirocco: %1.2e photons will be transported for cycle %i\n", (double) NPHOT, geo.wcycle + 1);
 

@@ -153,8 +153,8 @@ create_master_table (ndom, rootname)
      char rootname[];
 {
   char filename[132];
-  double *c[50], *converge;
-  char column_name[50][24];
+  double *c[51], *converge;
+  char column_name[51][24];
   char one_line[1024], start[1024], one_value[24];
   char name[132];               /* file name extension */
 
@@ -181,67 +181,70 @@ create_master_table (ndom, rootname)
   c[2] = get_one (ndom, "ne");
   strcpy (column_name[2], "ne");
 
-  c[3] = get_one (ndom, "t_e");
-  strcpy (column_name[3], "t_e");
+  c[3] = get_one (ndom, "nh");
+  strcpy (column_name[3], "nh");
 
-  c[4] = get_one (ndom, "t_r");
-  strcpy (column_name[4], "t_r");
+  c[4] = get_one (ndom, "t_e");
+  strcpy (column_name[4], "t_e");
 
-  c[5] = get_ion (ndom, 1, 1, 0, name);
-  strcpy (column_name[5], "h1");
+  c[5] = get_one (ndom, "t_r");
+  strcpy (column_name[5], "t_r");
 
-  c[6] = get_ion (ndom, 2, 2, 0, name);
-  strcpy (column_name[6], "he2");
+  c[6] = get_ion (ndom, 1, 1, 0, name);
+  strcpy (column_name[6], "h1");
 
-  c[7] = get_ion (ndom, 6, 4, 0, name);
-  strcpy (column_name[7], "c4");
+  c[7] = get_ion (ndom, 2, 2, 0, name);
+  strcpy (column_name[7], "he2");
 
-  c[8] = get_ion (ndom, 7, 5, 0, name);
-  strcpy (column_name[8], "n5");
+  c[8] = get_ion (ndom, 6, 4, 0, name);
+  strcpy (column_name[8], "c4");
 
-  c[9] = get_ion (ndom, 8, 6, 0, name);
-  strcpy (column_name[9], "o6");
+  c[9] = get_ion (ndom, 7, 5, 0, name);
+  strcpy (column_name[9], "n5");
 
-  c[10] = get_one (ndom, "dmo_dt_x");
-  strcpy (column_name[10], "dmo_dt_x");
+  c[10] = get_ion (ndom, 8, 6, 0, name);
+  strcpy (column_name[10], "o6");
+
+  c[11] = get_one (ndom, "dmo_dt_x");
+  strcpy (column_name[11], "dmo_dt_x");
 
 
-  c[11] = get_one (ndom, "dmo_dt_y");
-  strcpy (column_name[11], "dmo_dt_y");
+  c[12] = get_one (ndom, "dmo_dt_y");
+  strcpy (column_name[12], "dmo_dt_y");
 
-  c[12] = get_one (ndom, "dmo_dt_z");
-  strcpy (column_name[12], "dmo_dt_z");
+  c[13] = get_one (ndom, "dmo_dt_z");
+  strcpy (column_name[13], "dmo_dt_z");
 
-  c[13] = get_one (ndom, "ip");
-  strcpy (column_name[13], "ip");
+  c[14] = get_one (ndom, "ip");
+  strcpy (column_name[14], "ip");
 
-  c[14] = get_one (ndom, "xi");
-  strcpy (column_name[14], "xi");
+  c[15] = get_one (ndom, "xi");
+  strcpy (column_name[15], "xi");
 
-  c[15] = get_one (ndom, "ntot");
-  strcpy (column_name[15], "ntot");
+  c[16] = get_one (ndom, "ntot");
+  strcpy (column_name[16], "ntot");
 
-  c[16] = get_one (ndom, "nrad");
-  strcpy (column_name[16], "nrad");
+  c[17] = get_one (ndom, "nrad");
+  strcpy (column_name[17], "nrad");
 
-  c[17] = get_one (ndom, "nioniz");
-  strcpy (column_name[17], "nioniz");
+  c[18] = get_one (ndom, "nioniz");
+  strcpy (column_name[18], "nioniz");
 
-  c[18] = get_one (ndom, "nscat_es");
-  strcpy (column_name[18], "nscat_es");
+  c[19] = get_one (ndom, "nscat_es");
+  strcpy (column_name[19], "nscat_es");
 
-  c[19] = get_one (ndom, "nscat_res");
-  strcpy (column_name[19], "nscat_res");
+  c[20] = get_one (ndom, "nscat_res");
+  strcpy (column_name[20], "nscat_res");
 
-  c[20] = get_one (ndom, "nscat_ff");
-  strcpy (column_name[20], "nscat_ff");
+  c[21] = get_one (ndom, "nscat_ff");
+  strcpy (column_name[21], "nscat_ff");
 
-  c[21] = get_one (ndom, "nscat_bf");
-  strcpy (column_name[21], "nscat_bf");
+  c[22] = get_one (ndom, "nscat_bf");
+  strcpy (column_name[22], "nscat_bf");
 
 
   /* This should be the maxium number above +1 */
-  ncols = 22;
+  ncols = 23;
 
 
   converge = get_one (ndom, "converge");
@@ -1606,6 +1609,8 @@ get_one (ndom, variable_name)
       {
         x[n] = wmain[n].dfudge;
       }
+      else if (strcmp (variable_name, "nh") == 0)
+        x[n] = rho2nh * plasmamain[nplasma].rho;
       else
       {
         Error ("get_one: Unknown variable %s\n", variable_name);
