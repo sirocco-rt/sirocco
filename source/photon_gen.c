@@ -912,12 +912,16 @@ photo_gen_star (p, r, t, weight, f1, f2, spectype, istart, nphot)
     Error ("photo_gen_star: Cannot generate photons if freqmax %g < freqmin %g\n", f2, f1);
   }
   Log ("photo_gen_star creates nphot %5d photons from %5d to %5d \n", nphot, istart, iend);
-  Log_silent ("photo_gen_star creates nphot %5d photons from %5d to %5d \n", nphot, istart, iend);
+  // Log_silent ("photo_gen_star creates nphot %5d photons from %5d to %5d \n", nphot, istart, iend);
+  Log_flush ();
+
   freqmin = f1;
   freqmax = f2;
   r = (1. + EPSILON) * r;       /* Generate photons just outside the photosphere */
   for (i = istart; i < iend; i++)
   {
+    Log ("phot %6d %6d -  %6d for %6d\n", i, istart, iend, NPHOT);
+    Log_flush ();
     p[i].origin = PTYPE_STAR;   // For BL photons this is corrected in photon_gen
     p[i].frame = F_OBSERVER;    // Stellar photons are not redshifted
     p[i].w = weight;
