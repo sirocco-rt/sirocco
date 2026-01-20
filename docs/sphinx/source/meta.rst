@@ -20,7 +20,23 @@ We require the **Python 3** version of **Sphinx**. Install it, and the other mod
     cd docs/sphinx
     pip3 install -r requirements.txt
 
-Building the documentation
+If you use conda/minconda or a similar environment management tool, we recommend you create a new enviroment 
+for compoling the sphinx documentation.  This is because there are some version dependences in the package
+[pysi](https://pysi.readthedocs.io/en/stable/) which is used in some of the Jupyter scripts.  
+
+And example that is known to work, if you are in the sphinx directory:
+
+.. code :: bash
+
+    conda create -n xsphinx python=3.10
+    conda activate xsphinx
+    pip3 install -r requirements.txt
+
+
+In the absence of installing this package, you can still edit and recompile the sphinx documentation, but
+you will see errors associated with this missing package.  This should not prevent you from improving other
+parts of the documenation. 
+
 --------------------------
 
 Once **Sphinx** is installed, you can make the documentation using a **Makefile** as:
@@ -28,6 +44,8 @@ Once **Sphinx** is installed, you can make the documentation using a **Makefile*
 .. code :: bash
 
     make html
+
+
 
 You can tell if the documentation was built successfully by looking at the output of ``make html``.
 You should see:
