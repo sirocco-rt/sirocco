@@ -69,6 +69,15 @@ Do this via:
     make clean
     make html
 
+Alternatively, you can use ``sphinx-autobuild`` to automatically rebuild the documentation when changes are detected.
+To do this run:
+
+.. code :: bash
+
+    make livehtml
+
+This will start a local server (usually at http://127.0.0.1:8000) where you can view the documentation.
+
 General documentation
 =====================
 

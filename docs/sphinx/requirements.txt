@@ -13,4 +13,5 @@ jinja2==3.1.4
 sphinx_gallery
 pyhdf
 sphinx-autoapi
+sphinx-autobuild
 git+https://github.com/sirocco-rt/pysi.git@main#egg=pysi
