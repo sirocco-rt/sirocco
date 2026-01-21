@@ -84,7 +84,6 @@ calculate_ionization (restart_stat)
   /* What is here is just a test, that we can allocate and then deallocate photmain.
      With a little more logic, this could  be put inside the ioniation loop. */
 
-  //OLD photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
   photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT + 1);
   photmain_allocated = TRUE;
   Log ("CCC - Allocated photmain for memory check with NPHOT set to %d\n", NPHOT);
@@ -117,7 +116,6 @@ calculate_ionization (restart_stat)
 
 
 
-//OLD  p = photmain;
   w = wmain;
 
   freqmin = xband.f1[0];
@@ -160,7 +158,23 @@ calculate_ionization (restart_stat)
   while (geo.wcycle < geo.wcycles)
   {                             /* This allows you to build up photons in bunches */
 
-    // photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
+    /* If we are using photon speed up mode then the number of photons varies by cycle in the
+     * ionization phase.  We set this up here
+     */
+
+    if (modes.photon_speedup)
+    {
+      nphot_min = NPHOT_MAX / pow (10., PHOT_RANGE);
+
+      x = log10 (NPHOT_MAX / nphot_min) / (geo.wcycles - 1);
+      NPHOT = nphot_min * pow (10., (x * geo.wcycle));
+      if (NPHOT > NPHOT_MAX)
+      {
+        NPHOT = NPHOT_MAX;
+      }
+    }
+
+
     photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT + 1);
     photmain_allocated = TRUE;
     Log ("CCC - Allocated photmain for wcycle %d with NPHOT of %d\n", geo.wcycle, NPHOT);
@@ -217,23 +231,6 @@ calculate_ionization (restart_stat)
       iwind = -1;               /* Do not generate photons from wind */
     else
       iwind = 1;                /* Create wind photons and force a reinitialization of wind parms */
-
-
-    /* If we are using photon speed up mode then the number of photons varies by cycle in the
-     * ionization phase.  We set this up here
-     */
-
-    if (modes.photon_speedup)
-    {
-      nphot_min = NPHOT_MAX / pow (10., PHOT_RANGE);
-
-      x = log10 (NPHOT_MAX / nphot_min) / (geo.wcycles - 1);
-      NPHOT = nphot_min * pow (10., (x * geo.wcycle));
-      if (NPHOT > NPHOT_MAX)
-      {
-        NPHOT = NPHOT_MAX;
-      }
-    }
 
     Log ("!!Sirocco: %1.2e photons will be transported for cycle %i\n", (double) NPHOT, geo.wcycle + 1);
 
@@ -494,7 +491,6 @@ make_spectra (restart_stat)
    * and in the somewhat abnormal case where additional ionization cycles
    * were calculated for the wind
    */
-  // photmain = (PhotPtr) calloc (sizeof (p_dummy), NPHOT);
   photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT + 1);
   photmain_allocated = TRUE;
   Log ("CCC - Allocated photmain at beginning of detailed spectrum, with NPHOt %d\n", NPHOT);
