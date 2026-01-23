@@ -9,11 +9,24 @@ Calculate LTE ion abundances using Sirocco atomic data and the Saha equation.
 
 Command line usage:
 
-    usage: calc_lte_abundances.py [-h] [-v] masterfile temperature nh
-
-    Examples:
+    Single temperature calculation:
+        calc_lte_abundances.py masterfile temperature nh
         calc_lte_abundances.py data/standard80.dat 10000 1e10
-        calc_lte_abundances.py data/standard80.dat 50000 1e8 -v
+
+    Multi-temperature calculation (do_many):
+        calc_lte_abundances.py -many [options]
+        calc_lte_abundances.py -many -masterfile data/standard80.dat -nh 1e10
+        calc_lte_abundances.py -many -log_tmin 4 -log_tmax 5 -n_per_decade 20
+        calc_lte_abundances.py -many -ion_tables
+
+    Options for -many mode:
+        -masterfile FILE   Atomic data masterfile (default: data/h20_hetop_standard80.dat)
+        -nh VALUE          Hydrogen number density in cm^-3 (default: 1e9)
+        -log_tmin VALUE    Log10 of minimum temperature (default: 3)
+        -log_tmax VALUE    Log10 of maximum temperature (default: 6)
+        -n_per_decade N    Number of temperature points per decade (default: 30)
+        -outfile FILE      Output filename (default: auto-generated from masterfile)
+        -ion_tables        Also produce per-element ion tables (like windsave2table format)
 
 Description:
 
@@ -25,10 +38,16 @@ Description:
     Before running, ensure that Setup_Sirocco_Dir has been run to create
     the necessary symlinks so that file paths in the masterfile are valid.
 
+    The -ion_tables option produces additional output files for each element,
+    with ion fractions as columns (i01, i02, etc.) similar to the format
+    produced by windsave2table.
+
 Primary routines:
 
-    steer           Processes command line options and calls do_one
-    do_one          Loads data, runs calculation, prints and returns results
+    steer           Processes command line options and calls do_one or do_many
+    do_one          Loads data, runs calculation for a single temperature
+    do_many         Runs calculations over a range of temperatures, writes table
+    get_ion         Extracts per-element tables from do_many output
     calc_ionization Performs the ionization calculation, returns results as
                     a list of dictionaries suitable for conversion to a Table
     read_atomicdata Reads atomic data from a masterfile
@@ -57,6 +76,10 @@ import sys
 import math
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
+
+import numpy as np
+from astropy.table import Table, join
+from astropy.io import ascii
 
 # Physical constants (matching Sirocco's constants.h)
 BOLTZMANN = 1.38062e-16      # erg/K
@@ -566,18 +589,180 @@ def do_one(masterfile, temperature, nh):
     return results
 
 
+def do_many(masterfile='data/h20_hetop_standard80.dat', nh=1e9, log_tmin=3, log_tmax=6, n_per_decade=30, outfile=''):
+    """
+    Calculate LTE ionization over a range of temperatures and write to a table.
+
+    Args:
+        masterfile: Path to atomic data masterfile
+        nh: Hydrogen number density in cm^-3
+        log_tmin: Log10 of minimum temperature in K
+        log_tmax: Log10 of maximum temperature in K
+        n_per_decade: Number of temperature points per decade
+        outfile: Output filename (auto-generated if empty)
+
+    Returns:
+        Astropy Table with columns: element, z, ion, istate, density,
+        fraction, ne, t_e, nh
+
+    The output file uses ascii.fixed_width_two_line format.
+    """
+    delta=1./n_per_decade
+    log_t=log_tmin
+    results=[]
+    while log_t<=log_tmax:
+        # print(log_t)
+        result=do_one(masterfile,10**log_t,nh)
+        for r in result:
+            r['t_e']     = 10.0**log_t
+            r['nh']    = nh
+        results.extend(result)
+        log_t+=delta
+    all_results=Table(rows=results)
+    if outfile=='':
+        word=masterfile.split('/')[-1]
+        outfile=word.split('.')[0]
+        outfile='%s_nh_%.2e.txt' % (outfile,nh)
+    all_results.write(outfile,format='ascii.fixed_width_two_line',overwrite=True)
+    return all_results
+
+
+def get_ion(element, filename='lte_from_data.txt', xsave=False):
+    """
+    Extract per-element ion table from do_many output, similar to windsave2table format.
+
+    Args:
+        element: Element name (e.g., 'H', 'He', 'C')
+        filename: Input file from do_many
+        xsave: If True, write the result to a file
+
+    Returns:
+        Astropy Table with columns: t_e, ne, i01, i02, ... (ion fractions)
+        Returns empty list if element not found.
+
+    The output format resembles windsave2table ion files, with temperature
+    and electron density followed by ion fraction columns.
+    """
+    xtab = ascii.read(filename)
+    xelem = xtab[xtab['element'] == element]
+    if len(xelem) == 0:
+        print('Could not find %s' % element)
+        print(np.unique(xtab['element']))
+        return []
+
+    istate = np.unique(xelem['istate'])
+    start = True
+    for one_state in istate:
+        xx = xelem[xelem['istate'] == one_state]
+        ztab = xx['t_e', 'ne', 'fraction']
+        ztab.rename_column('fraction', 'i%02d' % one_state)
+        if start:
+            result = ztab.copy()
+            start = False
+        else:
+            result = join(result, ztab['t_e', 'i%02d' % one_state], join_type='left')
+
+    if xsave:
+        # Derive output filename from input filename
+        outfile = filename.replace('.txt', '.%s.txt' % element)
+        if outfile == filename:
+            outfile = '%s.%s.txt' % (filename, element)
+        result.write(outfile, format='ascii.fixed_width_two_line', overwrite=True)
+        print(f"  Wrote {element} table to {outfile}")
+
+    return result
+
+import matplotlib.pyplot as plt
+from astropy.io import ascii
+
+def plot_one(
+    sirr='sirocco_bb/Sum_sirroco_He_bb.txt',
+    cloud='cloudy_bb/Sum_Cloudy_helium.txt',
+    outfile=''
+):
+    """
+    This is just a plotting routine, intended to make it possible
+    to compate two different sets of data of the same element.
+    """
+    cloudy  = ascii.read(cloud)
+    sirocco = ascii.read(sirr)
+
+    scols = sirocco.colnames
+    last  = scols[-1].replace('i', '')
+    ion_max = int(last)
+
+    cols = scols[-ion_max:]
+
+    fig, ax = plt.subplots(figsize=(8, 8))
+
+    # Use one color per ion stage, reused for both files
+    for col in cols:
+        ion = int(col.replace('i', ''))
+
+        # Sirocco: points
+        ax.loglog(
+            sirocco['t_e'], sirocco[col],
+            marker='o', linestyle='none',
+            label=f'He {ion}+ (Sirocco)'
+        )
+
+        # Cloudy: lines, same color
+        ax.loglog(
+            cloudy['t_e'], cloudy[col],
+            linestyle=':', alpha=0.6,
+            color=ax.lines[-1].get_color()
+        )
+
+    ax.set_xlim(1e3, 1e6)
+    ax.set_ylim(1e-4, 2)
+
+    ax.set_xlabel(r'T$_e$', fontsize=16)
+    ax.set_ylabel('Fractional Abundance', fontsize=16)
+    # ax.set_title('Sirocco vs Cloudy', fontsize=14)
+    ax.tick_params(axis='both', which='major', labelsize=16)
+    ax.tick_params(axis='both', which='minor', labelsize=14)
+
+    # Main legend: ion + model
+    ax.legend(ncol=2, fontsize=9)
+
+    first=sirr.split('/')[-1]
+    second=cloud.split('/')[-1]
+    first=first.replace('.txt','')
+    second=second.replace('.txt','')
+
+    # Secondary legend explaining styles
+    from matplotlib.lines import Line2D
+    style_legend = [
+        Line2D([0], [0], marker='o', linestyle='none', label=first),
+        Line2D([0], [0], linestyle=':', label=second)
+    ]
+    ax.add_artist(ax.legend(
+        handles=style_legend,
+        loc='lower left',
+        frameon=False
+    ))
+
+    fig.tight_layout()
+    if outfile!='':
+        plt.savefig(outfile)
+
 def steer(argv):
     """
-    Parse command line arguments and call do_one.
+    Parse command line arguments and call do_one or do_many.
 
     Args:
         argv: Command line arguments (sys.argv)
     """
+    # Check for -many mode first
+    if len(argv) > 1 and argv[1] == '-many':
+        steer_many(argv[2:])
+        return
+
     if len(argv) < 4:
         print(__doc__)
         return
 
-    # Parse arguments
+    # Parse arguments for single calculation
     positional = []
     i = 1
     while i < len(argv):
@@ -603,6 +788,90 @@ def steer(argv):
 
     results = do_one(masterfile, temperature, nh)
     print_results(results, temperature, nh)
+
+
+def steer_many(argv):
+    """
+    Parse command line arguments for do_many.
+
+    Args:
+        argv: Command line arguments after '-many'
+    """
+    # Default values matching do_many signature
+    masterfile = 'data/h20_hetop_standard80.dat'
+    nh = 1e9
+    log_tmin = 3
+    log_tmax = 6
+    n_per_decade = 30
+    outfile = ''
+    ion_tables = False
+
+    i = 0
+    while i < len(argv):
+        if argv[i] == '-h' or argv[i] == '--help':
+            print("Usage: calc_lte_abundances.py -many [options]")
+            print("\nOptions:")
+            print("  -masterfile FILE   Atomic data masterfile (default: data/h20_hetop_standard80.dat)")
+            print("  -nh VALUE          Hydrogen number density in cm^-3 (default: 1e9)")
+            print("  -log_tmin VALUE    Log10 of minimum temperature (default: 3)")
+            print("  -log_tmax VALUE    Log10 of maximum temperature (default: 6)")
+            print("  -n_per_decade N    Number of temperature points per decade (default: 30)")
+            print("  -outfile FILE      Output filename (default: auto-generated)")
+            print("  -ion_tables        Also produce per-element ion tables (like windsave2table)")
+            return
+        elif argv[i] == '-masterfile' and i + 1 < len(argv):
+            masterfile = argv[i + 1]
+            i += 2
+        elif argv[i] == '-nh' and i + 1 < len(argv):
+            nh = float(argv[i + 1])
+            i += 2
+        elif argv[i] == '-log_tmin' and i + 1 < len(argv):
+            log_tmin = float(argv[i + 1])
+            i += 2
+        elif argv[i] == '-log_tmax' and i + 1 < len(argv):
+            log_tmax = float(argv[i + 1])
+            i += 2
+        elif argv[i] == '-n_per_decade' and i + 1 < len(argv):
+            n_per_decade = int(argv[i + 1])
+            i += 2
+        elif argv[i] == '-outfile' and i + 1 < len(argv):
+            outfile = argv[i + 1]
+            i += 2
+        elif argv[i] == '-ion_tables':
+            ion_tables = True
+            i += 1
+        else:
+            print(f'Error: Unknown option or missing value --- {argv[i]}')
+            return
+
+    print(f"Running do_many with:")
+    print(f"  masterfile:   {masterfile}")
+    print(f"  nh:           {nh:.2e}")
+    print(f"  log_tmin:     {log_tmin}")
+    print(f"  log_tmax:     {log_tmax}")
+    print(f"  n_per_decade: {n_per_decade}")
+    if outfile:
+        print(f"  outfile:      {outfile}")
+    if ion_tables:
+        print(f"  ion_tables:   True")
+
+    results = do_many(masterfile, nh, log_tmin, log_tmax, n_per_decade, outfile)
+
+    # Determine actual output filename for ion tables
+    if outfile == '':
+        word = masterfile.split('/')[-1]
+        actual_outfile = word.split('.')[0]
+        actual_outfile = '%s_nh_%.2e.txt' % (actual_outfile, nh)
+    else:
+        actual_outfile = outfile
+
+    print(f"\nWrote {len(results)} rows to {actual_outfile}")
+
+    if ion_tables:
+        print("\nGenerating per-element ion tables:")
+        elements = np.unique(results['element'])
+        for elem in elements:
+            get_ion(elem, filename=actual_outfile, xsave=True)
 
 
 # Next lines permit one to run the routine from the command line
