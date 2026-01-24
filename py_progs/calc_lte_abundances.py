@@ -664,9 +664,9 @@ def get_ion(element, filename='lte_from_data.txt', xsave=False):
 
     if xsave:
         # Derive output filename from input filename
-        outfile = filename.replace('.txt', '.%s.txt' % element)
+        outfile = filename.replace('.txt', '.%s.frac.txt' % element)
         if outfile == filename:
-            outfile = '%s.%s.txt' % (filename, element)
+            outfile = '%s.%s.frac.txt' % (filename, element)
         result.write(outfile, format='ascii.fixed_width_two_line', overwrite=True)
         print(f"  Wrote {element} table to {outfile}")
 
@@ -683,34 +683,65 @@ def plot_one(
     """
     This is just a plotting routine, intended to make it possible
     to compate two different sets of data of the same element.
+
+    The figure has two panels:
+      - Top: log-log comparison of fractional abundances
+      - Bottom: difference (sirocco - cloudy) on a linear scale,
+        with cloudy interpolated onto the sirocco temperature grid
     """
     cloudy  = ascii.read(cloud)
     sirocco = ascii.read(sirr)
 
-    scols = sirocco.colnames
-    last  = scols[-1].replace('i', '')
-    ion_max = int(last)
+    # Find ion abundance columns (pattern: i01, i02, etc.)
+    import re
+    ion_pattern = re.compile(r'^i(\d+)$')
+    cols = [c for c in sirocco.colnames if ion_pattern.match(c)]
+    # Sort by ion number to ensure correct order
+    cols.sort(key=lambda c: int(ion_pattern.match(c).group(1)))
 
-    cols = scols[-ion_max:]
+    fig, (ax, ax_diff) = plt.subplots(2, 1, figsize=(8, 10),
+                                       gridspec_kw={'height_ratios': [2, 1]})
 
-    fig, ax = plt.subplots(figsize=(8, 8))
+    # Get temperature arrays
+    t_sirocco = np.array(sirocco['t_e'])
+    t_cloudy = np.array(cloudy['t_e'])
 
     # Use one color per ion stage, reused for both files
+    colors = {}
     for col in cols:
         ion = int(col.replace('i', ''))
+        roman_label = ROMAN[ion - 1] if ion <= len(ROMAN) else f'{ion}+'
 
         # Sirocco: points
         ax.loglog(
             sirocco['t_e'], sirocco[col],
             marker='o', linestyle='none',
-            label=f'He {ion}+ (Sirocco)'
+            label=roman_label
         )
+        colors[col] = ax.lines[-1].get_color()
 
         # Cloudy: lines, same color
         ax.loglog(
             cloudy['t_e'], cloudy[col],
             linestyle=':', alpha=0.6,
-            color=ax.lines[-1].get_color()
+            color=colors[col]
+        )
+
+        # Interpolate cloudy onto sirocco temperature grid for difference
+        # Use log of temperature for interpolation since grid is logarithmic
+        cloudy_interp = np.interp(
+            np.log10(t_sirocco),
+            np.log10(t_cloudy),
+            np.array(cloudy[col])
+        )
+        diff = np.array(sirocco[col]) - cloudy_interp
+
+        # Plot difference in bottom panel
+        ax_diff.semilogx(
+            t_sirocco, diff,
+            marker='o', linestyle='-', markersize=4,
+            color=colors[col],
+            label=roman_label
         )
 
     ax.set_xlim(1e3, 1e6)
@@ -718,31 +749,73 @@ def plot_one(
 
     ax.set_xlabel(r'T$_e$', fontsize=16)
     ax.set_ylabel('Fractional Abundance', fontsize=16)
-    # ax.set_title('Sirocco vs Cloudy', fontsize=14)
+    ax.set_title('Sirocco vs Cloudy', fontsize=14)
     ax.tick_params(axis='both', which='major', labelsize=16)
     ax.tick_params(axis='both', which='minor', labelsize=14)
 
-    # Main legend: ion + model
-    ax.legend(ncol=2, fontsize=9)
-
     first=sirr.split('/')[-1]
     second=cloud.split('/')[-1]
+    first_element=first.split('.')[-3]
+    second_element=second.split('.')[-3]
     first=first.replace('.txt','')
     second=second.replace('.txt','')
 
-    # Secondary legend explaining styles
+    if first_element==second_element:
+        ax.set_title(first_element, fontsize=14)
+
+    # Determine legend layout based on number of ions
+    n_ions = len(cols)
+    if n_ions <= 6:
+        legend_ncol = 2
+        legend_fontsize = 9
+    elif n_ions <= 12:
+        legend_ncol = 4
+        legend_fontsize = 8
+    else:
+        # Many ions (e.g., Fe with 27): use more columns
+        legend_ncol = 9
+        legend_fontsize = 7
+
+    # Secondary legend explaining styles (add first so ion legend is on top)
     from matplotlib.lines import Line2D
     style_legend = [
         Line2D([0], [0], marker='o', linestyle='none', label=first),
         Line2D([0], [0], linestyle=':', label=second)
     ]
-    ax.add_artist(ax.legend(
+    style_leg = ax.legend(
         handles=style_legend,
         loc='lower left',
         frameon=False
-    ))
+    )
+    ax.add_artist(style_leg)
 
-    fig.tight_layout()
+    # Main legend: ion stages
+    if n_ions > 12:
+        # Place legend below the bottom panel
+        ax.legend(ncol=legend_ncol, fontsize=legend_fontsize, loc='upper right')
+    else:
+        ax.legend(ncol=legend_ncol, fontsize=legend_fontsize, loc='best')
+
+    # Configure difference panel
+    ax_diff.set_xlim(1e3, 1e6)
+    ax_diff.axhline(y=0, color='gray', linestyle='--', linewidth=0.8)
+    ax_diff.set_xlabel(r'T$_e$', fontsize=16)
+    ax_diff.set_ylabel('Difference', fontsize=14)
+    ax_diff.tick_params(axis='both', which='major', labelsize=14)
+    ax_diff.tick_params(axis='both', which='minor', labelsize=12)
+
+    # For the difference panel, place legend below when many ions
+    if n_ions > 12:
+        ax_diff.legend(ncol=legend_ncol, fontsize=legend_fontsize,
+                       loc='upper center', bbox_to_anchor=(0.5, -0.15))
+    else:
+        ax_diff.legend(ncol=legend_ncol, fontsize=legend_fontsize, loc='best')
+
+    if n_ions > 12:
+        # Make room for legend below the plot
+        fig.tight_layout(rect=[0, 0.08, 1, 1])
+    else:
+        fig.tight_layout()
     if outfile!='':
         plt.savefig(outfile)
 
