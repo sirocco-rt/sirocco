@@ -1234,6 +1234,7 @@ extern int size_Jbar_est, size_gamma_est, size_alpha_est;
 #define IONMODE_ML93_FIXTE 0    /**< Lucy Mazzali using existing t_e (no HC balance) */
 #define IONMODE_LTE_TR 1        /**< LTE using t_r */
 #define IONMODE_LTE_TE 4        /**<  LTE using t_e */
+#define IONMODE_LTE_ITERATE 5   /**<  LTE with heating/cooling balance to find t_e */
 #define IONMODE_FIXED 2         /**<  Hardwired concentrations */
 #define IONMODE_ML93 3          /**<  Lucy Mazzali */
 #define IONMODE_MATRIX_BB 8     /**<  matrix solver BB model */
