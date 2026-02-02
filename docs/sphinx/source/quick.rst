@@ -9,7 +9,7 @@ SIROCCO, the details of a particular wind model, or criteria for evaluating whet
 the inputs correspond to a plausible model of an astrophysical system.
 
 * :ref:`Installation <installation>` -- how to install SIROCCO from github and to run a model
-* :ref:`Creating the input file for SIROCCO <Inputs>`  -- Simple instructions how to set up a model interactively
-* :ref:`The files produced by SIROCCO <Outputs>`  -- A quick look at the output files
-* :ref:`Evaluation of the results <Evaluation>` -- A discussion of whether a model has run as required, or not
-* :ref:`Plotting \& Processing Outputs <plotting>` -- Some tutorials for plotting and processing outputs with PySi and other tools.
+* :doc:`Creating the input file for SIROCCO <input>`  -- Simple instructions how to set up a model interactively
+* :doc:`The files produced by SIROCCO <output>`  -- A quick look at the output files
+* :ref:`Evaluation of the results <evaluation>` -- A discussion of whether a model has run as required, or not
+* :doc:`Tutorials \& Plotting <plotting>` -- Some tutorials for plotting and processing outputs with PySi and other tools.

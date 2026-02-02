@@ -31,6 +31,8 @@ regarding the code and suggestions for improvement should be reported there.  We
 the code for their own science.  If anyone has questions about whether the code might be useful for a project, we
 encourage you to contact one of the authors of the code.
 
+You can join the users mailing list through our `Sirocco Users Google Group <https://groups.google.com/g/sirocco-users>`_.
+
 ---------------------------------------
 Documentation \& Publications
 ---------------------------------------
@@ -61,6 +63,9 @@ Knox Long
   Space Telescope Science Institute, 3700 San Martin Drive, Baltimore, MD 21218, USA
   Eureka Scientific, Inc., 2452 Delmer St., Suite 100, Oakland, CA 94602-3017, USA
 
+James Matthews
+  Department of Physics, Astrophysics, University of Oxford, Denys Wilkinson Building, Keble Road, Oxford, OX1 3RH, UK
+
 Christian Knigge
   Department of Physics and Astronomy, University of Southampton, Southampton, SO17 1BJ, UK
 
@@ -69,9 +74,6 @@ Stuart Sim
 
 Nick Higginbottom
   Department of Physics and Astronomy, University of Southampton, Southampton, SO17 1BJ, UK
-
-James Matthews
-  Department of Physics, Astrophysics, University of Oxford, Denys Wilkinson Building, Keble Road, Oxford, OX1 3RH, UK
 
 Sam Mangham
   Department of Physics and Astronomy, University of Southampton, Southampton, SO17 1BJ, UK

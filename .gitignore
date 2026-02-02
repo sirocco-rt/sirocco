@@ -1,5 +1,7 @@
 # This is the git ignore for python
 # ignore binaries in bin/ such as e.g. py78a
+bin/sirocco*
+bin/swind*
 bin/py*
 bin/windsave2table*
 bin/rad_hydro*
@@ -96,7 +98,7 @@ source/version.h
 # we also should not track templates.h.old either
 source/templates.h.old
 
-# python output files
+# sirocco output files
 *.diag
 *.spec
 *.log_spec
@@ -113,4 +115,9 @@ logfile
 **/*.vscode/
 py_progs/.idea/
 scratch/
+
+
+# files from sed or other -e modifier
+*-e 
+
 
