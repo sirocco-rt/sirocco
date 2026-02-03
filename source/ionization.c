@@ -75,15 +75,18 @@ ion_abundances (PlasmaPtr xplasma, int mode)
   }
   else if (mode == IONMODE_LTE_TR)
   {
-    /* LTE using t_r - force Saha equation for all ions including macro atoms */
+    /* LTE using t_r - force Saha equation for all ions including macro atoms.
+       Update t_e to 0.9 * t_r each cycle, similar to ML93. */
     int save_macro_ioniz_mode = geo.macro_ioniz_mode;
     geo.macro_ioniz_mode = MACRO_IONIZ_MODE_NO_ESTIMATORS;
+    xplasma->t_e = 0.9 * xplasma->t_r;
     ireturn = nebular_concentrations (xplasma, NEBULARMODE_TR);
     geo.macro_ioniz_mode = save_macro_ioniz_mode;
   }
   else if (mode == IONMODE_LTE_TE)
   {
-    /* LTE using t_e - force Saha equation for all ions including macro atoms */
+    /* LTE using t_e - force Saha equation for all ions including macro atoms.
+       t_e remains fixed at the initial temperature (set in define_wind.c). */
     int save_macro_ioniz_mode = geo.macro_ioniz_mode;
     geo.macro_ioniz_mode = MACRO_IONIZ_MODE_NO_ESTIMATORS;
     ireturn = nebular_concentrations (xplasma, NEBULARMODE_TE);
