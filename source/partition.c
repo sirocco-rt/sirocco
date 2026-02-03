@@ -110,8 +110,21 @@ partition_functions (xplasma, mode)
   for (nion = 0; nion < nions; nion++)
   {
 
-    if (ion[nion].nlevels > 0)
-      //Calculate data on levels using a weighed BB assumption
+    if (ion[nion].macro_info == TRUE && ion[nion].nlte > 0)
+      // Macro atom with macro levels: use macro levels for partition function
+    {
+      m = ion[nion].first_nlte_level;
+      m_ground = m;
+      z = xconfig[m].g;
+
+      for (n = 1; n < ion[nion].nlte; n++)
+      {
+        m++;
+        z += weight * xconfig[m].g * exp ((-xconfig[m].ex + xconfig[m_ground].ex) / kt);
+      }
+    }
+    else if (ion[nion].nlevels > 0)
+      // Simple atom: calculate using simple levels with weighted BB assumption
     {
       m = ion[nion].firstlevel;
       m_ground = m;
@@ -126,7 +139,7 @@ partition_functions (xplasma, mode)
       }
     }
     else if (ion[nion].nlte > 0)
-      //Calculate using "non-lte" levels
+      // Fallback: calculate using "non-lte" levels
     {
       m = ion[nion].first_nlte_level;
       m_ground = m;
@@ -222,8 +235,21 @@ partition_functions_2 (xplasma, xnion, temp, weight)
   for (nion = xnion - 1; nion < xnion + 1; nion++)
   {
 
-    if (ion[nion].nlevels > 0)
-      //Calculate data on levels using a weighed BB assumption
+    if (ion[nion].macro_info == TRUE && ion[nion].nlte > 0)
+      // Macro atom with macro levels: use macro levels for partition function
+    {
+      m = ion[nion].first_nlte_level;
+      m_ground = m;
+      z = xconfig[m].g;
+
+      for (n = 1; n < ion[nion].nlte; n++)
+      {
+        m++;
+        z += weight * xconfig[m].g * exp ((-xconfig[m].ex + xconfig[m_ground].ex) / kt);
+      }
+    }
+    else if (ion[nion].nlevels > 0)
+      // Simple atom: calculate using simple levels with weighted BB assumption
     {
       m = ion[nion].firstlevel;
       m_ground = m;
@@ -238,7 +264,7 @@ partition_functions_2 (xplasma, xnion, temp, weight)
       }
     }
     else if (ion[nion].nlte > 0)
-      //Calculate using "non-lte" levels
+      // Fallback: calculate using "non-lte" levels
     {
       m = ion[nion].first_nlte_level;
       m_ground = m;

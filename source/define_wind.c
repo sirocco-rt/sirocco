@@ -214,11 +214,15 @@ set_plasma_temperature (PlasmaPtr cell, int ndom, double xcen[3])
 
   /* The next lines set the electron temperature to 0.9 times the radiation temperature (which is a bit
      odd since the input is the wind temperature, but is taken to be the radiation temperature). If we have
-     a fixed temperature calculation,then the wind temperature is set to be the wind temperature so the
-     user gets what they are expecting */
+     a fixed temperature calculation, then the wind temperature is set to be the wind temperature so the
+     user gets what they are expecting. For LTE_TE mode, t_e is set to t_r and remains fixed. */
   if (dom->wind_type == IMPORT)
   {
     cell->t_e = import_temperature (ndom, xcen, TRUE);
+  }
+  else if (geo.ioniz_mode == IONMODE_LTE_TE)
+  {
+    cell->t_e = cell->t_e_old = cell->t_r;      // LTE_TE: t_e fixed at initial t_r
   }
   else if (modes.fixed_temp == FALSE && modes.zeus_connect == FALSE)
   {
@@ -303,13 +307,17 @@ create_plasma_grid (void)
     }
 
     /* Determine the initial ion abundances, using either LTE or fixed concentrations */
-    if (geo.ioniz_mode != IONMODE_FIXED)
-    {                           /* Carry out an LTE determination of the ionization (using T_r) */
-      ierr = ion_abundances (&plasmamain[n_plasma], IONMODE_LTE_TR);
-    }
-    else
+    if (geo.ioniz_mode == IONMODE_FIXED)
     {                           /* Set the concentrations to specified values */
       ierr = ion_abundances (&plasmamain[n_plasma], IONMODE_FIXED);
+    }
+    else if (geo.ioniz_mode == IONMODE_LTE_TE)
+    {                           /* LTE using t_e (which is fixed at initial t_r) */
+      ierr = ion_abundances (&plasmamain[n_plasma], IONMODE_LTE_TE);
+    }
+    else
+    {                           /* Carry out an LTE determination of the ionization (using T_r) */
+      ierr = ion_abundances (&plasmamain[n_plasma], IONMODE_LTE_TR);
     }
     if (ierr != 0)
     {
