@@ -27,3 +27,4 @@ The API documentation for PySi can be found :doc:`here <py_progs/pysi>`,
    plotting/plot_wind
    plotting/Convergence
    plotting/ion-models
+   plotting/gui
