@@ -91,9 +91,14 @@ ion_abundances (PlasmaPtr xplasma, int mode)
   }
   else if (mode == IONMODE_LTE_ITERATE)
   {
-    /* LTE with heating/cooling balance - find t_e where heating = cooling,
-       with LTE ionization recalculated at each trial temperature.
-       This properly couples temperature and ionization for LTE.
+    /* LTE with heating/cooling balance.  The approach is:
+       1) Find t_e where heating = cooling with the CURRENT densities
+       (using calc_te/zero_emit, same as one_shot).  This keeps the
+       temperature search self-consistent since the MC heating was
+       accumulated with these same densities.
+       2) Compute LTE Saha ionization at the new t_e.
+       3) Blend the LTE densities with the old densities using the gain
+       parameter to damp the ionization-opacity feedback loop.
        Force Saha equation for all ions including macro atoms. */
     int save_macro_ioniz_mode = geo.macro_ioniz_mode;
     geo.macro_ioniz_mode = MACRO_IONIZ_MODE_NO_ESTIMATORS;
@@ -103,20 +108,20 @@ ion_abundances (PlasmaPtr xplasma, int mode)
     double te_old = xplasma->t_e;
     double gain = xplasma->gain;
 
-    /* Use calc_te_lte which recalculates LTE ionization at each trial temperature.
-       Use a search range based on the previous t_e, similar to one_shot/calc_te.
-       This allows the temperature to converge gradually between cycles. */
-    double tmin = 0.7 * te_old;
-    double tmax = 1.3 * te_old;
-    if (tmin < MIN_TEMP)
-      tmin = MIN_TEMP;
-    if (tmax > TMAX)
-      tmax = TMAX;
+    /* Save the current ion densities for blending later */
+    double density_old[nions];
+    int nion;
+    for (nion = 0; nion < nions; nion++)
+    {
+      density_old[nion] = xplasma->density[nion];
+    }
 
-    /* Find t_e where heating = cooling with LTE ionization */
-    double te_new = calc_te_lte (xplasma, tmin, tmax);
+    /* Step 1: Find t_e where heating = cooling with CURRENT (fixed) densities.
+       This is the same approach as one_shot/calc_te -- the temperature search
+       does not modify ion populations, so heating and cooling are consistent. */
+    double te_new = calc_te (xplasma, 0.7 * te_old, 1.3 * te_old);
 
-    /* Apply gain damping, same as one_shot */
+    /* Apply gain damping */
     xplasma->t_e = (1 - gain) * te_old + gain * te_new;
 
     if (xplasma->t_e > TMAX)
@@ -128,9 +133,28 @@ ion_abundances (PlasmaPtr xplasma, int mode)
       xplasma->t_e = MIN_TEMP;
     }
 
-    /* Recalculate LTE ionization and heating/cooling at the final temperature
-       so everything is self-consistent for the convergence check */
-    zero_emit_lte (xplasma->t_e);
+    /* Get heating and cooling rates at the final temperature with current densities */
+    zero_emit (xplasma->t_e);
+
+    /* Step 2: Compute LTE Saha ionization at the new t_e */
+    nebular_concentrations (xplasma, NEBULARMODE_TE);
+
+    /* Step 3: Blend the new LTE densities with the old densities.  Because the
+       Saha equation is exponentially sensitive to temperature, even modest t_e
+       changes produce huge density changes (e.g. He2 shifting by factors of
+       1000).  We therefore use a much smaller blending fraction for the
+       densities than for the temperature, so the opacities evolve slowly
+       and the heating changes smoothly between cycles.  The blending preserves
+       total element abundances since both old and new densities individually
+       sum to the correct element density. */
+    double density_gain = gain * gain;
+    if (density_gain < 0.01)
+      density_gain = 0.01;
+    for (nion = 0; nion < nions; nion++)
+    {
+      xplasma->density[nion] = (1 - density_gain) * density_old[nion] + density_gain * xplasma->density[nion];
+    }
+    xplasma->ne = get_ne (xplasma->density);
 
     convergence (xplasma);
 
@@ -324,9 +348,11 @@ convergence (PlasmaPtr xplasma)
    */
 
   /*
-   * The cell is converging as the electron temperature is oscillating and the change in temperature is decreasing
+   * The cell is converging as the electron temperature is oscillating and the change in temperature is decreasing.
+   * For LTE_ITERATE mode, any oscillation triggers damping because the ionization-opacity feedback
+   * can cause self-reinforcing oscillations where increasing the gain makes things worse.
    */
-  if (xplasma->dt_e_old * xplasma->dt_e < 0 && fabs (xplasma->dt_e) < fabs (xplasma->dt_e_old))
+  if (xplasma->dt_e_old * xplasma->dt_e < 0 && (fabs (xplasma->dt_e) < fabs (xplasma->dt_e_old) || geo.ioniz_mode == IONMODE_LTE_ITERATE))
   {
     xplasma->converging = CELL_CONVERGING;
 
