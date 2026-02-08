@@ -92,13 +92,13 @@ ion_abundances (PlasmaPtr xplasma, int mode)
   else if (mode == IONMODE_LTE_ITERATE)
   {
     /* LTE with heating/cooling balance.  The approach is:
-       1) Find t_e where heating = cooling with the CURRENT densities
-       (using calc_te/zero_emit, same as one_shot).  This keeps the
-       temperature search self-consistent since the MC heating was
-       accumulated with these same densities.
-       2) Compute LTE Saha ionization at the new t_e.
-       3) Blend the LTE densities with the old densities using the gain
-       parameter to damp the ionization-opacity feedback loop.
+       1) Find t_e where heating = cooling, with Saha ionization
+       recalculated at each trial temperature AND MC heating scaled
+       to reflect the new densities.  This makes heating and cooling
+       self-consistent at every trial temperature.
+       2) Apply gain damping to the temperature.
+       3) Blend the LTE densities with the old densities using gain^2
+       to damp the ionization-opacity feedback loop.
        Force Saha equation for all ions including macro atoms. */
     int save_macro_ioniz_mode = geo.macro_ioniz_mode;
     geo.macro_ioniz_mode = MACRO_IONIZ_MODE_NO_ESTIMATORS;
@@ -116,10 +116,10 @@ ion_abundances (PlasmaPtr xplasma, int mode)
       density_old[nion] = xplasma->density[nion];
     }
 
-    /* Step 1: Find t_e where heating = cooling with CURRENT (fixed) densities.
-       This is the same approach as one_shot/calc_te -- the temperature search
-       does not modify ion populations, so heating and cooling are consistent. */
-    double te_new = calc_te (xplasma, 0.7 * te_old, 1.3 * te_old);
+    /* Find t_e where heating = cooling with coupled LTE ionization.
+       calc_te_lte uses zero_emit_lte which recalculates Saha ionization
+       and scales MC heating at each trial temperature. */
+    double te_new = calc_te_lte (xplasma, 0.7 * te_old, 1.3 * te_old);
 
     /* Apply gain damping */
     xplasma->t_e = (1 - gain) * te_old + gain * te_new;
@@ -133,13 +133,10 @@ ion_abundances (PlasmaPtr xplasma, int mode)
       xplasma->t_e = MIN_TEMP;
     }
 
-    /* Get heating and cooling rates at the final temperature with current densities */
-    zero_emit (xplasma->t_e);
-
-    /* Step 2: Compute LTE Saha ionization at the new t_e */
+    /* Recompute ionization and heating/cooling at the gain-damped temperature */
     nebular_concentrations (xplasma, NEBULARMODE_TE);
 
-    /* Step 3: Blend the new LTE densities with the old densities.  Because the
+    /* Blend the new LTE densities with the old densities.  Because the
        Saha equation is exponentially sensitive to temperature, even modest t_e
        changes produce huge density changes (e.g. He2 shifting by factors of
        1000).  We therefore use a much smaller blending fraction for the
@@ -469,6 +466,16 @@ check_convergence (void)
 /* An externall pointer reference used by zero_emit.  */
 PlasmaPtr xxxplasma;
 
+/* Storage for original MC-phase values used by zero_emit_lte to scale
+   heating when densities change during the temperature search */
+static double *lte_density_orig = NULL;
+static double lte_ne_orig;
+static double lte_heat_photo_orig, lte_heat_ff_orig;
+static double lte_heat_comp_orig, lte_heat_ind_comp_orig;
+static double lte_heat_lines_orig, lte_heat_auger_orig;
+static double lte_heat_lines_macro_orig, lte_heat_photo_macro_orig;
+static double lte_heat_ch_ex_orig;
+
 
 /**********************************************************/
 /**
@@ -778,30 +785,82 @@ double
 zero_emit_lte (double t)
 {
   double difference;
+  double scaled_heat_photo, scaled_heat_auger;
+  double ne_ratio;
+  int nion;
+  double density_min = 1.e-30;
 
   xxxplasma->t_e = t;
 
   /* Update ionization to LTE at this trial temperature */
   nebular_concentrations (xxxplasma, NEBULARMODE_TE);
 
-  /* Correct heat_tot for the change in temperature. SS June 04. */
-  xxxplasma->heat_tot -= xxxplasma->heat_lines_macro;
-  xxxplasma->heat_lines -= xxxplasma->heat_lines_macro;
+  /* Scale MC-phase heating to reflect the new densities from Saha.
+     The MC heating was accumulated with the original densities, but
+     the Saha equation has now changed them.  We scale per-ion heating
+     by the density ratio and ne-dependent heating by the ne ratio. */
 
-  xxxplasma->heat_lines_macro = macro_bb_heating (xxxplasma, t);
+  ne_ratio = (lte_ne_orig > 0) ? xxxplasma->ne / lte_ne_orig : 1.0;
 
-  xxxplasma->heat_tot += xxxplasma->heat_lines_macro;
-  xxxplasma->heat_lines += xxxplasma->heat_lines_macro;
+  /* Scale per-ion photoionization heating */
+  scaled_heat_photo = 0.0;
+  for (nion = 0; nion < nions; nion++)
+  {
+    if (lte_density_orig[nion] > density_min)
+    {
+      scaled_heat_photo += xxxplasma->heat_ion[nion] * xxxplasma->density[nion] / lte_density_orig[nion];
+    }
+    else
+    {
+      scaled_heat_photo += xxxplasma->heat_ion[nion];
+    }
+  }
+  xxxplasma->heat_photo = scaled_heat_photo;
 
-  xxxplasma->heat_tot -= xxxplasma->heat_photo_macro;
-  xxxplasma->heat_photo -= xxxplasma->heat_photo_macro;
+  /* Scale per-ion Auger (inner shell) heating */
+  scaled_heat_auger = 0.0;
+  for (nion = 0; nion < nions; nion++)
+  {
+    if (lte_density_orig[nion] > density_min)
+    {
+      scaled_heat_auger += xxxplasma->heat_inner_ion[nion] * xxxplasma->density[nion] / lte_density_orig[nion];
+    }
+    else
+    {
+      scaled_heat_auger += xxxplasma->heat_inner_ion[nion];
+    }
+  }
+  xxxplasma->heat_auger = scaled_heat_auger;
+
+  /* Scale ne-dependent heating */
+  xxxplasma->heat_ff = lte_heat_ff_orig * ne_ratio;
+  xxxplasma->heat_comp = lte_heat_comp_orig * ne_ratio;
+  xxxplasma->heat_ind_comp = lte_heat_ind_comp_orig * ne_ratio;
+
+  /* Scale non-macro line heating by ne ratio */
+  double non_macro_lines = lte_heat_lines_orig - lte_heat_lines_macro_orig;
+  xxxplasma->heat_lines = non_macro_lines * ne_ratio;
+
+  /* Reconstruct heat_tot from scaled components (without macro yet) */
+  xxxplasma->heat_tot = xxxplasma->heat_photo + xxxplasma->heat_auger
+    + xxxplasma->heat_ff + xxxplasma->heat_comp + xxxplasma->heat_ind_comp + xxxplasma->heat_lines + lte_heat_ch_ex_orig;
+
+  /* Now subtract the original macro contributions (which are included
+     in the scaled heat_photo and heat_lines above) and replace with
+     freshly computed macro heating at the new temperature and densities */
+  xxxplasma->heat_photo -= lte_heat_photo_macro_orig;
 
   xxxplasma->heat_photo_macro = macro_bf_heating (xxxplasma, t);
 
-  xxxplasma->heat_tot += xxxplasma->heat_photo_macro;
   xxxplasma->heat_photo += xxxplasma->heat_photo_macro;
 
-  /* Finished macro atom corrections */
+  xxxplasma->heat_lines_macro = macro_bb_heating (xxxplasma, t);
+
+  xxxplasma->heat_lines += xxxplasma->heat_lines_macro;
+
+  /* Reconstruct heat_tot with macro corrections */
+  xxxplasma->heat_tot = xxxplasma->heat_photo + xxxplasma->heat_auger
+    + xxxplasma->heat_ff + xxxplasma->heat_comp + xxxplasma->heat_ind_comp + xxxplasma->heat_lines + lte_heat_ch_ex_orig;
 
   cooling (xxxplasma, t);
 
@@ -858,6 +917,29 @@ calc_te_lte (PlasmaPtr xplasma, double tmin, double tmax)
   xxxplasma = xplasma;
 
   xxxplasma->heat_tot += xxxplasma->heat_ch_ex;
+
+  /* Save original MC-phase heating values and ion densities.
+     These are used by zero_emit_lte to scale heating when Saha
+     ionization changes the densities at each trial temperature. */
+  int nion;
+  if (lte_density_orig == NULL)
+  {
+    lte_density_orig = calloc (nions, sizeof (double));
+  }
+  for (nion = 0; nion < nions; nion++)
+  {
+    lte_density_orig[nion] = xplasma->density[nion];
+  }
+  lte_ne_orig = xplasma->ne;
+  lte_heat_photo_orig = xplasma->heat_photo;
+  lte_heat_ff_orig = xplasma->heat_ff;
+  lte_heat_comp_orig = xplasma->heat_comp;
+  lte_heat_ind_comp_orig = xplasma->heat_ind_comp;
+  lte_heat_lines_orig = xplasma->heat_lines;
+  lte_heat_auger_orig = xplasma->heat_auger;
+  lte_heat_lines_macro_orig = xplasma->heat_lines_macro;
+  lte_heat_photo_macro_orig = xplasma->heat_photo_macro;
+  lte_heat_ch_ex_orig = xplasma->heat_ch_ex;
 
   /* Evaluate heating-cooling difference at bracket endpoints */
   xplasma->t_e = tmin;

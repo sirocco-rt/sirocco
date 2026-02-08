@@ -13,12 +13,35 @@ Values
 
   LTE_te
     Calculate ionization based on the Saha equation using
-    the electron temperature.  (This is intended as a diagnostic
-    mode.)
+    the electron temperature.  The electron temperature is not
+    iterated; it remains at the value set during initialization
+    (from Wind.t.init, or from the imported model for hydro winds).
+    (This is intended as a diagnostic mode.)
 
   LTE_tr
     Calculate ionization based on the Saha equation using
-    the radiation temperature. (This is intended as a diagnstic mode)
+    the radiation temperature.  Unlike LTE_te, the radiation
+    temperature is updated each cycle from the mean frequency
+    of the radiation field estimated during photon transport,
+    so the ionization evolves as the radiation field converges.
+    The electron temperature is not iterated.
+    (This is intended as a diagnostic mode.)
+
+  LTE_iterate
+    Calculate ionization using the Saha equation at the electron temperature,
+    with the electron temperature determined by balancing heating and cooling.
+    At each trial temperature during the root-finding process, the Saha equation
+    is solved to update ion densities, and the MC-phase heating is scaled to
+    reflect the new densities: per-ion photoionization and Auger heating are
+    scaled by the ratio of the new to original ion density for each ion, while
+    free-free, Compton, and line heating are scaled by the electron density ratio.
+    This coupling ensures that heating and cooling are self-consistent at every
+    trial temperature.  Gain-based damping is applied to the temperature, and
+    the ion densities are blended with the previous cycle's values (using gain^2)
+    to stabilize the ionization-opacity feedback loop across cycles.
+    This mode is intended for situations where LTE ionization is
+    physically appropriate and one wants to determine the electron temperature
+    self-consistently.
 
   ML93
     Use the modified on the spot approimation  described by 
