@@ -9,7 +9,7 @@ Type
 
 Values
   on.the.spot
-    Use a simple on the spot approximation to calculated the ionization.
+    Use a simple on-the-spot approximation to calculate the ionization.
 
   LTE_te
     Calculate ionization based on the Saha equation using
@@ -44,8 +44,15 @@ Values
     self-consistently.
 
   ML93
-    Use the modified on the spot approimation  described by 
-    `Mazzli & Lucy 1993 <https://ui.adsabs.harvard.edu/abs/1993A%26A...279..447M/abstract>`_  
+    Use the modified on-the-spot approximation described by
+    `Mazzali & Lucy 1993 <https://ui.adsabs.harvard.edu/abs/1993A%26A...279..447M/abstract>`_.
+    At each ionization cycle, the electron temperature is set to
+    t_e = 0.9 * t_r. Ionization fractions are first computed using
+    the Saha equation at t_r, then corrected using the Lucy-Mazzali
+    estimators which account for the dilute, non-Planckian radiation field.
+    The partition functions are evaluated using the dilution factor W.
+    This mode does not attempt to balance heating and cooling to determine
+    t_e self-consistently.  
 
   fixed
     Read the ion aboundances in from a file.  All cells will have

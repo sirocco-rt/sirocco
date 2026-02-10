@@ -10,7 +10,21 @@ It can be installed from its `own Github repository <https://github.com/sirocco-
 under the sirocco-rt organisation. We recommend installing this package for reading code outputs.:
 instructions to do so can be found in the README of that repository. 
 
-The API documentation for PySi can be found :doc:`here <py_progs/pysi>`,
+The API documentation for PySi can be found :doc:`here <py_progs/pysi>`.
+
+PySi can also be used from the command line. For example, the command 
+
+.. code-block:: bash
+
+    pysi plot spectrum observer [model_name]
+
+will allow you to plot a spectrum, whereas 
+
+.. code-block:: bash
+
+    pysi plot wind property [model_name] [variable]
+
+will allow you to plot the wind property specified by [variable]. For more flexibility, see the tutorials. 
 
 .. admonition :: Warning to users! 
 
