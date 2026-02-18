@@ -490,7 +490,13 @@ make_spectra (restart_stat)
    * standard one where one is calulating the spectrum for the first time
    * and in the somewhat abnormal case where additional ionization cycles
    * were calculated for the wind
+   *
+   * Note: We must allocate using NPHOT_MAX, not NPHOT, because NPHOT may
+   * still hold a reduced value from the last photon_speedup ionization cycle.
+   * Inside the spectral cycle loop, NPHOT is set to NPHOT_MAX before photon
+   * generation, so the array must be large enough to hold NPHOT_MAX photons.
    */
+  NPHOT = NPHOT_MAX;
   photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT + 1);
   photmain_allocated = TRUE;
   Log ("CCC - Allocated photmain at beginning of detailed spectrum, with NPHOt %d\n", NPHOT);
