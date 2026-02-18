@@ -30,16 +30,18 @@ Values
   LTE_iterate
     Calculate ionization using the Saha equation at the electron temperature,
     with the electron temperature determined by balancing heating and cooling.
-    At each trial temperature during the root-finding process, the Saha equation
-    is solved to update ion densities, and the MC-phase heating is scaled to
-    reflect the new densities: per-ion photoionization and Auger heating are
-    scaled by the ratio of the new to original ion density for each ion, while
-    free-free, Compton, and line heating are scaled by the electron density ratio.
-    This coupling ensures that heating and cooling are self-consistent at every
-    trial temperature.  Gain-based damping is applied to the temperature, and
-    the ion densities are blended with the previous cycle's values (using gain^2)
-    to stabilize the ionization-opacity feedback loop across cycles.
-    This mode is intended for situations where LTE ionization is
+    Both ion populations and partition functions are calculated in LTE.
+    Unlike other modes, here, both the heating and cooling are changed as part 
+    of the iteration proces.  At each trial temperature, the Saha equation
+    is solved to update ion densities, and the heating is scaled to
+    reflect the new densities. Specifically, the routine scales heated recorded
+    during photon transfer by the ratio of the original ion density for each cycle
+    to the trial densites for  photoionization and Auger heating.  Similarly,
+    for free free, Compton and line heating are scaled by the electron density.
+    This approach is more self-conistent than modifying only the cooling. 
+    As is the case for other most modes, changes are dampted with results from the
+    previous ionization cycle to prevent changes from being too large between ionization 
+    cycles.  This mode is intended for situations where LTE ionization is
     physically appropriate and one wants to determine the electron temperature
     self-consistently.
 
