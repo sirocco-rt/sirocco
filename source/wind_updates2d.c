@@ -636,7 +636,7 @@ init_plasma_rad_properties (void)
     }
 
     /* Initialise  the frequency banded radiation estimators used for estimating the coarse spectra in each i */
-    for (j = 0; j < NXBANDS; j++)
+    for (j = 0; j < plasmamain[i].nbands; j++)
     {
       plasmamain[i].nxtot[j] = 0;
       plasmamain[i].xj[j] = 0.0;
@@ -644,6 +644,16 @@ init_plasma_rad_properties (void)
       plasmamain[i].xsd_freq[j] = 0.0;
       plasmamain[i].fmin[j] = plasmamain[i].f2[j];      /* Set the minium frequency to the max frequency in the band */
       plasmamain[i].fmax[j] = plasmamain[i].f1[j];      /* Set the maximum frequency to the min frequency in the band */
+    }
+    /* Initialize unused band elements to safe values for MPI communication */
+    for (j = plasmamain[i].nbands; j < NXBANDS; j++)
+    {
+      plasmamain[i].nxtot[j] = 0;
+      plasmamain[i].xj[j] = 0.0;
+      plasmamain[i].xave_freq[j] = 0.0;
+      plasmamain[i].xsd_freq[j] = 0.0;
+      plasmamain[i].fmin[j] = 0.0;
+      plasmamain[i].fmax[j] = 0.0;
     }
     for (j = 0; j < NBINS_IN_CELL_SPEC; ++j)
     {

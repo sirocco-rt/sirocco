@@ -368,10 +368,10 @@ typedef struct topbase_phot
   double f, log_f, sigma, log_sigma;            /**< last freq, last x-section and log versions*/
 } Topbase_phot, *TopPhotPtr;
 
-extern Topbase_phot phot_top[NLEVELS];
+extern Topbase_phot *phot_top;
 extern TopPhotPtr phot_top_ptr[NLEVELS];       /**<  Pointers to phot_top in threshold frequency order - this */
 
-extern Topbase_phot inner_cross[N_INNER * NIONS];  /**< Pointer to inner shell cross sections which use the same structure type */
+extern Topbase_phot *inner_cross;  /**< Pointer to inner shell cross sections which use the same structure type */
 extern TopPhotPtr inner_cross_ptr[N_INNER * NIONS];  /**< Pointer to inner shell cross sections in frequency order */
 
 
