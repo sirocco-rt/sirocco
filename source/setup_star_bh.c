@@ -337,7 +337,7 @@ get_bl_and_agn_params (lstar)
       rddoub ("@Central_object.power_law_cutoff", &geo.pl_low_cutoff);
 
     strcpy (answer, "sphere");
-    geo.pl_geometry = rdchoice ("Central_object.geometry_for_source(sphere,lamp_post,bubble)", "0,1,2", answer);
+    geo.pl_geometry = rdchoice ("Central_object.geometry_for_source(sphere,lamp_post,bubble,iso)", "0,1,2,3", answer);
 
 
     if (geo.pl_geometry == PL_GEOMETRY_LAMP_POST)
@@ -352,7 +352,7 @@ get_bl_and_agn_params (lstar)
       geo.bubble_size *= GRAV * geo.mstar / VLIGHT / VLIGHT;    //get it in CGS units
       Log ("bubble size  in cm is %g\n", geo.bubble_size);
     }
-    else if (geo.pl_geometry != PL_GEOMETRY_SPHERE)     // only three options at the moment
+    else if (geo.pl_geometry != PL_GEOMETRY_SPHERE && geo.pl_geometry != PL_GEOMETRY_ISO)     // only four options at the moment
     {
       Error ("Did not understand power law geometry %i. Fatal.\n", geo.pl_geometry);
       Exit (0);

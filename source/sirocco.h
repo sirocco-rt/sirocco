@@ -689,6 +689,7 @@ struct geometry
 #define PL_GEOMETRY_SPHERE 0
 #define PL_GEOMETRY_LAMP_POST 1
 #define PL_GEOMETRY_BUBBLE 2
+#define PL_GEOMETRY_ISO 3
   double lamp_post_height;      /**<  height of X-ray point source if lamp post */
   double bubble_size;           /**<  size of a bubble if any */
 
