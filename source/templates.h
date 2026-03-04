@@ -299,6 +299,9 @@ int one_shot(PlasmaPtr xplasma, int mode);
 double calc_te(PlasmaPtr xplasma, double tmin, double tmax);
 double zero_emit(double t);
 double zero_emit2(double t, void *params);
+double zero_emit_lte(double t);
+double zero_emit_lte2(double t, void *params);
+double calc_te_lte(PlasmaPtr xplasma, double tmin, double tmax);
 /* janitor.c */
 void free_domains(void);
 void free_wind_grid(void);

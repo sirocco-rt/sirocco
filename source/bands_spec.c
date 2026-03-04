@@ -64,7 +64,11 @@ band_copy()
         for(nband=0;nband<xband.nbands;nband++){
             plasmamain[n].f1[nband]=xband.f1[nband];
             plasmamain[n].f2[nband]=xband.f2[nband];
-
+        }
+        /* Initialize remaining unused band frequencies to safe values */
+        for(nband=xband.nbands;nband<NXBANDS+1;nband++){
+            plasmamain[n].f1[nband]=0.0;
+            plasmamain[n].f2[nband]=0.0;
         }
     }
 }

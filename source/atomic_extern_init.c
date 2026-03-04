@@ -46,10 +46,10 @@ double inner_freq_min;          /*The lowest frequency for which inner shell ion
 int ntop_phot;                  /* The actual number of TopBase photoionzation x-sections */
 int nphot_total;                /* total number of photoionzation x-sections = nxphot + ntop_phot */
 
-Topbase_phot phot_top[NLEVELS];
+Topbase_phot *phot_top;
 TopPhotPtr phot_top_ptr[NLEVELS];       /* Pointers to phot_top in threshold frequency order - this */
 
-Topbase_phot inner_cross[N_INNER * NIONS];
+Topbase_phot *inner_cross;
 TopPhotPtr inner_cross_ptr[N_INNER * NIONS];
 
 Inner_elec_yield inner_elec_yield[N_INNER * NIONS];
