@@ -1236,6 +1236,9 @@ reduce_simple_estimators (void)
   free (inner_ion_helper);
   free (inner_ion_helper2);
 
+  free (flux_helper);
+  free (flux_helper2);
+
   /* allocate the integer helper arrays, set a barrier, then do all the integers. */
   iqdisk_helper = calloc (sizeof (int), NRINGS * 2);
   iqdisk_helper2 = calloc (sizeof (int), NRINGS * 2);

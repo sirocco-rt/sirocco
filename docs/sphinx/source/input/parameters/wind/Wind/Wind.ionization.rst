@@ -12,22 +12,38 @@ Values
     Use a simple on-the-spot approximation to calculate the ionization.
 
   LTE_te
-    Calculate ionization assuming Local Thermodynamic Equilibrium (LTE)
-    using the Saha equation with the electron temperature t_e. The electron
-    temperature is set equal to the initial radiation temperature (twind),
-    or from the imported model if available, and remains fixed throughout
-    the simulation. The partition functions are evaluated at t_e. This mode
-    forces Saha ionization for all species, including macro atoms.
+    Calculate ionization based on the Saha equation using
+    the electron temperature.  The electron temperature is not
+    iterated; it remains at the value set during initialization
+    (from Wind.t.init, or from the imported model for hydro winds).
     (This is intended as a diagnostic mode.)
 
   LTE_tr
-    Calculate ionization assuming Local Thermodynamic Equilibrium (LTE)
-    using the Saha equation with the radiation temperature t_r. The
-    radiation temperature is updated each ionization cycle based on the
-    mean frequency of the radiation field. The electron temperature is
-    set to t_e = 0.9 * t_r each cycle. The partition functions are
-    evaluated at t_r. This mode forces Saha ionization for all species,
-    including macro atoms. (This is intended as a diagnostic mode.)
+    Calculate ionization based on the Saha equation using
+    the radiation temperature.  Unlike LTE_te, the radiation
+    temperature is updated each cycle from the mean frequency
+    of the radiation field estimated during photon transport,
+    so the ionization evolves as the radiation field converges.
+    The electron temperature is not iterated.
+    (This is intended as a diagnostic mode.)
+
+  LTE_iterate
+    Calculate ionization using the Saha equation at the electron temperature,
+    with the electron temperature determined by balancing heating and cooling.
+    Both ion populations and partition functions are calculated in LTE.
+    Unlike other modes, here, both the heating and cooling are changed as part 
+    of the iteration proces.  At each trial temperature, the Saha equation
+    is solved to update ion densities, and the heating is scaled to
+    reflect the new densities. Specifically, the routine scales heated recorded
+    during photon transfer by the ratio of the original ion density for each cycle
+    to the trial densites for  photoionization and Auger heating.  Similarly,
+    for free free, Compton and line heating are scaled by the electron density.
+    This approach is more self-conistent than modifying only the cooling. 
+    As is the case for other most modes, changes are dampted with results from the
+    previous ionization cycle to prevent changes from being too large between ionization 
+    cycles.  This mode is intended for situations where LTE ionization is
+    physically appropriate and one wants to determine the electron temperature
+    self-consistently.
 
   ML93
     Use the modified on-the-spot approximation described by
