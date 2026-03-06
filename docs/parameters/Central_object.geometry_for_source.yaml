@@ -13,6 +13,13 @@ values:
     Emission is cosine-weighted in the direction of the sphere normal at the point of emission.
     Photons that would be spawned in an extended disk (if :ref:`Disk.type` is `vertically.extended`)
     are re-generated.
+  bubble: |
+    The central source radiates from between two spheres, one with radius :ref:`Central_object.radius` 
+    and one with radius :ref:`Central_object.bubble_size`. The photon directions are individually isotropic but do not necessarily
+    create a truly isotropic source.
+  iso: |
+    The central source radiates from the surface of a sphere with radius :ref:`Central_object.radius`.
+    Emission is truly isotropic, so photons are emitted in the same direction as the random point on the sphere surface where they are emitted.
 parent:
   System_type: [agn, bh]
   Central_object.radiation: true

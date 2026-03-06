@@ -522,7 +522,16 @@ photo_gen_agn (p, r, alpha, weight, f1, f2, spectype, istart, nphot)
       randvec (p[i].lmn, 1.0);  // lamp-post geometry is isotropic, so completely random vector
     }
 
-    /* This is set up for looking at photons in spectral cycles at present */
+    else if (geo.pl_geometry == PL_GEOMETRY_ISO)
+    {
+      /* We want to generate photons isotropically from the surface of a sphere, 
+        but with radial direction so it resembles an isotropic point source */
+      randvec (p[i].x, r);            // Simple random coordinate on the surface of a sphere
+      stuff_v (p[i].x, p[i].lmn);     // we want photon to travel in the same direction as the random point on the sphere so it is isotropic
+      renorm (p[i].lmn, 1.0);         // turn into a unit vector
+    }
+
+    /* This is a diagnostic mode one can use to look at photon origins  */
     //if (modes.save_photons && geo.ioniz_or_extract == CYCLE_EXTRACT)
     //  save_photons (&p[i], "AGN");
   }
