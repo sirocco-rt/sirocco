@@ -367,6 +367,8 @@ extern int current_domain;      // This integer is used by swind only
  * structure.
  */
 
+#define CONVERGENCE_HISTORY_MAX 100
+
 struct geometry
 {
 
@@ -406,6 +408,13 @@ struct geometry
   int wcycles, pcycles, pcycles_renorm; /**< The number of ionization and spectrum cycles desired, pcycles_renorm
                                          * is only used on restarts.  See spectrum_restart_renormalize
                                          */
+  double convergence_fraction;  /**< The fraction of cells that must be converged to trigger early stopping.
+                                     A value <= 0 disables early stopping. Default: -1 (disabled) */
+  int min_ionization_cycles;    /**< Minimum number of ionization cycles before early stopping is allowed. Default: 0 */
+  int convergence_lookback;     /**< Number of consecutive cycles the convergence criterion must be met. Default: 5 */
+
+  double convergence_history[CONVERGENCE_HISTORY_MAX]; /**< Ring buffer storing fraction_converged per cycle */
+
 #define CYCLE_IONIZ    0
 #define CYCLE_EXTRACT  1
   int ioniz_or_extract;         /**<  Set to CYCLE_IONIZ during ionization cycles, set to CYCLE_EXTRACT during calculation of

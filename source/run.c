@@ -155,6 +155,12 @@ calculate_ionization (restart_stat)
   }
 
   cycle_start = geo.wcycle;
+  /* Initialise convergence history buffer */
+  {
+    int k;
+    for (k = 0; k < CONVERGENCE_HISTORY_MAX; k++)
+      geo.convergence_history[k] = 0.0;
+  }
   while (geo.wcycle < geo.wcycles)
   {                             /* This allows you to build up photons in bunches */
 
@@ -386,6 +392,34 @@ calculate_ionization (restart_stat)
     }
 
     check_time (files.root);
+
+    /* Early stopping check: if convergence fraction has stabilised, break */
+    if (geo.convergence_fraction > 0 && geo.wcycle >= geo.min_ionization_cycles)
+    {
+      geo.convergence_history[geo.wcycle % CONVERGENCE_HISTORY_MAX] = geo.fraction_converged;
+      if (geo.wcycle >= geo.min_ionization_cycles + geo.convergence_lookback)
+      {
+        double avg_change = 0;
+        int k;
+        for (k = 0; k < geo.convergence_lookback - 1; k++)
+        {
+          int idx = (geo.wcycle - k) % CONVERGENCE_HISTORY_MAX;
+          int idx_prev = (geo.wcycle - k - 1) % CONVERGENCE_HISTORY_MAX;
+          avg_change += fabs (geo.convergence_history[idx] - geo.convergence_history[idx_prev]);
+        }
+        avg_change /= (geo.convergence_lookback - 1);
+        Log ("!!Early_stop check: cycle %d, fraction_converged=%.4f, avg_change=%.4f over last %d cycles\n",
+             geo.wcycle, geo.fraction_converged, avg_change, geo.convergence_lookback);
+        if (geo.fraction_converged >= geo.convergence_fraction && avg_change < 0.02)
+        {
+          Log ("!!Early_stop: Convergence criterion met at cycle %d of %d (%.4f >= %.4f, delta=%.4f)\n",
+               geo.wcycle, geo.wcycles, geo.fraction_converged, geo.convergence_fraction, avg_change);
+          xsignal (files.root, "%-20s Ionization converged early at cycle %3d of %3d\n", "OK", geo.wcycle, geo.wcycles);
+          Log_flush ();
+          break;
+        }
+      }
+    }
     Log_flush ();               /*Flush the logfile */
 //OLD    free (photmain);
 

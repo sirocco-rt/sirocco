@@ -1,0 +1,12 @@
+name: Ionization_cycles.convergence_fraction(-1=no_early-stopping)
+description: |
+  The fraction of wind cells that must be converged to allow early stopping
+  of ionization cycles. When this fraction is reached and the convergence
+  has stabilised (average change < 2% over the lookback window), the
+  ionization phase will end early and proceed to spectrum extraction.
+  A value <= 0 disables early stopping (default behaviour).
+  Typical values: 0.90 to 0.99
+type: Double
+values: -1 to 1.0
+default: -1
+file: setup.c
