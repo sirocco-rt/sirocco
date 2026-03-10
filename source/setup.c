@@ -353,6 +353,7 @@ init_advanced_modes ()
   modes.partial_cells = PC_ZERO_DEN;    /* Default is to omit partial cells in calculation */
 
   modes.no_macro_pops_for_ions = FALSE; /* use the ion densities from macro_pops where applicable */
+  modes.early_stopping = FALSE; /* convergence-based early stopping of ionization cycles */
 
   return (0);
 }
@@ -647,12 +648,21 @@ init_photons ()
     }
     rddoub ("@estop.Ionization_cycles.convergence_fraction(%)", &geo.convergence_fraction);
     if (geo.convergence_fraction < 0.0)
+    {
+      Error ("convergence_fraction (%.1f%%) cannot be negative, setting to 0%%\n", geo.convergence_fraction);
       geo.convergence_fraction = 0.0;
+    }
     if (geo.convergence_fraction > 100.0)
+    {
+      Error ("convergence_fraction (%.1f%%) cannot exceed 100%%, clamping to 100%%\n", geo.convergence_fraction);
       geo.convergence_fraction = 100.0;
+    }
     rdint ("@estop.Ionization_cycles.min_cycles", &geo.min_ionization_cycles);
     if (geo.min_ionization_cycles < 0)
+    {
+      Error ("min_ionization_cycles (%d) must be >= 0, setting to 0\n", geo.min_ionization_cycles);
       geo.min_ionization_cycles = 0;
+    }
     rdint ("@estop.Ionization_cycles.convergence_lookback", &geo.convergence_lookback);
     if (geo.convergence_lookback > CONVERGENCE_HISTORY_MAX)
     {
