@@ -394,7 +394,7 @@ calculate_ionization (restart_stat)
     check_time (files.root);
 
     /* Early stopping check: if convergence fraction has stabilised, break */
-    if (geo.convergence_fraction > 0 && geo.wcycle >= geo.min_ionization_cycles)
+    if (modes.early_stopping && geo.wcycle >= geo.min_ionization_cycles)
     {
       geo.convergence_history[geo.wcycle % CONVERGENCE_HISTORY_MAX] = geo.fraction_converged;
       if (geo.wcycle >= geo.min_ionization_cycles + geo.convergence_lookback)
@@ -408,12 +408,13 @@ calculate_ionization (restart_stat)
           avg_change += fabs (geo.convergence_history[idx] - geo.convergence_history[idx_prev]);
         }
         avg_change /= (geo.convergence_lookback - 1);
-        Log ("!!Early_stop check: cycle %d, fraction_converged=%.4f, avg_change=%.4f over last %d cycles\n",
-             geo.wcycle, geo.fraction_converged, avg_change, geo.convergence_lookback);
-        if (geo.fraction_converged >= geo.convergence_fraction && avg_change < 0.02)
+        Log ("!!Early_stop check: cycle %d, fraction_converged=%.4f, avg_change=%.4f over last %d cycles (floor=%.1f%%)\n",
+             geo.wcycle, geo.fraction_converged, avg_change, geo.convergence_lookback, geo.convergence_fraction);
+        if (geo.fraction_converged >= geo.convergence_fraction / 100.0 && avg_change < geo.convergence_tolerance / 100.0)
         {
-          Log ("!!Early_stop: Convergence criterion met at cycle %d of %d (%.4f >= %.4f, delta=%.4f)\n",
-               geo.wcycle, geo.wcycles, geo.fraction_converged, geo.convergence_fraction, avg_change);
+          Log
+            ("!!Early_stop: Convergence stabilised at cycle %d of %d (converged=%.4f >= floor %.1f%%, avg_change=%.4f < tolerance=%.1f%%)\n",
+             geo.wcycle, geo.wcycles, geo.fraction_converged, geo.convergence_fraction, avg_change, geo.convergence_tolerance);
           xsignal (files.root, "%-20s Ionization converged early at cycle %3d of %3d\n", "OK", geo.wcycle, geo.wcycles);
           Log_flush ();
           break;

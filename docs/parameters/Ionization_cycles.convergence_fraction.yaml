@@ -1,12 +1,12 @@
-name: Ionization_cycles.convergence_fraction(-1=no_early-stopping)
+name: '@estop.Ionization_cycles.convergence_fraction(%)'
 description: |
-  The fraction of wind cells that must be converged to allow early stopping
-  of ionization cycles. When this fraction is reached and the convergence
-  has stabilised (average change < 2% over the lookback window), the
-  ionization phase will end early and proceed to spectrum extraction.
-  A value <= 0 disables early stopping (default behaviour).
-  Typical values: 0.90 to 0.99
+  The minimum percentage of cells that must be converged before early stopping
+  is allowed. This acts as a floor to prevent the code from stopping early on
+  a model that is stably unconverged (e.g. only 50% of cells converged).
+  For example, a value of 80 means at least 80% of cells must be converged
+  for the early stopping check to trigger.
+  Only queried when the -early_stopping switch is used.
 type: Double
-values: -1 to 1.0
-default: -1
+values: 0 to 100
+default: 80
 file: setup.c
