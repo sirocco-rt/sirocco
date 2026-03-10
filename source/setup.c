@@ -670,7 +670,10 @@ init_photons ()
       geo.convergence_lookback = CONVERGENCE_HISTORY_MAX;
     }
     if (geo.convergence_lookback < 2)
+    {
+      Error ("convergence_lookback (%d) must be >= 2, setting to 2\n", geo.convergence_lookback);
       geo.convergence_lookback = 2;
+    }
     Log ("Early stopping enabled: tolerance = %.1f%%, fraction floor = %.1f%%, min_cycles = %d, lookback = %d\n",
          geo.convergence_tolerance, geo.convergence_fraction, geo.min_ionization_cycles, geo.convergence_lookback);
   }
