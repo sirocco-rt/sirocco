@@ -486,20 +486,20 @@ translate_in_wind (w, p, tau_scat, tau, nres)
 
     if (p->nres == NRES_ES)
     {
-      xplasma->nscat_es++;
+      xplasma->derived.nscat_es++;
     }
     if (p->nres > NLINES)
     {
-      xplasma->nscat_bf++;
+      xplasma->derived.nscat_bf++;
     }
 
     else if (p->nres > 0)
     {
-      xplasma->nscat_res++;
+      xplasma->derived.nscat_res++;
     }
     else if (p->nres == NRES_FF)
     {
-      xplasma->nscat_ff++;
+      xplasma->derived.nscat_ff++;
     }
 
 

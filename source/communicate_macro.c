@@ -65,8 +65,9 @@ broadcast_macro_atom_emissivities (const int n_start, const int n_stop, const in
       for (n_plasma = n_start; n_plasma < n_stop; ++n_plasma)
       {
         MPI_Pack (&n_plasma, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (&plasmamain[n_plasma].kpkt_emiss, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].matom_emiss, nlevels_macro, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (&plasmamain[n_plasma].derived.kpkt_emiss, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].derived.matom_emiss, nlevels_macro, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+                  MPI_COMM_WORLD);
       }
     }
 
@@ -80,8 +81,9 @@ broadcast_macro_atom_emissivities (const int n_start, const int n_stop, const in
       for (i = 0; i < num_comm; i++)
       {
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &n_plasma, 1, MPI_INT, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &plasmamain[n_plasma].kpkt_emiss, 1, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].matom_emiss, nlevels_macro, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &plasmamain[n_plasma].derived.kpkt_emiss, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].derived.matom_emiss, nlevels_macro, MPI_DOUBLE,
+                    MPI_COMM_WORLD);
       }
     }
   }
@@ -143,14 +145,17 @@ broadcast_macro_atom_recomb (const int n_start, const int n_stop, const int n_ce
         MPI_Pack (&n_plasma, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);     // which cell we're working on
         if (nlevels_macro > 0)
         {
-          MPI_Pack (macromain[n_plasma].recomb_sp, size_alpha_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-          MPI_Pack (macromain[n_plasma].recomb_sp_e, size_alpha_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+          MPI_Pack (macromain[n_plasma].est.recomb_sp, size_alpha_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+                    MPI_COMM_WORLD);
+          MPI_Pack (macromain[n_plasma].est.recomb_sp_e, size_alpha_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+                    MPI_COMM_WORLD);
         }
         if (nphot_total > 0)
         {
-          MPI_Pack (plasmamain[n_plasma].recomb_simple, nphot_total, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-          MPI_Pack (plasmamain[n_plasma].recomb_simple_upweight, nphot_total, MPI_DOUBLE, comm_buffer, comm_buffer_size,
-                    &position, MPI_COMM_WORLD);
+          MPI_Pack (plasmamain[n_plasma].state.recomb_simple, nphot_total, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+                    MPI_COMM_WORLD);
+          MPI_Pack (plasmamain[n_plasma].state.recomb_simple_upweight, nphot_total, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+                    MPI_COMM_WORLD);
         }
       }
     }
@@ -168,15 +173,16 @@ broadcast_macro_atom_recomb (const int n_start, const int n_stop, const int n_ce
 
         if (nlevels_macro > 0)
         {
-          MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].recomb_sp, size_alpha_est, MPI_DOUBLE, MPI_COMM_WORLD);
-          MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].recomb_sp_e,
-                      size_alpha_est, MPI_DOUBLE, MPI_COMM_WORLD);
+          MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].est.recomb_sp, size_alpha_est, MPI_DOUBLE,
+                      MPI_COMM_WORLD);
+          MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].est.recomb_sp_e, size_alpha_est, MPI_DOUBLE,
+                      MPI_COMM_WORLD);
         }
         if (nphot_total > 0)
         {
-          MPI_Unpack (comm_buffer, comm_buffer_size, &position, plasmamain[n_plasma].recomb_simple,
+          MPI_Unpack (comm_buffer, comm_buffer_size, &position, plasmamain[n_plasma].state.recomb_simple,
                       nphot_total, MPI_DOUBLE, MPI_COMM_WORLD);
-          MPI_Unpack (comm_buffer, comm_buffer_size, &position, plasmamain[n_plasma].recomb_simple_upweight,
+          MPI_Unpack (comm_buffer, comm_buffer_size, &position, plasmamain[n_plasma].state.recomb_simple_upweight,
                       nphot_total, MPI_DOUBLE, MPI_COMM_WORLD);
         }
       }
@@ -238,16 +244,19 @@ broadcast_updated_macro_atom_properties (const int n_start, const int n_stop, co
       for (n_plasma = n_start; n_plasma < n_stop; ++n_plasma)
       {
         MPI_Pack (&n_plasma, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].jbar, size_Jbar_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].jbar_old, size_Jbar_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].gamma, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].gamma_old, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].gamma_e, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].gamma_e_old, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].alpha_st, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].alpha_st_old, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (&macromain[n_plasma].kpkt_rates_known, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (&macromain[n_plasma].matrix_rates_known, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].est.jbar, size_Jbar_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].state.jbar_old, size_Jbar_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].est.gamma, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].state.gamma_old, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+                  MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].est.gamma_e, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].state.gamma_e_old, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+                  MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].est.alpha_st, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].state.alpha_st_old, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+                  MPI_COMM_WORLD);
+        MPI_Pack (&macromain[n_plasma].derived.kpkt_rates_known, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (&macromain[n_plasma].derived.matrix_rates_known, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
       }
     }
 
@@ -261,16 +270,20 @@ broadcast_updated_macro_atom_properties (const int n_start, const int n_stop, co
       for (i = 0; i < num_comm; ++i)
       {
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &n_plasma, 1, MPI_INT, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].jbar, size_Jbar_est, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].jbar_old, size_Jbar_est, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].gamma, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].gamma_old, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].gamma_e, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].gamma_e_old, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].alpha_st, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].alpha_st_old, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &macromain[n_plasma].kpkt_rates_known, 1, MPI_INT, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &macromain[n_plasma].matrix_rates_known, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].est.jbar, size_Jbar_est, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].state.jbar_old, size_Jbar_est, MPI_DOUBLE,
+                    MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].est.gamma, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].state.gamma_old, size_gamma_est, MPI_DOUBLE,
+                    MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].est.gamma_e, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].state.gamma_e_old, size_gamma_est, MPI_DOUBLE,
+                    MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].est.alpha_st, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].state.alpha_st_old, size_gamma_est, MPI_DOUBLE,
+                    MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &macromain[n_plasma].derived.kpkt_rates_known, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &macromain[n_plasma].derived.matrix_rates_known, 1, MPI_INT, MPI_COMM_WORLD);
       }
     }
   }
@@ -331,9 +344,9 @@ broadcast_macro_atom_state_matrix (int n_start, int n_stop, int n_cells_rank)
         MPI_Pack (&n, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
 
         /* we only communicate the matrix if it is being stored in this cell */
-        if (macromain[n].store_matom_matrix == TRUE)
+        if (macromain[n].state.store_matom_matrix == TRUE)
         {
-          MPI_Pack (macromain[n].matom_matrix[0], matrix_size * matrix_size, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+          MPI_Pack (macromain[n].derived.matom_matrix[0], matrix_size * matrix_size, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
                     MPI_COMM_WORLD);
         }
       }
@@ -351,9 +364,9 @@ broadcast_macro_atom_state_matrix (int n_start, int n_stop, int n_cells_rank)
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &n, 1, MPI_INT, MPI_COMM_WORLD);
 
         /* we only communicate the matrix if it is being stored in this cell */
-        if (macromain[n].store_matom_matrix == TRUE)
+        if (macromain[n].state.store_matom_matrix == TRUE)
         {
-          MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n].matom_matrix[0], matrix_size * matrix_size, MPI_DOUBLE,
+          MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n].derived.matom_matrix[0], matrix_size * matrix_size, MPI_DOUBLE,
                       MPI_COMM_WORLD);
         }
       }
@@ -426,52 +439,52 @@ reduce_macro_atom_estimators (void)
   for (mpi_i = 0; mpi_i < NPLASMA; mpi_i++)
   {
     /* one kpkt_abs quantity per cell */
-    cell_helper[mpi_i] = plasmamain[mpi_i].kpkt_abs / np_mpi_global;
+    cell_helper[mpi_i] = plasmamain[mpi_i].est.kpkt_abs / np_mpi_global;
 
     /* each of the cooling sums and normalisations also have one quantity per cell */
-    cell_helper[mpi_i + NPLASMA] = macromain[mpi_i].cooling_normalisation / np_mpi_global;
-    cell_helper[mpi_i + 2 * NPLASMA] = macromain[mpi_i].cooling_bftot / np_mpi_global;
-    cell_helper[mpi_i + 3 * NPLASMA] = macromain[mpi_i].cooling_bf_coltot / np_mpi_global;
-    cell_helper[mpi_i + 4 * NPLASMA] = macromain[mpi_i].cooling_bbtot / np_mpi_global;
-    cell_helper[mpi_i + 5 * NPLASMA] = macromain[mpi_i].cooling_ff / np_mpi_global;
-    cell_helper[mpi_i + 6 * NPLASMA] = macromain[mpi_i].cooling_ff_lofreq / np_mpi_global;
-    cell_helper[mpi_i + 7 * NPLASMA] = macromain[mpi_i].cooling_adiabatic / np_mpi_global;
+    cell_helper[mpi_i + NPLASMA] = macromain[mpi_i].est.cooling_normalisation / np_mpi_global;
+    cell_helper[mpi_i + 2 * NPLASMA] = macromain[mpi_i].est.cooling_bftot / np_mpi_global;
+    cell_helper[mpi_i + 3 * NPLASMA] = macromain[mpi_i].est.cooling_bf_coltot / np_mpi_global;
+    cell_helper[mpi_i + 4 * NPLASMA] = macromain[mpi_i].est.cooling_bbtot / np_mpi_global;
+    cell_helper[mpi_i + 5 * NPLASMA] = macromain[mpi_i].est.cooling_ff / np_mpi_global;
+    cell_helper[mpi_i + 6 * NPLASMA] = macromain[mpi_i].est.cooling_ff_lofreq / np_mpi_global;
+    cell_helper[mpi_i + 7 * NPLASMA] = macromain[mpi_i].est.cooling_adiabatic / np_mpi_global;
 
 
 
     for (n = 0; n < nlevels_macro; n++)
     {
-      level_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].matom_abs[n] / np_mpi_global;
+      level_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].est.matom_abs[n] / np_mpi_global;
     }
 
     for (n = 0; n < size_Jbar_est; n++)
     {
-      jbar_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].jbar[n] / np_mpi_global;
+      jbar_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].est.jbar[n] / np_mpi_global;
     }
 
     for (n = 0; n < size_gamma_est; n++)
     {
-      gamma_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].alpha_st[n] / np_mpi_global;
-      gamma_helper[mpi_i + ((n + size_gamma_est) * NPLASMA)] = macromain[mpi_i].alpha_st_e[n] / np_mpi_global;
-      gamma_helper[mpi_i + ((n + 2 * size_gamma_est) * NPLASMA)] = macromain[mpi_i].gamma[n] / np_mpi_global;
-      gamma_helper[mpi_i + ((n + 3 * size_gamma_est) * NPLASMA)] = macromain[mpi_i].gamma_e[n] / np_mpi_global;
+      gamma_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].est.alpha_st[n] / np_mpi_global;
+      gamma_helper[mpi_i + ((n + size_gamma_est) * NPLASMA)] = macromain[mpi_i].est.alpha_st_e[n] / np_mpi_global;
+      gamma_helper[mpi_i + ((n + 2 * size_gamma_est) * NPLASMA)] = macromain[mpi_i].est.gamma[n] / np_mpi_global;
+      gamma_helper[mpi_i + ((n + 3 * size_gamma_est) * NPLASMA)] = macromain[mpi_i].est.gamma_e[n] / np_mpi_global;
     }
 
     for (n = 0; n < size_alpha_est; n++)
     {
-      alpha_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].recomb_sp[n] / np_mpi_global;
-      alpha_helper[mpi_i + ((n + size_alpha_est) * NPLASMA)] = macromain[mpi_i].recomb_sp_e[n] / np_mpi_global;
+      alpha_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].est.recomb_sp[n] / np_mpi_global;
+      alpha_helper[mpi_i + ((n + size_alpha_est) * NPLASMA)] = macromain[mpi_i].est.recomb_sp_e[n] / np_mpi_global;
     }
 
     for (n = 0; n < nphot_total; n++)
     {
-      cooling_bf_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].cooling_bf[n] / np_mpi_global;
-      cooling_bf_helper[mpi_i + ((n + nphot_total) * NPLASMA)] = macromain[mpi_i].cooling_bf_col[n] / np_mpi_global;
+      cooling_bf_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].est.cooling_bf[n] / np_mpi_global;
+      cooling_bf_helper[mpi_i + ((n + nphot_total) * NPLASMA)] = macromain[mpi_i].est.cooling_bf_col[n] / np_mpi_global;
     }
 
     for (n = 0; n < nlines; n++)
     {
-      cooling_bb_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].cooling_bb[n] / np_mpi_global;
+      cooling_bb_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].est.cooling_bb[n] / np_mpi_global;
     }
   }
 
@@ -491,51 +504,51 @@ reduce_macro_atom_estimators (void)
   for (mpi_i = 0; mpi_i < NPLASMA; mpi_i++)
   {
     /* one kpkt_abs quantity per cell */
-    plasmamain[mpi_i].kpkt_abs = cell_helper2[mpi_i];
+    plasmamain[mpi_i].est.kpkt_abs = cell_helper2[mpi_i];
 
     /* each of the cooling sums and normalisations also have one quantity per cell */
-    macromain[mpi_i].cooling_normalisation = cell_helper2[mpi_i + NPLASMA];
-    macromain[mpi_i].cooling_bftot = cell_helper2[mpi_i + 2 * NPLASMA];
-    macromain[mpi_i].cooling_bf_coltot = cell_helper2[mpi_i + 3 * NPLASMA];
-    macromain[mpi_i].cooling_bbtot = cell_helper2[mpi_i + 4 * NPLASMA];
-    macromain[mpi_i].cooling_ff = cell_helper2[mpi_i + 5 * NPLASMA];
-    macromain[mpi_i].cooling_ff_lofreq = cell_helper2[mpi_i + 6 * NPLASMA];
-    macromain[mpi_i].cooling_adiabatic = cell_helper2[mpi_i + 7 * NPLASMA];
+    macromain[mpi_i].est.cooling_normalisation = cell_helper2[mpi_i + NPLASMA];
+    macromain[mpi_i].est.cooling_bftot = cell_helper2[mpi_i + 2 * NPLASMA];
+    macromain[mpi_i].est.cooling_bf_coltot = cell_helper2[mpi_i + 3 * NPLASMA];
+    macromain[mpi_i].est.cooling_bbtot = cell_helper2[mpi_i + 4 * NPLASMA];
+    macromain[mpi_i].est.cooling_ff = cell_helper2[mpi_i + 5 * NPLASMA];
+    macromain[mpi_i].est.cooling_ff_lofreq = cell_helper2[mpi_i + 6 * NPLASMA];
+    macromain[mpi_i].est.cooling_adiabatic = cell_helper2[mpi_i + 7 * NPLASMA];
 
 
     for (n = 0; n < nlevels_macro; n++)
     {
-      macromain[mpi_i].matom_abs[n] = level_helper2[mpi_i + (n * NPLASMA)];
+      macromain[mpi_i].est.matom_abs[n] = level_helper2[mpi_i + (n * NPLASMA)];
     }
 
     for (n = 0; n < size_Jbar_est; n++)
     {
-      macromain[mpi_i].jbar[n] = jbar_helper2[mpi_i + (n * NPLASMA)];
+      macromain[mpi_i].est.jbar[n] = jbar_helper2[mpi_i + (n * NPLASMA)];
     }
 
     for (n = 0; n < size_gamma_est; n++)
     {
-      macromain[mpi_i].alpha_st[n] = gamma_helper2[mpi_i + (n * NPLASMA)];
-      macromain[mpi_i].alpha_st_e[n] = gamma_helper2[mpi_i + ((n + size_gamma_est) * NPLASMA)] / np_mpi_global;
-      macromain[mpi_i].gamma[n] = gamma_helper2[mpi_i + ((n + 2 * size_gamma_est) * NPLASMA)];
-      macromain[mpi_i].gamma_e[n] = gamma_helper2[mpi_i + ((n + 3 * size_gamma_est) * NPLASMA)];
+      macromain[mpi_i].est.alpha_st[n] = gamma_helper2[mpi_i + (n * NPLASMA)];
+      macromain[mpi_i].est.alpha_st_e[n] = gamma_helper2[mpi_i + ((n + size_gamma_est) * NPLASMA)] / np_mpi_global;
+      macromain[mpi_i].est.gamma[n] = gamma_helper2[mpi_i + ((n + 2 * size_gamma_est) * NPLASMA)];
+      macromain[mpi_i].est.gamma_e[n] = gamma_helper2[mpi_i + ((n + 3 * size_gamma_est) * NPLASMA)];
     }
 
     for (n = 0; n < size_alpha_est; n++)
     {
-      macromain[mpi_i].recomb_sp[n] = alpha_helper2[mpi_i + (n * NPLASMA)];
-      macromain[mpi_i].recomb_sp_e[n] = alpha_helper2[mpi_i + ((n + size_alpha_est) * NPLASMA)];
+      macromain[mpi_i].est.recomb_sp[n] = alpha_helper2[mpi_i + (n * NPLASMA)];
+      macromain[mpi_i].est.recomb_sp_e[n] = alpha_helper2[mpi_i + ((n + size_alpha_est) * NPLASMA)];
     }
 
     for (n = 0; n < nphot_total; n++)
     {
-      macromain[mpi_i].cooling_bf[n] = cooling_bf_helper2[mpi_i + (n * NPLASMA)];
-      macromain[mpi_i].cooling_bf_col[n] = cooling_bf_helper2[mpi_i + ((n + nphot_total) * NPLASMA)];
+      macromain[mpi_i].est.cooling_bf[n] = cooling_bf_helper2[mpi_i + (n * NPLASMA)];
+      macromain[mpi_i].est.cooling_bf_col[n] = cooling_bf_helper2[mpi_i + ((n + nphot_total) * NPLASMA)];
     }
 
     for (n = 0; n < nlines; n++)
     {
-      macromain[mpi_i].cooling_bb[n] = cooling_bb_helper2[mpi_i + (n * NPLASMA)];
+      macromain[mpi_i].est.cooling_bb[n] = cooling_bb_helper2[mpi_i + (n * NPLASMA)];
     }
   }
 

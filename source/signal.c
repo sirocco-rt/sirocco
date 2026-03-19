@@ -34,6 +34,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "log.h"
 #include "atomic.h"
@@ -201,26 +202,13 @@ xsignal_rm (char *root)
 #endif
 
     char filename[LINELENGTH];
-    char command[LINELENGTH];
-    FILE *tmp_ptr;
-    /* Make the filemne */
+    /* Make the filename */
     strcpy (filename, "");
     strcpy (filename, root);
     strcat (filename, ".sig");
 
-    /* first check if the file exists */
-
-    if ((tmp_ptr = fopen (filename, "r")) == NULL)
-    {
-      return (0);
-    }
-
-
-    strcpy (command, "rm ");
-    strcat (command, filename);
-
-    if (system (command) == -1)
-      Error ("xsignal_rm: '%s' returned error status\n", command);
+    if (remove (filename) != 0 && errno != ENOENT)
+      Error ("xsignal_rm: failed to remove '%s'\n", filename);
 
 #ifdef MPI_ON
   }

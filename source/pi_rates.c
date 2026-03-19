@@ -139,17 +139,17 @@ calc_pi_rate (nion, xplasma, mode, type)
   {
     for (j = 0; j < geo.nxfreq; j++)    //We loop over all the bands
     {
-      xpl_alpha = xplasma->pl_alpha[j]; //set the various model parameters to those for this model
-      xpl_logw = xplasma->pl_log_w[j];
-      xexp_temp = xplasma->exp_temp[j];
-      xexp_w = xplasma->exp_w[j];
-      if (xplasma->spec_mod_type[j] != SPEC_MOD_FAIL)   //Only bother doing the integrals if we have a model in this band
+      xpl_alpha = xplasma->state.pl_alpha[j];   //set the various model parameters to those for this model
+      xpl_logw = xplasma->state.pl_log_w[j];
+      xexp_temp = xplasma->state.exp_temp[j];
+      xexp_w = xplasma->state.exp_w[j];
+      if (xplasma->state.spec_mod_type[j] != SPEC_MOD_FAIL)     //Only bother doing the integrals if we have a model in this band
       {
-        f1 = xplasma->fmin_mod[j];      //NSH 131114 - Set the low frequency limit to the lowest frequency that the model applies to
-        f2 = xplasma->fmax_mod[j];      //NSH 131114 - Set the high frequency limit to the highest frequency that the model applies to
+        f1 = xplasma->state.fmin_mod[j];        //NSH 131114 - Set the low frequency limit to the lowest frequency that the model applies to
+        f2 = xplasma->state.fmax_mod[j];        //NSH 131114 - Set the high frequency limit to the highest frequency that the model applies to
         if (f1 < fthresh && fthresh < f2 && f1 < fmax && fmax < f2)     //Case 1-
         {
-          if (xplasma->spec_mod_type[j] == SPEC_MOD_PL)
+          if (xplasma->state.spec_mod_type[j] == SPEC_MOD_PL)
           {
             pi_rate += num_int (tb_logpow, fthresh, fmax, pl_qromb);
 
@@ -161,7 +161,7 @@ calc_pi_rate (nion, xplasma, mode, type)
         }
         else if (f1 < fthresh && fthresh < f2 && f2 < fmax)     //case 2
         {
-          if (xplasma->spec_mod_type[j] == SPEC_MOD_PL)
+          if (xplasma->state.spec_mod_type[j] == SPEC_MOD_PL)
           {
             pi_rate += num_int (tb_logpow, fthresh, f2, pl_qromb);
           }
@@ -172,7 +172,7 @@ calc_pi_rate (nion, xplasma, mode, type)
         }
         else if (f1 > fthresh && f1 < fmax && fmax < f2)        //case 3
         {
-          if (xplasma->spec_mod_type[j] == SPEC_MOD_PL)
+          if (xplasma->state.spec_mod_type[j] == SPEC_MOD_PL)
           {
             pi_rate += num_int (tb_logpow, f1, fmax, pl_qromb);
           }
@@ -183,7 +183,7 @@ calc_pi_rate (nion, xplasma, mode, type)
         }
         else if (f1 > fthresh && f2 < fmax)     // case 4
         {
-          if (xplasma->spec_mod_type[j] == SPEC_MOD_PL)
+          if (xplasma->state.spec_mod_type[j] == SPEC_MOD_PL)
           {
             pi_rate += num_int (tb_logpow, f1, f2, pl_qromb);
           }
@@ -203,16 +203,16 @@ calc_pi_rate (nion, xplasma, mode, type)
   else if (mode == 2)           //blackbody mode
   {
     fmaxtemp = xtop->freq[xtop->np - 1];        //Set the maximum frequency temporarily to the maximum cross section frequency
-    fmax = check_freq_max (fmaxtemp, xplasma->t_r);     /*Check that the requested maximum frequency is sensible - if it is way
-                                                           off the end of the wien tail then the integration can fail - reset if necessary. */
+    fmax = check_freq_max (fmaxtemp, xplasma->state.t_r);       /*Check that the requested maximum frequency is sensible - if it is way
+                                                                   off the end of the wien tail then the integration can fail - reset if necessary. */
     if (fthresh > fmax)         //The threshold for PI is above the maximum frequency of the radiation
     {
       pi_rate = 0.0;
     }
     else                        //We are OK - do the integral
     {
-      qromb_temp = xplasma->t_r;
-      pi_rate = xplasma->w * num_int (tb_planck, fthresh, fmax, 1.e-4);
+      qromb_temp = xplasma->state.t_r;
+      pi_rate = xplasma->state.w * num_int (tb_planck, fthresh, fmax, 1.e-4);
     }
   }
 

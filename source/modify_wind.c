@@ -303,7 +303,7 @@ put_ion (ndom, element, istate, den)
   for (n = 0; n < ndim2; n++)
   {
     nplasma = wmain[nstart + n].nplasma;
-    plasmamain[nplasma].density[nion] = den[n];
+    plasmamain[nplasma].state.density[nion] = den[n];
   }
 
   return (0);
@@ -341,14 +341,14 @@ apply_model (ndom, filename)
           nplasma = wmain[n].nplasma;
           for (nion = 0; nion < nions; nion++)  //Change the absolute number densities, fractions remain the same
           {
-            plasmamain[nplasma].density[nion] =
-              plasmamain[nplasma].density[nion] * (imported_model[ndom].mass_rho[n] / plasmamain[nplasma].rho);
+            plasmamain[nplasma].state.density[nion] =
+              plasmamain[nplasma].state.density[nion] * (imported_model[ndom].mass_rho[n] / plasmamain[nplasma].state.rho);
           }
-          plasmamain[nplasma].rho = imported_model[ndom].mass_rho[n];
+          plasmamain[nplasma].state.rho = imported_model[ndom].mass_rho[n];
           if (imported_model[ndom].init_temperature == FALSE)
           {
-            plasmamain[nplasma].t_e = imported_model[ndom].t_e[n];
-            plasmamain[nplasma].t_r = imported_model[ndom].t_r[n];
+            plasmamain[nplasma].state.t_e = imported_model[ndom].t_e[n];
+            plasmamain[nplasma].state.t_r = imported_model[ndom].t_r[n];
           }
         }
       }
@@ -366,14 +366,14 @@ apply_model (ndom, filename)
           nplasma = wmain[n].nplasma;
           for (nion = 0; nion < nions; nion++)  //Change the absolute number densities, fractions remain the same
           {
-            plasmamain[nplasma].density[nion] =
-              plasmamain[nplasma].density[nion] * (imported_model[ndom].mass_rho[n] / plasmamain[nplasma].rho);
+            plasmamain[nplasma].state.density[nion] =
+              plasmamain[nplasma].state.density[nion] * (imported_model[ndom].mass_rho[n] / plasmamain[nplasma].state.rho);
           }
-          plasmamain[nplasma].rho = imported_model[ndom].mass_rho[n];
+          plasmamain[nplasma].state.rho = imported_model[ndom].mass_rho[n];
           if (imported_model[ndom].init_temperature == FALSE)
           {
-            plasmamain[nplasma].t_e = imported_model[ndom].t_e[n];
-            plasmamain[nplasma].t_r = imported_model[ndom].t_r[n];
+            plasmamain[nplasma].state.t_e = imported_model[ndom].t_e[n];
+            plasmamain[nplasma].state.t_r = imported_model[ndom].t_r[n];
           }
         }
       }
@@ -443,12 +443,12 @@ frame_transform (ndom)
     {
       printf ("This cell is in the wind - transforming plasma variables\n");
       nplasma = wmain[n].nplasma;
-      plasmamain[nplasma].vol *= factor;
-      plasmamain[nplasma].rho /= factor;
-      plasmamain[nplasma].ne /= factor;
+      plasmamain[nplasma].state.vol *= factor;
+      plasmamain[nplasma].state.rho /= factor;
+      plasmamain[nplasma].state.ne /= factor;
       for (nion = 0; nion < nions; nion++)
       {
-        plasmamain[nplasma].density[nion] /= factor;
+        plasmamain[nplasma].state.density[nion] /= factor;
       }
 
     }

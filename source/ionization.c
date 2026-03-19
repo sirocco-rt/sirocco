@@ -30,11 +30,11 @@
 void
 update_old_plasma_variables (PlasmaPtr xplasma)
 {
-  xplasma->dt_e_old = xplasma->dt_e;
-  xplasma->dt_e = xplasma->t_e - xplasma->t_e_old;
-  xplasma->t_e_old = xplasma->t_e;
-  xplasma->lum_tot_old = xplasma->lum_tot;
-  xplasma->heat_tot_old = xplasma->heat_tot;
+  xplasma->derived.dt_e_old = xplasma->derived.dt_e;
+  xplasma->derived.dt_e = xplasma->state.t_e - xplasma->state.t_e_old;
+  xplasma->state.t_e_old = xplasma->state.t_e;
+  xplasma->derived.lum_tot_old = xplasma->derived.lum_tot;
+  xplasma->derived.heat_tot_old = xplasma->est.heat_tot;
 }
 
 
@@ -70,7 +70,7 @@ ion_abundances (PlasmaPtr xplasma, int mode)
     if ((ireturn = nebular_concentrations (xplasma, NEBULARMODE_ML93)))
     {
       Error ("ionization_abundances: nebular_concentrations failed to converge\n");
-      Error ("ionization_abundances: j %8.2e t_e %8.2e t_r %8.2e w %8.2e\n", xplasma->j, xplasma->t_e, xplasma->w);
+      Error ("ionization_abundances: j %8.2e t_e %8.2e t_r %8.2e w %8.2e\n", xplasma->est.j, xplasma->state.t_e, xplasma->state.w);
     }
   }
   else if (mode == IONMODE_LTE_TR)
@@ -105,15 +105,15 @@ ion_abundances (PlasmaPtr xplasma, int mode)
 
     update_old_plasma_variables (xplasma);
 
-    double te_old = xplasma->t_e;
-    double gain = xplasma->gain;
+    double te_old = xplasma->state.t_e;
+    double gain = xplasma->derived.gain;
 
     /* Save the current ion densities for blending later */
     double density_old[nions];
     int nion;
     for (nion = 0; nion < nions; nion++)
     {
-      density_old[nion] = xplasma->density[nion];
+      density_old[nion] = xplasma->state.density[nion];
     }
 
     /* Find t_e where heating = cooling with coupled LTE ionization.
@@ -122,15 +122,15 @@ ion_abundances (PlasmaPtr xplasma, int mode)
     double te_new = calc_te_lte (xplasma, 0.7 * te_old, 1.3 * te_old);
 
     /* Apply gain damping */
-    xplasma->t_e = (1 - gain) * te_old + gain * te_new;
+    xplasma->state.t_e = (1 - gain) * te_old + gain * te_new;
 
-    if (xplasma->t_e > TMAX)
+    if (xplasma->state.t_e > TMAX)
     {
-      xplasma->t_e = TMAX;
+      xplasma->state.t_e = TMAX;
     }
-    if (xplasma->t_e < MIN_TEMP)
+    if (xplasma->state.t_e < MIN_TEMP)
     {
-      xplasma->t_e = MIN_TEMP;
+      xplasma->state.t_e = MIN_TEMP;
     }
 
     /* Recompute ionization and heating/cooling at the gain-damped temperature */
@@ -149,9 +149,9 @@ ion_abundances (PlasmaPtr xplasma, int mode)
       density_gain = 0.01;
     for (nion = 0; nion < nions; nion++)
     {
-      xplasma->density[nion] = (1 - density_gain) * density_old[nion] + density_gain * xplasma->density[nion];
+      xplasma->state.density[nion] = (1 - density_gain) * density_old[nion] + density_gain * xplasma->state.density[nion];
     }
-    xplasma->ne = get_ne (xplasma->density);
+    xplasma->state.ne = get_ne (xplasma->state.density);
 
     convergence (xplasma);
 
@@ -167,17 +167,17 @@ ion_abundances (PlasmaPtr xplasma, int mode)
   {
     /* On the spot, setting te to 0.9 t_r before calculating densities */
 
-    xplasma->dt_e_old = xplasma->dt_e;
-    xplasma->dt_e = xplasma->t_e - xplasma->t_e_old;
-    xplasma->t_e_old = xplasma->t_e;
-    xplasma->lum_tot_old = xplasma->lum_tot;
-    xplasma->heat_tot_old = xplasma->heat_tot;
+    xplasma->derived.dt_e_old = xplasma->derived.dt_e;
+    xplasma->derived.dt_e = xplasma->state.t_e - xplasma->state.t_e_old;
+    xplasma->state.t_e_old = xplasma->state.t_e;
+    xplasma->derived.lum_tot_old = xplasma->derived.lum_tot;
+    xplasma->derived.heat_tot_old = xplasma->est.heat_tot;
     ireturn = 0;
-    xplasma->t_e = 0.9 * xplasma->t_r;
+    xplasma->state.t_e = 0.9 * xplasma->state.t_r;
     if ((ireturn = nebular_concentrations (xplasma, NEBULARMODE_ML93)))
     {
       Error ("ionization_abundances: nebular_concentrations failed to converge\n");
-      Error ("ionization_abundances: j %8.2e t_e %8.2e t_r %8.2e w %8.2e\n", xplasma->j, xplasma->t_e, xplasma->w);
+      Error ("ionization_abundances: j %8.2e t_e %8.2e t_r %8.2e w %8.2e\n", xplasma->est.j, xplasma->state.t_e, xplasma->state.w);
     }
     convergence (xplasma);
 
@@ -214,7 +214,7 @@ ion_abundances (PlasmaPtr xplasma, int mode)
     for (kkk = 0; kkk < MAX_MULTISHOT; kkk++)
     {
       ireturn = one_shot (xplasma, NEBULARMODE_MATRIX_SPECTRALMODEL);
-      xte[kkk] = xplasma->t_e;
+      xte[kkk] = xplasma->state.t_e;
       if (kkk > 1)
       {
         delta[kkk] = (xte[kkk] - xte[kkk - 1]) / (0.5 * (xte[kkk] + xte[kkk - 1]));
@@ -288,16 +288,16 @@ convergence (PlasmaPtr xplasma)
   epsilon = 0.05;
 
   trcheck = techeck = hccheck = CONVERGENCE_CHECK_PASS;
-  xplasma->trcheck = xplasma->techeck = xplasma->hccheck = CONVERGENCE_CHECK_PASS;      // NSH 70g - zero the global variables
+  xplasma->derived.trcheck = xplasma->derived.techeck = xplasma->derived.hccheck = CONVERGENCE_CHECK_PASS;      // NSH 70g - zero the global variables
 
   /*
    * Check the convergence of the radiation temperature
    */
 
-  xplasma->converge_t_r =       // Radiation temperature check
-    fabs (xplasma->t_r_old - xplasma->t_r) / (xplasma->t_r_old + xplasma->t_r);
-  if (xplasma->converge_t_r > epsilon)
-    xplasma->trcheck = trcheck = CONVERGENCE_CHECK_FAIL;
+  xplasma->derived.converge_t_r =       // Radiation temperature check
+    fabs (xplasma->state.t_r_old - xplasma->state.t_r) / (xplasma->state.t_r_old + xplasma->state.t_r);
+  if (xplasma->derived.converge_t_r > epsilon)
+    xplasma->derived.trcheck = trcheck = CONVERGENCE_CHECK_FAIL;
 
   /*
    * Check the convergence for electron temperature and heat + cooling rates
@@ -312,29 +312,30 @@ convergence (PlasmaPtr xplasma)
    *   converge if we are hitting the maximum temperature
    */
 
-  if (xplasma->t_e < TMAX)
+  if (xplasma->state.t_e < TMAX)
   {
-    xplasma->converge_t_e =     // Electron temperature check
-      fabs (xplasma->t_e_old - xplasma->t_e) / (xplasma->t_e_old + xplasma->t_e);
-    if (xplasma->converge_t_e > epsilon)
-      xplasma->techeck = techeck = CONVERGENCE_CHECK_FAIL;
+    xplasma->derived.converge_t_e =     // Electron temperature check
+      fabs (xplasma->state.t_e_old - xplasma->state.t_e) / (xplasma->state.t_e_old + xplasma->state.t_e);
+    if (xplasma->derived.converge_t_e > epsilon)
+      xplasma->derived.techeck = techeck = CONVERGENCE_CHECK_FAIL;
 
-    xplasma->converge_hc =      // Heating and cooling rates check
-      fabs (xplasma->heat_tot + xplasma->heat_shock - xplasma->cool_tot) / fabs (xplasma->heat_tot + xplasma->heat_shock +
-                                                                                 xplasma->cool_tot);
-    if (xplasma->converge_hc > epsilon)
-      xplasma->hccheck = hccheck = CONVERGENCE_CHECK_FAIL;
+    xplasma->derived.converge_hc =      // Heating and cooling rates check
+      fabs (xplasma->est.heat_tot + xplasma->derived.heat_shock - xplasma->est.cool_tot) / fabs (xplasma->est.heat_tot +
+                                                                                                 xplasma->derived.heat_shock +
+                                                                                                 xplasma->est.cool_tot);
+    if (xplasma->derived.converge_hc > epsilon)
+      xplasma->derived.hccheck = hccheck = CONVERGENCE_CHECK_FAIL;
   }
   else                          // If the cell has reached the maximum temperature we mark it as over-limit
   {
-    xplasma->techeck = techeck = xplasma->hccheck = hccheck = CONVERGENCE_CHECK_OVER_TEMP;
+    xplasma->derived.techeck = techeck = xplasma->derived.hccheck = hccheck = CONVERGENCE_CHECK_OVER_TEMP;
   }
 
   /*
    * whole_check is the sum of the temperature checks and the heating check - the higher this is, the more convergence checks have failed.
    */
 
-  xplasma->converge_whole = whole_check = trcheck + techeck + hccheck;
+  xplasma->derived.converge_whole = whole_check = trcheck + techeck + hccheck;
 
   /*
    * Now we check to see if a cell is converging:
@@ -349,14 +350,15 @@ convergence (PlasmaPtr xplasma)
    * For LTE_ITERATE mode, any oscillation triggers damping because the ionization-opacity feedback
    * can cause self-reinforcing oscillations where increasing the gain makes things worse.
    */
-  if (xplasma->dt_e_old * xplasma->dt_e < 0 && (fabs (xplasma->dt_e) < fabs (xplasma->dt_e_old) || geo.ioniz_mode == IONMODE_LTE_ITERATE))
+  if (xplasma->derived.dt_e_old * xplasma->derived.dt_e < 0
+      && (fabs (xplasma->derived.dt_e) < fabs (xplasma->derived.dt_e_old) || geo.ioniz_mode == IONMODE_LTE_ITERATE))
   {
-    xplasma->converging = CELL_CONVERGING;
+    xplasma->derived.converging = CELL_CONVERGING;
 
     // TODO: is this optimal for converging cells? See discussion on Bug #631
-    xplasma->gain *= gain_damp;
-    if (xplasma->gain < min_gain)
-      xplasma->gain = min_gain;
+    xplasma->derived.gain *= gain_damp;
+    if (xplasma->derived.gain < min_gain)
+      xplasma->derived.gain = min_gain;
   }
   /*
    * The cell is not converging, which means either that the temperature is consistently moving in one direction or
@@ -371,7 +373,7 @@ convergence (PlasmaPtr xplasma)
      * to find the best numbers
      */
 
-    xplasma->converging = CELL_NOT_CONVERGING;
+    xplasma->derived.converging = CELL_NOT_CONVERGING;
 
     cyc_frac = 0.5;
 
@@ -386,9 +388,9 @@ convergence (PlasmaPtr xplasma)
       max_gain = 0.8;
     }
 
-    xplasma->gain *= gain_amp;
-    if (xplasma->gain > max_gain)
-      xplasma->gain = max_gain;
+    xplasma->derived.gain *= gain_amp;
+    if (xplasma->derived.gain > max_gain)
+      xplasma->derived.gain = max_gain;
   }
 
   return (whole_check);
@@ -434,17 +436,17 @@ check_convergence (void)
     if (wmain[plasmamain[n].nwind].inwind == W_ALL_INWIND || modes.partial_cells == PC_INCLUDE)
     {
       ntot++;
-      if (plasmamain[n].converge_whole == CONVERGENCE_CHECK_PASS)
+      if (plasmamain[n].derived.converge_whole == CONVERGENCE_CHECK_PASS)
         nconverge++;
-      if (plasmamain[n].trcheck == CONVERGENCE_CHECK_PASS)
+      if (plasmamain[n].derived.trcheck == CONVERGENCE_CHECK_PASS)
         ntr++;
-      if (plasmamain[n].techeck == CONVERGENCE_CHECK_PASS)
+      if (plasmamain[n].derived.techeck == CONVERGENCE_CHECK_PASS)
         nte++;
-      if (plasmamain[n].hccheck == CONVERGENCE_CHECK_PASS)
+      if (plasmamain[n].derived.hccheck == CONVERGENCE_CHECK_PASS)
         nhc++;
-      if (plasmamain[n].techeck == CONVERGENCE_CHECK_OVER_TEMP)
+      if (plasmamain[n].derived.techeck == CONVERGENCE_CHECK_OVER_TEMP)
         nmax++;
-      if (plasmamain[n].converging == CELL_CONVERGING)
+      if (plasmamain[n].derived.converging == CELL_CONVERGING)
         nconverging++;
     }
   }
@@ -513,9 +515,9 @@ one_shot (PlasmaPtr xplasma, int mode)
   double gain;
 
 
-  gain = xplasma->gain;
+  gain = xplasma->derived.gain;
 
-  te_old = xplasma->t_e;
+  te_old = xplasma->state.t_e;
 
   if (modes.zeus_connect == TRUE || modes.fixed_temp == TRUE)
   {
@@ -527,25 +529,26 @@ one_shot (PlasmaPtr xplasma, int mode)
   else                          //Find a new teperature where heating and cooling match
   {
     te_new = calc_te (xplasma, 0.7 * te_old, 1.3 * te_old);     //compute the new t_e - no limits on where it can go
-    xplasma->t_e = (1 - gain) * te_old + gain * te_new; /*Allow the temperature to move by a fraction gain towards
-                                                           the equilibrium temperature */
+    xplasma->state.t_e = (1 - gain) * te_old + gain * te_new;   /*Allow the temperature to move by a fraction gain towards
+                                                                   the equilibrium temperature */
 
-    if (xplasma->t_e > TMAX)    //check to see if we have maxed out the temperature.
+    if (xplasma->state.t_e > TMAX)      //check to see if we have maxed out the temperature.
     {
-      xplasma->t_e = TMAX;
+      xplasma->state.t_e = TMAX;
     }
-    zero_emit (xplasma->t_e);   //Get the heating and cooling rates correctly for the new temperature
+    zero_emit (xplasma->state.t_e);     //Get the heating and cooling rates correctly for the new temperature
   }
 
 
   if (nebular_concentrations (xplasma, mode))
   {
     Error ("one_shot: nebular_concentrations failed to converge\n");
-    Error ("one_shot: j %8.2e t_e %8.2e t_r %8.2e w %8.2e nphot %i\n", xplasma->j, xplasma->t_e, xplasma->t_r, xplasma->w, xplasma->ntot);
+    Error ("one_shot: j %8.2e t_e %8.2e t_r %8.2e w %8.2e nphot %i\n", xplasma->est.j, xplasma->state.t_e, xplasma->state.t_r,
+           xplasma->state.w, xplasma->est.ntot);
   }
-  if (xplasma->ne < 0 || VERY_BIG < xplasma->ne)
+  if (xplasma->state.ne < 0 || VERY_BIG < xplasma->state.ne)
   {
-    Error ("one_shot: ne = %8.2e out of range\n", xplasma->ne);
+    Error ("one_shot: ne = %8.2e out of range\n", xplasma->state.ne);
   }
 
 
@@ -592,11 +595,11 @@ calc_te (PlasmaPtr xplasma, double tmin, double tmax)
 
   xxxplasma = xplasma;
 
-  xxxplasma->heat_tot += xxxplasma->heat_ch_ex;
+  xxxplasma->est.heat_tot += xxxplasma->est.heat_ch_ex;
 
-  xplasma->t_e = tmin;
+  xplasma->state.t_e = tmin;
   z1 = zero_emit (tmin);
-  xplasma->t_e = tmax;
+  xplasma->state.t_e = tmax;
   z2 = zero_emit (tmax);
 
   /* The way this works is that if we have a situation where the cooling
@@ -606,7 +609,7 @@ calc_te (PlasmaPtr xplasma, double tmin, double tmax)
 
   if ((z1 * z2 < 0.0))
   {                             // Then the interval is bracketed
-    xplasma->t_e = zero_find (zero_emit2, tmin, tmax, 50., &ierr);
+    xplasma->state.t_e = zero_find (zero_emit2, tmin, tmax, 50., &ierr);
     if (ierr)
     {
       Error ("calc_te: zero_find failed to find a temperature\n");
@@ -615,11 +618,11 @@ calc_te (PlasmaPtr xplasma, double tmin, double tmax)
   }
   else if (fabs (z1) < fabs (z2))
   {
-    xplasma->t_e = tmin;
+    xplasma->state.t_e = tmin;
   }
   else
   {
-    xplasma->t_e = tmax;
+    xplasma->state.t_e = tmax;
   }
   /* With the new temperature in place for the cell, get the correct value of heat_tot.
      SS June  04 */
@@ -633,26 +636,26 @@ calc_te (PlasmaPtr xplasma, double tmin, double tmax)
    * We subtract the current value and then compute at the new temperature and
    * add this back */
 
-  xplasma->heat_tot -= xplasma->heat_lines_macro;
-  xplasma->heat_lines -= xplasma->heat_lines_macro;
+  xplasma->est.heat_tot -= xplasma->est.heat_lines_macro;
+  xplasma->est.heat_lines -= xplasma->est.heat_lines_macro;
 
-  xplasma->heat_lines_macro = macro_bb_heating (xplasma, xplasma->t_e);
+  xplasma->est.heat_lines_macro = macro_bb_heating (xplasma, xplasma->state.t_e);
 
-  xplasma->heat_tot += xplasma->heat_lines_macro;
-  xplasma->heat_lines += xplasma->heat_lines_macro;
+  xplasma->est.heat_tot += xplasma->est.heat_lines_macro;
+  xplasma->est.heat_lines += xplasma->est.heat_lines_macro;
 
   /* Similaryly for macro_atom_bf_heating */
 
-  xplasma->heat_tot -= xplasma->heat_photo_macro;
-  xplasma->heat_photo -= xplasma->heat_photo_macro;
+  xplasma->est.heat_tot -= xplasma->est.heat_photo_macro;
+  xplasma->est.heat_photo -= xplasma->est.heat_photo_macro;
 
-  xplasma->heat_photo_macro = macro_bf_heating (xplasma, xplasma->t_e);
+  xplasma->est.heat_photo_macro = macro_bf_heating (xplasma, xplasma->state.t_e);
 
-  xplasma->heat_tot += xplasma->heat_photo_macro;
-  xplasma->heat_photo += xplasma->heat_photo_macro;
+  xplasma->est.heat_tot += xplasma->est.heat_photo_macro;
+  xplasma->est.heat_photo += xplasma->est.heat_photo_macro;
 
 
-  return (xplasma->t_e);
+  return (xplasma->state.t_e);
 
 }
 
@@ -703,32 +706,32 @@ zero_emit (double t)
   double difference;
 
   /*Original method */
-  xxxplasma->t_e = t;
+  xxxplasma->state.t_e = t;
 
 
   /* Correct heat_tot for the change in temperature. SS June 04. */
-  xxxplasma->heat_tot -= xxxplasma->heat_lines_macro;
-  xxxplasma->heat_lines -= xxxplasma->heat_lines_macro;
+  xxxplasma->est.heat_tot -= xxxplasma->est.heat_lines_macro;
+  xxxplasma->est.heat_lines -= xxxplasma->est.heat_lines_macro;
 
-  xxxplasma->heat_lines_macro = macro_bb_heating (xxxplasma, t);
+  xxxplasma->est.heat_lines_macro = macro_bb_heating (xxxplasma, t);
 
-  xxxplasma->heat_tot += xxxplasma->heat_lines_macro;
-  xxxplasma->heat_lines += xxxplasma->heat_lines_macro;
+  xxxplasma->est.heat_tot += xxxplasma->est.heat_lines_macro;
+  xxxplasma->est.heat_lines += xxxplasma->est.heat_lines_macro;
 
-  xxxplasma->heat_tot -= xxxplasma->heat_photo_macro;
-  xxxplasma->heat_photo -= xxxplasma->heat_photo_macro;
+  xxxplasma->est.heat_tot -= xxxplasma->est.heat_photo_macro;
+  xxxplasma->est.heat_photo -= xxxplasma->est.heat_photo_macro;
 
-  xxxplasma->heat_photo_macro = macro_bf_heating (xxxplasma, t);
+  xxxplasma->est.heat_photo_macro = macro_bf_heating (xxxplasma, t);
 
-  xxxplasma->heat_tot += xxxplasma->heat_photo_macro;
-  xxxplasma->heat_photo += xxxplasma->heat_photo_macro;
+  xxxplasma->est.heat_tot += xxxplasma->est.heat_photo_macro;
+  xxxplasma->est.heat_photo += xxxplasma->est.heat_photo_macro;
 
   /* Finished macro atom corrections */
 
 
   cooling (xxxplasma, t);
 
-  difference = xxxplasma->heat_tot + xxxplasma->heat_shock - xxxplasma->cool_tot;
+  difference = xxxplasma->est.heat_tot + xxxplasma->derived.heat_shock - xxxplasma->est.cool_tot;
 
 
 
@@ -790,7 +793,7 @@ zero_emit_lte (double t)
   int nion;
   double density_min = 1.e-30;
 
-  xxxplasma->t_e = t;
+  xxxplasma->state.t_e = t;
 
   /* Update ionization to LTE at this trial temperature */
   nebular_concentrations (xxxplasma, NEBULARMODE_TE);
@@ -800,7 +803,7 @@ zero_emit_lte (double t)
      the Saha equation has now changed them.  We scale per-ion heating
      by the density ratio and ne-dependent heating by the ne ratio. */
 
-  ne_ratio = (lte_ne_orig > 0) ? xxxplasma->ne / lte_ne_orig : 1.0;
+  ne_ratio = (lte_ne_orig > 0) ? xxxplasma->state.ne / lte_ne_orig : 1.0;
 
   /* Scale per-ion photoionization heating */
   scaled_heat_photo = 0.0;
@@ -808,14 +811,14 @@ zero_emit_lte (double t)
   {
     if (lte_density_orig[nion] > density_min)
     {
-      scaled_heat_photo += xxxplasma->heat_ion[nion] * xxxplasma->density[nion] / lte_density_orig[nion];
+      scaled_heat_photo += xxxplasma->est.heat_ion[nion] * xxxplasma->state.density[nion] / lte_density_orig[nion];
     }
     else
     {
-      scaled_heat_photo += xxxplasma->heat_ion[nion];
+      scaled_heat_photo += xxxplasma->est.heat_ion[nion];
     }
   }
-  xxxplasma->heat_photo = scaled_heat_photo;
+  xxxplasma->est.heat_photo = scaled_heat_photo;
 
   /* Scale per-ion Auger (inner shell) heating */
   scaled_heat_auger = 0.0;
@@ -823,48 +826,48 @@ zero_emit_lte (double t)
   {
     if (lte_density_orig[nion] > density_min)
     {
-      scaled_heat_auger += xxxplasma->heat_inner_ion[nion] * xxxplasma->density[nion] / lte_density_orig[nion];
+      scaled_heat_auger += xxxplasma->est.heat_inner_ion[nion] * xxxplasma->state.density[nion] / lte_density_orig[nion];
     }
     else
     {
-      scaled_heat_auger += xxxplasma->heat_inner_ion[nion];
+      scaled_heat_auger += xxxplasma->est.heat_inner_ion[nion];
     }
   }
-  xxxplasma->heat_auger = scaled_heat_auger;
+  xxxplasma->est.heat_auger = scaled_heat_auger;
 
   /* Scale ne-dependent heating */
-  xxxplasma->heat_ff = lte_heat_ff_orig * ne_ratio;
-  xxxplasma->heat_comp = lte_heat_comp_orig * ne_ratio;
-  xxxplasma->heat_ind_comp = lte_heat_ind_comp_orig * ne_ratio;
+  xxxplasma->est.heat_ff = lte_heat_ff_orig * ne_ratio;
+  xxxplasma->est.heat_comp = lte_heat_comp_orig * ne_ratio;
+  xxxplasma->est.heat_ind_comp = lte_heat_ind_comp_orig * ne_ratio;
 
   /* Scale non-macro line heating by ne ratio */
   double non_macro_lines = lte_heat_lines_orig - lte_heat_lines_macro_orig;
-  xxxplasma->heat_lines = non_macro_lines * ne_ratio;
+  xxxplasma->est.heat_lines = non_macro_lines * ne_ratio;
 
   /* Reconstruct heat_tot from scaled components (without macro yet) */
-  xxxplasma->heat_tot = xxxplasma->heat_photo + xxxplasma->heat_auger
-    + xxxplasma->heat_ff + xxxplasma->heat_comp + xxxplasma->heat_ind_comp + xxxplasma->heat_lines + lte_heat_ch_ex_orig;
+  xxxplasma->est.heat_tot = xxxplasma->est.heat_photo + xxxplasma->est.heat_auger
+    + xxxplasma->est.heat_ff + xxxplasma->est.heat_comp + xxxplasma->est.heat_ind_comp + xxxplasma->est.heat_lines + lte_heat_ch_ex_orig;
 
   /* Now subtract the original macro contributions (which are included
      in the scaled heat_photo and heat_lines above) and replace with
      freshly computed macro heating at the new temperature and densities */
-  xxxplasma->heat_photo -= lte_heat_photo_macro_orig;
+  xxxplasma->est.heat_photo -= lte_heat_photo_macro_orig;
 
-  xxxplasma->heat_photo_macro = macro_bf_heating (xxxplasma, t);
+  xxxplasma->est.heat_photo_macro = macro_bf_heating (xxxplasma, t);
 
-  xxxplasma->heat_photo += xxxplasma->heat_photo_macro;
+  xxxplasma->est.heat_photo += xxxplasma->est.heat_photo_macro;
 
-  xxxplasma->heat_lines_macro = macro_bb_heating (xxxplasma, t);
+  xxxplasma->est.heat_lines_macro = macro_bb_heating (xxxplasma, t);
 
-  xxxplasma->heat_lines += xxxplasma->heat_lines_macro;
+  xxxplasma->est.heat_lines += xxxplasma->est.heat_lines_macro;
 
   /* Reconstruct heat_tot with macro corrections */
-  xxxplasma->heat_tot = xxxplasma->heat_photo + xxxplasma->heat_auger
-    + xxxplasma->heat_ff + xxxplasma->heat_comp + xxxplasma->heat_ind_comp + xxxplasma->heat_lines + lte_heat_ch_ex_orig;
+  xxxplasma->est.heat_tot = xxxplasma->est.heat_photo + xxxplasma->est.heat_auger
+    + xxxplasma->est.heat_ff + xxxplasma->est.heat_comp + xxxplasma->est.heat_ind_comp + xxxplasma->est.heat_lines + lte_heat_ch_ex_orig;
 
   cooling (xxxplasma, t);
 
-  difference = xxxplasma->heat_tot + xxxplasma->heat_shock - xxxplasma->cool_tot;
+  difference = xxxplasma->est.heat_tot + xxxplasma->derived.heat_shock - xxxplasma->est.cool_tot;
 
   return (difference);
 }
@@ -916,7 +919,7 @@ calc_te_lte (PlasmaPtr xplasma, double tmin, double tmax)
 
   xxxplasma = xplasma;
 
-  xxxplasma->heat_tot += xxxplasma->heat_ch_ex;
+  xxxplasma->est.heat_tot += xxxplasma->est.heat_ch_ex;
 
   /* Save original MC-phase heating values and ion densities.
      These are used by zero_emit_lte to scale heating when Saha
@@ -928,33 +931,33 @@ calc_te_lte (PlasmaPtr xplasma, double tmin, double tmax)
   }
   for (nion = 0; nion < nions; nion++)
   {
-    lte_density_orig[nion] = xplasma->density[nion];
+    lte_density_orig[nion] = xplasma->state.density[nion];
   }
-  lte_ne_orig = xplasma->ne;
-  lte_heat_photo_orig = xplasma->heat_photo;
-  lte_heat_ff_orig = xplasma->heat_ff;
-  lte_heat_comp_orig = xplasma->heat_comp;
-  lte_heat_ind_comp_orig = xplasma->heat_ind_comp;
-  lte_heat_lines_orig = xplasma->heat_lines;
-  lte_heat_auger_orig = xplasma->heat_auger;
-  lte_heat_lines_macro_orig = xplasma->heat_lines_macro;
-  lte_heat_photo_macro_orig = xplasma->heat_photo_macro;
-  lte_heat_ch_ex_orig = xplasma->heat_ch_ex;
+  lte_ne_orig = xplasma->state.ne;
+  lte_heat_photo_orig = xplasma->est.heat_photo;
+  lte_heat_ff_orig = xplasma->est.heat_ff;
+  lte_heat_comp_orig = xplasma->est.heat_comp;
+  lte_heat_ind_comp_orig = xplasma->est.heat_ind_comp;
+  lte_heat_lines_orig = xplasma->est.heat_lines;
+  lte_heat_auger_orig = xplasma->est.heat_auger;
+  lte_heat_lines_macro_orig = xplasma->est.heat_lines_macro;
+  lte_heat_photo_macro_orig = xplasma->est.heat_photo_macro;
+  lte_heat_ch_ex_orig = xplasma->est.heat_ch_ex;
 
   /* Evaluate heating-cooling difference at bracket endpoints */
-  xplasma->t_e = tmin;
+  xplasma->state.t_e = tmin;
   z1 = zero_emit_lte (tmin);
-  heat1 = xxxplasma->heat_tot;
-  cool1 = xxxplasma->cool_tot;
+  heat1 = xxxplasma->est.heat_tot;
+  cool1 = xxxplasma->est.cool_tot;
 
-  xplasma->t_e = tmax;
+  xplasma->state.t_e = tmax;
   z2 = zero_emit_lte (tmax);
-  heat2 = xxxplasma->heat_tot;
-  cool2 = xxxplasma->cool_tot;
+  heat2 = xxxplasma->est.heat_tot;
+  cool2 = xxxplasma->est.cool_tot;
 
   if ((z1 * z2 < 0.0))
   {                             // Then the interval is bracketed
-    xplasma->t_e = zero_find (zero_emit_lte2, tmin, tmax, 50., &ierr);
+    xplasma->state.t_e = zero_find (zero_emit_lte2, tmin, tmax, 50., &ierr);
     if (ierr)
     {
       Error ("calc_te_lte: zero_find failed to find a temperature\n");
@@ -973,22 +976,22 @@ calc_te_lte (PlasmaPtr xplasma, double tmin, double tmax)
     /* Choose the temperature that minimizes |heat - cool| */
     if (fabs (z1) < fabs (z2))
     {
-      xplasma->t_e = tmin;
+      xplasma->state.t_e = tmin;
       Error ("calc_te_lte:   Using tmin=%.0f K (smaller imbalance)\n", tmin);
     }
     else
     {
-      xplasma->t_e = tmax;
+      xplasma->state.t_e = tmax;
       Error ("calc_te_lte:   Using tmax=%.0f K (smaller imbalance)\n", tmax);
     }
   }
 
   /* Ensure ionization and heating/cooling are set correctly at the final temperature.
      zero_emit_lte will call nebular_concentrations and cooling. */
-  zero_emit_lte (xplasma->t_e);
+  zero_emit_lte (xplasma->state.t_e);
 
   /* Store whether we found a proper solution */
-  xplasma->trcheck = bracketed ? 0 : 1;
+  xplasma->derived.trcheck = bracketed ? 0 : 1;
 
-  return (xplasma->t_e);
+  return (xplasma->state.t_e);
 }

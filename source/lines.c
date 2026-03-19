@@ -59,7 +59,7 @@ total_line_emission (xplasma, f1, f2)
   double lum;
   double t_e;
 
-  t_e = xplasma->t_e;
+  t_e = xplasma->state.t_e;
 
   if (t_e <= 0 || f2 < f1)
     return (0);
@@ -113,11 +113,11 @@ lum_lines (xplasma, nmin, nmax)
   double q;
   double t_e;
   double foo1, foo2, foo3, foo4;
-  t_e = xplasma->t_e;
+  t_e = xplasma->state.t_e;
   lum = 0;
   for (n = nmin; n < nmax; n++)
   {
-    dd = xplasma->density[lin_ptr[n]->nion];
+    dd = xplasma->state.density[lin_ptr[n]->nion];
 
     if (dd > LDEN_MIN)
     {                           /* potentially dangerous step to avoid lines with no power */
@@ -133,7 +133,7 @@ lum_lines (xplasma, nmin, nmax)
 
       x *= foo2 = q * a21 (lin_ptr[n]) * z / (1. - z);
 
-      x *= foo3 = PLANCK * lin_ptr[n]->freq * xplasma->vol;
+      x *= foo3 = PLANCK * lin_ptr[n]->freq * xplasma->state.vol;
       if (geo.line_mode == LINE_MODE_ESC_PROB)
         x *= foo4 = p_escape (lin_ptr[n], xplasma);     // Include effects of line trapping
       else
@@ -146,7 +146,7 @@ lum_lines (xplasma, nmin, nmax)
       {
         Log
           ("lum_lines: foo %10.3g (%10.3g %10.3g %10.3g) %10.3g %10.3g %10.3g %10.3g %10.3g %10.3g %10.3g\n",
-           foo1, d1, d2, dd, foo2, foo3, foo4, lin_ptr[n]->el, xplasma->t_r, t_e, xplasma->w);
+           foo1, d1, d2, dd, foo2, foo3, foo4, lin_ptr[n]->el, xplasma->state.t_r, t_e, xplasma->state.w);
       }
       if (sane_check (x) != 0)
       {
@@ -228,18 +228,18 @@ two_level_atom (line_ptr, xplasma, d1, d2)
   }
 
 /* Move variables used in the calculation from the xplasma structure into subroutine variables */
-  ne = xplasma->ne;
-  te = xplasma->t_e;
-  tr = xplasma->t_r;
-  w = xplasma->w;
+  ne = xplasma->state.ne;
+  te = xplasma->state.t_e;
+  tr = xplasma->state.t_r;
+  w = xplasma->state.w;
   nion = line_ptr->nion;
-  dd = xplasma->density[nion];
+  dd = xplasma->state.density[nion];
 
   /* Calculate the number density of the lower level for the transition using the partition function */
   ;
   if (ion[nion].nlevels > 0)
   {
-    dd *= xconfig[ion[nion].firstlevel].g / xplasma->partition[nion];
+    dd *= xconfig[ion[nion].firstlevel].g / xplasma->state.partition[nion];
   }
 
   if (old_line_ptr == line_ptr && old_ne == ne && old_te == te && old_w == w && old_tr == tr && old_dd == dd)
@@ -435,9 +435,9 @@ scattering_fraction (line_ptr, xplasma)
     return (1.);                //purely scattering atmosphere
 
   //Populate variable from previous calling structure
-  ne = xplasma->ne;
-  te = xplasma->t_e;
-  w = xplasma->w;
+  ne = xplasma->state.ne;
+  te = xplasma->state.t_e;
+  w = xplasma->state.w;
 
   c = (-H_OVER_K * line_ptr->freq / te);
   a = exp (c);
@@ -506,12 +506,12 @@ p_escape (line_ptr, xplasma)
   double w, tr;                 /* the radiative weight, and radiation tempeature */
   WindPtr one;
 
-  ne = xplasma->ne;
-  te = xplasma->t_e;
-  tr = xplasma->t_r;
-  w = xplasma->w;
+  ne = xplasma->state.ne;
+  te = xplasma->state.t_e;
+  tr = xplasma->state.t_r;
+  w = xplasma->state.w;
 
-  dd = xplasma->density[line_ptr->nion];
+  dd = xplasma->state.density[line_ptr->nion];
 
   one = &wmain[xplasma->nwind];
   dvds = one->dvds_ave;
@@ -606,7 +606,7 @@ p_escape_from_tau (tau)
  * @param [in] int  nres   The number of the resonance
  * @return   Alway returns 0  f
  *
- * xplasma->heat_lines and heat_total are updated.  The weight of photon
+ * xplasma->est.heat_lines and heat_total are updated.  The weight of photon
  * is decreased by the amount of its energy that goes into heating
  *
  * @details
@@ -641,8 +641,8 @@ line_heat (xplasma, pp, nres)
     Error ("line_heat:sane_check scattering fraction %g\n", sf);
   }
   x = pp->w * (1. - sf);
-  xplasma->heat_lines += x;
-  xplasma->heat_tot += x;
+  xplasma->est.heat_lines += x;
+  xplasma->est.heat_tot += x;
 
   // Reduce the weight of the photon bundle
 

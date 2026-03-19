@@ -136,23 +136,23 @@ cleanup_model (const char *root_name)
   for (n_plasma = 0; n_plasma < NPLASMA + 1; ++n_plasma)
   {
     plasma_cell = &plasmamain[n_plasma];
-    free (plasma_cell->density);
-    free (plasma_cell->partition);
-    free (plasma_cell->ioniz);
-    free (plasma_cell->recomb);
-    free (plasma_cell->scatters);
-    free (plasma_cell->xscatters);
-    free (plasma_cell->heat_ion);
-    free (plasma_cell->heat_inner_ion);
-    free (plasma_cell->cool_rr_ion);
-    free (plasma_cell->lum_rr_ion);
-    free (plasma_cell->inner_recomb);
-    free (plasma_cell->inner_ioniz);
-    free (plasma_cell->cool_dr_ion);
-    free (plasma_cell->levden);
-    free (plasma_cell->recomb_simple);
-    free (plasma_cell->recomb_simple_upweight);
-    free (plasma_cell->kbf_use);
+    free (plasma_cell->state.density);
+    free (plasma_cell->state.partition);
+    free (plasma_cell->est.ioniz);
+    free (plasma_cell->derived.recomb);
+    free (plasma_cell->derived.scatters);
+    free (plasma_cell->derived.xscatters);
+    free (plasma_cell->est.heat_ion);
+    free (plasma_cell->est.heat_inner_ion);
+    free (plasma_cell->derived.cool_rr_ion);
+    free (plasma_cell->derived.lum_rr_ion);
+    free (plasma_cell->derived.inner_recomb);
+    free (plasma_cell->est.inner_ioniz);
+    free (plasma_cell->derived.cool_dr_ion);
+    free (plasma_cell->state.levden);
+    free (plasma_cell->state.recomb_simple);
+    free (plasma_cell->state.recomb_simple_upweight);
+    free (plasma_cell->state.kbf_use);
   }
 
   free_and_null ((void **) &plasmamain);
@@ -164,27 +164,27 @@ cleanup_model (const char *root_name)
     for (n_plasma = 0; n_plasma < NPLASMA + 1; n_plasma++)
     {
       macro_cell = &macromain[n_plasma];
-      free (macro_cell->jbar);
-      free (macro_cell->jbar_old);
-      free (macro_cell->gamma);
-      free (macro_cell->gamma_old);
-      free (macro_cell->gamma_e);
-      free (macro_cell->gamma_e_old);
-      free (macro_cell->alpha_st);
-      free (macro_cell->alpha_st_old);
-      free (macro_cell->alpha_st_e);
-      free (macro_cell->alpha_st_e_old);
-      free (macro_cell->recomb_sp);
-      free (macro_cell->recomb_sp_e);
-      free (macro_cell->matom_emiss);
-      free (macro_cell->matom_abs);
-      free (macro_cell->cooling_bf);
-      free (macro_cell->cooling_bf_col);
-      free (macro_cell->cooling_bb);
+      free (macro_cell->est.jbar);
+      free (macro_cell->state.jbar_old);
+      free (macro_cell->est.gamma);
+      free (macro_cell->state.gamma_old);
+      free (macro_cell->est.gamma_e);
+      free (macro_cell->state.gamma_e_old);
+      free (macro_cell->est.alpha_st);
+      free (macro_cell->state.alpha_st_old);
+      free (macro_cell->est.alpha_st_e);
+      free (macro_cell->state.alpha_st_e_old);
+      free (macro_cell->est.recomb_sp);
+      free (macro_cell->est.recomb_sp_e);
+      free (macro_cell->derived.matom_emiss);
+      free (macro_cell->est.matom_abs);
+      free (macro_cell->est.cooling_bf);
+      free (macro_cell->est.cooling_bf_col);
+      free (macro_cell->est.cooling_bb);
 
-      if (macro_cell->store_matom_matrix == TRUE)
+      if (macro_cell->state.store_matom_matrix == TRUE)
       {
-        free_and_null ((void **) &macro_cell->matom_matrix);
+        free_and_null ((void **) &macro_cell->derived.matom_matrix);
       }
     }
 

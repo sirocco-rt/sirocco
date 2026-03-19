@@ -354,7 +354,7 @@ rho (w, x)
     for (nn = 0; nn < nelem; nn++)
     {
       nplasma = w[nnn[nn]].nplasma;
-      dd += plasmamain[nplasma].rho * frac[nn];
+      dd += plasmamain[nplasma].state.rho * frac[nn];
     }
 
   }
@@ -536,7 +536,7 @@ zero_scatters ()
   {
     for (j = 0; j < nions; j++)
     {
-      plasmamain[n].scatters[j] = 0;
+      plasmamain[n].derived.scatters[j] = 0;
     }
   }
 
@@ -653,10 +653,10 @@ check_grid ()
     ndom = one->ndom;
 
     /* Hydrogen density, ne should be roughly this */
-    nh = xplasma->rho * rho2nh;
+    nh = xplasma->state.rho * rho2nh;
 
     /* thermal speed */
-//OLD    vth = sqrt (1.5 * BOLTZMANN * xplasma->t_e / MPROT);
+//OLD    vth = sqrt (1.5 * BOLTZMANN * xplasma->state.t_e / MPROT);
 
     /* sobolev length -- this could be used for a check but isn't yet */
 //OLD    l_sob = vth / one->dvds_ave;

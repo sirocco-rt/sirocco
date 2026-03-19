@@ -56,7 +56,7 @@ xadiabatic_cooling_summary (w, rootname, ochoice)
     aaa[n] = 0;
     if (w[n].inwind >= 0)
     {
-      t_e = plasmamain[w[n].nplasma].t_e;
+      t_e = plasmamain[w[n].nplasma].state.t_e;
       num_recomb (&plasmamain[w[n].nplasma], t_e, 1);
       tot += aaa[n] = adiabatic_cooling (&w[n], t_e);
     }
@@ -277,7 +277,7 @@ config_overview (n, icell)
   if (icell >= 0 && icell < NDIM2)
   {
     x = &plasmamain[icell];
-    xden = x->levden[p->nden];
+    xden = x->state.levden[p->nden];
   }
   else
   {
@@ -315,8 +315,8 @@ config_overview (n, icell)
     printf ("\n");
 
     m = &macromain[icell];
-    printf ("matom_emis: %8.2e\n", m->matom_emiss[n]);
-    printf ("matom_abs : %8.2e\n", m->matom_abs[n]);
+    printf ("matom_emis: %8.2e\n", m->derived.matom_emiss[n]);
+    printf ("matom_abs : %8.2e\n", m->est.matom_abs[n]);
 
     /* Detailed information on the bb transitions */
     printf ("bbu_jump:\n");
@@ -324,7 +324,7 @@ config_overview (n, icell)
     {
       //ii=p->bbu_jump[i];
       ii = i;
-      printf (" %3d %8.2e %8.2e\n", ii, (m->jbar[xconfig[n].bbu_indx_first + ii]), (m->jbar_old[xconfig[n].bbu_indx_first + ii]));
+      printf (" %3d %8.2e %8.2e\n", ii, (m->est.jbar[xconfig[n].bbu_indx_first + ii]), (m->state.jbar_old[xconfig[n].bbu_indx_first + ii]));
     }
 
     printf ("bbd_jump:\n");
@@ -332,7 +332,7 @@ config_overview (n, icell)
     {
       //                          ii=p->bbd_jump[i];
       ii = i;
-      printf (" %3d %8.2e %8.2e\n", ii, (m->jbar[xconfig[n].bbu_indx_first + ii]), (m->jbar_old[xconfig[n].bbu_indx_first + ii]));
+      printf (" %3d %8.2e %8.2e\n", ii, (m->est.jbar[xconfig[n].bbu_indx_first + ii]), (m->state.jbar_old[xconfig[n].bbu_indx_first + ii]));
     }
 
     /* Detailed information on the fb transitions */
@@ -343,13 +343,13 @@ config_overview (n, icell)
       //      ii=p->bfu_jump[i];
       ii = i;
       printf (" %3d %g %g %g %g %g %g %g %g\n", ii,
-              (m->gamma[xconfig[n].bfu_indx_first + ii]),
-              (m->gamma_old[xconfig[n].bfu_indx_first + ii]),
-              (m->alpha_st[xconfig[n].bfu_indx_first + ii]),
-              (m->alpha_st_old[xconfig[n].bfu_indx_first + ii]),
-              (m->alpha_st_e[xconfig[n].bfu_indx_first + ii]),
-              (m->alpha_st_e_old[xconfig[n].bfu_indx_first + ii]),
-              (m->recomb_sp[xconfig[n].bfd_indx_first + ii]), (m->recomb_sp_e[xconfig[n].bfd_indx_first + ii]));
+              (m->est.gamma[xconfig[n].bfu_indx_first + ii]),
+              (m->state.gamma_old[xconfig[n].bfu_indx_first + ii]),
+              (m->est.alpha_st[xconfig[n].bfu_indx_first + ii]),
+              (m->state.alpha_st_old[xconfig[n].bfu_indx_first + ii]),
+              (m->est.alpha_st_e[xconfig[n].bfu_indx_first + ii]),
+              (m->state.alpha_st_e_old[xconfig[n].bfu_indx_first + ii]),
+              (m->est.recomb_sp[xconfig[n].bfd_indx_first + ii]), (m->est.recomb_sp_e[xconfig[n].bfd_indx_first + ii]));
     }
 
 
@@ -360,13 +360,13 @@ config_overview (n, icell)
       //      ii=p->bfd_jump[i];
       ii = i;
       printf (" %3d %g %g %g %g %g %g %g %g\n", ii,
-              (m->gamma[xconfig[n].bfu_indx_first + ii]),
-              (m->gamma_old[xconfig[n].bfu_indx_first + ii]),
-              (m->alpha_st[xconfig[n].bfu_indx_first + ii]),
-              (m->alpha_st_old[xconfig[n].bfu_indx_first + ii]),
-              (m->alpha_st_e[xconfig[n].bfu_indx_first + ii]),
-              (m->alpha_st_e_old[xconfig[n].bfu_indx_first + ii]),
-              (m->recomb_sp[xconfig[n].bfd_indx_first + ii]), (m->recomb_sp_e[xconfig[n].bfd_indx_first + ii]));
+              (m->est.gamma[xconfig[n].bfu_indx_first + ii]),
+              (m->state.gamma_old[xconfig[n].bfu_indx_first + ii]),
+              (m->est.alpha_st[xconfig[n].bfu_indx_first + ii]),
+              (m->state.alpha_st_old[xconfig[n].bfu_indx_first + ii]),
+              (m->est.alpha_st_e[xconfig[n].bfu_indx_first + ii]),
+              (m->state.alpha_st_e_old[xconfig[n].bfu_indx_first + ii]),
+              (m->est.recomb_sp[xconfig[n].bfd_indx_first + ii]), (m->est.recomb_sp_e[xconfig[n].bfd_indx_first + ii]));
     }
 
 
@@ -416,7 +416,7 @@ depcoef_overview (icell)
     geo.macro_ioniz_mode = MACRO_IONIZ_MODE_NO_ESTIMATORS;
 
     partition_functions (xdummy, NEBULARMODE_TE);
-    saha (xdummy, xdummy->ne, xdummy->t_e);
+    saha (xdummy, xdummy->state.ne, xdummy->state.t_e);
     geo.macro_ioniz_mode = MACRO_IONIZ_MODE_ESTIMATORS;
   }
   else
@@ -437,9 +437,10 @@ depcoef_overview (icell)
     {
       xden = den_config (x, n);
       lteden = den_config (xdummy, n);
-      //  xden = x->levden[p->nden];
-      //lteden = xdummy->levden[p->nden];
-      printf ("%2d %2d %4d %5d %8.2e %8.2e %8.2e %8.2e\n", p->z, p->istate, p->nden, p->macro_info, (xden / lteden), xden, lteden, x->t_e);
+      //  xden = x->state.levden[p->nden];
+      //lteden = xdummy->state.levden[p->nden];
+      printf ("%2d %2d %4d %5d %8.2e %8.2e %8.2e %8.2e\n", p->z, p->istate, p->nden, p->macro_info, (xden / lteden), xden, lteden,
+              x->state.t_e);
     }
   }
 
@@ -466,36 +467,36 @@ copy_plasma (x1, x2)
 
   x2->nwind = x1->nwind;
   x2->nplasma = x1->nplasma;
-  x2->ne = x1->ne;
-  x2->rho = x1->rho;
-  x2->vol = x1->vol;
-  x2->t_r = x1->t_r;
-  x2->t_e = x1->t_e;
-  x2->w = x1->w;
+  x2->state.ne = x1->state.ne;
+  x2->state.rho = x1->state.rho;
+  x2->state.vol = x1->state.vol;
+  x2->state.t_r = x1->state.t_r;
+  x2->state.t_e = x1->state.t_e;
+  x2->state.w = x1->state.w;
 
-  if ((x2->density = calloc (sizeof (double), nions)) == NULL)
+  if ((x2->state.density = calloc (sizeof (double), nions)) == NULL)
   {
     Error ("calloc_dyn_plasma: Error in allocating memory for density\n");
     exit (0);
   }
-  if ((x2->partition = calloc (sizeof (double), nions)) == NULL)
+  if ((x2->state.partition = calloc (sizeof (double), nions)) == NULL)
   {
     Error ("calloc_dyn_plasma: Error in allocating memory for partition\n");
     exit (0);
   }
-  if ((x2->levden = calloc (sizeof (double), nlte_levels)) == NULL)
+  if ((x2->state.levden = calloc (sizeof (double), nlte_levels)) == NULL)
   {
     Error ("calloc_dyn_plasma: Error in allocating memory for levden\n");
     exit (0);
   }
   for (i = 0; i < nions; i++)
   {
-    x2->density[i] = x1->density[i];
-    x2->partition[i] = x1->partition[i];
+    x2->state.density[i] = x1->state.density[i];
+    x2->state.partition[i] = x1->state.partition[i];
   }
   for (i = 0; i < nlte_levels; i++)
   {
-    x2->levden[i] = x1->levden[i];
+    x2->state.levden[i] = x1->state.levden[i];
   }
 
 
@@ -520,8 +521,8 @@ int
 dealloc_copied_plasma (xcopy)
      PlasmaPtr xcopy;
 {
-  free (xcopy->density);
-  free (xcopy->partition);
+  free (xcopy->state.density);
+  free (xcopy->state.partition);
   return (0);
 }
 
@@ -577,7 +578,7 @@ depcoef_overview_specific (version, nconfig, w, rootname, ochoice)
       geo.macro_ioniz_mode = MACRO_IONIZ_MODE_NO_ESTIMATORS;
 
       partition_functions (xdummy, NEBULARMODE_TE);
-      saha (xdummy, xdummy->ne, xdummy->t_e);
+      saha (xdummy, xdummy->state.ne, xdummy->state.t_e);
 
       geo.macro_ioniz_mode = MACRO_IONIZ_MODE_ESTIMATORS;
 
@@ -585,7 +586,7 @@ depcoef_overview_specific (version, nconfig, w, rootname, ochoice)
       xden = den_config (xplasma, nconfig);
       lteden = den_config (xdummy, nconfig);
 
-      ion_density = xplasma->density[p->nion];
+      ion_density = xplasma->state.density[p->nion];
 
       if (version == 0)
       {
@@ -688,28 +689,28 @@ level_popsoverview (nplasma, w, rootname, ochoice)
   if (ochoice)
     fprintf (f, "# Level, Pops, Dep coefs\n");
 
-  Log ("# Cell %i Radiation field t_r %8.4e w %8.4e\n", nplasma, xplasma->t_r, xplasma->w);
-  Log ("# Cell %i Physical t_e %8.4e ne %8.4e\n", nplasma, xplasma->t_e, xplasma->ne);
+  Log ("# Cell %i Radiation field t_r %8.4e w %8.4e\n", nplasma, xplasma->state.t_r, xplasma->state.w);
+  Log ("# Cell %i Physical t_e %8.4e ne %8.4e\n", nplasma, xplasma->state.t_e, xplasma->state.ne);
 
   if (ochoice)
   {
-    fprintf (f, "# Cell %i Radiation field t_r %8.4e w %8.4e\n", nplasma, xplasma->t_r, xplasma->w);
-    fprintf (f, "# Cell %i Physical t_e %8.4e ne %8.4e\n", nplasma, xplasma->t_e, xplasma->ne);
+    fprintf (f, "# Cell %i Radiation field t_r %8.4e w %8.4e\n", nplasma, xplasma->state.t_r, xplasma->state.w);
+    fprintf (f, "# Cell %i Physical t_e %8.4e ne %8.4e\n", nplasma, xplasma->state.t_e, xplasma->state.ne);
   }
 
   for (i = 0; i < nlevels_macro; i++)
   {
     partition_functions (xdummy, NEBULARMODE_TE);
-    saha (xdummy, xdummy->ne, xdummy->t_e);
+    saha (xdummy, xdummy->state.ne, xdummy->state.t_e);
 
     geo.macro_ioniz_mode = MACRO_IONIZ_MODE_ESTIMATORS;
 
     //p = &config[i];
     xden = den_config (xplasma, i);
     lteden = den_config (xdummy, i);
-    Log ("%i %8.4e %8.4e\n", i + 1, xplasma->levden[i], xden / lteden);
+    Log ("%i %8.4e %8.4e\n", i + 1, xplasma->state.levden[i], xden / lteden);
     if (ochoice)
-      fprintf (f, "%i %8.4e %8.4e\n", i + 1, xplasma->levden[i], xden / lteden);
+      fprintf (f, "%i %8.4e %8.4e\n", i + 1, xplasma->state.levden[i], xden / lteden);
   }
   fclose (f);
   dealloc_copied_plasma (xdummy);
@@ -759,15 +760,15 @@ level_emissoverview (nlev, w, rootname, ochoice)
     aaa[n] = 0;
     nplasma = w[n].nplasma;
 
-    if (w[n].inwind >= 0 && plasmamain[nplasma].ne > 1.0)
+    if (w[n].inwind >= 0 && plasmamain[nplasma].state.ne > 1.0)
     {
       if (nlev != 0)
       {
-        aaa[n] = macromain[nplasma].matom_emiss[nlev - 1];
+        aaa[n] = macromain[nplasma].derived.matom_emiss[nlev - 1];
       }
       else
       {
-        aaa[n] = plasmamain[nplasma].kpkt_emiss;
+        aaa[n] = plasmamain[nplasma].derived.kpkt_emiss;
       }
     }
   }
@@ -862,7 +863,7 @@ level_escapeoverview (nlev, w, rootname, ochoice)
     aaa[n] = 0;
     nplasma = w[n].nplasma;
 
-    if (w[n].inwind >= 0 && plasmamain[nplasma].ne > 1.0)
+    if (w[n].inwind >= 0 && plasmamain[nplasma].state.ne > 1.0)
     {
       xplasma = &plasmamain[nplasma];
       aaa[n] = p_escape (lin_ptr[nline], xplasma);
@@ -955,11 +956,11 @@ level_tauoverview (nlev, w, rootname, ochoice)
     aaa[n] = 0;
     nplasma = w[n].nplasma;
 
-    if (w[n].inwind >= 0 && plasmamain[nplasma].ne > 1.0)
+    if (w[n].inwind >= 0 && plasmamain[nplasma].state.ne > 1.0)
     {
       xplasma = &plasmamain[nplasma];
       one = &wmain[xplasma->nwind];
-      aaa[n] = sobolev (one, one->x, xplasma->density[lin_ptr[nline]->nion], lin_ptr[nline], one->dvds_ave);
+      aaa[n] = sobolev (one, one->x, xplasma->state.density[lin_ptr[nline]->nion], lin_ptr[nline], one->dvds_ave);
 
 
     }

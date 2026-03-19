@@ -105,7 +105,7 @@ xtemp_rad (w)
       {
         n = nstart + i;
         nplasma = w[n].nplasma;
-        Log ("%8.2e ", plasmamain[nplasma].t_r);
+        Log ("%8.2e ", plasmamain[nplasma].state.t_r);
         if (j % 10 == 0)
         {
           Log ("\n");
@@ -120,7 +120,7 @@ xtemp_rad (w)
       {
         n = nstart + i;
         nplasma = w[n].nplasma;
-        Log ("%8.2e ", plasmamain[nplasma].t_e);
+        Log ("%8.2e ", plasmamain[nplasma].state.t_e);
         if (j % 10 == 0)
         {
           Log ("\n");
@@ -137,7 +137,7 @@ xtemp_rad (w)
         nplasma = w[n].nplasma;
         if (wmain[n].inwind >= 0)
         {
-          ntot = plasmamain[nplasma].ntot;
+          ntot = plasmamain[nplasma].est.ntot;
         }
         else
           ntot = 0;
@@ -176,7 +176,7 @@ xtemp_rad (w)
         if (w[n].inwind >= 0)
         {
           nplasma = w[n].nplasma;
-          x = plasmamain[nplasma].t_r;
+          x = plasmamain[nplasma].state.t_r;
         }
         else
           x = 0.0;
@@ -201,7 +201,7 @@ xtemp_rad (w)
         nplasma = w[n].nplasma;
         if (wmain[n].inwind >= 0)
         {
-          x = plasmamain[nplasma].t_e;
+          x = plasmamain[nplasma].state.t_e;
         }
         else
           x = 0.0;
@@ -226,7 +226,7 @@ xtemp_rad (w)
         nplasma = w[n].nplasma;
         if (wmain[n].inwind >= 0)
         {
-          ntot = plasmamain[nplasma].ntot;
+          ntot = plasmamain[nplasma].est.ntot;
         }
         else
           ntot = -99;

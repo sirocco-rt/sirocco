@@ -87,23 +87,23 @@ free_plasma_grid (void)
 
   for (n_plasma = 0; n_plasma < NPLASMA + 1; ++n_plasma)
   {
-    free (plasmamain[n_plasma].density);
-    free (plasmamain[n_plasma].partition);
-    free (plasmamain[n_plasma].ioniz);
-    free (plasmamain[n_plasma].recomb);
-    free (plasmamain[n_plasma].scatters);
-    free (plasmamain[n_plasma].xscatters);
-    free (plasmamain[n_plasma].heat_ion);
-    free (plasmamain[n_plasma].heat_inner_ion);
-    free (plasmamain[n_plasma].cool_rr_ion);
-    free (plasmamain[n_plasma].lum_rr_ion);
-    free (plasmamain[n_plasma].inner_recomb);
-    free (plasmamain[n_plasma].inner_ioniz);
-    free (plasmamain[n_plasma].cool_dr_ion);
-    free (plasmamain[n_plasma].levden);
-    free (plasmamain[n_plasma].recomb_simple);
-    free (plasmamain[n_plasma].recomb_simple_upweight);
-    free (plasmamain[n_plasma].kbf_use);
+    free (plasmamain[n_plasma].state.density);
+    free (plasmamain[n_plasma].state.partition);
+    free (plasmamain[n_plasma].est.ioniz);
+    free (plasmamain[n_plasma].derived.recomb);
+    free (plasmamain[n_plasma].derived.scatters);
+    free (plasmamain[n_plasma].derived.xscatters);
+    free (plasmamain[n_plasma].est.heat_ion);
+    free (plasmamain[n_plasma].est.heat_inner_ion);
+    free (plasmamain[n_plasma].derived.cool_rr_ion);
+    free (plasmamain[n_plasma].derived.lum_rr_ion);
+    free (plasmamain[n_plasma].derived.inner_recomb);
+    free (plasmamain[n_plasma].est.inner_ioniz);
+    free (plasmamain[n_plasma].derived.cool_dr_ion);
+    free (plasmamain[n_plasma].state.levden);
+    free (plasmamain[n_plasma].state.recomb_simple);
+    free (plasmamain[n_plasma].state.recomb_simple_upweight);
+    free (plasmamain[n_plasma].state.kbf_use);
   }
 
   free (plasmamain);
@@ -124,27 +124,27 @@ free_macro_grid (void)
 
   for (n_plasma = 0; n_plasma < NPLASMA + 1; n_plasma++)
   {
-    free (macromain[n_plasma].jbar);
-    free (macromain[n_plasma].jbar_old);
-    free (macromain[n_plasma].gamma);
-    free (macromain[n_plasma].gamma_old);
-    free (macromain[n_plasma].gamma_e);
-    free (macromain[n_plasma].gamma_e_old);
-    free (macromain[n_plasma].alpha_st);
-    free (macromain[n_plasma].alpha_st_old);
-    free (macromain[n_plasma].alpha_st_e);
-    free (macromain[n_plasma].alpha_st_e_old);
-    free (macromain[n_plasma].recomb_sp);
-    free (macromain[n_plasma].recomb_sp_e);
-    free (macromain[n_plasma].matom_emiss);
-    free (macromain[n_plasma].matom_abs);
-    free (macromain[n_plasma].cooling_bf);
-    free (macromain[n_plasma].cooling_bf_col);
-    free (macromain[n_plasma].cooling_bb);
-    if (macromain[n_plasma].store_matom_matrix == TRUE)
+    free (macromain[n_plasma].est.jbar);
+    free (macromain[n_plasma].state.jbar_old);
+    free (macromain[n_plasma].est.gamma);
+    free (macromain[n_plasma].state.gamma_old);
+    free (macromain[n_plasma].est.gamma_e);
+    free (macromain[n_plasma].state.gamma_e_old);
+    free (macromain[n_plasma].est.alpha_st);
+    free (macromain[n_plasma].state.alpha_st_old);
+    free (macromain[n_plasma].est.alpha_st_e);
+    free (macromain[n_plasma].state.alpha_st_e_old);
+    free (macromain[n_plasma].est.recomb_sp);
+    free (macromain[n_plasma].est.recomb_sp_e);
+    free (macromain[n_plasma].derived.matom_emiss);
+    free (macromain[n_plasma].est.matom_abs);
+    free (macromain[n_plasma].est.cooling_bf);
+    free (macromain[n_plasma].est.cooling_bf_col);
+    free (macromain[n_plasma].est.cooling_bb);
+    if (macromain[n_plasma].state.store_matom_matrix == TRUE)
     {
-      free (macromain[n_plasma].matom_matrix[0]);
-      free (macromain[n_plasma].matom_matrix);
+      free (macromain[n_plasma].derived.matom_matrix[0]);
+      free (macromain[n_plasma].derived.matom_matrix);
     }
   }
 

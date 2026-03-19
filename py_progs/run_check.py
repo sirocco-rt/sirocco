@@ -138,12 +138,15 @@ def xwindsave2table(root):
     if len(sfiles):
         foo=open(sfiles[0])
         line=foo.readline()
+        foo.close()
         words=line.split()
-        if words[1]=='Python':
+        if words[1] in ('Python', 'Sirocco'):
             xver=words[3]
-            command='windsave2table%s %s' % (xver,root)
+            command='windsave2table-%s %s' % (xver,root)
         else:
-            return FALSE
+            return True
+    else:
+        return True
 
 
     print('We will try this command instead :', command)
@@ -152,12 +155,12 @@ def xwindsave2table(root):
     proc=subprocess.Popen(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     stdout,stderr=proc.communicate()
     if proc.returncode:
-        print('Error: also failed trying to run %s ' % xver,proc.returncode)
+        print('Error: also failed trying to run %s ' % command,proc.returncode)
         return True
     elif len(stderr):
-        print('Error: also failed with ' %s)
+        print('Error: also failed with %s' % command)
         print(stderr.decode())
-        return True 
+        return True
     else:
         return False
 

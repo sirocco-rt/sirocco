@@ -271,13 +271,13 @@ write_spectra_model_table (fitsfile *fptr)
       iplasma[k] = i;
       iwind[k] = plasmamain[i].nwind;
       iband[k] = j;
-      ichoice[k] = plasmamain[i].spec_mod_type[j];
-      exp_w[k] = plasmamain[i].exp_w[j];
-      exp_temp[k] = plasmamain[i].exp_temp[j];
-      pl_log_w[k] = plasmamain[i].pl_log_w[j];
-      pl_alpha[k] = plasmamain[i].pl_alpha[j];
-      nxtot[k] = plasmamain[i].nxtot[j];
-      printf ("nxtot %d\n", plasmamain[i].nxtot[j]);
+      ichoice[k] = plasmamain[i].state.spec_mod_type[j];
+      exp_w[k] = plasmamain[i].state.exp_w[j];
+      exp_temp[k] = plasmamain[i].state.exp_temp[j];
+      pl_log_w[k] = plasmamain[i].state.pl_log_w[j];
+      pl_alpha[k] = plasmamain[i].state.pl_alpha[j];
+      nxtot[k] = plasmamain[i].est.nxtot[j];
+      printf ("nxtot %d\n", plasmamain[i].est.nxtot[j]);
       k++;
     }
   }
@@ -451,7 +451,7 @@ make_spec (inroot)
     for (int j = 0; j < spectra.num_wavelengths; j++)
     {
       // spectra.data[i][j] = (float) (i + j);
-      spectra.data[i][j] = (float) plasmamain[i].cell_spec_flux[j];
+      spectra.data[i][j] = (float) plasmamain[i].est.cell_spec_flux[j];
     }
   }
 

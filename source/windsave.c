@@ -102,21 +102,21 @@ in the plasma structure */
 
   for (m = 0; m < NPLASMA; m++)
   {
-    n += fwrite (plasmamain[m].density, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].partition, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].ioniz, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].recomb, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].inner_recomb, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].scatters, sizeof (int), nions, fptr);
-    n += fwrite (plasmamain[m].xscatters, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].heat_ion, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].cool_rr_ion, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].cool_dr_ion, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].lum_rr_ion, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].levden, sizeof (double), nlte_levels, fptr);
-    n += fwrite (plasmamain[m].recomb_simple, sizeof (double), nphot_total, fptr);
-    n += fwrite (plasmamain[m].recomb_simple_upweight, sizeof (double), nphot_total, fptr);
-    n += fwrite (plasmamain[m].kbf_use, sizeof (double), nphot_total, fptr);
+    n += fwrite (plasmamain[m].state.density, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].state.partition, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].est.ioniz, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].derived.recomb, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].derived.inner_recomb, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].derived.scatters, sizeof (int), nions, fptr);
+    n += fwrite (plasmamain[m].derived.xscatters, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].est.heat_ion, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].derived.cool_rr_ion, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].derived.cool_dr_ion, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].derived.lum_rr_ion, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].state.levden, sizeof (double), nlte_levels, fptr);
+    n += fwrite (plasmamain[m].state.recomb_simple, sizeof (double), nphot_total, fptr);
+    n += fwrite (plasmamain[m].state.recomb_simple_upweight, sizeof (double), nphot_total, fptr);
+    n += fwrite (plasmamain[m].state.kbf_use, sizeof (double), nphot_total, fptr);
   }
 
 /* Now write out the macro atom info */
@@ -126,20 +126,20 @@ in the plasma structure */
     n += fwrite (macromain, sizeof (macro_dummy), NPLASMA, fptr);
     for (m = 0; m < NPLASMA; m++)
     {
-      n += fwrite (macromain[m].jbar, sizeof (double), size_Jbar_est, fptr);
-      n += fwrite (macromain[m].jbar_old, sizeof (double), size_Jbar_est, fptr);
-      n += fwrite (macromain[m].gamma, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].gamma_old, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].gamma_e, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].gamma_e_old, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].alpha_st, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].alpha_st_old, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].alpha_st_e, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].alpha_st_e_old, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].recomb_sp, sizeof (double), size_alpha_est, fptr);
-      n += fwrite (macromain[m].recomb_sp_e, sizeof (double), size_alpha_est, fptr);
-      n += fwrite (macromain[m].matom_emiss, sizeof (double), nlevels_macro, fptr);
-      n += fwrite (macromain[m].matom_abs, sizeof (double), nlevels_macro, fptr);
+      n += fwrite (macromain[m].est.jbar, sizeof (double), size_Jbar_est, fptr);
+      n += fwrite (macromain[m].state.jbar_old, sizeof (double), size_Jbar_est, fptr);
+      n += fwrite (macromain[m].est.gamma, sizeof (double), size_gamma_est, fptr);
+      n += fwrite (macromain[m].state.gamma_old, sizeof (double), size_gamma_est, fptr);
+      n += fwrite (macromain[m].est.gamma_e, sizeof (double), size_gamma_est, fptr);
+      n += fwrite (macromain[m].state.gamma_e_old, sizeof (double), size_gamma_est, fptr);
+      n += fwrite (macromain[m].est.alpha_st, sizeof (double), size_gamma_est, fptr);
+      n += fwrite (macromain[m].state.alpha_st_old, sizeof (double), size_gamma_est, fptr);
+      n += fwrite (macromain[m].est.alpha_st_e, sizeof (double), size_gamma_est, fptr);
+      n += fwrite (macromain[m].state.alpha_st_e_old, sizeof (double), size_gamma_est, fptr);
+      n += fwrite (macromain[m].est.recomb_sp, sizeof (double), size_alpha_est, fptr);
+      n += fwrite (macromain[m].est.recomb_sp_e, sizeof (double), size_alpha_est, fptr);
+      n += fwrite (macromain[m].derived.matom_emiss, sizeof (double), nlevels_macro, fptr);
+      n += fwrite (macromain[m].est.matom_abs, sizeof (double), nlevels_macro, fptr);
     }
   }
 
@@ -273,25 +273,25 @@ wind_read (filename)
   for (m = 0; m < NPLASMA; m++)
   {
 
-    n += fread (plasmamain[m].density, sizeof (double), nions, fptr);
-    n += fread (plasmamain[m].partition, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].state.density, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].state.partition, sizeof (double), nions, fptr);
 
-    n += fread (plasmamain[m].ioniz, sizeof (double), nions, fptr);
-    n += fread (plasmamain[m].recomb, sizeof (double), nions, fptr);
-    n += fread (plasmamain[m].inner_recomb, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].est.ioniz, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].derived.recomb, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].derived.inner_recomb, sizeof (double), nions, fptr);
 
-    n += fread (plasmamain[m].scatters, sizeof (int), nions, fptr);
-    n += fread (plasmamain[m].xscatters, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].derived.scatters, sizeof (int), nions, fptr);
+    n += fread (plasmamain[m].derived.xscatters, sizeof (double), nions, fptr);
 
-    n += fread (plasmamain[m].heat_ion, sizeof (double), nions, fptr);
-    n += fread (plasmamain[m].cool_rr_ion, sizeof (double), nions, fptr);
-    n += fread (plasmamain[m].cool_dr_ion, sizeof (double), nions, fptr);
-    n += fread (plasmamain[m].lum_rr_ion, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].est.heat_ion, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].derived.cool_rr_ion, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].derived.cool_dr_ion, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].derived.lum_rr_ion, sizeof (double), nions, fptr);
 
-    n += fread (plasmamain[m].levden, sizeof (double), nlte_levels, fptr);
-    n += fread (plasmamain[m].recomb_simple, sizeof (double), nphot_total, fptr);
-    n += fread (plasmamain[m].recomb_simple_upweight, sizeof (double), nphot_total, fptr);
-    n += fread (plasmamain[m].kbf_use, sizeof (double), nphot_total, fptr);
+    n += fread (plasmamain[m].state.levden, sizeof (double), nlte_levels, fptr);
+    n += fread (plasmamain[m].state.recomb_simple, sizeof (double), nphot_total, fptr);
+    n += fread (plasmamain[m].state.recomb_simple_upweight, sizeof (double), nphot_total, fptr);
+    n += fread (plasmamain[m].state.kbf_use, sizeof (double), nphot_total, fptr);
   }
 
 
@@ -306,25 +306,25 @@ wind_read (filename)
 
     for (m = 0; m < NPLASMA; m++)
     {
-      n += fread (macromain[m].jbar, sizeof (double), size_Jbar_est, fptr);
-      n += fread (macromain[m].jbar_old, sizeof (double), size_Jbar_est, fptr);
-      n += fread (macromain[m].gamma, sizeof (double), size_gamma_est, fptr);
-      n += fread (macromain[m].gamma_old, sizeof (double), size_gamma_est, fptr);
-      n += fread (macromain[m].gamma_e, sizeof (double), size_gamma_est, fptr);
-      n += fread (macromain[m].gamma_e_old, sizeof (double), size_gamma_est, fptr);
-      n += fread (macromain[m].alpha_st, sizeof (double), size_gamma_est, fptr);
-      n += fread (macromain[m].alpha_st_old, sizeof (double), size_gamma_est, fptr);
-      n += fread (macromain[m].alpha_st_e, sizeof (double), size_gamma_est, fptr);
-      n += fread (macromain[m].alpha_st_e_old, sizeof (double), size_gamma_est, fptr);
-      n += fread (macromain[m].recomb_sp, sizeof (double), size_alpha_est, fptr);
-      n += fread (macromain[m].recomb_sp_e, sizeof (double), size_alpha_est, fptr);
-      n += fread (macromain[m].matom_emiss, sizeof (double), nlevels_macro, fptr);
-      n += fread (macromain[m].matom_abs, sizeof (double), nlevels_macro, fptr);
+      n += fread (macromain[m].est.jbar, sizeof (double), size_Jbar_est, fptr);
+      n += fread (macromain[m].state.jbar_old, sizeof (double), size_Jbar_est, fptr);
+      n += fread (macromain[m].est.gamma, sizeof (double), size_gamma_est, fptr);
+      n += fread (macromain[m].state.gamma_old, sizeof (double), size_gamma_est, fptr);
+      n += fread (macromain[m].est.gamma_e, sizeof (double), size_gamma_est, fptr);
+      n += fread (macromain[m].state.gamma_e_old, sizeof (double), size_gamma_est, fptr);
+      n += fread (macromain[m].est.alpha_st, sizeof (double), size_gamma_est, fptr);
+      n += fread (macromain[m].state.alpha_st_old, sizeof (double), size_gamma_est, fptr);
+      n += fread (macromain[m].est.alpha_st_e, sizeof (double), size_gamma_est, fptr);
+      n += fread (macromain[m].state.alpha_st_e_old, sizeof (double), size_gamma_est, fptr);
+      n += fread (macromain[m].est.recomb_sp, sizeof (double), size_alpha_est, fptr);
+      n += fread (macromain[m].est.recomb_sp_e, sizeof (double), size_alpha_est, fptr);
+      n += fread (macromain[m].derived.matom_emiss, sizeof (double), nlevels_macro, fptr);
+      n += fread (macromain[m].est.matom_abs, sizeof (double), nlevels_macro, fptr);
 
       /* Force recalculation of kpkt_rates and matrix rates */
 
-      macromain[m].kpkt_rates_known = FALSE;
-      macromain[m].matrix_rates_known = FALSE;
+      macromain[m].derived.kpkt_rates_known = FALSE;
+      macromain[m].derived.matrix_rates_known = FALSE;
     }
 
   }

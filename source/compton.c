@@ -52,7 +52,7 @@ compton_scatter (p)
 
 
 
-  t_e = xplasma->t_e;
+  t_e = xplasma->state.t_e;
 
   compton_get_thermal_velocity (t_e, velocity_electron);
 
@@ -170,7 +170,7 @@ kappa_comp (xplasma, freq)
   sigma = compton_alpha (freq) * THOMPSON;      //the energy exchange cross section
 
   x = (sigma * PLANCK) / (MELEC * VLIGHT * VLIGHT);
-  x *= xplasma->ne * freq;
+  x *= xplasma->state.ne * freq;
 
   ndom = wmain[xplasma->nwind].ndom;
   x *= zdom[ndom].fill;         // multiply by the filling factor-
@@ -219,7 +219,7 @@ kappa_ind_comp (xplasma, freq)
 
   sigma = THOMPSON * compton_alpha (freq);      //the energy exchange cross section
 
-  x = (xplasma->ne) / (MELEC);
+  x = (xplasma->state.ne) / (MELEC);
   x *= sigma * J;
   x *= 1 / (2 * freq * freq);
 
@@ -291,36 +291,36 @@ total_comp (one, t_e)
   x = 0.0;
 
   //Since J_nu is constant for a given cycle - we only need to compute the integral once when searching for a thermal balance
-  if (xplasma->comp_nujnu < 0.0)
+  if (xplasma->derived.comp_nujnu < 0.0)
   {
     if (geo.spec_mod)           //Check to see if we have generated a spectral model
     {
       for (j = 0; j < geo.nxfreq; j++)
       {
-        if (xplasma->spec_mod_type[j] != SPEC_MOD_FAIL) //Only bother doing the integrals if we have a model in this band
+        if (xplasma->state.spec_mod_type[j] != SPEC_MOD_FAIL)   //Only bother doing the integrals if we have a model in this band
         {
-          f1 = xplasma->fmin_mod[j];
-          f2 = xplasma->fmax_mod[j];
+          f1 = xplasma->state.fmin_mod[j];
+          f2 = xplasma->state.fmax_mod[j];
           if (f1 > 1e18)
             x += num_int (comp_cool_integrand, f1, f2, 1e-6);
 
           else
-            x += THOMPSON * xplasma->xj[j];     //If in the Thompson limit, we just multiply the band limited frequency integrated mean intensity by the Thompson cross section
+            x += THOMPSON * xplasma->est.xj[j]; //If in the Thompson limit, we just multiply the band limited frequency integrated mean intensity by the Thompson cross section
         }
       }
     }
 
     else                        //If no spectral model - we do the best we can, and multply the mean intensity by the Thompson cross section.
     {
-      x = THOMPSON * xplasma->j;
+      x = THOMPSON * xplasma->est.j;
     }
-    xplasma->comp_nujnu = x;
+    xplasma->derived.comp_nujnu = x;
   }
   else
-    x = xplasma->comp_nujnu;
+    x = xplasma->derived.comp_nujnu;
 
   //Multply by the other terms - including temperature - this gives the temperature dependance of this cooling term.
-  x *= (16. * PI * BOLTZMANN * t_e * xplasma->ne) / (MELEC * VLIGHT * VLIGHT) * xplasma->vol;
+  x *= (16. * PI * BOLTZMANN * t_e * xplasma->state.ne) / (MELEC * VLIGHT * VLIGHT) * xplasma->state.vol;
 
 
   return (x);

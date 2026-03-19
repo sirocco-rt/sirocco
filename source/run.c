@@ -479,8 +479,8 @@ make_spectra (restart_stat)
   {
     for (n = 0; n < NPLASMA; n++)
     {
-      macromain[n].kpkt_rates_known = FALSE;
-      macromain[n].matrix_rates_known = FALSE;
+      macromain[n].derived.kpkt_rates_known = FALSE;
+      macromain[n].derived.matrix_rates_known = FALSE;
     }
   }
 

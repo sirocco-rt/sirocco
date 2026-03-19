@@ -204,7 +204,8 @@ total_di (one, t_e)
   {
     if (ion[n].dere_di_flag)
     {
-      cooling_rate += xplasma->vol * xplasma->ne * xplasma->density[n] * di_coeffs[n] * dere_di_rate[ion[n].nxderedi].xi * EV2ERGS;
+      cooling_rate +=
+        xplasma->state.vol * xplasma->state.ne * xplasma->state.density[n] * di_coeffs[n] * dere_di_rate[ion[n].nxderedi].xi * EV2ERGS;
     }
   }
   return (cooling_rate);

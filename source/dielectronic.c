@@ -139,9 +139,9 @@ total_dr (one, t_e)
 /* One possibility is to use the mean k.e. of electrons this is based on the idea that an eleectron
 		is absorbed, so a guess would be to just say its energy is re-radiated. This is clearly an over estimate
 		since some of the enegy is lost to binding energy 	*/
-//              x += xplasma->vol * xplasma->ne * xplasma->density[n + 1] * dr_coeffs[n] * meanke;
+//              x += xplasma->state.vol * xplasma->state.ne * xplasma->state.density[n + 1] * dr_coeffs[n] * meanke;
 /* A different estimate is to use the ionization potential of the ion - this is order of magnitude at best */
-//              x += xplasma->vol * xplasma->ne * xplasma->density[n + 1] * dr_coeffs[n] * ion[n].ip;
+//              x += xplasma->state.vol * xplasma->state.ne * xplasma->state.density[n + 1] * dr_coeffs[n] * ion[n].ip;
       x += 0.0;                 //At present, we just set it to zero - obviously an underestimate!
     }
   }

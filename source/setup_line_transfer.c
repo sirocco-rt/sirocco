@@ -161,8 +161,8 @@ get_line_transfer_mode ()
         {
           for (n = 0; n < NPLASMA; n++)
           {
-            macromain[n].store_matom_matrix = modes.store_matom_matrix;
-            macromain[n].matom_transition_mode = geo.matom_transition_mode;
+            macromain[n].state.store_matom_matrix = modes.store_matom_matrix;
+            macromain[n].state.matom_transition_mode = geo.matom_transition_mode;
           }
 
         }
@@ -171,8 +171,8 @@ get_line_transfer_mode ()
       {
         for (n = 0; n < NPLASMA; n++)
         {
-          macromain[n].store_matom_matrix = modes.store_matom_matrix = FALSE;
-          macromain[n].matom_transition_mode = geo.matom_transition_mode;
+          macromain[n].state.store_matom_matrix = modes.store_matom_matrix = FALSE;
+          macromain[n].state.matom_transition_mode = geo.matom_transition_mode;
         }
 
       }

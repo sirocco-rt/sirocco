@@ -195,26 +195,33 @@ def doit(run1='py_180809',run2='',outputfile='check.txt'):
     pf1=glob('%s/*.out.pf' % run1)
     pf2=glob('%s/*.out.pf' % run2)
 
-    # print(pf1)
-    # print(pf2)
+    # Fall back to .spec files if .out.pf files are missing
+    if len(pf1)==0:
+        pf1=glob('%s/*.spec' % run1)
+        ext1='.spec'
+    else:
+        ext1='.out.pf'
+    if len(pf2)==0:
+        pf2=glob('%s/*.spec' % run2)
+        ext2='.spec'
+    else:
+        ext2='.out.pf'
 
     name1=[]
     root1=[]
     for one in pf1:
-        x=one.replace('.out.pf','')
+        x=one.replace(ext1,'')
         root1.append(x)
         x=x.split('/')
         name1.append(x[1])
-    # print(name1)
 
     name2=[]
     root2=[]
     for one in pf2:
-        x=one.replace('.out.pf','')
+        x=one.replace(ext2,'')
         root2.append(x)
         x=x.split('/')
         name2.append(x[1])
-    # print(name2)
 
 
     table1=Table([name1,root1],names=['name','root1'])

@@ -40,7 +40,7 @@ get_kpkt_f ()
 
   for (n = 0; n < NPLASMA; n++)
   {
-    lum += plasmamain[n].kpkt_emiss;
+    lum += plasmamain[n].derived.kpkt_emiss;
   }
 
 
@@ -52,7 +52,7 @@ get_kpkt_f ()
  * @brief returns the specific luminosity in kpkts from nonthermal ("shock")
  *        heating. This is used to generate kpkts in the ionization cycles.
  *        This also populates the cell-by-cell kpkt luminosities in the
- *        variable plasmamain[n].kpkt_emiss.
+ *        variable plasmamain[n].derived.kpkt_emiss.
  *
  * @return double lum
  *         The energy created by non-radiative heating throughout the
@@ -76,21 +76,21 @@ get_kpkt_heating_f ()
 
     /* what we do depends on how the "net heating mode" is defined */
     if (KPKT_NET_HEAT_MODE)
-      shock_kpkt_luminosity = (shock_heating (one) - plasmamain[n].cool_adiabatic);
+      shock_kpkt_luminosity = (shock_heating (one) - plasmamain[n].derived.cool_adiabatic);
     else
       shock_kpkt_luminosity = shock_heating (one);
 
     if (shock_kpkt_luminosity > 0)
     {
       if (geo.ioniz_or_extract == CYCLE_IONIZ)
-        plasmamain[n].kpkt_emiss = shock_kpkt_luminosity;
+        plasmamain[n].derived.kpkt_emiss = shock_kpkt_luminosity;
       else
-        plasmamain[n].kpkt_abs += shock_kpkt_luminosity;
+        plasmamain[n].est.kpkt_abs += shock_kpkt_luminosity;
 
       lum += shock_kpkt_luminosity;
     }
     else
-      plasmamain[n].kpkt_emiss = 0.0;
+      plasmamain[n].derived.kpkt_emiss = 0.0;
   }
 
   return (lum);
@@ -171,7 +171,7 @@ photo_gen_kpkt (p, weight, photstart, nphot)
       if (wmain[icell].inwind >= 0)
       {
         nplasma = wmain[icell].nplasma;
-        xlumsum += plasmamain[nplasma].kpkt_emiss;
+        xlumsum += plasmamain[nplasma].derived.kpkt_emiss;
       }
       icell++;
     }
@@ -337,7 +337,7 @@ photo_gen_matom (p, weight, photstart, nphot)
       if (wmain[icell].inwind >= 0)
       {
         nplasma = wmain[icell].nplasma;
-        xlumsum += macromain[nplasma].matom_emiss[upper];
+        xlumsum += macromain[nplasma].derived.matom_emiss[upper];
         upper++;
         if (upper == nlevels_macro)
         {

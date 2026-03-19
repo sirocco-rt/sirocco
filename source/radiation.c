@@ -246,7 +246,7 @@ radiation (PhotPtr p, double ds)
           }
 
           else if (ion[nion].phot_info == 0)    // verner
-            density = xplasma->density[nion];
+            density = xplasma->state.density[nion];
 
           else
           {
@@ -312,7 +312,7 @@ radiation (PhotPtr p, double ds)
                 nion = x_top_ptr->nion;
                 if (ion[nion].phot_info == 0)   // verner only ion
                 {
-                  density = xplasma->density[nion];     //All these rates are from the ground state, so we just need the density of the ion.
+                  density = xplasma->state.density[nion];       //All these rates are from the ground state, so we just need the density of the ion.
                 }
                 else
                 {
@@ -416,8 +416,8 @@ radiation (PhotPtr p, double ds)
 /* Everything after this point is only needed for ionization calculations */
 /* Update the radiation parameters used ultimately in calculating t_r */
 
-  if (freq > xplasma->max_freq) // check if photon frequency exceeds maximum frequency - use doppler shifted frequency
-    xplasma->max_freq = freq;   // set maximum frequency sen in the cell to the mean doppler shifted freq - see bug #391
+  if (freq > xplasma->est.max_freq)     // check if photon frequency exceeds maximum frequency - use doppler shifted frequency
+    xplasma->est.max_freq = freq;       // set maximum frequency sen in the cell to the mean doppler shifted freq - see bug #391
 
   if (modes.save_cell_stats && ncstat > 0)
   {
@@ -435,9 +435,9 @@ radiation (PhotPtr p, double ds)
   update_flux_estimators (xplasma, &phot_mid, ds, w_ave_obs, ndom);
 
 
-  if (sane_check (xplasma->j) || sane_check (xplasma->ave_freq))
+  if (sane_check (xplasma->est.j) || sane_check (xplasma->est.ave_freq))
   {
-    Error ("radiation:sane_check Problem with j %g or ave_freq %g\n", xplasma->j, xplasma->ave_freq);
+    Error ("radiation:sane_check Problem with j %g or ave_freq %g\n", xplasma->est.j, xplasma->est.ave_freq);
   }
 
   if (kappa_tot > 0)
@@ -446,46 +446,46 @@ radiation (PhotPtr p, double ds)
     // Use the cmf value of the energy aborbed 
 
     z = (energy_abs_cmf) / kappa_tot;
-    xplasma->heat_ff += z * frac_ff;
-    xplasma->heat_tot += z * frac_ff;
-    xplasma->abs_tot += z * frac_ff;    /* The energy absorbed from the photon field in this cell */
+    xplasma->est.heat_ff += z * frac_ff;
+    xplasma->est.heat_tot += z * frac_ff;
+    xplasma->derived.abs_tot += z * frac_ff;    /* The energy absorbed from the photon field in this cell */
 
-    xplasma->heat_comp += z * frac_comp;        /* Calculate the heating in the cell due to Compton heating */
-    xplasma->heat_tot += z * frac_comp; /* Add the Compton heating to the total heating for the cell */
-    xplasma->abs_tot += z * frac_comp;  /* The energy absorbed from the photon field in this cell */
-    xplasma->abs_tot += z * frac_ind_comp;      /* The energy absorbed from the photon field in this cell */
+    xplasma->est.heat_comp += z * frac_comp;    /* Calculate the heating in the cell due to Compton heating */
+    xplasma->est.heat_tot += z * frac_comp;     /* Add the Compton heating to the total heating for the cell */
+    xplasma->derived.abs_tot += z * frac_comp;  /* The energy absorbed from the photon field in this cell */
+    xplasma->derived.abs_tot += z * frac_ind_comp;      /* The energy absorbed from the photon field in this cell */
 
-    xplasma->heat_tot += z * frac_ind_comp;     /* Calculate the heating in the cell due to induced Compton heating */
-    xplasma->heat_ind_comp += z * frac_ind_comp;        /* Increment the induced Compton heating counter for the cell */
+    xplasma->est.heat_tot += z * frac_ind_comp; /* Calculate the heating in the cell due to induced Compton heating */
+    xplasma->est.heat_ind_comp += z * frac_ind_comp;    /* Increment the induced Compton heating counter for the cell */
     if (freq > phot_freq_min)
     {
-      xplasma->abs_photo += z * frac_tot_abs;   //Here we store the energy absorbed from the photon flux - different from the heating by the binding energy
-      xplasma->abs_auger += z * frac_auger_abs; //same for auger
-      xplasma->abs_tot += z * frac_tot_abs;     /* The energy absorbed from the photon field in this cell */
-      xplasma->abs_tot += z * frac_auger_abs;   /* The energy absorbed from the photon field in this cell */
+      xplasma->derived.abs_photo += z * frac_tot_abs;   //Here we store the energy absorbed from the photon flux - different from the heating by the binding energy
+      xplasma->derived.abs_auger += z * frac_auger_abs; //same for auger
+      xplasma->derived.abs_tot += z * frac_tot_abs;     /* The energy absorbed from the photon field in this cell */
+      xplasma->derived.abs_tot += z * frac_auger_abs;   /* The energy absorbed from the photon field in this cell */
 
-      xplasma->heat_photo += z * frac_tot;
-      xplasma->heat_z += z * frac_z;
-      xplasma->heat_tot += z * frac_tot;        //All of the photoinization opacities
-      xplasma->heat_auger += z * frac_auger;
-      xplasma->heat_tot += z * frac_auger;      //All the inner shell opacities
+      xplasma->est.heat_photo += z * frac_tot;
+      xplasma->est.heat_z += z * frac_z;
+      xplasma->est.heat_tot += z * frac_tot;    //All of the photoinization opacities
+      xplasma->est.heat_auger += z * frac_auger;
+      xplasma->est.heat_tot += z * frac_auger;  //All the inner shell opacities
 
-      q = (z) / (PLANCK * freq * xplasma->vol);
+      q = (z) / (PLANCK * freq * xplasma->state.vol);
 
-      /* So xplasma->ioniz for each species is just
+      /* So xplasma->est.ioniz for each species is just
          (energy_abs)*kappa_h/kappa_tot / PLANCK*freq / volume
          or the number of photons absorbed in this bundle per unit volume by this ion
        */
 
       for (nion = 0; nion < nions; nion++)
       {
-        xplasma->ioniz[nion] += kappa_ion[nion] * q;
-        xplasma->heat_ion[nion] += frac_ion[nion] * z;
+        xplasma->est.ioniz[nion] += kappa_ion[nion] * q;
+        xplasma->est.heat_ion[nion] += frac_ion[nion] * z;
       }
       for (n = 0; n < n_inner_tot; n++)
       {
-        xplasma->heat_inner_ion[inner_cross_ptr[n]->nion] += frac_inner_ion[n] * z;     //This quantity is per ion - the ion number comes from the freq ordered cross section
-        xplasma->inner_ioniz[n] += kappa_inner_ion[n] * q;      //This is the number of ionizations from this innershell cross section - at this point, inner_ioniz is ordered by frequency
+        xplasma->est.heat_inner_ion[inner_cross_ptr[n]->nion] += frac_inner_ion[n] * z; //This quantity is per ion - the ion number comes from the freq ordered cross section
+        xplasma->est.inner_ioniz[n] += kappa_inner_ion[n] * q;  //This is the number of ionizations from this innershell cross section - at this point, inner_ioniz is ordered by frequency
       }
     }
   }
@@ -551,19 +551,19 @@ kappa_ff (xplasma, freq)
   {
     if (nelements > 1)
     {
-      x = x1 = 3.692e8 * xplasma->ne * (xplasma->density[1] + 4. * xplasma->density[4]);
+      x = x1 = 3.692e8 * xplasma->state.ne * (xplasma->state.density[1] + 4. * xplasma->state.density[4]);
     }
     else
     {
-      x = x1 = 3.692e8 * xplasma->ne * (xplasma->density[1]);
+      x = x1 = 3.692e8 * xplasma->state.ne * (xplasma->state.density[1]);
     }
   }
   else
   {
-    x = x1 = xplasma->kappa_ff_factor;
+    x = x1 = xplasma->state.kappa_ff_factor;
   }
-  x *= x2 = (1. - exp (-H_OVER_K * freq / xplasma->t_e));
-  x /= x3 = (sqrt (xplasma->t_e) * freq * freq * freq);
+  x *= x2 = (1. - exp (-H_OVER_K * freq / xplasma->state.t_e));
+  x /= x3 = (sqrt (xplasma->state.t_e) * freq * freq * freq);
 
   x *= zdom[ndom].fill;
 
@@ -679,14 +679,14 @@ den_config (xplasma, nconf)
 
   if (nnlev >= 0)
   {                             // Then a "non-lte" level with a density
-    density = xplasma->levden[nnlev] * xplasma->density[nion];
+    density = xplasma->state.levden[nnlev] * xplasma->state.density[nion];
   }
   else if (nconf == ion[nion].firstlevel)
   {
 /* Then we are using a Topbase photoionization x-section for this ion,
 but we are not storing any densities, and so we assume it is completely in the
 in the ground state */
-    density = xplasma->density[nion];
+    density = xplasma->state.density[nion];
   }
   else
   {
@@ -708,7 +708,7 @@ in the ground state */
  * @return  Always returns 0
  *
  * @details
- * The routine populates plasmamain[].kappa_ff_factor
+ * The routine populates plasmamain[].state.kappa_ff_factor
  *
  * The free-free multiplicative constant depends only
  * on the densities of ions in the cell, and the electron
@@ -747,9 +747,9 @@ pop_kappa_ff_array ()
     {
       if (ion[j].istate != 1)   //The neutral ion does not contribute
       {
-        gsqrd = ((ion[j].istate - 1) * (ion[j].istate - 1) * RYD2ERGS) / (BOLTZMANN * plasmamain[i].t_e);
+        gsqrd = ((ion[j].istate - 1) * (ion[j].istate - 1) * RYD2ERGS) / (BOLTZMANN * plasmamain[i].state.t_e);
         gaunt = gaunt_ff (gsqrd);
-        sum += plasmamain[i].density[j] * (ion[j].istate - 1) * (ion[j].istate - 1) * gaunt;
+        sum += plasmamain[i].state.density[j] * (ion[j].istate - 1) * (ion[j].istate - 1) * gaunt;
         if (sane_check (sum))
         {
           Error ("pop_kappa_ff_array:sane_check sum is %e this is a problem, possible in gaunt %e\n", sum, gaunt);
@@ -761,7 +761,7 @@ pop_kappa_ff_array ()
       }
 
     }
-    plasmamain[i].kappa_ff_factor = plasmamain[i].ne * sum * 3.692e8;
+    plasmamain[i].state.kappa_ff_factor = plasmamain[i].state.ne * sum * 3.692e8;
   }
 
   return (0);
@@ -813,7 +813,7 @@ mean_intensity (xplasma, freq, mode)
   }
   else
   {
-    j_bar = mean_intensity_bb_estimate (freq, xplasma->t_r, xplasma->w);
+    j_bar = mean_intensity_bb_estimate (freq, xplasma->state.t_r, xplasma->state.w);
   }
 
   return j_bar;
@@ -849,30 +849,30 @@ mean_intensity_from_models (PlasmaPtr xplasma, double freq, int mode)
      * cycles.
      */
 
-    for (i = 0; i < xplasma->nbands; i++)
+    for (i = 0; i < xplasma->state.nbands; i++)
     {
       // Check that the band has the correct frequency range
-      if (xplasma->f1[i] < freq && freq <= xplasma->f2[i])
+      if (xplasma->state.f1[i] < freq && freq <= xplasma->state.f2[i])
       {
         // Check we have a model for this band
-        if (xplasma->spec_mod_type[i] > 0)
+        if (xplasma->state.spec_mod_type[i] > 0)
         {
           // Check the spectral model is defined for the frequency in question
           // todo: this seems redundant, but possibly can be important if the model
           //       in question isn't complete due to photon statistics
-          if (freq > xplasma->fmin_mod[i] && freq < xplasma->fmax_mod[i])
+          if (freq > xplasma->state.fmin_mod[i] && freq < xplasma->state.fmax_mod[i])
           {
-            if (xplasma->spec_mod_type[i] == SPEC_MOD_PL)
+            if (xplasma->state.spec_mod_type[i] == SPEC_MOD_PL)
             {
-              j_bar = pow (10, (xplasma->pl_log_w[i] + log10 (freq) * xplasma->pl_alpha[i]));
+              j_bar = pow (10, (xplasma->state.pl_log_w[i] + log10 (freq) * xplasma->state.pl_alpha[i]));
             }
-            else if (xplasma->spec_mod_type[i] == SPEC_MOD_EXP)
+            else if (xplasma->state.spec_mod_type[i] == SPEC_MOD_EXP)
             {
-              j_bar = xplasma->exp_w[i] * exp ((-1 * PLANCK * freq) / (BOLTZMANN * xplasma->exp_temp[i]));
+              j_bar = xplasma->state.exp_w[i] * exp ((-1 * PLANCK * freq) / (BOLTZMANN * xplasma->state.exp_temp[i]));
             }
             else
             {
-              Error ("mean_intensity: unknown spectral model (%i) in band %i\n", xplasma->spec_mod_type[i], i);
+              Error ("mean_intensity: unknown spectral model (%i) in band %i\n", xplasma->state.spec_mod_type[i], i);
               j_bar = 0.0;
             }
           }
@@ -905,7 +905,7 @@ mean_intensity_from_models (PlasmaPtr xplasma, double freq, int mode)
 
     if (mode == MEAN_INTENSITY_BB_MODEL)
     {
-      j_bar = mean_intensity_bb_estimate (freq, xplasma->t_r, xplasma->w);
+      j_bar = mean_intensity_bb_estimate (freq, xplasma->state.t_r, xplasma->state.w);
     }
     else
     {

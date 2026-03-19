@@ -115,16 +115,16 @@ wind_luminosity (double f1, double f2, int mode)
 
     if (mode == MODE_OBSERVER_FRAME_TIME)
     {
-      gamma_factor = 1.0 / plasmamain[n_plasma].xgamma; /* this is dt_cmf */
+      gamma_factor = 1.0 / plasmamain[n_plasma].state.xgamma;   /* this is dt_cmf */
     }
     else
     {
       gamma_factor = 1.0;
     }
 
-    lum_lines += plasmamain[n_plasma].lum_lines * gamma_factor;
-    lum_rad_recomb += plasmamain[n_plasma].lum_rr * gamma_factor;
-    lum_free_free += plasmamain[n_plasma].lum_ff * gamma_factor;
+    lum_lines += plasmamain[n_plasma].derived.lum_lines * gamma_factor;
+    lum_rad_recomb += plasmamain[n_plasma].derived.lum_rr * gamma_factor;
+    lum_free_free += plasmamain[n_plasma].derived.lum_ff * gamma_factor;
   }
 
   total_lum = lum_lines + lum_rad_recomb + lum_free_free;
@@ -178,51 +178,51 @@ total_emission (xplasma, f1, f2)
 {
   double t_e;
 
-  t_e = xplasma->t_e;
+  t_e = xplasma->state.t_e;
 
 
   if (f2 < f1)
   {
-    xplasma->lum_tot = xplasma->lum_lines = xplasma->lum_ff = xplasma->lum_rr = 0;
+    xplasma->derived.lum_tot = xplasma->derived.lum_lines = xplasma->derived.lum_ff = xplasma->derived.lum_rr = 0;
   }
   else
   {
     if (geo.rt_mode == RT_MODE_MACRO)
     {
-      xplasma->lum_rr = (total_fb_matoms (xplasma, t_e, f1, f2) + total_fb (xplasma, t_e, f1, f2, FB_FULL, OUTER_SHELL));       //outer shellrecombinations
+      xplasma->derived.lum_rr = (total_fb_matoms (xplasma, t_e, f1, f2) + total_fb (xplasma, t_e, f1, f2, FB_FULL, OUTER_SHELL));       //outer shellrecombinations
 
       /*
        *The first term here is the fb cooling due to macro ions and the second gives
        *the fb cooling due to simple ions.
        *total_fb has been modified to exclude recombinations treated using macro atoms.
        */
-      xplasma->lum_tot = xplasma->cool_rr;
+      xplasma->derived.lum_tot = xplasma->derived.cool_rr;
       /* Note: This the fb_matom call makes no use of f1 or f2. They are passed for
        * now in case they should be used in the future. But they could
        * also be removed.
        * (SS)
        */
-      xplasma->lum_lines = total_bb_cooling (xplasma, t_e);
-      xplasma->lum_tot += xplasma->lum_lines;
+      xplasma->derived.lum_lines = total_bb_cooling (xplasma, t_e);
+      xplasma->derived.lum_tot += xplasma->derived.lum_lines;
       /* total_bb_cooling gives the total cooling rate due to bb transisions whether they
          are macro atoms or simple ions. */
-      xplasma->lum_ff = total_free (xplasma, t_e, f1, f2);
-      xplasma->lum_tot += xplasma->lum_ff;
+      xplasma->derived.lum_ff = total_free (xplasma, t_e, f1, f2);
+      xplasma->derived.lum_tot += xplasma->derived.lum_ff;
 
 
     }
     else                        //default (non-macro atoms) (SS)
     {
-      xplasma->lum_tot = xplasma->lum_lines = total_line_emission (xplasma, f1, f2);
-      xplasma->lum_tot += xplasma->lum_ff = total_free (xplasma, t_e, f1, f2);
+      xplasma->derived.lum_tot = xplasma->derived.lum_lines = total_line_emission (xplasma, f1, f2);
+      xplasma->derived.lum_tot += xplasma->derived.lum_ff = total_free (xplasma, t_e, f1, f2);
       /* We compute the radiative recombination luminosity - this is not the same as the rr cooling rate and
          so is stored in a separate variable */
-      xplasma->lum_tot += xplasma->lum_rr = total_fb (xplasma, t_e, f1, f2, FB_FULL, OUTER_SHELL);      //outer shell recombinations
+      xplasma->derived.lum_tot += xplasma->derived.lum_rr = total_fb (xplasma, t_e, f1, f2, FB_FULL, OUTER_SHELL);      //outer shell recombinations
     }
   }
 
 
-  return (xplasma->lum_tot);
+  return (xplasma->derived.lum_tot);
 }
 
 
@@ -316,8 +316,8 @@ photo_gen_wind (p, weight, freqmin, freqmax, photstart, nphot)
 
     while (xlumsum < xlum)
     {
-      dt_cmf = 1.0 / plasmamain[nplasma].xgamma;
-      xlumsum += plasmamain[nplasma].lum_tot * dt_cmf;
+      dt_cmf = 1.0 / plasmamain[nplasma].state.xgamma;
+      xlumsum += plasmamain[nplasma].derived.lum_tot * dt_cmf;
       nplasma++;
     }
     nplasma--;
@@ -330,21 +330,21 @@ photo_gen_wind (p, weight, freqmin, freqmax, photstart, nphot)
 
     /* At this point we know the cell in which the photon will be generated */
 
-    plasmamain[nplasma].nrad += 1;
+    plasmamain[nplasma].derived.nrad += 1;
 
     /*Determine the type of photon this photon will be and increment ptype, which stores the total number of
      * each photon type to be made in each cell. We don't need to account for time
      * dilation heere, because all processes are in the same cell*/
 
-    lum = plasmamain[nplasma].lum_tot;
+    lum = plasmamain[nplasma].derived.lum_tot;
     xlum = lum * random_number (0.0, 1.0);
     xlumsum = 0;
 
-    if ((xlumsum += plasmamain[nplasma].lum_ff) > xlum)
+    if ((xlumsum += plasmamain[nplasma].derived.lum_ff) > xlum)
     {
       ptype[nplasma][FREE_FREE]++;
     }
-    else if ((xlumsum += plasmamain[nplasma].lum_rr) > xlum)
+    else if ((xlumsum += plasmamain[nplasma].derived.lum_rr) > xlum)
     {
       ptype[nplasma][FREE_BOUND]++;
     }
@@ -378,7 +378,8 @@ photo_gen_wind (p, weight, freqmin, freqmax, photstart, nphot)
         if (p[np].freq <= 0.0)
         {
           Error_silent
-            ("photo_gen_wind: On return from one_ff: icell %d vol %g t_e %g\n", nplasma, plasmamain[nplasma].vol, plasmamain[nplasma].t_e);
+            ("photo_gen_wind: On return from one_ff: icell %d vol %g t_e %g\n", nplasma, plasmamain[nplasma].state.vol,
+             plasmamain[nplasma].state.t_e);
           p[np].freq = 0.0;
         }
       }
@@ -492,7 +493,7 @@ one_line (xplasma, nres)
   double xlum, xlumsum;
   int m;
   /* Put in a bunch of checks */
-  if (xplasma->lum_lines <= 0)
+  if (xplasma->derived.lum_lines <= 0)
   {
     Error ("one_line: requesting a line when line lum is 0\n");
     return (0);
@@ -504,7 +505,7 @@ one_line (xplasma, nres)
   }
 
 
-  xlum = xplasma->lum_lines * random_number (0.0, 1.0);
+  xlum = xplasma->derived.lum_lines * random_number (0.0, 1.0);
 
   xlumsum = 0;
   m = nline_min;
@@ -569,14 +570,14 @@ total_free (xplasma, t_e, f1, f2)
     return (0.0);
   }
 
-  if (ALPHA_FF * xplasma->t_e / H_OVER_K < f1)
+  if (ALPHA_FF * xplasma->state.t_e / H_OVER_K < f1)
   {
     return (0.0);
   }
 
-  if (ALPHA_FF * xplasma->t_e / H_OVER_K < f2)
+  if (ALPHA_FF * xplasma->state.t_e / H_OVER_K < f2)
   {
-    f2 = ALPHA_FF * xplasma->t_e / H_OVER_K;
+    f2 = ALPHA_FF * xplasma->state.t_e / H_OVER_K;
   }
 
   if (t_e < TMIN)
@@ -590,11 +591,11 @@ total_free (xplasma, t_e, f1, f2)
     g_ff_h = g_ff_he = 1.0;
     if (nelements > 1)
     {
-      x = BREMS_CONSTANT * xplasma->ne * (xplasma->density[1] * g_ff_h + 4. * xplasma->density[4] * g_ff_he) / H_OVER_K;
+      x = BREMS_CONSTANT * xplasma->state.ne * (xplasma->state.density[1] * g_ff_h + 4. * xplasma->state.density[4] * g_ff_he) / H_OVER_K;
     }
     else
     {
-      x = BREMS_CONSTANT * xplasma->ne * (xplasma->density[1] * g_ff_h) / H_OVER_K;
+      x = BREMS_CONSTANT * xplasma->state.ne * (xplasma->state.density[1] * g_ff_h) / H_OVER_K;
     }
   }
   else
@@ -606,16 +607,16 @@ total_free (xplasma, t_e, f1, f2)
       {
         gsqrd = ((ion[nion].istate - 1) * (ion[nion].istate - 1) * RYD2ERGS) / (BOLTZMANN * t_e);
         gaunt = gaunt_ff (gsqrd);
-        sum += xplasma->density[nion] * (ion[nion].istate - 1) * (ion[nion].istate - 1) * gaunt;
+        sum += xplasma->state.density[nion] * (ion[nion].istate - 1) * (ion[nion].istate - 1) * gaunt;
       }
     }
-    x = BREMS_CONSTANT * xplasma->ne * (sum) / H_OVER_K;
+    x = BREMS_CONSTANT * xplasma->state.ne * (sum) / H_OVER_K;
   }
 
   /* JM 1604 -- The reason why this is proportional to t_e**1/2,
      rather than t_e**(-1/2) as in equation 40 of LK02 is because
      one gets an extra factor of (k*t_e/h) when one does the integral */
-  x *= sqrt (t_e) * xplasma->vol;
+  x *= sqrt (t_e) * xplasma->state.vol;
   x *= (exp (-H_OVER_K * f1 / t_e) - exp (-H_OVER_K * f2 / t_e));
   return (x);
 }
@@ -674,11 +675,11 @@ ff (xplasma, t_e, freq)
       g_ff_h = g_ff_he = 1.0;
       if (nelements > 1)
       {
-        fnu = BREMS_CONSTANT * xplasma->ne * (xplasma->density[1] * g_ff_h + 4. * xplasma->density[4] * g_ff_he);
+        fnu = BREMS_CONSTANT * xplasma->state.ne * (xplasma->state.density[1] * g_ff_h + 4. * xplasma->state.density[4] * g_ff_he);
       }
       else
       {
-        fnu = BREMS_CONSTANT * xplasma->ne * (xplasma->density[1] * g_ff_h);
+        fnu = BREMS_CONSTANT * xplasma->state.ne * (xplasma->state.density[1] * g_ff_h);
       }
     }
     else
@@ -690,17 +691,17 @@ ff (xplasma, t_e, freq)
         {
           gsqrd = ((ion[nion].istate - 1) * (ion[nion].istate - 1) * RYD2ERGS) / (BOLTZMANN * t_e);
           gaunt = gaunt_ff (gsqrd);
-          sum += xplasma->density[nion] * (ion[nion].istate - 1) * (ion[nion].istate - 1) * gaunt;
+          sum += xplasma->state.density[nion] * (ion[nion].istate - 1) * (ion[nion].istate - 1) * gaunt;
         }
         else
         {
           sum += 0.0;
         }
       }
-      fnu = BREMS_CONSTANT * xplasma->ne * (sum);
+      fnu = BREMS_CONSTANT * xplasma->state.ne * (sum);
     }
 
-    ff_constant = fnu * xplasma->vol;
+    ff_constant = fnu * xplasma->state.vol;
   }
 
 
@@ -753,31 +754,31 @@ one_ff (xplasma, f1, f2)
 
   if (f2 < f1)
   {
-    Error ("one_ff: Bad inputs f2 %g < f1 %g returning 0.0  t_e %g\n", f2, f1, xplasma->t_e);
+    Error ("one_ff: Bad inputs f2 %g < f1 %g returning 0.0  t_e %g\n", f2, f1, xplasma->state.t_e);
     return (-1.0);
   }
 
   /* Check to see if we have already generated a pdf */
 
-  if (xplasma->t_e != one_ff_te || f1 != one_ff_f1 || f2 != one_ff_f2)
+  if (xplasma->state.t_e != one_ff_te || f1 != one_ff_f1 || f2 != one_ff_f2)
   {                             /* Generate a new pdf */
     dfreq = (f2 - f1) / (ARRAY_PDF - 1);
     for (n = 0; n < ARRAY_PDF - 1; n++)
     {
       ff_x[n] = f1 + dfreq * n;
-      ff_y[n] = ff (xplasma, xplasma->t_e, ff_x[n]);
+      ff_y[n] = ff (xplasma, xplasma->state.t_e, ff_x[n]);
     }
 
     ff_x[ARRAY_PDF - 1] = f2;
-    ff_y[ARRAY_PDF - 1] = ff (xplasma, xplasma->t_e, ff_x[ARRAY_PDF - 1]);
+    ff_y[ARRAY_PDF - 1] = ff (xplasma, xplasma->state.t_e, ff_x[ARRAY_PDF - 1]);
     if ((echeck = cdf_gen_from_array (&cdf_ff, ff_x, ff_y, ARRAY_PDF, f1, f2)) != 0)
     {
       Error
         ("one_ff: cdf_gen_from_array error %d : nplasma %d f1 %g f2 %g te %g ne %g nh %g vol %g\n",
-         echeck, xplasma->nplasma, f1, f2, xplasma->t_e, xplasma->ne, xplasma->density[1], xplasma->vol);
+         echeck, xplasma->nplasma, f1, f2, xplasma->state.t_e, xplasma->state.ne, xplasma->state.density[1], xplasma->state.vol);
       Exit (0);
     }
-    one_ff_te = xplasma->t_e;
+    one_ff_te = xplasma->state.t_e;
     one_ff_f1 = f1;
     one_ff_f2 = f2;
   }

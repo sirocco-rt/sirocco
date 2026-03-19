@@ -67,25 +67,25 @@ partition_functions (xplasma, mode)
   if (mode == NEBULARMODE_TR)
   {
     //LTE using t_r
-    t = xplasma->t_r;
+    t = xplasma->state.t_r;
     weight = 1;
   }
   else if (mode == NEBULARMODE_TE)
   {
     //LTE using t_e
-    t = xplasma->t_e;
+    t = xplasma->state.t_e;
     weight = 1;
   }
   else if (mode == NEBULARMODE_ML93)
   {
     //Non LTE calculation with radiative weights
-    t = xplasma->t_r;
-    weight = xplasma->w;
+    t = xplasma->state.t_r;
+    weight = xplasma->state.w;
   }
   else if (mode == NEBULARMODE_NLTE_SIM)        /*NSH 120912 This mode is more or less defunct. When the last vestigies of the mode 3 ionizetion scheme (the original sim PL correction) is removed, this can go too */
   {
     //Non LTE calculation with non BB radiation field. Use T_e to get partition functions, same as mode 1- 
-    t = xplasma->t_e;
+    t = xplasma->state.t_e;
     weight = 1;
   }
   else if (mode == NEBULARMODE_LTE_GROUND)      /*This is used to set partition functions  to ground state only, used when
@@ -94,7 +94,7 @@ partition_functions (xplasma, mode)
                                                    the temperature is a moot point, so lest go with t_e, since this is only 
                                                    going to be called if we are doing a power law calculation */
   {
-    t = xplasma->t_e;
+    t = xplasma->state.t_e;
     weight = 0;
   }
 
@@ -159,7 +159,7 @@ partition_functions (xplasma, mode)
     }
 
 
-    xplasma->partition[nion] = z;
+    xplasma->state.partition[nion] = z;
 
   }
 
@@ -197,7 +197,7 @@ partition_functions (xplasma, mode)
  * 	temperature for just two states of interest. It is 
  * 	wasteful to calculate all of the states at each temperature.
  *
- * 	The results are stored in xplasma->partition[nion]
+ * 	The results are stored in xplasma->state.partition[nion]
  *
  * ### Notes ###
  * @bug According to the historical notes, there is no need for the weight term in the calculation 
@@ -284,7 +284,7 @@ partition_functions_2 (xplasma, xnion, temp, weight)
     }
 
 
-    xplasma->partition[nion] = z;
+    xplasma->state.partition[nion] = z;
 
   }
 

@@ -137,7 +137,7 @@ macro_gov (p, nres, matom_or_kpkt, which_out)
     escape = FALSE;
   }
 
-  if (mplasma->matom_transition_mode == MATOM_MATRIX)
+  if (mplasma->state.matom_transition_mode == MATOM_MATRIX)
   {
     if (matom_or_kpkt == MATOM)
     {
@@ -196,7 +196,7 @@ macro_gov (p, nres, matom_or_kpkt, which_out)
   }
 
   /* using the old MATOM_MC_JUMPS scheme */
-  else if (mplasma->matom_transition_mode == MATOM_MC_JUMPS)
+  else if (mplasma->state.matom_transition_mode == MATOM_MC_JUMPS)
   {
     /* Beginning of the main loop for processing a macro-atom */
     while (escape == FALSE)
@@ -355,7 +355,7 @@ macro_pops (xplasma, xne)
    * hide errors in very extreme cases.
    */
 
-  if (xplasma->ntot == 0)
+  if (xplasma->est.ntot == 0)
   {
     get_dilute_estimators (xplasma);
   }
@@ -483,7 +483,7 @@ macro_pops (xplasma, xne)
           {
             Error
               ("macro_pops: iteration %d: unreasonable population(s) in plasma cell %i. Using dilute BBody excitation with w %8.4e t_r %8.4e\n",
-               n_iterations, xplasma->nplasma, xplasma->w, xplasma->t_r);
+               n_iterations, xplasma->nplasma, xplasma->state.w, xplasma->state.t_r);
             get_dilute_estimators (xplasma);
           }
           else
@@ -587,12 +587,12 @@ macro_pops_fill_rate_matrix (MacroPtr mplasma, PlasmaPtr xplasma, double xne, in
           fast_line.gu = xconfig[index_fast_col + 1].g;
           fast_line.freq = (xconfig[index_fast_col + 1].ex - xconfig[index_lvl].ex) / PLANCK;
           fast_line.f = 1e4;
-          rate = q12 (&fast_line, xplasma->t_e) * xne;
+          rate = q12 (&fast_line, xplasma->state.t_e) * xne;
           lower = conf_to_matrix[index_lvl];
           upper = conf_to_matrix[index_fast_col + 1];
           rate_matrix[lower][lower] += -1. * rate;
           rate_matrix[upper][lower] += rate;
-          rate = q21 (&fast_line, xplasma->t_e) * xne;
+          rate = q21 (&fast_line, xplasma->state.t_e) * xne;
           rate_matrix[upper][upper] += -1. * rate;
           rate_matrix[lower][upper] += rate;
         }
@@ -612,8 +612,8 @@ macro_pops_fill_rate_matrix (MacroPtr mplasma, PlasmaPtr xplasma, double xne, in
            including a collisional term (which depends on ne). */
 
         line_ptr = &line[xconfig[index_lvl].bbu_jump[index_bbu]];
-        rate = b12 (line_ptr) * mplasma->jbar_old[xconfig[index_lvl].bbu_indx_first + index_bbu];
-        rate += q12 (line_ptr, xplasma->t_e) * xne;
+        rate = b12 (line_ptr) * mplasma->state.jbar_old[xconfig[index_lvl].bbu_indx_first + index_bbu];
+        rate += q12 (line_ptr, xplasma->state.t_e) * xne;
 
         /* This is the rate out of the level in question. We need to add it
            to the matrix in two places: firstly as a -ve contribution to the
@@ -646,7 +646,7 @@ macro_pops_fill_rate_matrix (MacroPtr mplasma, PlasmaPtr xplasma, double xne, in
 
         line_ptr = &line[xconfig[index_lvl].bbd_jump[index_bbd]];
         rate = (a21 (line_ptr) * p_escape (line_ptr, xplasma));
-        rate += q21 (line_ptr, xplasma->t_e) * xne;
+        rate += q21 (line_ptr, xplasma->state.t_e) * xne;
 
         /* This is the rate out of the level in question. We need to add it
            to the matrix in two places: firstly as a -ve contribution to the
@@ -677,8 +677,8 @@ macro_pops_fill_rate_matrix (MacroPtr mplasma, PlasmaPtr xplasma, double xne, in
            gamma which has been computed as a Monte Carlo estimator. */
 
         cont_ptr = &phot_top[xconfig[index_lvl].bfu_jump[index_bfu]];
-        rate = mplasma->gamma_old[xconfig[index_lvl].bfu_indx_first + index_bfu];
-        rate += q_ioniz (cont_ptr, xplasma->t_e) * xne;
+        rate = mplasma->state.gamma_old[xconfig[index_lvl].bfu_indx_first + index_bfu];
+        rate += q_ioniz (cont_ptr, xplasma->state.t_e) * xne;
 
         /* This is the rate out of the level in question. We need to add it
            to the matrix in two places: firstly as a -ve contribution to the
@@ -702,7 +702,7 @@ macro_pops_fill_rate_matrix (MacroPtr mplasma, PlasmaPtr xplasma, double xne, in
         /* Lower and upper are the same, but now it contributes in the
            other direction. */
 
-        rate = mplasma->alpha_st_old[xconfig[index_lvl].bfu_indx_first + index_bfu] * xne;
+        rate = mplasma->state.alpha_st_old[xconfig[index_lvl].bfu_indx_first + index_bfu] * xne;
 
         rate_matrix[upper][upper] += -1. * rate;
         rate_matrix[lower][upper] += rate;
@@ -719,10 +719,10 @@ macro_pops_fill_rate_matrix (MacroPtr mplasma, PlasmaPtr xplasma, double xne, in
            the alpha value. */
         cont_ptr = &phot_top[xconfig[index_lvl].bfd_jump[index_bfd]];
         /* Get new values of the recombination rates and store them. */
-        mplasma->recomb_sp[xconfig[index_lvl].bfd_indx_first + index_bfd] = alpha_sp (cont_ptr, xplasma, 0);
-        mplasma->recomb_sp_e[xconfig[index_lvl].bfd_indx_first + index_bfd] = alpha_sp (cont_ptr, xplasma, 2);
-        rate = mplasma->recomb_sp[xconfig[index_lvl].bfd_indx_first + index_bfd] * xne;
-        rate += q_recomb (cont_ptr, xplasma->t_e) * xne * xne;
+        mplasma->est.recomb_sp[xconfig[index_lvl].bfd_indx_first + index_bfd] = alpha_sp (cont_ptr, xplasma, 0);
+        mplasma->est.recomb_sp_e[xconfig[index_lvl].bfd_indx_first + index_bfd] = alpha_sp (cont_ptr, xplasma, 2);
+        rate = mplasma->est.recomb_sp[xconfig[index_lvl].bfd_indx_first + index_bfd] * xne;
+        rate += q_recomb (cont_ptr, xplasma->state.t_e) * xne * xne;
 
         /* This is the rate out of the level in question. We need to add it
            to the matrix in two places: firstly as a -ve contribution to the
@@ -840,7 +840,7 @@ macro_pops_check_densities_for_numerical_errors (PlasmaPtr xplasma, int index_el
 
     /* Check that the ion density is positive and finite */
 
-    ion_density_temp = this_ion_density * ele[index_element].abun * xplasma->rho * rho2nh;
+    ion_density_temp = this_ion_density * ele[index_element].abun * xplasma->state.rho * rho2nh;
     if (sane_check (ion_density_temp) || ion_density_temp < 0.0)
     {
       Error ("macro_pops: iteration %d: ion %i has calculated a frac. pop. of %8.4e in plasma cell %i\n", n_iterations, index_ion,
@@ -879,7 +879,7 @@ macro_pops_check_densities_for_numerical_errors (PlasmaPtr xplasma, int index_el
  * @details
  * The populations are now known. The populations need to be stored firstly as
  * ion populations and secondly as fractional level populations within an ion.
- * Get the ion populations and write them to one->density[nion]. The level
+ * Get the ion populations and write them to one->state.density[nion]. The level
  * populations are to be put in "levden".
  *
  **********************************************************/
@@ -898,13 +898,13 @@ macro_pops_copy_to_xplasma (PlasmaPtr xplasma, int index_element, double *popula
       this_ion_density += populations[conf_to_matrix[index_lvl]];
     }
 
-    xplasma->density[index_ion] = this_ion_density * ele[index_element].abun * xplasma->rho * rho2nh;
+    xplasma->state.density[index_ion] = this_ion_density * ele[index_element].abun * xplasma->state.rho * rho2nh;
 
     /* to maintain consistency with the higher level routines, only allow density to drop to DENSITY_MIN */
 
-    if (xplasma->density[index_ion] < DENSITY_MIN)
+    if (xplasma->state.density[index_ion] < DENSITY_MIN)
     {
-      xplasma->density[index_ion] = DENSITY_MIN;
+      xplasma->state.density[index_ion] = DENSITY_MIN;
     }
 
     for (index_lvl = ion[index_ion].first_nlte_level; index_lvl < ion[index_ion].first_nlte_level + ion[index_ion].nlte; index_lvl++)
@@ -912,11 +912,11 @@ macro_pops_copy_to_xplasma (PlasmaPtr xplasma, int index_element, double *popula
       fractional_population = populations[conf_to_matrix[index_lvl]] / this_ion_density;
       if (this_ion_density < DENSITY_MIN || fractional_population < DENSITY_MIN)
       {
-        xplasma->levden[xconfig[index_lvl].nden] = DENSITY_MIN;
+        xplasma->state.levden[xconfig[index_lvl].nden] = DENSITY_MIN;
       }
       else
       {
-        xplasma->levden[xconfig[index_lvl].nden] = fractional_population;
+        xplasma->state.levden[xconfig[index_lvl].nden] = fractional_population;
       }
     }
   }

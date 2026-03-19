@@ -378,9 +378,9 @@ par_wind_luminosity (f1, f2, mode)
         MPI_Pack (&n, 1, MPI_INT, commbuffer, size_of_commbuffer, &position, MPI_COMM_WORLD);
         //   Log ("Position2 %d %d\n", n, position);
         // Now transimit the values we want (8)
-        MPI_Pack (&plasmamain[n].lum_lines, 1, MPI_DOUBLE, commbuffer, size_of_commbuffer, &position, MPI_COMM_WORLD);
-        MPI_Pack (&plasmamain[n].lum_rr, 1, MPI_DOUBLE, commbuffer, size_of_commbuffer, &position, MPI_COMM_WORLD);
-        MPI_Pack (&plasmamain[n].lum_ff, 1, MPI_DOUBLE, commbuffer, size_of_commbuffer, &position, MPI_COMM_WORLD);
+        MPI_Pack (&plasmamain[n].derived.lum_lines, 1, MPI_DOUBLE, commbuffer, size_of_commbuffer, &position, MPI_COMM_WORLD);
+        MPI_Pack (&plasmamain[n].derived.lum_rr, 1, MPI_DOUBLE, commbuffer, size_of_commbuffer, &position, MPI_COMM_WORLD);
+        MPI_Pack (&plasmamain[n].derived.lum_ff, 1, MPI_DOUBLE, commbuffer, size_of_commbuffer, &position, MPI_COMM_WORLD);
 
         //    Log ("Position3 %d %d\n", n, position);
       }
@@ -400,9 +400,9 @@ par_wind_luminosity (f1, f2, mode)
       for (n_mpi2 = 0; n_mpi2 < num_comm; n_mpi2++)
       {
         MPI_Unpack (commbuffer, size_of_commbuffer, &position, &n, 1, MPI_INT, MPI_COMM_WORLD);
-        MPI_Unpack (commbuffer, size_of_commbuffer, &position, &plasmamain[n].lum_lines, 1, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (commbuffer, size_of_commbuffer, &position, &plasmamain[n].lum_rr, 1, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (commbuffer, size_of_commbuffer, &position, &plasmamain[n].lum_ff, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (commbuffer, size_of_commbuffer, &position, &plasmamain[n].derived.lum_lines, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (commbuffer, size_of_commbuffer, &position, &plasmamain[n].derived.lum_rr, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (commbuffer, size_of_commbuffer, &position, &plasmamain[n].derived.lum_ff, 1, MPI_DOUBLE, MPI_COMM_WORLD);
 
       }
     }
@@ -418,13 +418,13 @@ par_wind_luminosity (f1, f2, mode)
   {
 
     if (mode == MODE_OBSERVER_FRAME_TIME)
-      factor = 1.0 / plasmamain[nplasma].xgamma;        /* this is dt_cmf */
+      factor = 1.0 / plasmamain[nplasma].state.xgamma;  /* this is dt_cmf */
     else if (mode == MODE_CMF_TIME)
       factor = 1.0;
 
-    lum_lines += plasmamain[nplasma].lum_lines * factor;
-    lum_rr += plasmamain[nplasma].lum_rr * factor;
-    lum_ff += plasmamain[nplasma].lum_ff * factor;
+    lum_lines += plasmamain[nplasma].derived.lum_lines * factor;
+    lum_rr += plasmamain[nplasma].derived.lum_rr * factor;
+    lum_ff += plasmamain[nplasma].derived.lum_ff * factor;
   }
 
   lum = lum_lines + lum_rr + lum_ff;

@@ -209,7 +209,7 @@ calculate_ds (w, p, tau_scat, tau, nres, smax, istat)
    * electron scattering is always treated as a scattering event.
    */
 
-  kap_es = klein_nishina (mean_freq) * xplasma->ne * zdom[ndom].fill;
+  kap_es = klein_nishina (mean_freq) * xplasma->state.ne * zdom[ndom].fill;
 
   /* If in macro-atom mode, calculate the bf and ff opacities, because in
    * macro-atom mode everything including bf is calculated as a scattering
@@ -498,7 +498,7 @@ select_continuum_scattering_process (kap_cont, kap_es, kap_ff, xplasma)
       ncont++;
     }
     /* When it gets here know that excitation is in photoionisation labelled by ncont */
-    nres = NLINES + 1 + xplasma->kbf_use[ncont - 1];    //modified SS Nov 04
+    nres = NLINES + 1 + xplasma->state.kbf_use[ncont - 1];      //modified SS Nov 04
   }
   return (nres);
 }
@@ -550,9 +550,9 @@ kappa_bf (xplasma, freq, macro_all)
 
   ndom = wmain[xplasma->nwind].ndom;
 
-  for (nn = 0; nn < xplasma->kbf_nuse; nn++)    // Loop over photoionisation processes.
+  for (nn = 0; nn < xplasma->state.kbf_nuse; nn++)      // Loop over photoionisation processes.
   {
-    n = xplasma->kbf_use[nn];
+    n = xplasma->state.kbf_use[nn];
     ft = phot_top[n].freq[0];   //This is the edge frequency (SS)
 
     kap_bf[nn] = 0.0;
@@ -590,10 +590,10 @@ kappa_bf (xplasma, freq, macro_all)
  * ion is so low it will not contribute.
  *
  * For each cell, the routine determines what bf transitons are important
- * and stores them in one->kbf_use[n].
+ * and stores them in one->state.kbf_use[n].
  *
  * The total number of such transitions
- * is given in one->kbf_nuse.
+ * is given in one->state.kbf_nuse.
  *
  * @details
  *
@@ -650,7 +650,7 @@ kbf_need (freq_min, freq_max)
 
         if (ion[nion].phot_info == 0)   // vfky
         {
-          density = xplasma->density[nion];
+          density = xplasma->state.density[nion];
         }
         else
         {
@@ -669,13 +669,13 @@ kbf_need (freq_min, freq_max)
         if (tau_test > 1.e-6 || phot_top[n].macro_info == TRUE || n == ion[nion].ntop_ground || ion[nion].phot_info == 0)
         {
           /* Store the bf transition and increment nuse */
-          xplasma->kbf_use[nuse] = n;
+          xplasma->state.kbf_use[nuse] = n;
           nuse += 1;
         }
       }
 
     }
-    xplasma->kbf_nuse = nuse;
+    xplasma->state.kbf_nuse = nuse;
   }
 
 
@@ -749,7 +749,7 @@ sobolev (one, x, den_ion, lptr, dvds)
     // macro atom case SS
     d1 = den_config (xplasma, lptr->nconfigl);
     d2 = den_config (xplasma, lptr->nconfigu);
-    levden_upper = xplasma->levden[xconfig[lptr->nconfigu].nden];
+    levden_upper = xplasma->state.levden[xconfig[lptr->nconfigu].nden];
   }
 
   else
@@ -759,19 +759,19 @@ ion which was done above in calculate ds.  It was made necessary by a change in 
 calls to two_level atom
 */
 
-    d_hold = xplasma->density[nion];    // Store the density of this ion in the cell
+    d_hold = xplasma->state.density[nion];      // Store the density of this ion in the cell
 
     if (den_ion < 0)
     {
-      xplasma->density[nion] = get_ion_density (ndom, x, lptr->nion);   // Forced calculation of density
+      xplasma->state.density[nion] = get_ion_density (ndom, x, lptr->nion);     // Forced calculation of density
     }
     else
     {
-      xplasma->density[nion] = den_ion; // Put den_ion into the density array
+      xplasma->state.density[nion] = den_ion;   // Put den_ion into the density array
     }
     two_level_atom (lptr, xplasma, &d1, &d2);   // Calculate d1 & d2
-    xplasma->density[nion] = d_hold;    // Restore w
-    levden_upper = d2 / xplasma->density[nion];
+    xplasma->state.density[nion] = d_hold;      // Restore w
+    levden_upper = d2 / xplasma->state.density[nion];
   }
 
 /* At this point d1 and d2 are known for all of the various ways sobolev can be called, and whether
@@ -1019,12 +1019,14 @@ scatter (p, nres, nnscat)
 
         /* Need to compute the factor needed for the stimulated term. */
 
-        stim_fact = den_config (xplasma, ulvl) / den_config (xplasma, llvl) / xplasma->ne;
+        stim_fact = den_config (xplasma, ulvl) / den_config (xplasma, llvl) / xplasma->state.ne;
 
         gamma_twiddle =
-          mplasma->gamma_old[xconfig[llvl].bfu_indx_first + m] - (mplasma->alpha_st_old[xconfig[llvl].bfu_indx_first + m] * stim_fact);
+          mplasma->state.gamma_old[xconfig[llvl].bfu_indx_first + m] -
+          (mplasma->state.alpha_st_old[xconfig[llvl].bfu_indx_first + m] * stim_fact);
         gamma_twiddle_e =
-          mplasma->gamma_e_old[xconfig[llvl].bfu_indx_first + m] - (mplasma->alpha_st_e_old[xconfig[llvl].bfu_indx_first + m] * stim_fact);
+          mplasma->state.gamma_e_old[xconfig[llvl].bfu_indx_first + m] -
+          (mplasma->state.alpha_st_e_old[xconfig[llvl].bfu_indx_first + m] * stim_fact);
 
         /* Both gamma_twiddles must be greater that zero if this is going to work. If they
            are zero then it's probably because this is the first iteration and so the've not
@@ -1091,7 +1093,7 @@ scatter (p, nres, nnscat)
 
         if (*nres - NLINES - 1 >= 0)
         {
-          xplasma->n_bf_in[*nres - NLINES - 1] += 1;
+          xplasma->derived.n_bf_in[*nres - NLINES - 1] += 1;
 
 
           //  XXXXXXXXXXXXXXXXXX  117 had and inordinate
@@ -1127,7 +1129,7 @@ scatter (p, nres, nnscat)
              to allow for the portion of the energy that went into the ionization pool before
              generating a kpkt.  In this approach we always generate a kpkt */
 
-          xplasma->bf_simple_ionpool_in += p->w * (1 - prob_kpkt);
+          xplasma->derived.bf_simple_ionpool_in += p->w * (1 - prob_kpkt);
           p->w *= prob_kpkt;
 
           macro_gov (p, nres, 2, &which_out);   //routine to deal with kpkt
@@ -1152,7 +1154,7 @@ scatter (p, nres, nnscat)
 
         if (*nres - NLINES - 1 >= 0)
         {
-          xplasma->n_bf_out[*nres - NLINES - 1] += 1;
+          xplasma->derived.n_bf_out[*nres - NLINES - 1] += 1;
         }
       }
       else
@@ -1246,7 +1248,7 @@ if fixed.
       dp_cyl[2] *= (-1);
     for (i = 0; i < 3; i++)
     {
-      xplasma->dmo_dt[i] += dp_cyl[i];
+      xplasma->derived.dmo_dt[i] += dp_cyl[i];
     }
 
   }
