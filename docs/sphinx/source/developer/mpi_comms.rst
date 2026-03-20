@@ -6,7 +6,7 @@ between ranks and should serve as a basic set of instructions for extending or m
 routines.
 
 In general, all calls to MPI are isolated from the rest of SIROCCO. Most, if not all, of the MPI code is contained
-within give source files, which deal entirely with parallelisation or communication. Currently these files are:
+within five source files, which deal entirely with parallelisation or communication. Currently these files are:
 
 - :code:`communicate_macro.c`
 - :code:`communicate_plasma.c`
@@ -153,3 +153,70 @@ Adding a new variable to an existing communication
   there as an example.
 - In the block where :code:`rank != rank_global`, add a new call to :code:`MPI_Unpack` using the code which is already
   there as an example.
+
+Relationship between sub-structures and communication patterns
+==============================================================
+
+The ``plasma_dummy`` and ``macro_dummy`` structures are each divided into three
+sub-structures that correspond directly to different MPI communication patterns.
+This makes it straightforward to determine which communication function to modify
+when adding a new variable:
+
+.. list-table:: Plasma sub-structures and their communication
+   :header-rows: 1
+   :widths: 20 30 25 25
+
+   * - Sub-structure
+     - Contents
+     - Communication
+     - Key functions
+   * - ``state``
+     - Thermodynamic state (``ne``, ``t_e``, ``t_r``, ``w``, ``rho``, ``vol``), ion populations (``density``, ``partition``, ``levden``), spectral model parameters, bound-free data
+     - Broadcast after wind updates
+     - ``broadcast_updated_plasma_properties()``, ``broadcast_plasma_grid()``
+   * - ``est``
+     - Radiation field estimators (``j``, ``ave_freq``), heating rates (``heat_tot``, ``heat_lines``, etc.), photon counters, flux estimators, cell spectra, ionization estimators
+     - Reduced (summed) across ranks after photon transport
+     - ``reduce_simple_estimators()``
+   * - ``derived``
+     - Cooling rates, luminosities, convergence diagnostics, scatter counts, persistent flux averages, ionization parameter (``xi``)
+     - Broadcast after wind updates
+     - ``broadcast_updated_plasma_properties()``, ``broadcast_wind_luminosity()``, ``broadcast_wind_cooling()``
+
+.. list-table:: Macro-atom sub-structures and their communication
+   :header-rows: 1
+   :widths: 20 30 25 25
+
+   * - Sub-structure
+     - Contents
+     - Communication
+     - Key functions
+   * - ``state``
+     - Normalized rate coefficients (``jbar_old``, ``gamma_old``, ``alpha_st_old``, etc.), mode flags
+     - Broadcast after wind updates
+     - ``broadcast_updated_macro_atom_properties()``
+   * - ``est``
+     - Raw Sobolev mean intensities (``jbar``), photoionization rates (``gamma``), stimulated recombination rates (``alpha_st``), macro-atom absorption, cooling stores
+     - Reduced (summed) across ranks after transport
+     - ``reduce_macro_atom_estimators()``
+   * - ``derived``
+     - Macro-atom emissivities (``matom_emiss``), k-packet rate flags, transition probability matrix
+     - Broadcast after computation
+     - ``broadcast_macro_atom_emissivities()``
+
+When adding a new variable, place it in the appropriate sub-structure and update
+the corresponding communication function.  For ``est`` fields, update the reduction
+function.  For ``state`` or ``derived`` fields, update the broadcast function.
+In both cases, remember to update the buffer size calculation (the integer and double
+counts) to account for the new variable.
+
+Future shared-memory model
+--------------------------
+
+The sub-structure split is designed to enable a future MPI-3 shared memory optimization.
+The idea is that ranks on the same node can share a single copy of the ``state`` and
+``derived`` sub-structures (which are read-only during transport) via ``MPI_Win_allocate_shared``,
+while each rank maintains its own private copy of the ``est`` sub-structure for accumulating
+estimators.  After transport, a two-level reduction would sum the estimators: first within
+each node (intra-node), then across nodes (inter-node).  This would significantly reduce
+memory usage for large models run on multi-core nodes.

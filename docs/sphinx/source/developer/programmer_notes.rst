@@ -33,6 +33,76 @@ The main header files  are:
 * sirocco.h - This contains the structures and other data that comprise the wind as well
   as the parameters of the model.  (This is fairly well-documented, or should be)
 
+Plasma and macro-atom sub-structures
+-------------------------------------
+
+The two largest data structures, ``plasma_dummy`` (accessed via ``PlasmaPtr``) and
+``macro_dummy`` (accessed via ``MacroPtr``), are each split into three sub-structures
+that categorize fields by their role during a simulation cycle.  This split makes the
+MPI communication patterns self-documenting and lays the groundwork for a future
+shared-memory optimization where read-only data can be shared between ranks on the
+same node while private estimator data remains per-rank.
+
+The top-level ``plasma_dummy`` struct is:
+
+.. code:: c
+
+    typedef struct plasma {
+        int nwind;                     /* cross-reference to wind cell */
+        int nplasma;                   /* self-reference index */
+        struct plasma_state state;     /* read-only during transport */
+        struct plasma_estimators est;  /* accumulated during transport */
+        struct plasma_derived derived; /* computed during wind updates */
+    } plasma_dummy, *PlasmaPtr;
+
+The three sub-structures are:
+
+* **plasma_state** -- Thermodynamic state, ion/level populations, spectral model
+  parameters, and bound-free process data.  These fields are set during initialization
+  or the wind update phase.  During photon transport, all ranks read them but none
+  write them.  Fields are accessed as ``xplasma->state.ne``, ``xplasma->state.t_e``,
+  ``xplasma->state.density[n]``, etc.
+
+* **plasma_estimators** -- Radiation field estimators (mean intensity, heating rates,
+  ionization rates, flux estimators, photon counters, cell spectra).  Every rank
+  accumulates these independently during photon transport via ``+=``.  After transport,
+  ``reduce_simple_estimators()`` sums them across ranks using ``MPI_Allreduce``.
+  Fields are accessed as ``xplasma->est.j``, ``xplasma->est.heat_tot``,
+  ``xplasma->est.ioniz[n]``, etc.
+
+* **plasma_derived** -- Cooling rates, luminosities, convergence diagnostics,
+  per-ion recombination/scattering counts, persistent flux averages, and the
+  ionization parameter.  These are computed from the estimators during the wind
+  update phase.  Each rank computes its assigned partition of cells, then broadcasts
+  to all ranks via ``broadcast_updated_plasma_properties()``.
+  Fields are accessed as ``xplasma->derived.lum_tot``, ``xplasma->derived.cool_comp``,
+  ``xplasma->derived.xi``, etc.
+
+The ``macro_dummy`` struct follows the same pattern:
+
+.. code:: c
+
+    typedef struct macro {
+        struct macro_state state;      /* normalized rates, read-only during transport */
+        struct macro_estimators est;   /* raw estimators, accumulated during transport */
+        struct macro_derived derived;  /* computed quantities, broadcast after wind updates */
+    } macro_dummy, *MacroPtr;
+
+* **macro_state** -- Normalized rate coefficients (``jbar_old``, ``gamma_old``, etc.)
+  and mode flags.  Set before transport, read-only during it.
+* **macro_estimators** -- Raw Sobolev mean intensities, photoionization rates,
+  stimulated recombination rates, and macro-atom cooling stores.  Accumulated during
+  transport and reduced across ranks.
+* **macro_derived** -- Macro-atom emissivities, k-packet rate flags, and the
+  transition probability matrix.  Computed during wind updates and broadcast.
+
+When adding a new field to the plasma or macro-atom grid, place it in the
+appropriate sub-structure based on when it is read and written:
+
+* If it is set during initialization/wind updates and only read during transport → ``state``
+* If it is accumulated (``+=``) during transport and reduced across ranks → ``est``
+* If it is computed from estimators during wind updates and then broadcast → ``derived``
+
 
 Program Flow
 ============
@@ -67,20 +137,22 @@ Parallel Operation
 SIROCCO uses MPI to parallelize the most compute intensive portions of the routine.  It has
 been run on large machines with 100s of cores without problem.
 
-The portions of the routine that are parallelize are:
+The portions of the routine that are parallelized are:
 
-* Photon generation and transfer: When run in multiprocesser mode, each thread creates only a
+* Photon generation and transfer: When run in multiprocessor mode, each thread creates only a
   fraction of the total number of photons.  The weight of the photons in each thread is such
   that the sum of the weights is the total energy expected to be produced in one observer frame second.
-  These photons are propagated through the wind, and estimators based on these photons are accumulated.
-  At the end of photon transfer by all threads, the various quantities, including the spectra,  that
-  have been accumulated in the separate threads are gathered together and averaged or summed as
-  appropriate.  For ionization cycles, this means that all of the data needed to calculate the
+  These photons are propagated through the wind, and estimators based on these photons are accumulated
+  in the ``est`` sub-structures of ``plasmamain`` and ``macromain``.
+  At the end of photon transfer by all threads, the estimators
+  are reduced (summed) across ranks via ``reduce_simple_estimators()`` and
+  ``reduce_macro_atom_estimators()``, so that all of the data needed to calculate the
   ionization in any cell is available on each of the threads.
 * Ionization calculation:  Although all of the threads have all of the data needed to calculate
   the ionization in any cell, in practice what happens is that the program assigns a different set of
   cells to each thread to calculate the ionization.  After the thread calculates the new ionization
-  state for its assigned cells, the ionization states are then gathered back and broadcast to all
+  state for its assigned cells, the results (stored in the ``state`` and ``derived`` sub-structures)
+  are then gathered back and broadcast to all
   of the threads, in preparation for the next cycle.
 * Preparation for detailed radiative transfer in the macro-atom mode.  When photons go through the
   grid in the simple-atom mode, photon frequencies do not change a great deal, however in macro-atom
@@ -94,9 +166,10 @@ The portions of the routine that are parallelize are:
   the radiative transfer step in the detailed spectrum phase.
 
 
-MPI requires intialization. For SIROCCO this is carried out in sirocco.c.  Various subroutines make
+MPI requires initialization. For SIROCCO this is carried out in sirocco.c.  Various subroutines make
 use of MPI, and as a result, programmers need to be aware of this fact when they write auxiliary
-routines that use the various subroutines called by SIROCCO.
+routines that use the various subroutines called by SIROCCO.  See :doc:`mpi_comms` for details
+on the communication patterns and how they relate to the plasma and macro-atom sub-structures.
 
 Input naming conventions
 ========================
