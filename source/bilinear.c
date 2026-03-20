@@ -103,17 +103,15 @@
  **********************************************************/
 
 int
-bilin (x, x00, x01, x10, x11, f, g)
-     double x[], x00[], x01[], x10[], x11[];
-     double *f, *g;
-
+bilin (double x[], double x00[], double x01[], double x10[], double x11[], double *f, double *g)
 {
   double z;
   double root[2];
   double a, b, c, d;
   double q[3], r[3], s[3], t[3];
   double zz[3];
-  int i, quadratic ();
+  int i;
+  int quadratic (double a, double b, double c, double r[]);
   void Exit (int error_code);
 
 

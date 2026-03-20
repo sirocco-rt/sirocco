@@ -23,17 +23,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <sys/stat.h>
 
 #include "atomic.h"
 #include "sirocco.h"
 
+int create_matom_level_map (void);
 
 char inroot[LINELENGTH], outroot[LINELENGTH], model_file[LINELENGTH], folder[LINELENGTH];
 int model_flag, ksl_flag, cmf2obs_flag, obs2cmf_flag;
 
 double line_matom_lum_single (double lum[], PlasmaPtr xplasma, int uplvl);
 int line_matom_lum (int uplvl);
-int create_matom_level_map ();
 
 /**********************************************************/
 /**
@@ -56,14 +57,11 @@ int create_matom_level_map ();
  **********************************************************/
 
 int
-xparse_command_line (argc, argv)
-     int argc;
-     char *argv[];
+xparse_command_line (int argc, char *argv[])
 {
   int j = 0;
   int i;
   char dummy[LINELENGTH];
-  int mkdir ();
   char *fgets_rc;
 
 
@@ -178,16 +176,13 @@ xparse_command_line (argc, argv)
 
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
 
   char infile[LINELENGTH], outfile[LINELENGTH];
   int n, i;
-  FILE *fptr, *fopen ();
+  FILE *fptr;
   int ii, jj, ndom, nnwind;
-  int mkdir ();
 
 
   xparse_command_line (argc, argv);
@@ -398,7 +393,7 @@ create_matom_level_map ()
 {
   int uplvl, nbbd, n;
   char outfile[LINELENGTH];
-  FILE *fptr, *fopen ();
+  FILE *fptr;
 
   /* open a file in the folder where we store the matom line luminosities */
   sprintf (outfile, "%.200s/line_map.txt", folder);
@@ -430,13 +425,12 @@ create_matom_level_map ()
  **********************************************************/
 
 int
-line_matom_lum (uplvl)
-     int uplvl;
+line_matom_lum (int uplvl)
 {
   int n, nbbd, i, ii, jj, nnwind, ndom, inwind;
   double lum[NBBJUMPS];
   char outfile[LINELENGTH];
-  FILE *fptr, *fopen ();
+  FILE *fptr;
 
   nbbd = xconfig[uplvl].n_bbd_jump;
 
@@ -516,10 +510,7 @@ line_matom_lum (uplvl)
  **********************************************************/
 
 double
-line_matom_lum_single (lum, xplasma, uplvl)
-     double lum[];
-     PlasmaPtr xplasma;
-     int uplvl;
+line_matom_lum_single (double lum[], PlasmaPtr xplasma, int uplvl)
 {
   int n, nbbd, m;
   double penorm, bb_cont;

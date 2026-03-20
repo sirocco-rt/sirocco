@@ -172,9 +172,7 @@ wind_luminosity (double f1, double f2, int mode)
  **********************************************************/
 
 double
-total_emission (xplasma, f1, f2)
-     PlasmaPtr xplasma;
-     double f1, f2;
+total_emission (PlasmaPtr xplasma, double f1, double f2)
 {
   double t_e;
 
@@ -270,11 +268,7 @@ total_emission (xplasma, f1, f2)
 #define BOUND_BOUND 2
 
 int
-photo_gen_wind (p, weight, freqmin, freqmax, photstart, nphot)
-     PhotPtr p;
-     double weight;
-     double freqmin, freqmax;
-     int photstart, nphot;
+photo_gen_wind (PhotPtr p, double weight, double freqmin, double freqmax, int photstart, int nphot)
 {
   int nn, np;
   int kkk;
@@ -486,9 +480,7 @@ photo_gen_wind (p, weight, freqmin, freqmax, photstart, nphot)
  **********************************************************/
 
 double
-one_line (xplasma, nres)
-     PlasmaPtr xplasma;
-     int *nres;
+one_line (PlasmaPtr xplasma, int *nres)
 {
   double xlum, xlumsum;
   int m;
@@ -554,10 +546,7 @@ one_line (xplasma, nres)
  **********************************************************/
 
 double
-total_free (xplasma, t_e, f1, f2)
-     PlasmaPtr xplasma;
-     double t_e;
-     double f1, f2;
+total_free (PlasmaPtr xplasma, double t_e, double f1, double f2)
 {
   double g_ff_h, g_ff_he;
   double gaunt;
@@ -649,9 +638,7 @@ int ff_nplasma = -100;
 double ff_t_e = -100.;
 
 double
-ff (xplasma, t_e, freq)
-     PlasmaPtr xplasma;
-     double t_e, freq;
+ff (PlasmaPtr xplasma, double t_e, double freq)
 {
   double g_ff_h, g_ff_he;
   double fnu;
@@ -813,8 +800,7 @@ one_ff (xplasma, f1, f2)
  **********************************************************/
 
 double
-gaunt_ff (gsquared)
-     double gsquared;
+gaunt_ff (double gsquared)
 {
   int i, index;
   double gaunt;

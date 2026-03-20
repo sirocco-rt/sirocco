@@ -64,9 +64,7 @@
  **********************************************************/
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
 //OLD  WindPtr w;
 

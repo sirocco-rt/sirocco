@@ -59,11 +59,7 @@ double xexp_temp, xexp_w;
  **********************************************************/
 
 double
-calc_pi_rate (nion, xplasma, mode, type)
-     int nion;
-     PlasmaPtr xplasma;
-     int mode;
-     int type;
+calc_pi_rate (int nion, PlasmaPtr xplasma, int mode, int type)
 {
   int j;
   double pi_rate;

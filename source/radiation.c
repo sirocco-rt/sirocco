@@ -528,12 +528,9 @@ radiation (PhotPtr p, double ds)
  **********************************************************/
 
 double
-kappa_ff (xplasma, freq)
-     PlasmaPtr xplasma;
-     double freq;
+kappa_ff (PlasmaPtr xplasma, double freq)
 {
   double x;
-  double exp ();
   double x1, x2, x3;
   int ndom;
 
@@ -598,14 +595,11 @@ kappa_ff (xplasma, freq)
  **********************************************************/
 
 double
-sigma_phot (x_ptr, freq)
-     struct topbase_phot *x_ptr;
-     double freq;
+sigma_phot (struct topbase_phot *x_ptr, double freq)
 {
   int nmax;
   double xsection;
   double frac, fbot, ftop;
-  int linterp ();
   int nlast;
 
   if (freq < x_ptr->freq[0])
@@ -667,9 +661,7 @@ sigma_phot (x_ptr, freq)
  **********************************************************/
 
 double
-den_config (xplasma, nconf)
-     PlasmaPtr xplasma;
-     int nconf;
+den_config (PlasmaPtr xplasma, int nconf)
 {
   double density;
   int nnlev, nion;
@@ -800,10 +792,7 @@ pop_kappa_ff_array ()
  **********************************************************/
 
 double
-mean_intensity (xplasma, freq, mode)
-     PlasmaPtr xplasma;
-     double freq;
-     int mode;
+mean_intensity (PlasmaPtr xplasma, double freq, int mode)
 {
   double j_bar;
 

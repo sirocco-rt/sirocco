@@ -57,14 +57,11 @@ int model_flag, ksl_flag, cmf2obs_flag, obs2cmf_flag;
  **********************************************************/
 
 int
-xparse_command_line (argc, argv)
-     int argc;
-     char *argv[];
+xparse_command_line (int argc, char *argv[])
 {
   int j = 0;
   int i;
   char dummy[LINELENGTH];
-  int mkdir ();
   char *fgets_rc;
 
 
@@ -179,17 +176,15 @@ xparse_command_line (argc, argv)
 
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
 
   double *den;
   char name[LINELENGTH];        /* file name extension */
   char infile[LINELENGTH], outfile[LINELENGTH];
-  int put_ion ();
-  int apply_model ();
-  int frame_transform ();
+  int put_ion (int ndom, int element, int istate, double *den);
+  int apply_model (int ndom, char *filename);
+  int frame_transform (int ndom);
   int ndom;
   int i;
 
@@ -272,9 +267,7 @@ main (argc, argv)
  **********************************************************/
 
 int
-put_ion (ndom, element, istate, den)
-     int ndom, element, istate;
-     double *den;
+put_ion (int ndom, int element, int istate, double *den)
 {
   int i, n;
   int nion;
@@ -312,9 +305,7 @@ put_ion (ndom, element, istate, den)
 
 
 int
-apply_model (ndom, filename)
-     int ndom;
-     char *filename;
+apply_model (int ndom, char *filename)
 {
   int ndim, mdim;
 //OLD  int nstart, n, nion, nplasma;
@@ -389,8 +380,7 @@ apply_model (ndom, filename)
 
 
 int
-frame_transform (ndom)
-     int ndom;
+frame_transform (int ndom)
 {
   int n, nion;
   double factor;                //This will either be gamma or 1/gamma

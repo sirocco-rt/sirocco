@@ -47,9 +47,7 @@
  **********************************************************/
 
 int
-levels (xplasma, mode)
-     PlasmaPtr xplasma;
-     int mode;
+levels (PlasmaPtr xplasma, int mode)
 {
   double t, weight;
   int n, m;

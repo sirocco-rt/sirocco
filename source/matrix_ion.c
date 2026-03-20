@@ -52,10 +52,7 @@
  **********************************************************/
 
 int
-matrix_ion_populations (xplasma, mode)
-     PlasmaPtr xplasma;
-     int mode;
-
+matrix_ion_populations (PlasmaPtr xplasma, int mode)
 {
   double elem_dens[NELEMENTS];  //The density of each element
   int nn, mm, nrows;
@@ -442,15 +439,8 @@ matrix_ion_populations (xplasma, mode)
  **********************************************************/
 
 int
-populate_ion_rate_matrix (rate_matrix, pi_rates, inner_rates, rr_rates, b_temp, xne, nh1, nh2)
-     double rate_matrix[nions][nions];
-     double pi_rates[nions];
-     double inner_rates[n_inner_tot];
-     double rr_rates[nions];
-     double xne;
-     double b_temp[nions];
-     double nh1, nh2;
-
+populate_ion_rate_matrix (double rate_matrix[nions][nions], double pi_rates[nions], double inner_rates[n_inner_tot], double rr_rates[nions],
+                          double b_temp[nions], double xne, double nh1, double nh2)
 {
 //  int nn, mm, zcount;
   int nn, mm;

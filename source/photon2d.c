@@ -139,8 +139,7 @@ translate (w, pp, tau_scat, tau, nres)
  **********************************************************/
 
 int
-translate_in_space (pp)
-     PhotPtr pp;
+translate_in_space (PhotPtr pp)
 {
   //OLD double ds, delta, s, smax, prhosq;
   double ds, delta, s, smax;
@@ -277,9 +276,7 @@ translate_in_space (pp)
  **********************************************************/
 
 double
-ds_to_wind (pp, ndom_current)
-     PhotPtr pp;
-     int *ndom_current;
+ds_to_wind (PhotPtr pp, int *ndom_current)
 {
   struct photon ptest, qtest;
   double ds, x, rho, z;
@@ -671,10 +668,7 @@ smax_in_cell (PhotPtr p)
  **********************************************************/
 
 double
-ds_in_cell (ndom, p)
-     int ndom;
-     PhotPtr p;
-
+ds_in_cell (int ndom, PhotPtr p)
 {
   int n;
   double smax;

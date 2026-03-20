@@ -56,9 +56,7 @@ double wig_x, wig_y, wig_z;
  **********************************************************/
 
 int
-where_in_grid (ndom, x)
-     int ndom;
-     double x[];
+where_in_grid (int ndom, double x[])
 {
   int n;
   double fx, fz;
@@ -160,10 +158,7 @@ struct vwind
 } xvwind[NVWIND];
 
 int
-vwind_xyz (ndom, p, v)
-     int ndom;
-     PhotPtr p;
-     double v[];
+vwind_xyz (int ndom, PhotPtr p, double v[])
 {
   int i;
   double rho, r;
@@ -321,9 +316,7 @@ wind_div_v (int ndom, WindPtr cell)
  **********************************************************/
 
 double
-rho (w, x)
-     WindPtr w;
-     double x[];
+rho (WindPtr w, double x[])
 {
   int n;
   double dd;
@@ -399,9 +392,9 @@ mdot_wind (w, z, rmax)
   struct photon p;
   double r, dr, rmin;
   double theta, dtheta;
-  double den, rho ();
+  double den;
   double mdot, mplane, msphere;
-  double x[3], v[3], q[3], dot ();
+  double x[3], v[3], q[3];
   int ndom;
 
   ndom = 0;
@@ -569,8 +562,7 @@ zero_scatters ()
  **********************************************************/
 
 int
-check_corners_inwind (n)
-     int n;
+check_corners_inwind (int n)
 {
   int n_inwind;
   int i, j;

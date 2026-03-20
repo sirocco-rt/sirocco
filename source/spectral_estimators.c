@@ -53,8 +53,7 @@ double lspec_numin, lspec_numax;
  **********************************************************/
 
 int
-spectral_estimators (xplasma)
-     PlasmaPtr xplasma;
+spectral_estimators (PlasmaPtr xplasma)
 {
   double pl_alpha_min, pl_alpha_max, pl_alpha_temp, pl_w_temp, j;
   double exp_temp_min, exp_temp_max, exp_temp_store;    /* The 'temperature' range we are going to search for an effective temperature for the exponential model */
@@ -410,9 +409,7 @@ pl_alpha_func_log2 (double alpha, void *params)
  **********************************************************/
 
 double
-pl_logmean (alpha, lnumin, lnumax)
-     double alpha;
-     double lnumin, lnumax;
+pl_logmean (double alpha, double lnumin, double lnumax)
 {
   double k, answer, numerator, denominator, a, b, c, d;
 
@@ -578,9 +575,7 @@ exp_temp_func2 (double exp_temp, void *params)
  **********************************************************/
 
 double
-exp_mean (exp_temp, numin, numax)
-     double exp_temp;
-     double numin, numax;
+exp_mean (double exp_temp, double numin, double numax)
 {
   double answer, numerator, denominator;
   double exp1;                  /* We supply a temperature, but actually we expect the correct function to be of the form e^-hnu/kt, so this will hold -1*h/kt */

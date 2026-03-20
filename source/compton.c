@@ -158,9 +158,7 @@ compton_scatter (p)
  **********************************************************/
 
 double
-kappa_comp (xplasma, freq)
-     PlasmaPtr xplasma;
-     double freq;
+kappa_comp (PlasmaPtr xplasma, double freq)
 {
   double x;
   double sigma;                 /*The cross section, thompson, or KN if hnu/mec2 > 0.01 */
@@ -201,9 +199,7 @@ kappa_comp (xplasma, freq)
  **********************************************************/
 
 double
-kappa_ind_comp (xplasma, freq)
-     PlasmaPtr xplasma;
-     double freq;
+kappa_ind_comp (PlasmaPtr xplasma, double freq)
 {
   double x;
   double sigma;                 /*The cross section, thompson, or KN if hnu/mec2 > 0.01 */
@@ -277,9 +273,7 @@ kappa_ind_comp (xplasma, freq)
  **********************************************************/
 
 double
-total_comp (one, t_e)
-     WindPtr one;
-     double t_e;
+total_comp (WindPtr one, double t_e)
 {
   double x, f1, f2;
   int nplasma, j;
@@ -566,8 +560,7 @@ pdf_thermal (double x, void *params)
 
 
 int
-compton_get_thermal_velocity (t, v)
-     double t, *v;
+compton_get_thermal_velocity (double t, double *v)
 {
   double vel;
 
@@ -687,8 +680,7 @@ sigma_compton_partial (f, x)
  **********************************************************/
 
 double
-compton_alpha (nu)
-     double nu;
+compton_alpha (double nu)
 {
   double alpha;
   if (nu < 1e17)
@@ -719,8 +711,7 @@ compton_alpha (nu)
  **********************************************************/
 
 double
-compton_beta (nu)
-     double nu;
+compton_beta (double nu)
 {
   double alp, beta;
   if (nu < 1e17)
@@ -790,8 +781,7 @@ comp_cool_integrand (double nu, void *params)
 
 
 double
-compton_reweight_norm (nu)
-     double nu;
+compton_reweight_norm (double nu)
 {
   double v;
   double x1, x2, x3, x4, x5, xx;
@@ -840,10 +830,7 @@ compton_reweight_norm (nu)
 
 
 int
-compton_reweight (p_in, p_out)
-     PhotPtr p_in, p_out;
-
-
+compton_reweight (PhotPtr p_in, PhotPtr p_out)
 {
   double nu_in, nu_out, xr, reweight;
   double theta, ctheta;

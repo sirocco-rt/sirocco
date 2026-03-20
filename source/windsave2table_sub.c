@@ -49,10 +49,7 @@ int xedge = FALSE;
  **********************************************************/
 
 int
-do_windsave2table (root, ion_switch, edge_switch)
-     char *root;
-     int ion_switch;
-     int edge_switch;
+do_windsave2table (char *root, int ion_switch, int edge_switch)
 {
   int ndom, i;
   char rootname[LINELENGTH];
@@ -148,9 +145,7 @@ do_windsave2table (root, ion_switch, edge_switch)
  **********************************************************/
 
 int
-create_master_table (ndom, rootname)
-     int ndom;
-     char rootname[];
+create_master_table (int ndom, char rootname[])
 {
   char filename[132];
   double *c[51], *converge;
@@ -413,9 +408,7 @@ create_master_table (ndom, rootname)
  **********************************************************/
 
 int
-create_heat_table (ndom, rootname)
-     int ndom;
-     char rootname[];
+create_heat_table (int ndom, char rootname[])
 {
   char filename[132];
   double *c[50], *converge;
@@ -649,9 +642,7 @@ create_heat_table (ndom, rootname)
  **********************************************************/
 
 int
-create_convergence_table (ndom, rootname)
-     int ndom;
-     char rootname[];
+create_convergence_table (int ndom, char rootname[])
 {
   char filename[132];
   double *c[50], *converge;
@@ -849,9 +840,7 @@ create_convergence_table (ndom, rootname)
  **********************************************************/
 
 int
-create_velocity_gradient_table (ndom, rootname)
-     int ndom;
-     char rootname[];
+create_velocity_gradient_table (int ndom, char rootname[])
 {
   char filename[132];
   double *c[50], *converge;
@@ -1031,11 +1020,7 @@ create_velocity_gradient_table (ndom, rootname)
  **********************************************************/
 
 int
-create_ion_table (ndom, rootname, iz, ion_switch)
-     int ndom;
-     char rootname[];
-     int iz;
-     int ion_switch;
+create_ion_table (int ndom, char rootname[], int iz, int ion_switch)
 {
   char filename[132];
   double *c[100];
@@ -1197,9 +1182,7 @@ create_ion_table (ndom, rootname, iz, ion_switch)
  **********************************************************/
 
 double *
-get_ion (ndom, element, istate, iswitch, name)
-     int ndom, element, istate, iswitch;
-     char *name;
+get_ion (int ndom, int element, int istate, int iswitch, char *name)
 {
   int nion, nelem;
   int n;
@@ -1329,9 +1312,7 @@ get_ion (ndom, element, istate, iswitch, name)
  **********************************************************/
 
 double *
-get_one (ndom, variable_name)
-     int ndom;
-     char variable_name[];
+get_one (int ndom, char variable_name[])
 {
   int n;
   int nplasma;
@@ -1664,11 +1645,7 @@ get_one (ndom, variable_name)
  **********************************************************/
 
 int
-get_one_array_element (ndom, variable_name, array_dim, xval)
-     int ndom;
-     char variable_name[];
-     int array_dim;
-     double xval[];
+get_one_array_element (int ndom, char variable_name[], int array_dim, double xval[])
 {
   int j, n;
   int nplasma;
@@ -1799,9 +1776,7 @@ get_one_array_element (ndom, variable_name, array_dim, xval)
  **********************************************************/
 
 int
-create_spec_table (ndom, rootname)
-     int ndom;
-     char rootname[];
+create_spec_table (int ndom, char rootname[])
 {
   char filename[132];
   double *c[50], *converge;
@@ -2044,9 +2019,7 @@ create_spec_table (ndom, rootname)
  **********************************************************/
 
 int
-create_detailed_cell_spec_table (ncell, rootname)
-     int ncell;
-     char rootname[];
+create_detailed_cell_spec_table (int ncell, char rootname[])
 {
   FILE *fptr;
   char filename[132];
@@ -2120,9 +2093,7 @@ create_detailed_cell_spec_table (ncell, rootname)
  **********************************************************/
 
 int
-create_big_detailed_spec_table (ndom, rootname)
-     int ndom;
-     char *rootname;
+create_big_detailed_spec_table (int ndom, char *rootname)
 {
   char column_name[MAX_COLUMNS][20];
   int nplasma[MAX_COLUMNS], ii, jj, ncols;

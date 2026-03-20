@@ -200,13 +200,10 @@ double old_d1, old_d2, old_n2_over_n1;
 
 
 double
-two_level_atom (line_ptr, xplasma, d1, d2)
-     struct lines *line_ptr;
-     PlasmaPtr xplasma;
-     double *d1, *d2;
+two_level_atom (struct lines *line_ptr, PlasmaPtr xplasma, double *d1, double *d2)
 {
-  double a, a21 ();
-  double q, q21 (), c12, c21;
+  double a;
+  double q, c12, c21;
   double freq;
   double g2_over_g1;
   double n2_over_n1;
@@ -359,9 +356,7 @@ ERROR -- or conceptually
  **********************************************************/
 
 double
-line_nsigma (line_ptr, xplasma)
-     struct lines *line_ptr;
-     PlasmaPtr xplasma;
+line_nsigma (struct lines *line_ptr, PlasmaPtr xplasma)
 {
   double d1, d2, x;
 
@@ -418,9 +413,7 @@ excited by radiation and return to the ground state via spontaneous emission.
  **********************************************************/
 
 double
-scattering_fraction (line_ptr, xplasma)
-     struct lines *line_ptr;
-     PlasmaPtr xplasma;
+scattering_fraction (struct lines *line_ptr, PlasmaPtr xplasma)
 {
   double q, escape;
   double a, c, z;
@@ -494,11 +487,9 @@ double pe_escape;
  **********************************************************/
 
 double
-p_escape (line_ptr, xplasma)
-     struct lines *line_ptr;
-     PlasmaPtr xplasma;
+p_escape (struct lines *line_ptr, PlasmaPtr xplasma)
 {
-  double tau, two_level_atom ();
+  double tau;
   double escape;
   double ne, te;
   double dd;                    /* density of the relevent ion */
@@ -574,8 +565,7 @@ p_escape (line_ptr, xplasma)
  **********************************************************/
 
 double
-p_escape_from_tau (tau)
-     double tau;
+p_escape_from_tau (double tau)
 {
   double escape;
 
@@ -620,10 +610,7 @@ p_escape_from_tau (tau)
  **********************************************************/
 
 int
-line_heat (xplasma, pp, nres)
-     PlasmaPtr xplasma;
-     PhotPtr pp;
-     int nres;
+line_heat (PlasmaPtr xplasma, PhotPtr pp, int nres)
 {
   double x, sf;
 

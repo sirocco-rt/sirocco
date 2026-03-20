@@ -54,8 +54,7 @@
  **********************************************************/
 
 int
-xtemp_rad (w)
-     WindPtr w;
+xtemp_rad (WindPtr w)
 {
   int i, j, n;
   double x;

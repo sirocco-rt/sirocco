@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <sys/stat.h>
 
 #include "atomic.h"
 #include "sirocco.h"
@@ -47,14 +48,11 @@
  **********************************************************/
 
 int
-parse_command_line (argc, argv)
-     int argc;
-     char *argv[];
+parse_command_line (int argc, char *argv[])
 {
   int restart_stat, verbosity, max_errors, i;
   int j = 0;
   char dummy[LINELENGTH];
-  int mkdir ();
   double time_max;
   char *fgets_rc;
   double x;

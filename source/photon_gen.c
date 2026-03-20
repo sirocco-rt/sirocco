@@ -238,11 +238,7 @@ define_phot (p, f1, f2, nphot_tot, ioniz_or_extract, iwind, freq_sampling)
  **********************************************************/
 
 double
-populate_bands (ioniz_or_extract, iwind, band)
-     int ioniz_or_extract;
-     int iwind;
-     struct xbands *band;
-
+populate_bands (int ioniz_or_extract, int iwind, struct xbands *band)
 {
   double ftot, frac_used, z;
   int n, nphot, most, nphot_rad;
@@ -355,12 +351,7 @@ populate_bands (ioniz_or_extract, iwind, band)
  **********************************************************/
 
 int
-xdefine_phot (f1, f2, ioniz_or_extract, iwind, print_mode, tot_flag)
-     double f1, f2;
-     int ioniz_or_extract;
-     int iwind;
-     int print_mode;
-     int tot_flag;
+xdefine_phot (double f1, double f2, int ioniz_or_extract, int iwind, int print_mode, int tot_flag)
 {
   /* First determine if you need to reinitialize because the frequency boundaries are
      different than previously */
@@ -818,12 +809,10 @@ stellar photons */
  **********************************************************/
 
 int
-star_init (freqmin, freqmax, ioniz_or_extract, f)
-     double freqmin, freqmax, *f;
-     int ioniz_or_extract;
+star_init (double freqmin, double freqmax, int ioniz_or_extract, double *f)
 {
   double r, tstar, log_g;
-  double emit, emittance_bb (), emittance_continuum ();
+  double emit;
   int spectype;
 
   log_g = geo.gstar = log10 (GRAV * geo.mstar / (geo.rstar * geo.rstar));
@@ -1023,12 +1012,9 @@ photo_gen_star (p, r, t, weight, f1, f2, spectype, istart, nphot)
  **********************************************************/
 
 double
-bl_init (lum_bl, t_bl, freqmin, freqmax, ioniz_or_extract, f)
-     double lum_bl, t_bl, freqmin, freqmax, *f;
-     int ioniz_or_extract;
+bl_init (double lum_bl, double t_bl, double freqmin, double freqmax, int ioniz_or_extract, double *f)
 {
 //OLD  double q1;
-  double integ_planck_d ();
 //OLD  double alphamin, alphamax;
 
 //OLD  q1 = 2. * PI * (BOLTZMANN * BOLTZMANN * BOLTZMANN * BOLTZMANN) / (PLANCK * PLANCK * PLANCK * VLIGHT * VLIGHT);
@@ -1085,10 +1071,7 @@ bl_init (lum_bl, t_bl, freqmin, freqmax, ioniz_or_extract, f)
  **********************************************************/
 
 int
-photon_checks (p, freqmin, freqmax, comment)
-     char *comment;
-     PhotPtr p;
-     double freqmin, freqmax;
+photon_checks (PhotPtr p, double freqmin, double freqmax, char *comment)
 {
   int nnn, nn;
   int nlabel;

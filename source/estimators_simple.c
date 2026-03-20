@@ -75,12 +75,7 @@ int previous_nplasma = -1;
 int previous_np = -1;
 
 int
-update_banded_estimators (xplasma, p, ds, w_ave, ndom)
-     PlasmaPtr xplasma;
-     PhotPtr p;
-     double ds;
-     double w_ave;
-     int ndom;
+update_banded_estimators (PlasmaPtr xplasma, PhotPtr p, double ds, double w_ave, int ndom)
 {
   int i;
   double log_freq;
@@ -266,12 +261,7 @@ update_banded_estimators (xplasma, p, ds, w_ave, ndom)
 
 
 int
-update_flux_estimators (xplasma, phot_mid, ds_obs, w_ave, ndom)
-     PlasmaPtr xplasma;
-     PhotPtr phot_mid;
-     double ds_obs;
-     double w_ave;
-     int ndom;
+update_flux_estimators (PlasmaPtr xplasma, PhotPtr phot_mid, double ds_obs, double w_ave, int ndom)
 {
   double flux[3];
   double flux_orig[3];
@@ -394,11 +384,8 @@ update_flux_estimators (xplasma, phot_mid, ds_obs, w_ave, ndom)
 
 
 int
-update_force_estimators (xplasma, p, phot_mid, ds, w_ave, ndom, z, frac_ff, frac_auger, frac_tot)
-     PlasmaPtr xplasma;
-     PhotPtr p, phot_mid;
-     double ds, w_ave, z, frac_ff, frac_tot, frac_auger;
-     int ndom;
+update_force_estimators (PlasmaPtr xplasma, PhotPtr p, PhotPtr phot_mid, double ds, double w_ave, int ndom, double z, double frac_ff,
+                         double frac_auger, double frac_tot)
 {
   int i;
   double p_out[3], dp_cyl[3];
@@ -579,8 +566,7 @@ estimate_temperature_from_mean_frequency (double mean_nu_target, double nu_min, 
 #define BAND_CORRECTED_TRAD FALSE
 
 int
-normalise_simple_estimators (xplasma)
-     PlasmaPtr xplasma;
+normalise_simple_estimators (PlasmaPtr xplasma)
 {
   int i, j, nwind;
   double radiation_temperature, nh, wtest;

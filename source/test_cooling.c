@@ -34,7 +34,6 @@ int model_flag, ksl_flag, cmf2obs_flag, obs2cmf_flag;
 
 double line_matom_lum_single (double lum[], PlasmaPtr xplasma, int uplvl);
 int line_matom_lum (int uplvl);
-int create_matom_level_map ();
 
 /**********************************************************/
 /**
@@ -57,14 +56,11 @@ int create_matom_level_map ();
  **********************************************************/
 
 int
-xparse_command_line (argc, argv)
-     int argc;
-     char *argv[];
+xparse_command_line (int argc, char *argv[])
 {
   int j = 0;
   int i;
   char dummy[LINELENGTH];
-  int mkdir ();
   char *fgets_rc;
 
 
@@ -261,16 +257,13 @@ xcalc_te (PlasmaPtr xplasma, double tmin, double tmax)
 
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
 
   char infile[LINELENGTH], outfile[LINELENGTH];
   int n, i;
-  FILE *fptr, *fopen ();
+  FILE *fptr;
   int ii, jj, ndom, nnwind;
-  int mkdir ();
 
 
   xparse_command_line (argc, argv);

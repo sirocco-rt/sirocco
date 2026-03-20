@@ -76,13 +76,7 @@ const double MAXDIFF = VCHECK / VLIGHT;
 
 
 double
-calculate_ds (w, p, tau_scat, tau, nres, smax, istat)
-     WindPtr w;
-     PhotPtr p;
-     double tau_scat, *tau;
-     int *nres;
-     double smax;
-     int *istat;
+calculate_ds (WindPtr w, PhotPtr p, double tau_scat, double *tau, int *nres, double smax, int *istat)
 {
   int nion_for_resonance;
   int n, current_res_number, nstart, ndelt;
@@ -455,9 +449,7 @@ calculate_ds (w, p, tau_scat, tau, nres, smax, istat)
  **********************************************************/
 
 int
-select_continuum_scattering_process (kap_cont, kap_es, kap_ff, xplasma)
-     double kap_cont, kap_es, kap_ff;
-     PlasmaPtr xplasma;
+select_continuum_scattering_process (double kap_cont, double kap_es, double kap_ff, PlasmaPtr xplasma)
 {
   int nres;
   double threshold;
@@ -528,12 +520,7 @@ select_continuum_scattering_process (kap_cont, kap_es, kap_ff, xplasma)
  **********************************************************/
 
 double
-kappa_bf (xplasma, freq, macro_all)
-     PlasmaPtr xplasma;
-     double freq;
-     int macro_all;
-
-
+kappa_bf (PlasmaPtr xplasma, double freq, int macro_all)
 {
   double kap_bf_tot;
   double ft;
@@ -617,10 +604,7 @@ kappa_bf (xplasma, freq, macro_all)
  **********************************************************/
 
 int
-kbf_need (freq_min, freq_max)
-     double freq_min, freq_max;
-
-
+kbf_need (double freq_min, double freq_max)
 {
   int nconf;
   double density;
@@ -711,12 +695,7 @@ int sobolev_error_counter = 0;
  *
  **********************************************************/
 double
-sobolev (one, x, den_ion, lptr, dvds)
-     WindPtr one;
-     double x[];
-     double den_ion;
-     struct lines *lptr;
-     double dvds;
+sobolev (WindPtr one, double x[], double den_ion, struct lines *lptr, double dvds)
 {
   double tau, xden_ion, tau_x_dvds, levden_upper;
   double d1, d2;
@@ -884,10 +863,7 @@ calls to two_level atom
  **********************************************************/
 
 int
-scatter (p, nres, nnscat)
-     PhotPtr p;
-     int *nres;
-     int *nnscat;
+scatter (PhotPtr p, int *nres, int *nnscat)
 {
   double z_prime[3];
   int which_out;

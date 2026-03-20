@@ -60,9 +60,7 @@
  **********************************************************/
 
 double
-compute_zeta (temp, nion, mode)
-     double temp;
-     int mode, nion;
+compute_zeta (double temp, int nion, int mode)
 {
   double zeta, interpfrac, dummy;
   int ihi, ilow;

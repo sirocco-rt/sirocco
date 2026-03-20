@@ -162,8 +162,7 @@ delay_dump_finish (void)
 int
 delay_dump_combine (int i_ranks)
 {
-  FILE *fopen ();               //, *f_base, *f_cat;
-  char c_call[LINELENGTH];      //, c_cat[LINELENGTH], c_char;
+  char c_call[LINELENGTH];
   //int i;
 /*
 	f_base = fopen(delay_dump_file, 'a');
@@ -215,7 +214,7 @@ delay_dump_combine (int i_ranks)
 int
 delay_dump (PhotPtr p, int np)
 {
-  FILE *fopen (), *fptr;
+  FILE *fptr;
   int nphot, mscat, mtopbot, i, subzero;
   double delay;
   subzero = 0;

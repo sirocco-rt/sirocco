@@ -24,7 +24,7 @@ FC = g77
 NVCC = 
 # NVCC = nvcc  # default (and only?) CUDA compiler
 # specify any extra compiler flags here
-EXTRA_FLAGS = -Wno-deprecated-non-prototype -DMATOM_VER=$(MATOM_VER)
+EXTRA_FLAGS = -DMATOM_VER=$(MATOM_VER)
 LDFLAGS =
 
 # Use the next line if you want to change the c compiler that mpicc uses, or

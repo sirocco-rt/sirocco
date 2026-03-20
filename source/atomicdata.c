@@ -94,8 +94,7 @@
  **********************************************************/
 
 int
-get_atomic_data (masterfile)
-     char masterfile[];
+get_atomic_data (char masterfile[])
 {
   FILE *fptr, *mptr;
   char aline[LINELENGTH];

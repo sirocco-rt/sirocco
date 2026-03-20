@@ -63,8 +63,7 @@ History:
  ************************************************************************/
 
 int
-zoom (direction)
-     int direction;
+zoom (int direction)
 {
   int center;
   int ndim;
@@ -131,9 +130,7 @@ zoom (direction)
 
  ************************************************************************/
 int
-overview (w, rootname)
-     WindPtr w;
-     char rootname[];
+overview (WindPtr w, char rootname[])
 {
   int n;
   double heating, lines, ff, photo;
@@ -180,8 +177,7 @@ overview (w, rootname)
 
  ************************************************************************/
 int
-position_summary (w)
-     WindPtr w;
+position_summary (WindPtr w)
 {
   double x[3], v[3];
   struct photon p;
@@ -258,10 +254,7 @@ a:Log ("Input x=0,y=0,z=0 to return to main routine\n");
 
  ************************************************************************/
 int
-abs_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+abs_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   double x, xtot;
@@ -396,14 +389,10 @@ abs_summary (w, rootname, ochoice)
  ************************************************************************/
 
 int
-shock_heating_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+shock_heating_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   double tot;
-  double shock_heating ();
   char filename[LINELENGTH];
 
 
@@ -462,14 +451,10 @@ shock_heating_summary (w, rootname, ochoice)
  ************************************************************************/
 
 int
-adiabatic_cooling_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+adiabatic_cooling_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   double tot;
-  double adiabatic_cooling ();
   char filename[LINELENGTH];
   double t_e;
 
@@ -534,10 +519,7 @@ adiabatic_cooling_summary (w, rootname, ochoice)
 
  ************************************************************************/
 int
-lum_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+lum_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   double x, xtot;
@@ -680,10 +662,7 @@ lum_summary (w, rootname, ochoice)
 
  ************************************************************************/
 int
-photo_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+photo_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n, ion;
   char filename[LINELENGTH];
@@ -739,10 +718,7 @@ photo_summary (w, rootname, ochoice)
 
  ************************************************************************/
 int
-recomb_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+recomb_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   int ion;
@@ -803,10 +779,7 @@ recomb_summary (w, rootname, ochoice)
  ************************************************************************/
 
 int
-electron_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+electron_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   char filename[LINELENGTH];
@@ -858,10 +831,7 @@ A summary of rho
 
  ************************************************************************/
 int
-rho_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+rho_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   char filename[LINELENGTH];
@@ -917,10 +887,7 @@ rho_summary (w, rootname, ochoice)
 
  ************************************************************************/
 int
-plasma_cell (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+plasma_cell (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   char filename[LINELENGTH];
@@ -972,10 +939,7 @@ plasma_cell (w, rootname, ochoice)
 
  ************************************************************************/
 int
-freq_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+freq_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   char filename[LINELENGTH];
@@ -1028,10 +992,7 @@ freq_summary (w, rootname, ochoice)
 
  ************************************************************************/
 int
-nphot_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+nphot_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   char filename[LINELENGTH];
@@ -1130,10 +1091,7 @@ nphot_summary (w, rootname, ochoice)
 
  ************************************************************************/
 int
-temp_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+temp_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   char filename[LINELENGTH];
@@ -1180,10 +1138,7 @@ temp_summary (w, rootname, ochoice)
 
  ************************************************************************/
 int
-temp_rad (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+temp_rad (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   char filename[LINELENGTH];
@@ -1231,10 +1186,7 @@ temp_rad (w, rootname, ochoice)
  ************************************************************************/
 
 int
-weight_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+weight_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   int nplasma;
@@ -1285,10 +1237,7 @@ weight_summary (w, rootname, ochoice)
 
  ************************************************************************/
 int
-velocity_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+velocity_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   double x;
@@ -1386,10 +1335,7 @@ velocity_summary (w, rootname, ochoice)
 
  ************************************************************************/
 int
-mo_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+mo_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   int ichoice;
@@ -1497,10 +1443,7 @@ mo_summary (w, rootname, ochoice)
 
  ************************************************************************/
 int
-vol_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+vol_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
 
@@ -1555,8 +1498,7 @@ History:
 **************************************************************/
 
 int
-wind_element (w)
-     WindPtr w;
+wind_element (WindPtr w)
 {
   PlasmaPtr xplasma;
   int m, n, i, j, nn, mm;
@@ -1733,10 +1675,7 @@ b:return (0);
 
  ************************************************************************/
 int
-tau_h_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+tau_h_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   int nplasma;
@@ -1779,10 +1718,7 @@ tau_h_summary (w, rootname, ochoice)
 
  ************************************************************************/
 int
-coolheat_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+coolheat_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   int nplasma;
@@ -1842,10 +1778,7 @@ coolheat_summary (w, rootname, ochoice)
 
 
 int
-complete_file_summary (w, root, ochoice)
-     WindPtr w;
-     char root[];
-     int ochoice;
+complete_file_summary (WindPtr w, char root[], int ochoice)
 {
   temp_summary (w, root, ochoice);
   temp_rad (w, root, ochoice);
@@ -1916,10 +1849,7 @@ complete_file_summary (w, root, ochoice)
 /* A summary of the regions in the wind */
 
 int
-wind_reg_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+wind_reg_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
 
@@ -1943,10 +1873,7 @@ wind_reg_summary (w, rootname, ochoice)
 /* A summary of the dvds_ave */
 
 int
-dvds_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+dvds_summary (WindPtr w, char rootname[], int ochoice)
 {
   char filename[LINELENGTH], suffix[LINELENGTH];
   int n, ichoice;
@@ -2018,10 +1945,7 @@ dvds_summary (w, rootname, ochoice)
 /* A summary of inner shell ionization */
 /* NSH - this code removed May 18 
 int
-inner_shell_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+inner_shell_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   char filename[LINELENGTH];
@@ -2052,10 +1976,7 @@ inner_shell_summary (w, rootname, ochoice)
 /* A summary of the Ionization parameter - might not always be present */
 
 int
-IP_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+IP_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   char filename[LINELENGTH];
@@ -2158,10 +2079,7 @@ IP_summary (w, rootname, ochoice)
  */
 
 int
-alpha_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+alpha_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n, m;
   char filename[LINELENGTH];
@@ -2353,10 +2271,7 @@ alpha_summary (w, rootname, ochoice)
  */
 
 int
-J_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+J_summary (WindPtr w, char rootname[], int ochoice)
 {
   int i, n;
   char filename[LINELENGTH];
@@ -2456,10 +2371,7 @@ J_summary (w, rootname, ochoice)
 
 
 int
-J_scat_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+J_scat_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   char filename[LINELENGTH];
@@ -2533,10 +2445,7 @@ J_scat_summary (w, rootname, ochoice)
 //Split of photons from different sources in the cell.
 
 int
-phot_split (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+phot_split (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   char filename[LINELENGTH];
@@ -2619,10 +2528,7 @@ phot_split (w, rootname, ochoice)
 }
 
 int
-thompson (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+thompson (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   int nplasma;
@@ -2655,10 +2561,7 @@ thompson (w, rootname, ochoice)
 
 
 int
-nscat_split (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+nscat_split (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   int nplasma;
@@ -2703,10 +2606,7 @@ nscat_split (w, rootname, ochoice)
 }
 
 int
-convergence_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+convergence_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   int nplasma;
@@ -2742,10 +2642,7 @@ convergence_summary (w, rootname, ochoice)
 */
 
 int
-convergence_all (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+convergence_all (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   int nplasma;
@@ -2836,10 +2733,7 @@ convergence_all (w, rootname, ochoice)
 */
 
 int
-model_bands (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+model_bands (WindPtr w, char rootname[], int ochoice)
 {
   int n, m;
   int nplasma;
@@ -2966,10 +2860,7 @@ model_bands (w, rootname, ochoice)
 
 /* A summary of adiabatic cooling */
 int
-heatcool_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+heatcool_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   int nplasma;
@@ -3282,10 +3173,7 @@ heatcool_summary (w, rootname, ochoice)
 ************************************************************************/
 
 int
-complete_physical_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+complete_physical_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n, np;
   char filename[LINELENGTH];
@@ -3295,7 +3183,7 @@ complete_physical_summary (w, rootname, ochoice)
   int frac_choice;
   int ii, jj;
   double vtot;
-  FILE *fptr, *fopen ();
+  FILE *fptr;
   PlasmaPtr xplasma;
   int ndom;
 
@@ -3427,11 +3315,7 @@ ionH1\tionH2\tionHe1\tionHe2\tionHe3\tionC3\tionC4\tionC5\tionN5\tionO6\tionSi4\
 
 
 int
-complete_ion_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
-
+complete_ion_summary (WindPtr w, char rootname[], int ochoice)
 {
   char cell[5];
   PlasmaPtr xplasma;
@@ -3511,11 +3395,7 @@ b:return (0);
 
 
 double
-get_density_or_frac (xplasma, element, istate, frac_choice)
-     PlasmaPtr xplasma;
-     int element;
-     int istate;
-     int frac_choice;
+get_density_or_frac (PlasmaPtr xplasma, int element, int istate, int frac_choice)
 {
   int nion, nelem;
   double nh, density;
@@ -3553,9 +3433,7 @@ get_density_or_frac (xplasma, element, istate, frac_choice)
 
 
 int
-find_ion (element, istate)
-     int element;
-     int istate;
+find_ion (int element, int istate)
 {
   int nion;
 
@@ -3581,8 +3459,7 @@ find_ion (element, istate)
 
 
 int
-find_element (element)
-     int element;
+find_element (int element)
 {
   int n;
 
@@ -3609,10 +3486,7 @@ find_element (element)
 ************************************************************************/
 
 int
-get_los_dvds (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+get_los_dvds (WindPtr w, char rootname[], int ochoice)
 {
   struct photon p;
   struct photon ptest;
@@ -3758,7 +3632,7 @@ int
 grid_summary (WindPtr w, char rootname[], int ochoice)
 {
   char filename[LINELENGTH], suffix[LINELENGTH];
-  FILE *fopen (), *fptr;
+  FILE *fptr;
   int i, j;
 
   printf ("Outputting grid boundaries to file.\n");
@@ -3795,15 +3669,12 @@ grid_summary (WindPtr w, char rootname[], int ochoice)
 
 
 int
-flux_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+flux_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n, np;
   char filename[LINELENGTH];
   int ii, jj;
-  FILE *fptr, *fopen ();
+  FILE *fptr = NULL;
 //OLD  PlasmaPtr xplasma;
   int ndom, m;
 

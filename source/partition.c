@@ -51,12 +51,9 @@
  **********************************************************/
 
 int
-partition_functions (xplasma, mode)
-     PlasmaPtr xplasma;
-     int mode;
+partition_functions (PlasmaPtr xplasma, int mode)
 {
   int nion;
-  double partition ();
   double t, weight;
 
   int n, m;
@@ -215,14 +212,9 @@ partition_functions (xplasma, mode)
  **********************************************************/
 
 int
-partition_functions_2 (xplasma, xnion, temp, weight)
-     PlasmaPtr xplasma;
-     int xnion;
-     double temp;
-     double weight;
+partition_functions_2 (PlasmaPtr xplasma, int xnion, double temp, double weight)
 {
   int nion;
-  double partition ();
 
   int n, m;
   int m_ground;

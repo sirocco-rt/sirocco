@@ -221,11 +221,9 @@ int strict = 0;                 // Initialize to a value that indicates everytin
  **********************************************************/
 
 int
-opar (filename)
-     char filename[];
+opar (char filename[])
 {
-  FILE *fopen (), *tmp_ptr;
-  int rdpar_init ();
+  FILE *tmp_ptr;
 
   /* Check that an input file is not currently open */
   if (rdpar_stat == 2)
@@ -290,10 +288,8 @@ opar (filename)
  **********************************************************/
 
 int
-add_par (filename)
-     char filename[];
+add_par (char filename[])
 {
-  int rdpar_init ();
 
   /* Check that an input file is not currently open */
   if (rdpar_stat != 2)
@@ -340,8 +336,7 @@ add_par (filename)
  **********************************************************/
 
 int
-cpar (filename)
-     char filename[];
+cpar (char filename[])
 {
   char old_filename[LINELEN];
 
@@ -389,7 +384,6 @@ cpar (filename)
 int
 rdpar_init ()
 {
-  FILE *fopen ();
   rdin_ptr = stdin;             /* Initialize rdin_ptr to standard input */
   if ((rdout_ptr = fopen ("tmp.rdpar", "w")) == NULL)
   {
@@ -471,8 +465,7 @@ check_and_fix_string (char *s)
  **********************************************************/
 
 int
-string_process (question, dummy)
-     char question[], dummy[];
+string_process (char question[], char dummy[])
 {
 
   if (rdpar_stat == 0)
@@ -523,8 +516,7 @@ string_process (question, dummy)
  **********************************************************/
 
 int
-string_process_from_command_line (question, dummy)
-     char question[], dummy[];
+string_process_from_command_line (char question[], char dummy[])
 {
   char tdummy[LINELEN];
   fprintf (stderr, "%s (%s) :", question, dummy);
@@ -603,13 +595,12 @@ string_process_from_command_line (question, dummy)
  **********************************************************/
 
 int
-string_process_from_file (question, dummy)
-     char question[], dummy[];
+string_process_from_file (char question[], char dummy[])
 {
 
   char firstword[LINELEN], secondword[LINELEN];
   char *line, *fgets_rc;
-  char *ccc, *index (), *fgets ();
+  char *ccc;
   int nwords = 0;               // Initialise to avoid warning
   int wordlength;
   char xfirstword[LINELEN], xquestion[LINELEN];
@@ -779,8 +770,7 @@ string_process_from_file (question, dummy)
  **********************************************************/
 
 int
-rdpar_store_record (name, value)
-     char *name, *value;
+rdpar_store_record (char *name, char *value)
 {
   strcpy (rdpar_record[rdpar_nrec].name, name);
   strcpy (rdpar_record[rdpar_nrec].value, value);
@@ -814,8 +804,7 @@ rdpar_store_record (name, value)
  **********************************************************/
 
 int
-rdpar_save (file_ptr)
-     FILE *file_ptr;
+rdpar_save (FILE *file_ptr)
 {
   int i;
 
@@ -885,8 +874,7 @@ rdpar_comment (char *format, ...)
  **********************************************************/
 
 int
-message (string)
-     char string[];
+message (char string[])
 {
   fprintf (stderr, "%s\n", string);
   fflush (stderr);
@@ -912,8 +900,7 @@ message (string)
  **********************************************************/
 
 int
-rdstr (question, answer)
-     char question[], answer[];
+rdstr (char question[], char answer[])
 {
   int query;
   char dummy[LINELEN];
@@ -955,9 +942,7 @@ rdstr (question, answer)
  **********************************************************/
 
 int
-rdchar (question, answer)
-     char question[];
-     char *answer;
+rdchar (char question[], char *answer)
 {
   int query;
   char dummy[LINELEN];
@@ -999,9 +984,7 @@ rdchar (question, answer)
  **********************************************************/
 
 int
-rdint (question, answer)
-     char question[];
-     int *answer;
+rdint (char question[], int *answer)
 {
   int query;
   char dummy[LINELEN];
@@ -1043,9 +1026,7 @@ rdint (question, answer)
  **********************************************************/
 
 int
-rdflo (question, answer)
-     char question[];
-     float *answer;
+rdflo (char question[], float *answer)
 {
   int query;
   char dummy[LINELEN];
@@ -1086,9 +1067,7 @@ rdflo (question, answer)
  **********************************************************/
 
 int
-rddoub (question, answer)
-     char question[];
-     double *answer;
+rddoub (char question[], double *answer)
 {
   int query;
   char dummy[LINELEN];
@@ -1130,9 +1109,7 @@ rddoub (question, answer)
  **********************************************************/
 
 int
-rdline (question, answer)
-     char question[];
-     char answer[];
+rdline (char question[], char answer[])
 {
   int query;
   char dummy[LINELEN];
@@ -1192,11 +1169,7 @@ rdline (question, answer)
 
 #define MAX_CHOICES 10
 int
-string2int (word, string_choices, string_values, string_answer)
-     char *word;
-     char *string_choices;
-     char *string_values;
-     char *string_answer;
+string2int (char *word, char *string_choices, char *string_values, char *string_answer)
 {
   int i;
   int nchoices;
@@ -1369,10 +1342,7 @@ string2int (word, string_choices, string_values, string_answer)
  **********************************************************/
 
 int
-rdchoice (question, answers, answer)
-     char question[];
-     char answers[];
-     char *answer;
+rdchoice (char question[], char answers[], char *answer)
 {
   char dummy[LINELEN];
   char string_answer[LINELEN];
@@ -1472,8 +1442,7 @@ rdchoice (question, answers, answer)
  **********************************************************/
 
 int
-get_root (root, total)
-     char root[], total[];
+get_root (char root[], char total[])
 {
   int j;
   char *pf;
@@ -1525,8 +1494,7 @@ get_root (root, total)
  **********************************************************/
 
 int
-rdpar_set_mpi_rank (rank)
-     int rank;
+rdpar_set_mpi_rank (int rank)
 {
   rd_rank = rank;
   return (0);
@@ -1556,8 +1524,7 @@ rdpar_set_mpi_rank (rank)
  **********************************************************/
 
 int
-rdpar_set_verbose (vlevel)
-     int vlevel;
+rdpar_set_verbose (int vlevel)
 {
   if (vlevel < 2)
     verbose = 0;

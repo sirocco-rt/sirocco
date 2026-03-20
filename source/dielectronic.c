@@ -36,8 +36,7 @@
  **********************************************************/
 
 int
-compute_dr_coeffs (temp)
-     double temp;
+compute_dr_coeffs (double temp)
 {
   int n, n1, n2;
   double Adi, Bdi, T0, T1;

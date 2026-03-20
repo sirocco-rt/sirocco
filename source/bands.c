@@ -664,10 +664,7 @@ bands_init (imode, band)
 #define MIN_N_IONBANDS 7
 
 int
-ion_bands_init (mode, freqmin, freqmax, band)
-     int mode;
-     double freqmin, freqmax;
-     struct xbands *band;
+ion_bands_init (int mode, double freqmin, double freqmax, struct xbands *band)
 {
   int i, n, ngood, good[NXBANDS];
   double xfreq[NXBANDS];
@@ -803,9 +800,7 @@ ion_bands_init (mode, freqmin, freqmax, band)
  **********************************************************/
 
 void
-check_appropriate_banding (band, mode)
-     struct xbands *band;
-     int mode;
+check_appropriate_banding (struct xbands *band, int mode)
 {
   if (geo.system_type == SYSTEM_TYPE_AGN)
   {

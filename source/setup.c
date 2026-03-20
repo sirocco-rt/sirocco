@@ -186,17 +186,13 @@ char get_spectype_oldname[LINELENGTH] = "data/kurucz91.ls";
  **********************************************************/
 
 int
-get_spectype (yesno, question, spectype)
-     int yesno;
-     char *question;
-     int *spectype;
+get_spectype (int yesno, char *question, int *spectype)
 {
   char model_list[LINELENGTH];
   char one_choice[LINELENGTH];
   char choices[LINELENGTH];
   int get_models ();            // Note: Needed because get_models cannot be included in templates.h
   int i;
-  int init_choices (), get_choices ();
 
 
   if (yesno)

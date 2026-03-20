@@ -28,9 +28,7 @@
  **********************************************************/
 
 void
-calc_matom_matrix (xplasma, matom_matrix)
-     PlasmaPtr xplasma;
-     double **matom_matrix;
+calc_matom_matrix (PlasmaPtr xplasma, double **matom_matrix)
 {
   MacroPtr mplasma;
   double t_e, ne;
@@ -363,10 +361,7 @@ calc_matom_matrix (xplasma, matom_matrix)
  **********************************************************/
 
 int
-fill_kpkt_rates (xplasma, escape, p)
-     PlasmaPtr xplasma;
-     int *escape;
-     PhotPtr p;
+fill_kpkt_rates (PlasmaPtr xplasma, int *escape, PhotPtr p)
 {
 
   int i;
@@ -612,10 +607,7 @@ fill_kpkt_rates (xplasma, escape, p)
 ***********************************************************/
 
 double
-f_matom_emit_accelerate (xplasma, upper, freq_min, freq_max)
-     PlasmaPtr xplasma;
-     int upper;
-     double freq_min, freq_max;
+f_matom_emit_accelerate (PlasmaPtr xplasma, int upper, double freq_min, double freq_max)
 {
   struct lines *line_ptr;
   struct topbase_phot *cont_ptr;
@@ -783,9 +775,7 @@ f_matom_emit_accelerate (xplasma, upper, freq_min, freq_max)
 ************************************************************/
 
 double
-f_kpkt_emit_accelerate (xplasma, freq_min, freq_max)
-     PlasmaPtr xplasma;
-     double freq_min, freq_max;
+f_kpkt_emit_accelerate (PlasmaPtr xplasma, double freq_min, double freq_max)
 {
 
   int i;
@@ -952,9 +942,7 @@ f_kpkt_emit_accelerate (xplasma, freq_min, freq_max)
  **********************************************************/
 
 int
-matom_deactivation_from_matrix (xplasma, uplvl)
-     PlasmaPtr xplasma;
-     int uplvl;
+matom_deactivation_from_matrix (PlasmaPtr xplasma, int uplvl)
 {
   double z, total;
   int j, i;

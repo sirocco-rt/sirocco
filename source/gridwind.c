@@ -147,8 +147,7 @@ create_wind_and_plasma_cell_maps ()
  **********************************************************/
 
 int
-calloc_wind (nelem)
-     int nelem;
+calloc_wind (int nelem)
 {
 
   if (wmain != NULL)
@@ -204,8 +203,7 @@ calloc_wind (nelem)
  **********************************************************/
 
 int
-calloc_plasma (nelem)
-     int nelem;
+calloc_plasma (int nelem)
 {
 
   if (plasmamain != NULL)
@@ -298,9 +296,7 @@ calloc_plasma (nelem)
  **********************************************************/
 
 int
-check_plasma (xplasma, message)
-     PlasmaPtr xplasma;
-     char message[];
+check_plasma (PlasmaPtr xplasma, char message[])
 {
   if (xplasma->nplasma == NPLASMA)
   {
@@ -337,8 +333,7 @@ check_plasma (xplasma, message)
  **********************************************************/
 
 int
-calloc_macro (nelem)
-     int nelem;
+calloc_macro (int nelem)
 {
 
   /* JM 1502 -- commented out this if loop because we want 
@@ -395,8 +390,7 @@ calloc_macro (nelem)
  **********************************************************/
 
 int
-calloc_estimators (nelem)
-     int nelem;
+calloc_estimators (int nelem)
 {
   int n;
 
@@ -578,8 +572,7 @@ calloc_estimators (nelem)
  **********************************************************/
 
 int
-calloc_dyn_plasma (nelem)
-     int nelem;
+calloc_dyn_plasma (int nelem)
 {
   int n;
 
@@ -706,8 +699,7 @@ calloc_dyn_plasma (nelem)
  **********************************************************/
 
 int
-calloc_matom_matrix (nelem)
-     int nelem;
+calloc_matom_matrix (int nelem)
 {
   int nrows = nlevels_macro + 1;
   int n;

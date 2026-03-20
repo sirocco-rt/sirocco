@@ -37,14 +37,10 @@
  **********************************************************/
 
 int
-xadiabatic_cooling_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+xadiabatic_cooling_summary (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   double tot;
-  double adiabatic_cooling ();
   char filename[LINELENGTH];
   double t_e;
 
@@ -90,10 +86,7 @@ xadiabatic_cooling_summary (w, rootname, ochoice)
  **********************************************************/
 
 int
-macro_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+macro_summary (WindPtr w, char rootname[], int ochoice)
 {
 //OLD  int nmacro;
   int nconfig;
@@ -227,8 +220,7 @@ emissivities (2) P_escapes (3) Detailed Pops (4) taus (5) estimators (6)", &choo
  **********************************************************/
 
 int
-ion_overview (icell)
-     int icell;
+ion_overview (int icell)
 {
   int n;
   IonPtr p;
@@ -261,8 +253,7 @@ ion_overview (icell)
  **********************************************************/
 
 int
-config_overview (n, icell)
-     int n, icell;
+config_overview (int n, int icell)
 {
   ConfigPtr p;
   PlasmaPtr x;
@@ -393,15 +384,13 @@ config_overview (n, icell)
  **********************************************************/
 
 int
-depcoef_overview (icell)
-     int icell;
+depcoef_overview (int icell)
 {
   ConfigPtr p;
   PlasmaPtr x, xdummy;
   double xden, lteden;
   int n;
 
-  int copy_plasma ();
   plasma_dummy pdum;
 
 
@@ -460,8 +449,7 @@ depcoef_overview (icell)
  **********************************************************/
 
 int
-copy_plasma (x1, x2)
-     PlasmaPtr x1, x2;
+copy_plasma (PlasmaPtr x1, PlasmaPtr x2)
 {
   int i;
 
@@ -518,8 +506,7 @@ copy_plasma (x1, x2)
  **********************************************************/
 
 int
-dealloc_copied_plasma (xcopy)
-     PlasmaPtr xcopy;
+dealloc_copied_plasma (PlasmaPtr xcopy)
 {
   free (xcopy->state.density);
   free (xcopy->state.partition);
@@ -546,19 +533,13 @@ dealloc_copied_plasma (xcopy)
  **********************************************************/
 
 int
-depcoef_overview_specific (version, nconfig, w, rootname, ochoice)
-     int version;
-     int nconfig;
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+depcoef_overview_specific (int version, int nconfig, WindPtr w, char rootname[], int ochoice)
 {
   int n;
   char filename[LINELENGTH], lname[LINELENGTH];
   ConfigPtr p;
   PlasmaPtr xplasma, xdummy;
   double xden, lteden, ion_density;
-  int copy_plasma ();
   plasma_dummy pdum;
 
 
@@ -649,11 +630,7 @@ depcoef_overview_specific (version, nconfig, w, rootname, ochoice)
  **********************************************************/
 
 int
-level_popsoverview (nplasma, w, rootname, ochoice)
-     int nplasma;
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+level_popsoverview (int nplasma, WindPtr w, char rootname[], int ochoice)
 {
   int i;
   PlasmaPtr xplasma, xdummy;
@@ -661,7 +638,6 @@ level_popsoverview (nplasma, w, rootname, ochoice)
   char filename[LINELENGTH];
   char lname[LINELENGTH];
   double xden, lteden;
-  int copy_plasma ();
 
   strcpy (filename, rootname);
   strcpy (filename, rootname);
@@ -733,11 +709,7 @@ level_popsoverview (nplasma, w, rootname, ochoice)
  **********************************************************/
 
 int
-level_emissoverview (nlev, w, rootname, ochoice)
-     int nlev;
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+level_emissoverview (int nlev, WindPtr w, char rootname[], int ochoice)
 {
   int n, nplasma;
   char name[LINELENGTH], lname[LINELENGTH];
@@ -813,11 +785,7 @@ level_emissoverview (nlev, w, rootname, ochoice)
  **********************************************************/
 
 int
-level_escapeoverview (nlev, w, rootname, ochoice)
-     int nlev;
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+level_escapeoverview (int nlev, WindPtr w, char rootname[], int ochoice)
 {
   PlasmaPtr xplasma;
   int n, nplasma, nline, found;
@@ -905,11 +873,7 @@ level_escapeoverview (nlev, w, rootname, ochoice)
  **********************************************************/
 
 int
-level_tauoverview (nlev, w, rootname, ochoice)
-     int nlev;
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+level_tauoverview (int nlev, WindPtr w, char rootname[], int ochoice)
 {
   PlasmaPtr xplasma;
   WindPtr one;

@@ -77,7 +77,7 @@ xsignal (char *root, char *format, ...)
 
   char curtime[LINELENGTH];
   char message[LINELENGTH];
-  FILE *fopen (), *sptr;
+  FILE *sptr;
   char filename[LINELENGTH];
   double elapsed_time;
 

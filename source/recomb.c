@@ -119,8 +119,7 @@ int fbfr;
  **********************************************************/
 
 double
-fb_topbase_partial (freq)
-     double freq;
+fb_topbase_partial (double freq)
 {
   int nion;
   double partial, log_freq;
@@ -446,11 +445,7 @@ integ_fb (t, f1, f2, nion, fb_choice, mode)
  **********************************************************/
 
 double
-total_fb (xplasma, t, f1, f2, fb_choice, mode)
-     PlasmaPtr xplasma;
-     double t, f1, f2;
-     int fb_choice;
-     int mode;
+total_fb (PlasmaPtr xplasma, double t, double f1, double f2, int fb_choice, int mode)
 {
   double total;
   int nion;
@@ -742,10 +737,7 @@ one_fb (xplasma, f1, f2)
  **********************************************************/
 
 int
-num_recomb (xplasma, t_e, mode)
-     PlasmaPtr xplasma;
-     double t_e;
-     int mode;
+num_recomb (PlasmaPtr xplasma, double t_e, int mode)
 {
   int nelem;
   int i, imin, imax;
@@ -813,12 +805,7 @@ num_recomb (xplasma, t_e, mode)
  **********************************************************/
 
 double
-fb (xplasma, t, freq, ion_choice, fb_choice)
-     PlasmaPtr xplasma;
-     double t;
-     double freq;
-     int ion_choice;
-     int fb_choice;
+fb (PlasmaPtr xplasma, double t, double freq, int ion_choice, int fb_choice)
 {
   int n;
   double fnu, x;
@@ -947,13 +934,11 @@ int init_freebound_nfb;
  **********************************************************/
 
 int
-init_freebound (t1, t2, f1, f2)
-     double t1, t2, f1, f2;
+init_freebound (double t1, double t2, double f1, double f2)
 {
   double t;
   int i, j, nion;
   double ltmin, ltmax, dlt;
-  double xinteg_fb ();
   int nput;
 
 
@@ -1075,12 +1060,8 @@ on the assumption that the fb information will be reused.
  **********************************************************/
 
 double
-get_nrecomb (t, nion, mode)
-     double t;
-     int nion;
-     int mode;
+get_nrecomb (double t, int nion, int mode)
 {
-  int linterp ();
   double x = -99.;
   if (mode == OUTER_SHELL)
     linterp (t, fb_t, xnrecomb[nion], NTEMPS, &x, 0);   //Interpolate in linear space
@@ -1130,14 +1111,8 @@ get_nrecomb (t, nion, mode)
  **********************************************************/
 
 double
-get_fb (t, nion, narray, fb_choice, mode)
-     double t;
-     int nion;
-     int narray;
-     int fb_choice;
-     int mode;
+get_fb (double t, int nion, int narray, int fb_choice, int mode)
 {
-  int linterp ();
   double x = -99.;
   if (mode == OUTER_SHELL)
   {
@@ -1205,9 +1180,7 @@ xinteg_fb (t, f1, f2, nion, fb_choice)
   double fnu;
   double dnu;                   //NSH 140120 - a parameter to allow one to restrict the integration limits.
   double fthresh, fmax;
-  double den_config ();
   int nmin, nmax;               // These are the limits over which number xsections we will use
-  double qromb ();
 
 
   dnu = 0.0;                    //Avoid compilation errors.
@@ -1336,7 +1309,6 @@ xinteg_inner_fb (t, f1, f2, nion, fb_choice)
   double fnu;
   double dnu;                   // a parameter to allow one to restrict the integration limits.
   double fthresh, fmax;
-  double den_config ();
 
 
   dnu = 0.0;                    //Avoid compilation errors.
@@ -1431,9 +1403,7 @@ xinteg_inner_fb (t, f1, f2, nion, fb_choice)
  **********************************************************/
 
 double
-total_rrate (nion, T)
-     int nion;
-     double T;
+total_rrate (int nion, double T)
 {
 
 
@@ -1524,9 +1494,7 @@ total_rrate (nion, T)
  **********************************************************/
 
 double
-gs_rrate (nion, T)
-     int nion;
-     double T;
+gs_rrate (int nion, double T)
 {
   double rate, drdt, dt;
   int i, imin, imax;

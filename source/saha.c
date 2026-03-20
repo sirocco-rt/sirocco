@@ -40,9 +40,7 @@
  **********************************************************/
 
 int
-nebular_concentrations (xplasma, mode)
-     PlasmaPtr xplasma;
-     int mode;
+nebular_concentrations (PlasmaPtr xplasma, int mode)
 {
   int m;
 
@@ -144,16 +142,12 @@ nebular_concentrations (xplasma, mode)
  **********************************************************/
 
 int
-concentrations (xplasma, mode)
-     PlasmaPtr xplasma;
-     int mode;
+concentrations (PlasmaPtr xplasma, int mode)
 {
   int nion, niterate;
   double xne, xxne, xnew, xsaha;
   double theta, x;
-  double get_ne ();
   double t, nh;
-  int saha ();
 
 
   // This needs to be moved up into nebular_concentrations given that we
@@ -299,10 +293,7 @@ concentrations (xplasma, mode)
  **********************************************************/
 
 int
-saha (xplasma, ne, t)
-     PlasmaPtr xplasma;
-     double ne, t;
-
+saha (PlasmaPtr xplasma, double ne, double t)
 {
   double nh;
   int nelem;
@@ -425,8 +416,7 @@ saha (xplasma, ne, t)
  **********************************************************/
 
 int
-lucy (xplasma)
-     PlasmaPtr xplasma;
+lucy (PlasmaPtr xplasma)
 {
   int nelem, nion, niterate;
   double xne, xnew;
@@ -559,10 +549,7 @@ lucy (xplasma)
  **********************************************************/
 
 int
-lucy_mazzali1 (nh, t_r, t_e, www, nelem, ne, density, xne, newden)
-     double nh, t_r, t_e, www;
-     int nelem;
-     double ne, density[], xne, newden[];
+lucy_mazzali1 (double nh, double t_r, double t_e, double www, int nelem, double ne, double density[], double xne, double newden[])
 {
   double fudge;
   double fudge2, q;
@@ -732,8 +719,7 @@ fix_concentrations (xplasma, mode)
 {
   int nelem, nion;
   int n;
-  double get_ne ();
-  FILE *fopen (), *cptr;
+  FILE *cptr;
   char line[LINELENGTH];
 
   double nh;
@@ -818,8 +804,7 @@ fix_concentrations (xplasma, mode)
  **********************************************************/
 
 double
-get_ne (density)
-     double density[];
+get_ne (double density[])
 {
   int n;
   double ne;

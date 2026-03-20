@@ -53,11 +53,7 @@
  **********************************************************/
 
 int
-macro_gov (p, nres, matom_or_kpkt, which_out)
-     PhotPtr p;
-     int *nres;
-     int matom_or_kpkt;
-     int *which_out;
+macro_gov (PhotPtr p, int *nres, int matom_or_kpkt, int *which_out)
 {
   int escape;                   //this tells us when the r-packet is escaping
   int n_jump = 0;
@@ -333,9 +329,7 @@ macro_gov (p, nres, matom_or_kpkt, which_out)
  **********************************************************/
 
 int
-macro_pops (xplasma, xne)
-     PlasmaPtr xplasma;
-     double xne;
+macro_pops (PlasmaPtr xplasma, double xne)
 {
   int i, j, index_element, index_lvl;
   int matrix_err, numerical_error, populations_ok;

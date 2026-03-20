@@ -121,10 +121,7 @@ get_kpkt_heating_f ()
  **********************************************************/
 
 int
-photo_gen_kpkt (p, weight, photstart, nphot)
-     PhotPtr p;
-     double weight;
-     int photstart, nphot;
+photo_gen_kpkt (PhotPtr p, double weight, int photstart, int nphot)
 {
   int photstop;
   int icell;
@@ -299,10 +296,7 @@ photo_gen_kpkt (p, weight, photstart, nphot)
  **********************************************************/
 
 int
-photo_gen_matom (p, weight, photstart, nphot)
-     PhotPtr p;
-     double weight;
-     int photstart, nphot;
+photo_gen_matom (PhotPtr p, double weight, int photstart, int nphot)
 {
   int photstop;
   int icell;
@@ -310,7 +304,6 @@ photo_gen_matom (p, weight, photstart, nphot)
   struct photon pp;
   int nres;
   int n;
-  double dot ();
 //OLD  double test;
   int upper;
   int nnscat;

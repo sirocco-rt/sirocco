@@ -71,8 +71,7 @@ double kn_lambda;
  **********************************************************/
 
 int
-get_knigge_wind_params (ndom)
-     int ndom;
+get_knigge_wind_params (int ndom)
 {
   double dmin;
   double rmin, rmax;
@@ -193,9 +192,7 @@ get_knigge_wind_params (ndom)
  **********************************************************/
 
 double
-kn_velocity (ndom, x, v)
-     int ndom;
-     double x[], v[];
+kn_velocity (int ndom, double x[], double v[])
 {
   double r, rzero, theta;
   double ldist, zzz, v_escape, vl;
@@ -346,9 +343,7 @@ test programs.
  **********************************************************/
 
 double
-kn_rho (ndom, x)
-     int ndom;
-     double x[];
+kn_rho (int ndom, double x[])
 {
   double r, rzero;
   double dd;
@@ -429,8 +424,7 @@ kn_rho (ndom, x)
  **********************************************************/
 
 double
-kn_vzero (r)
-     double r;
+kn_vzero (double r)
 {
   double t;
   double ratio, v;
@@ -501,9 +495,7 @@ kn_wind_mdot_integral (double r, void *params)
  **********************************************************/
 
 double
-kn_rho_zero (ndom, r)
-     double r;
-     int ndom;
+kn_rho_zero (int ndom, double r)
 {
   double t;
   double x, ratio;

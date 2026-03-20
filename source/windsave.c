@@ -51,8 +51,7 @@
  **********************************************************/
 
 int
-wind_save (filename)
-     char filename[];
+wind_save (char filename[])
 {
   FILE *fptr;
   char header[LINELENGTH];
@@ -192,8 +191,7 @@ in the plasma structure */
  **********************************************************/
 
 int
-wind_read (filename)
-     char filename[];
+wind_read (char filename[])
 {
   FILE *fptr;
   int ndom;
@@ -416,8 +414,7 @@ wind_complete ()
  **********************************************************/
 
 int
-spec_save (filename)
-     char filename[];
+spec_save (char filename[])
 {
 
   FILE *fptr;
@@ -474,8 +471,7 @@ spec_save (filename)
  **********************************************************/
 
 int
-spec_read (filename)
-     char filename[];
+spec_read (char filename[])
 {
   FILE *fptr;
   int nhead, nwave_ioniz_check;

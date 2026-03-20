@@ -56,10 +56,7 @@
  **********************************************************/
 
 double
-spherical_ds_in_cell (ndom, p)
-     int ndom;
-     PhotPtr p;
-
+spherical_ds_in_cell (int ndom, PhotPtr p)
 {
 
   int n, ix;
@@ -197,9 +194,7 @@ spherical_make_grid (int ndom, WindPtr w)
  **********************************************************/
 
 int
-spherical_wind_complete (ndom, w)
-     int ndom;
-     WindPtr w;
+spherical_wind_complete (int ndom, WindPtr w)
 {
   int i;
   int ndim, nstart;
@@ -355,9 +350,7 @@ spherical_cell_volume (WindPtr w)
  **********************************************************/
 
 int
-spherical_where_in_grid (ndom, x)
-     int ndom;
-     double x[];
+spherical_where_in_grid (int ndom, double x[])
 {
   int n;
   double r;
@@ -480,9 +473,7 @@ spherical_get_random_location (n, x)
  **********************************************************/
 
 int
-spherical_extend_density (ndom, w)
-     int ndom;
-     WindPtr w;
+spherical_extend_density (int ndom, WindPtr w)
 {
 
   int j, n, m;

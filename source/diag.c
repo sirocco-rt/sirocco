@@ -429,10 +429,7 @@ init_extra_diagnostics ()
  **********************************************************/
 
 int
-save_photon_stats (one, p, ds, w_ave)
-     WindPtr one;
-     PhotPtr p;
-     double ds, w_ave;
+save_photon_stats (WindPtr one, PhotPtr p, double ds, double w_ave)
 {
   int i;
 
@@ -475,9 +472,7 @@ int save_photon_number = 0;
  **********************************************************/
 
 int
-save_photons (p, comment)
-     PhotPtr p;
-     char comment[];
+save_photons (PhotPtr p, char comment[])
 {
   save_photon_number += 1;
 
@@ -513,10 +508,7 @@ save_photons (p, comment)
  **********************************************************/
 
 int
-track_scatters (p, nplasma, comment)
-     PhotPtr p;
-     int nplasma;
-     char *comment;
+track_scatters (PhotPtr p, int nplasma, char *comment)
 {
 
   fprintf (epltptr, "Scattter %i %.2e %.2e %.2e  %i %e %e %i %s\n", p->np,

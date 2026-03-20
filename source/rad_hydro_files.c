@@ -128,9 +128,7 @@ xparse_arguments (int argc, char *argv[], char root[], int *ion_switch)
  **********************************************************/
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
   char root[LINELENGTH];
   char outputfile[LINELENGTH];

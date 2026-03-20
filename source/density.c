@@ -43,10 +43,7 @@
  **********************************************************/
 
 double
-get_ion_density (ndom, x, nion)
-     int ndom;
-     double x[];
-     int nion;
+get_ion_density (int ndom, double x[], int nion)
 {
   double dd;
   int nn, nnn[4], nelem;

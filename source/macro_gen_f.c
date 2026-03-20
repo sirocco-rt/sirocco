@@ -45,8 +45,7 @@
  **********************************************************/
 
 double
-get_matom_f (mode)
-     int mode;
+get_matom_f (int mode)
 {
   int n, m, mm;
   double lum;
@@ -388,8 +387,7 @@ get_matom_f (mode)
  **********************************************************/
 
 double
-get_matom_f_accelerate (mode)
-     int mode;
+get_matom_f_accelerate (int mode)
 {
   int n, m, mm;
   double lum;

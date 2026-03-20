@@ -590,7 +590,7 @@ wind_paths_evaluate (WindPtr wind)
 int
 wind_paths_dump (WindPtr wind, int rank_global)
 {
-  FILE *fopen (), *fptr;
+  FILE *fptr;
   char c_file[LINELENGTH];
   int j, k;
 
@@ -736,7 +736,7 @@ wind_paths_sphere_point_index (int i, int j, int k)
 int
 wind_paths_output_vtk (WindPtr wind, int ndom)
 {
-  FILE *fopen (), *fptr;
+  FILE *fptr;
   char c_file[LINELENGTH];
   int i, j, k, n, i_obs, i_cells, i_points;
   double r_azi, r_inc, r_x, r_y, r_z, r_err;

@@ -64,10 +64,7 @@ int matom_cycle = -1;
 ***********************************************************/
 
 int
-matom (p, nres, escape)
-     PhotPtr p;
-     int *nres;
-     int *escape;
+matom (PhotPtr p, int *nres, int *escape)
 {
   struct lines *line_ptr;
   struct topbase_phot *cont_ptr;
@@ -505,8 +502,7 @@ struct lines *b12_line_ptr;
 double b12_a;
 
 double
-b12 (line_ptr)
-     struct lines *line_ptr;
+b12 (struct lines *line_ptr)
 {
   double freq;
 
@@ -563,10 +559,7 @@ int temp_choice;                //choice of type of calcualation for alpha_sp
 #define ALPHA_SP_CONSTANT 5.79618e-36
 
 double
-xalpha_sp (cont_ptr, xplasma, ichoice)
-     struct topbase_phot *cont_ptr;
-     PlasmaPtr xplasma;
-     int ichoice;
+xalpha_sp (struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice)
 {
   double alpha_sp_value;
   double fthresh, flast;
@@ -633,10 +626,7 @@ xalpha_sp (cont_ptr, xplasma, ichoice)
 ***********************************************************/
 
 double
-alpha_sp (cont_ptr, xplasma, ichoice)
-     struct topbase_phot *cont_ptr;
-     PlasmaPtr xplasma;
-     int ichoice;
+alpha_sp (struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice)
 {
   double alpha_sp_value;
   double fthresh, flast;
@@ -770,11 +760,7 @@ alpha_sp (cont_ptr, xplasma, ichoice)
 #define ALPHA_SP_CONSTANT 5.79618e-36
 
 double
-scaled_alpha_sp_integral_band_limited (cont_ptr, xplasma, ichoice, freq_min, freq_max)
-     struct topbase_phot *cont_ptr;
-     PlasmaPtr xplasma;
-     int ichoice;
-     double freq_min, freq_max;
+scaled_alpha_sp_integral_band_limited (struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice, double freq_min, double freq_max)
 {
   double alpha_sp_value;
   double fthresh, flast;
@@ -864,11 +850,7 @@ alpha_sp_integrand (double freq, void *params)
 ************************************************************/
 
 int
-kpkt (p, nres, escape, mode)
-     PhotPtr p;
-     int *nres;
-     int *escape;
-     int mode;
+kpkt (PhotPtr p, int *nres, int *escape, int mode)
 {
 
   int i;
@@ -1184,10 +1166,7 @@ kpkt (p, nres, escape, mode)
 ************************************************************/
 
 int
-fake_matom_bb (p, nres, escape)
-     PhotPtr p;
-     int *nres;
-     int *escape;
+fake_matom_bb (PhotPtr p, int *nres, int *escape)
 {
   double kprb, rprb;
   WindPtr one;
@@ -1286,10 +1265,7 @@ fake_matom_bb (p, nres, escape)
 ************************************************************/
 
 int
-fake_matom_bf (p, nres, escape)
-     PhotPtr p;
-     int *nres;
-     int *escape;
+fake_matom_bf (PhotPtr p, int *nres, int *escape)
 {
   WindPtr one;
 //OLD  PlasmaPtr xplasma;
@@ -1335,12 +1311,7 @@ fake_matom_bf (p, nres, escape)
 ***********************************************************/
 
 int
-emit_matom (w, p, nres, upper, freq_min, freq_max)
-     WindPtr w;
-     PhotPtr p;
-     int *nres;
-     int upper;
-     double freq_min, freq_max;
+emit_matom (WindPtr w, PhotPtr p, int *nres, int upper, double freq_min, double freq_max)
 {
   struct lines *line_ptr;
   struct topbase_phot *cont_ptr;

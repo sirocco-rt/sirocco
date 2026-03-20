@@ -76,8 +76,7 @@ HydroPtr hydro_ptr;
 
 
 int
-get_hydro_wind_params (ndom)
-     int ndom;
+get_hydro_wind_params (int ndom)
 {
   Log ("Creating a wind model using a Hydro calculation = domain %i\n", ndom);
 
@@ -144,11 +143,10 @@ get_hydro_wind_params (ndom)
 
 
 int
-get_hydro (ndom)
-     int ndom;
+get_hydro (int ndom)
 {
 
-  FILE *fopen (), *fptr;
+  FILE *fptr;
   char datafile[LINE];
   char aline[LINE];
   char word[LINE];
@@ -325,12 +323,8 @@ get_hydro (ndom)
 
 
 double
-hydro_velocity (ndom, x, v)
-     int ndom;
-     double x[];
-     double v[];
+hydro_velocity (int ndom, double x[], double v[])
 {
-  double length ();
   int ii, jj;
   int im, jm;
   double f1, f2;
@@ -433,10 +427,8 @@ hydro_velocity (ndom, x, v)
 
 
 double
-hydro_rho (x)
-     double x[];
+hydro_rho (double x[])
 {
-  double length ();
   int ii, jj;
   int im, jm;
   double r, theta;
@@ -492,10 +484,8 @@ hydro_rho (x)
 
 
 double
-hydro_temp (x)
-     double x[];
+hydro_temp (double x[])
 {
-  double length ();
   int ii, jj;
   int im, jm;
   double r, theta, temp;
@@ -717,12 +707,7 @@ rtheta_hydro_cell_volume (WindPtr w)
 
 
 int
-hydro_frac (coord, coord_array, imax, cell1, cell2, frac)
-     double coord;
-     double coord_array[];
-     int imax;
-     int *cell1, *cell2;
-     double *frac;
+hydro_frac (double coord, double coord_array[], int imax, int *cell1, int *cell2, double *frac)
 {
   int ii;
   ii = 0;
@@ -828,8 +813,7 @@ hydro_interp_value (array, im, ii, jm, jj, f1, f2)
 
 
 int
-hydro_restart (ndom)
-     int ndom;
+hydro_restart (int ndom)
 {
   int n, nion;
   int nwind;

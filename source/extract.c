@@ -81,10 +81,7 @@
 
 
 int
-extract (w, p, itype)
-     WindPtr w;
-     PhotPtr p;
-     int itype;
+extract (WindPtr w, PhotPtr p, int itype)
 {
   int n, mscat, mtopbot;
   struct photon pp, p_in, p_dummy;
@@ -445,11 +442,7 @@ extract (w, p, itype)
 
 
 int
-extract_one (w, pp, nspec)
-     WindPtr w;
-     PhotPtr pp;
-     int nspec;
-
+extract_one (WindPtr w, PhotPtr pp, int nspec)
 {
 
   int istat, nres;

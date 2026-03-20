@@ -48,12 +48,7 @@
  *
  **********************************************************/
 int
-ion_summary (w, element, istate, iswitch, rootname, ochoice)
-     WindPtr w;
-     int element, istate;
-     int iswitch;
-     char rootname[];
-     int ochoice;
+ion_summary (WindPtr w, int element, int istate, int iswitch, char rootname[], int ochoice)
 {
   int nion, nelem;
   int n;
@@ -210,12 +205,7 @@ ion_summary (w, element, istate, iswitch, rootname, ochoice)
  *
  **********************************************************/
 int
-tau_ave_summary (w, element, istate, freq, rootname, ochoice)
-     WindPtr w;
-     int element, istate;
-     double freq;
-     char rootname[];
-     int ochoice;
+tau_ave_summary (WindPtr w, int element, int istate, double freq, char rootname[], int ochoice)
 {
   int nion, nelem;
   int n;
@@ -311,10 +301,7 @@ tau_ave_summary (w, element, istate, freq, rootname, ochoice)
  *
  **********************************************************/
 int
-line_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+line_summary (WindPtr w, char rootname[], int ochoice)
 {
   int nion, nelem;
   int element, istate, iline, levu, levl, i_matom_search;
@@ -574,9 +561,7 @@ line_summary (w, rootname, ochoice)
  *
  **********************************************************/
 int
-total_emission_summary (rootname, ochoice)
-     char rootname[];
-     int ochoice;
+total_emission_summary (char rootname[], int ochoice)
 {
   double tot;
   int n;
@@ -626,14 +611,11 @@ total_emission_summary (rootname, ochoice)
  *
  **********************************************************/
 int
-modify_te (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+modify_te (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   double x;
-  double t_e, calc_te ();
+  double t_e;
   char filename[LINELENGTH];
   int nplasma;
 
@@ -683,11 +665,7 @@ modify_te (w, rootname, ochoice)
  **********************************************************/
 
 int
-partial_measure_summary (w, element, istate, rootname, ochoice)
-     WindPtr w;
-     int element, istate;
-     char rootname[];
-     int ochoice;
+partial_measure_summary (WindPtr w, int element, int istate, char rootname[], int ochoice)
 {
   int nion, nelem;
   int n;
@@ -774,10 +752,7 @@ partial_measure_summary (w, element, istate, rootname, ochoice)
  **********************************************************/
 
 int
-collision_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+collision_summary (WindPtr w, char rootname[], int ochoice)
 {
   int nline, int_te;
   double t_e, qup, qdown, A, wavelength;

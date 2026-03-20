@@ -29,9 +29,7 @@ char inroot[LINELENGTH];
 #define LUM_TEST 0
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
 
 //  FILE *fptr, *fopen ();
@@ -203,7 +201,6 @@ main (argc, argv)
 
   char infile[LINELENGTH];
   double lum_one;
-  int zparse ();
 
   double f1 = 1e12;
   double f2 = 1e18;
@@ -235,7 +232,6 @@ main (argc, argv)
 
 
 
-  double par_wind_luminosity ();
 
   xsignal ("unit_test", "%-20s before new wind luminosity %s\n", "NOK", "unit_test");
 
@@ -258,9 +254,7 @@ main (argc, argv)
 
 
 int
-zparse (argc, argv)
-     int argc;
-     char *argv[];
+zparse (int argc, char *argv[])
 {
   char dummy[LINELENGTH];
 
@@ -283,9 +277,7 @@ zparse (argc, argv)
 
 
 double
-par_wind_luminosity (f1, f2, mode)
-     double f1, f2;
-     int mode;
+par_wind_luminosity (double f1, double f2, int mode)
 {
   double lum, lum_lines, lum_rr, lum_ff, factor;
   int nplasma;

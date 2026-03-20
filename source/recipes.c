@@ -60,10 +60,7 @@
 
 
 double
-num_int (func, a, b, eps)
-     double (*func) (double, void *);
-     double a, b;
-     double eps;
+num_int (double (*func) (double, void *), double a, double b, double eps)
 {
   double result, error, result2;
   double alpha = 0.0;
@@ -151,11 +148,7 @@ num_int (func, a, b, eps)
 
 
 double
-zero_find (func, x1, x2, tol, ierr)
-     double (*func) (double, void *);
-     double x1, x2;
-     double tol;
-     int *ierr;
+zero_find (double (*func) (double, void *), double x1, double x2, double tol, int *ierr)
 {
   double result;
   double x_below, x_above;
@@ -263,11 +256,7 @@ zero_find (func, x1, x2, tol, ierr)
 
 
 double
-find_function_minimum (a, m, b, func, tol, xmin)
-     double (*func) (double, void *);
-     double a, m, b;
-     double tol, *xmin;
-
+find_function_minimum (double a, double m, double b, double (*func) (double, void *), double tol, double *xmin)
 {
   int status = 0;
   void *test = NULL;
