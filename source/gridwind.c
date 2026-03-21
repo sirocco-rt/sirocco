@@ -316,13 +316,42 @@ create_wind_and_plasma_cell_maps ()
 int
 calloc_wind (int nelem)
 {
+  long alloc_size = (long) (nelem + 1) * sizeof (wind_dummy);
 
+#ifdef MPI_ON
   if (wmain != NULL)
   {
-    free (wmain);
+    MPI_Win_free (&wmain_win);
+    wmain = NULL;
   }
 
-  wmain = (WindPtr) calloc (nelem + 1, sizeof (wind_dummy));
+  if (np_mpi_global > 1)
+  {
+    MPI_Aint win_size;
+    int disp_unit;
+    void *base;
+
+    if (node_rank == 0)
+    {
+      MPI_Win_allocate_shared (alloc_size, 1, MPI_INFO_NULL, node_comm, &base, &wmain_win);
+      memset (base, 0, alloc_size);
+    }
+    else
+    {
+      MPI_Win_allocate_shared (0, 1, MPI_INFO_NULL, node_comm, &base, &wmain_win);
+      MPI_Win_shared_query (wmain_win, 0, &win_size, &disp_unit, &base);
+    }
+    wmain = (WindPtr) base;
+  }
+  else
+#endif
+  {
+    if (wmain != NULL)
+    {
+      free (wmain);
+    }
+    wmain = (WindPtr) calloc (nelem + 1, sizeof (wind_dummy));
+  }
 
   if (wmain == NULL)
   {
@@ -332,8 +361,26 @@ calloc_wind (int nelem)
   else
   {
     Log
-      ("Allocated %10d bytes for each of %5d elements of             totaling %10.1f Mb\n",
-       sizeof (wind_dummy), nelem + 1, 1.e-6 * (nelem + 1) * sizeof (wind_dummy));
+      ("Allocated %10d bytes for each of %5d elements of      wind totaling %10.1f Mb (%s)\n",
+       sizeof (wind_dummy), nelem + 1, 1.e-6 * alloc_size,
+#ifdef MPI_ON
+       (np_mpi_global > 1) ? "shared" : "private"
+#else
+       "private"
+#endif
+      );
+  }
+
+  /* Allocate per-rank wind paths storage (always private) */
+  if (wind_paths_main != NULL)
+  {
+    free (wind_paths_main);
+  }
+  wind_paths_main = (wind_paths_store *) calloc (nelem + 1, sizeof (wind_paths_store));
+  if (wind_paths_main == NULL)
+  {
+    Error ("There is a problem in allocating memory for wind_paths_main\n");
+    Exit (0);
   }
 
   return (0);

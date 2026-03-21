@@ -273,7 +273,25 @@ wind_read (char filename[])
   }
 
   calloc_wind (NDIM2);
-  n += fread (wmain, sizeof (wind_dummy), NDIM2, fptr);
+#ifdef MPI_ON
+  if (np_mpi_global > 1)
+  {
+    if (node_rank == 0)
+    {
+      n += fread (wmain, sizeof (wind_dummy), NDIM2, fptr);
+    }
+    else
+    {
+      /* Skip past the wind data in the file without reading into shared memory */
+      fseek (fptr, (long) NDIM2 * sizeof (wind_dummy), SEEK_CUR);
+    }
+    MPI_Barrier (node_comm);
+  }
+  else
+#endif
+  {
+    n += fread (wmain, sizeof (wind_dummy), NDIM2, fptr);
+  }
 
   /* Read the disk and qdisk structures */
 

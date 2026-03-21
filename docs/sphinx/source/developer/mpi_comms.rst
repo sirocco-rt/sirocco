@@ -350,3 +350,22 @@ approximately 2.3 KB per cell, yielding additional PSS savings of
 roughly ``2.3 * N * (R-1)/R`` KB.  The savings scale linearly with
 NPLASMA: for a model with 80K cells and 29 ranks, this adds approximately
 177 MB of per-rank savings.
+
+Shared wind structure
+^^^^^^^^^^^^^^^^^^^^^
+
+The wind geometry array ``wmain`` (type ``wind_dummy``, indexed by NDIM2) is
+allocated via ``MPI_Win_allocate_shared`` in ``calloc_wind()`` so that all
+ranks on the same node share a single copy.  This is safe because ``wmain``
+is populated during initialization and is strictly read-only during photon
+transport.
+
+The reverb path-tracking data (``paths`` and ``line_paths``) was moved out
+of ``wind_dummy`` into a separate per-rank array ``wind_paths_main`` (type
+``wind_paths_store``), because path histograms are accumulated during photon
+transport and must remain private per rank.  Code in ``paths.c`` accesses
+these via ``wind_paths_main[cell_index]`` instead of ``wmain[cell_index]``.
+
+For a 300x300 grid (NDIM2 = 90,000, ``sizeof(wind_dummy)`` = 288 bytes),
+this saves approximately ``90000 * 288 * (R-1)/R`` bytes, or about 25 MB
+per rank with 29 ranks.

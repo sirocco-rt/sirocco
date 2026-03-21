@@ -869,11 +869,27 @@ typedef struct wind
   { W_IN_DISK = -5, W_IN_STAR = -4, W_IGNORE = -2, W_NOT_INWIND = -1,
     W_ALL_INWIND = 0, W_PART_INWIND = 1, W_NOT_ASSIGNED = -999
   } inwind;                     /**< Basic information on the nature of a particular cell. */
-  Wind_Paths_Ptr paths, *line_paths;    /**<  Path data struct for each cell */
 }
 wind_dummy, *WindPtr;
 
 extern WindPtr wmain;
+
+#ifdef MPI_ON
+extern MPI_Win wmain_win;             /**< MPI shared memory window for wmain */
+#endif
+
+/**
+ * Per-cell reverb path data, stored separately from wind_dummy so that
+ * wmain can be placed in MPI-3 shared memory (paths are written during
+ * transport and must remain private per rank).
+ */
+typedef struct wind_paths_store
+{
+  Wind_Paths_Ptr paths;              /**< Continuum path histogram */
+  Wind_Paths_Ptr *line_paths;        /**< Per-line path histograms */
+} wind_paths_store;
+
+extern wind_paths_store *wind_paths_main;
 
 /*****************************PLASMA STRUCTURE**************************/
 /** Plasma is a structure that contains information about the properties of the

@@ -78,6 +78,10 @@ struct xdisk disk, qdisk;   /**< disk defines zones in the disk which in a speci
 struct blmodel blmod;
 
 WindPtr wmain;
+#ifdef MPI_ON
+MPI_Win wmain_win;
+#endif
+wind_paths_store *wind_paths_main;
 
 PlasmaPtr plasmamain;
 

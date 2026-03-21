@@ -126,8 +126,8 @@ cleanup_model (const char *root_name)
 
   for (int n_wind = 0; n_wind < NDIM2; ++n_wind)
   {
-    free_and_null ((void **) &wmain[n_wind].paths);
-    free_and_null ((void **) &wmain[n_wind].line_paths);
+    free_and_null ((void **) &wind_paths_main[n_wind].paths);
+    free_and_null ((void **) &wind_paths_main[n_wind].line_paths);
   }
 
   free_and_null ((void **) &wmain);

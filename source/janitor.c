@@ -104,11 +104,23 @@ free_wind_grid (void)
 
   for (n_wind = 0; n_wind < NDIM2; ++n_wind)
   {
-    free (wmain[n_wind].paths);
-    free (wmain[n_wind].line_paths);
+    free (wind_paths_main[n_wind].paths);
+    free (wind_paths_main[n_wind].line_paths);
   }
+  free (wind_paths_main);
+  wind_paths_main = NULL;
 
-  free (wmain);
+#ifdef MPI_ON
+  if (np_mpi_global > 1)
+  {
+    MPI_Win_free (&wmain_win);
+    wmain = NULL;
+  }
+  else
+#endif
+  {
+    free (wmain);
+  }
 }
 
 /**********************************************************/
