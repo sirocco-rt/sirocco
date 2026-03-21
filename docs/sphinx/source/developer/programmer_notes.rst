@@ -39,9 +39,9 @@ Plasma and macro-atom sub-structures
 The two largest data structures, ``plasma_dummy`` (accessed via ``PlasmaPtr``) and
 ``macro_dummy`` (accessed via ``MacroPtr``), are each split into three sub-structures
 that categorize fields by their role during a simulation cycle.  This split makes the
-MPI communication patterns self-documenting and lays the groundwork for a future
-shared-memory optimization where read-only data can be shared between ranks on the
-same node while private estimator data remains per-rank.
+MPI communication patterns self-documenting and enables the MPI-3 shared-memory model
+(see :doc:`mpi_comms`) where read-only data is shared between ranks on the same node
+while private estimator data remains per-rank.
 
 The top-level ``plasma_dummy`` struct is:
 
@@ -60,7 +60,11 @@ The three sub-structures are:
 * **plasma_state** -- Thermodynamic state, ion/level populations, spectral model
   parameters, and bound-free process data.  These fields are set during initialization
   or the wind update phase.  During photon transport, all ranks read them but none
-  write them.  Fields are accessed as ``xplasma->state.ne``, ``xplasma->state.t_e``,
+  write them.  In the MPI shared-memory model the dynamic state arrays (``density``,
+  ``partition``, ``levden``, etc.) reside in shared memory, so it is critical that
+  transport code never modifies them — use local variables or function parameters
+  (e.g. the ``density_override`` argument to ``two_level_atom()``) instead.
+  Fields are accessed as ``xplasma->state.ne``, ``xplasma->state.t_e``,
   ``xplasma->state.density[n]``, etc.
 
 * **plasma_estimators** -- Radiation field estimators (mean intensity, heating rates,
@@ -75,6 +79,9 @@ The three sub-structures are:
   ionization parameter.  These are computed from the estimators during the wind
   update phase.  Each rank computes its assigned partition of cells, then broadcasts
   to all ranks via ``broadcast_updated_plasma_properties()``.
+  Most derived dynamic arrays reside in shared memory, but ``scatters`` and
+  ``xscatters`` are kept private per rank because they are incremented during
+  photon transport.
   Fields are accessed as ``xplasma->derived.lum_tot``, ``xplasma->derived.cool_comp``,
   ``xplasma->derived.xi``, etc.
 

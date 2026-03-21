@@ -672,14 +672,16 @@ int sobolev_error_counter = 0;
  * @brief      calculates tau in the sobolev approximation for a resonance, given the
  * conditions in the wind and the direction of the photon.
  *
- * It does not modify any of the variables that are passed to it, including for example
- * the photon.
+ * This routine does not modify any shared plasma state.  When a density
+ * override is needed (den_ion >= 0 or forced recalculation), the desired
+ * density is passed to two_level_atom via its density_override parameter
+ * rather than temporarily modifying the shared state.density array.
  *
  * @param [in] WindPtr  one   A single wind cell
  * @param [in] double  x[]   A position
  * @param [in] double  den_ion   The density of the ion.  If less than 0, the routine calculates
- * the density at x
- * @param [in] struct lines *  lptr   A pointer to a particular ion
+ * the density at x using get_ion_density
+ * @param [in] struct lines *  lptr   A pointer to a particular line transition
  * @param [in] double  dvds   the velocity gradient in the direction of travel of the photon
  * @return     The optical depth associated with a transition
  *
@@ -700,7 +702,6 @@ sobolev (WindPtr one, double x[], double den_ion, struct lines *lptr, double dvd
   double tau, xden_ion, tau_x_dvds, levden_upper;
   double d1, d2;
   int nion;
-  double d_hold;
   int nplasma;
   int ndom;
   PlasmaPtr xplasma;
@@ -738,18 +739,20 @@ ion which was done above in calculate ds.  It was made necessary by a change in 
 calls to two_level atom
 */
 
-    d_hold = xplasma->state.density[nion];      // Store the density of this ion in the cell
-
+    /* Use a density override to avoid modifying the shared state.density
+     * array, which would create a race condition with MPI shared memory.
+     * The density override is passed to two_level_atom so it uses this
+     * value instead of reading from xplasma->state.density[nion]. */
+    double den_override;
     if (den_ion < 0)
     {
-      xplasma->state.density[nion] = get_ion_density (ndom, x, lptr->nion);     // Forced calculation of density
+      den_override = get_ion_density (ndom, x, lptr->nion);     // Forced calculation of density
     }
     else
     {
-      xplasma->state.density[nion] = den_ion;   // Put den_ion into the density array
+      den_override = den_ion;   // Use the interpolated density
     }
-    two_level_atom (lptr, xplasma, &d1, &d2);   // Calculate d1 & d2
-    xplasma->state.density[nion] = d_hold;      // Restore w
+    two_level_atom (lptr, xplasma, &d1, &d2, den_override);     // Calculate d1 & d2
     levden_upper = d2 / xplasma->state.density[nion];
   }
 

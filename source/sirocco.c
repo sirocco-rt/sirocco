@@ -91,6 +91,23 @@ main (int argc, char *argv[])
   }
   MPI_Comm_rank (MPI_COMM_WORLD, &my_rank);
   MPI_Comm_size (MPI_COMM_WORLD, &np_mpi);
+
+  /* Create node-local communicator for MPI-3 shared memory */
+  MPI_Comm_split_type (MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, my_rank, MPI_INFO_NULL, &node_comm);
+  MPI_Comm_rank (node_comm, &node_rank);
+  MPI_Comm_size (node_comm, &node_size);
+
+  /* Create inter-node leader communicator (one leader per node) */
+  MPI_Comm_split (MPI_COMM_WORLD, (node_rank == 0) ? 0 : MPI_UNDEFINED, my_rank, &leader_comm);
+
+  /* Determine total number of nodes */
+  num_nodes = 0;
+  if (leader_comm != MPI_COMM_NULL)
+  {
+    MPI_Comm_size (leader_comm, &num_nodes);
+  }
+  MPI_Bcast (&num_nodes, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
 #else
   my_rank = 0;
   np_mpi = 1;
@@ -111,6 +128,10 @@ main (int argc, char *argv[])
   np_mpi_global = np_mpi;       // Global variable which holds the number of MPI processes
   rank_global = my_rank;        // Global variable which holds the rank of the active MPI process
   Log_set_mpi_rank (my_rank, np_mpi);   // communicates my_rank to kpar
+
+#ifdef MPI_ON
+  Log ("MPI topology: %d ranks across %d node(s), %d ranks on this node (node_rank %d)\n", np_mpi, num_nodes, node_size, node_rank);
+#endif
 
 /* This completes the initialisation of mpi */
 

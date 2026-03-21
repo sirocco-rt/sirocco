@@ -121,7 +121,7 @@ lum_lines (xplasma, nmin, nmax)
 
     if (dd > LDEN_MIN)
     {                           /* potentially dangerous step to avoid lines with no power */
-      two_level_atom (lin_ptr[n], xplasma, &d1, &d2);
+      two_level_atom (lin_ptr[n], xplasma, &d1, &d2, -1.0);
       x = foo1 = lin_ptr[n]->gu / lin_ptr[n]->gl * d1 - d2;
 
       z = exp (-H_OVER_K * lin_ptr[n]->freq / t_e);
@@ -177,7 +177,10 @@ double old_d1, old_d2, old_n2_over_n1;
  * @param [in] struct lines *  line_ptr   The line of interest
  * @param [in] PlasmaPtr  xplasma   The plasma cell of interest
  * @param [out] double *  d1   The calculated density of the lower level for the line of interest
- * @param [out] double *  d2   The calculated density of the upper levl
+ * @param [out] double *  d2   The calculated density of the upper level
+ * @param [in] double  density_override   If >= 0, use this ion density instead of
+ *   reading from xplasma->state.density.  Pass -1.0 for normal behaviour.
+ *   This avoids modifying shared memory in the MPI shared-memory model.
  * @return     The density ratio d2/d1
  *
  * @details
@@ -200,7 +203,7 @@ double old_d1, old_d2, old_n2_over_n1;
 
 
 double
-two_level_atom (struct lines *line_ptr, PlasmaPtr xplasma, double *d1, double *d2)
+two_level_atom (struct lines *line_ptr, PlasmaPtr xplasma, double *d1, double *d2, double density_override)
 {
   double a;
   double q, c12, c21;
@@ -230,7 +233,7 @@ two_level_atom (struct lines *line_ptr, PlasmaPtr xplasma, double *d1, double *d
   tr = xplasma->state.t_r;
   w = xplasma->state.w;
   nion = line_ptr->nion;
-  dd = xplasma->state.density[nion];
+  dd = (density_override >= 0) ? density_override : xplasma->state.density[nion];
 
   /* Calculate the number density of the lower level for the transition using the partition function */
   ;
@@ -360,7 +363,7 @@ line_nsigma (struct lines *line_ptr, PlasmaPtr xplasma)
 {
   double d1, d2, x;
 
-  two_level_atom (line_ptr, xplasma, &d1, &d2);
+  two_level_atom (line_ptr, xplasma, &d1, &d2, -1.0);
 
   x = (d1 - line_ptr->gl / line_ptr->gu * d2);
   x *= PI_E2_OVER_MC * line_ptr->f;

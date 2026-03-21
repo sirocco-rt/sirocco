@@ -15,6 +15,14 @@ extern int np_mpi_global;      /**< Global variable which holds the number of MP
 extern int rank_global;       /**<Global variable which holds the rank of the active MPI process
                                 */
 
+#ifdef MPI_ON
+extern MPI_Comm node_comm;             /**< Communicator for ranks on the same shared-memory node */
+extern MPI_Comm leader_comm;           /**< Communicator among node leaders (node_rank==0), MPI_COMM_NULL for non-leaders */
+extern int node_rank;                  /**< Rank of this process within its node */
+extern int node_size;                  /**< Number of MPI processes on this node */
+extern int num_nodes;                  /**< Number of distinct shared-memory nodes */
+#endif
+
 extern int verbosity;          /**< verbosity level for printing out information. 0 low, 10 is high
                                  */
 
@@ -1253,6 +1261,94 @@ extern MacroPtr macromain;
 //extern int xxxpdfwind;          // When 1, line luminosity calculates pdf
 
 extern int size_Jbar_est, size_gamma_est, size_alpha_est;
+
+
+/*******************************CONTIGUOUS BLOCK MANAGEMENT*****************************/
+/**
+ * Contiguous block base pointers for plasma dynamic arrays.
+ * Instead of NPLASMA separate calloc() calls per array, we allocate one
+ * contiguous block of NPLASMA * array_size elements, then point each cell's
+ * pointer into the block at the right offset.  This enables future
+ * MPI-3 shared memory (MPI_Win_allocate_shared requires contiguous blocks).
+ */
+
+typedef struct plasma_blocks
+{
+  /* state arrays (shared in MPI-3 mode) */
+  double *density_block;                /**< NPLASMA * nions */
+  double *partition_block;              /**< NPLASMA * nions */
+  double *levden_block;                 /**< NPLASMA * nlte_levels */
+  double *recomb_simple_block;          /**< NPLASMA * nphot_total */
+  double *recomb_simple_upweight_block; /**< NPLASMA * nphot_total */
+  double *kbf_use_block;                /**< NPLASMA * nphot_total (allocated as doubles for legacy compat) */
+
+  /* est arrays (always private per rank) */
+  double *ioniz_block;                  /**< NPLASMA * nions */
+  double *heat_ion_block;               /**< NPLASMA * nions */
+  double *heat_inner_ion_block;         /**< NPLASMA * nions */
+  double *inner_ioniz_block;            /**< NPLASMA * n_inner_tot */
+
+  /* derived arrays (shared in MPI-3 mode) */
+  double *recomb_block;                 /**< NPLASMA * nions */
+  int *scatters_block;                  /**< NPLASMA * nions */
+  double *xscatters_block;              /**< NPLASMA * nions */
+  double *cool_rr_ion_block;            /**< NPLASMA * nions */
+  double *lum_rr_ion_block;             /**< NPLASMA * nions */
+  double *cool_dr_ion_block;            /**< NPLASMA * nions */
+  double *inner_recomb_block;           /**< NPLASMA * nions */
+
+#ifdef MPI_ON
+  /* MPI shared memory windows for state/derived blocks */
+  MPI_Win win_density, win_partition, win_levden;
+  MPI_Win win_recomb_simple, win_recomb_simple_upweight, win_kbf_use;
+  MPI_Win win_recomb;
+  /* win_scatters and win_xscatters removed: these are always private (written during transport) */
+  MPI_Win win_cool_rr_ion, win_lum_rr_ion, win_cool_dr_ion, win_inner_recomb;
+  int shared_memory_active;             /**< TRUE if using MPI shared memory for this allocation */
+#endif
+} plasma_blocks;
+
+extern plasma_blocks plasma_block_ptrs;
+
+/**
+ * Contiguous block base pointers for macro atom dynamic arrays.
+ */
+
+typedef struct macro_blocks
+{
+  /* state arrays (shared in MPI-3 mode) */
+  double *jbar_old_block;               /**< NPLASMA * size_Jbar_est */
+  double *gamma_old_block;              /**< NPLASMA * size_gamma_est */
+  double *gamma_e_old_block;            /**< NPLASMA * size_gamma_est */
+  double *alpha_st_old_block;           /**< NPLASMA * size_gamma_est */
+  double *alpha_st_e_old_block;         /**< NPLASMA * size_gamma_est */
+
+  /* est arrays (always private per rank) */
+  double *jbar_block;                   /**< NPLASMA * size_Jbar_est */
+  double *gamma_block;                  /**< NPLASMA * size_gamma_est */
+  double *gamma_e_block;                /**< NPLASMA * size_gamma_est */
+  double *alpha_st_block;               /**< NPLASMA * size_gamma_est */
+  double *alpha_st_e_block;             /**< NPLASMA * size_gamma_est */
+  double *recomb_sp_block;              /**< NPLASMA * size_alpha_est */
+  double *recomb_sp_e_block;            /**< NPLASMA * size_alpha_est */
+  double *matom_abs_block;              /**< NPLASMA * nlevels_macro */
+  double *cooling_bf_block;             /**< NPLASMA * nphot_total */
+  double *cooling_bf_col_block;         /**< NPLASMA * nphot_total */
+  double *cooling_bb_block;             /**< NPLASMA * nlines */
+
+  /* derived arrays (shared in MPI-3 mode) */
+  double *matom_emiss_block;            /**< NPLASMA * nlevels_macro */
+
+#ifdef MPI_ON
+  /* MPI shared memory windows for state/derived blocks */
+  MPI_Win win_jbar_old, win_gamma_old, win_gamma_e_old;
+  MPI_Win win_alpha_st_old, win_alpha_st_e_old;
+  MPI_Win win_matom_emiss;
+  int shared_memory_active;             /**< TRUE if using MPI shared memory for this allocation */
+#endif
+} macro_blocks;
+
+extern macro_blocks macro_block_ptrs;
 
 
 //These constants are used in the various routines which compute ionization state

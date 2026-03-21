@@ -680,7 +680,7 @@ total_bb_cooling (PlasmaPtr xplasma, double t_e)
 
       //The cooling rate is computed using the scattering probability formalism in KSL's notes on Sirocco.
 
-      two_level_atom (line_ptr, xplasma, &lower_density, &upper_density);
+      two_level_atom (line_ptr, xplasma, &lower_density, &upper_density, -1.0);
       coll_rate = q21 (line_ptr, t_e) * xplasma->state.ne * (1. - exp (-H_OVER_K * line_ptr->freq / t_e));
 
       cool_contribution =

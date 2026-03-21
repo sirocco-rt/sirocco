@@ -471,7 +471,7 @@ line_summary (WindPtr w, char rootname[], int ochoice)
       else
       {
         /* If this is not a matom line */
-        two_level_atom (lin_ptr[nline], &plasmamain[nplasma], &d1, &d2);
+        two_level_atom (lin_ptr[nline], &plasmamain[nplasma], &d1, &d2, -1.0);
       }
 
 

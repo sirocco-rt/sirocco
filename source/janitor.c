@@ -14,6 +14,45 @@
 #include "atomic.h"
 #include "sirocco.h"
 
+
+/**********************************************************/
+/**
+ * @brief  Free a contiguous block, using MPI_Win_free for shared blocks.
+ *
+ * @param [in,out]  ptr         Address of the block pointer (set to NULL after freeing)
+ * @param [in]      is_shared   TRUE if the block was allocated with MPI shared memory
+ *
+ * @details
+ * This is the counterpart to alloc_block_double/alloc_block_int in gridwind.c.
+ * For shared blocks, we cannot call free() since the memory was allocated by
+ * MPI_Win_allocate_shared; instead we would need MPI_Win_free on the corresponding
+ * window.  However, at program exit the MPI runtime handles cleanup, so for
+ * shared blocks we simply NULL the pointer without calling free.
+ * For private (non-shared) blocks, we call free() as normal.
+ **********************************************************/
+
+static void
+free_plasma_block (void **ptr, int is_shared)
+{
+  if (*ptr == NULL)
+    return;
+
+#ifdef MPI_ON
+  if (is_shared && np_mpi_global > 1)
+  {
+    /* Shared memory is freed via MPI_Win_free, which is handled
+     * by the cleanup in calloc_dyn_plasma/calloc_estimators when
+     * re-allocating, or by MPI_Finalize at exit. */
+    *ptr = NULL;
+    return;
+  }
+#endif
+
+  (void) is_shared;
+  free (*ptr);
+  *ptr = NULL;
+}
+
 /**********************************************************/
 /**
  * @brief  Free memory associated with the domains
@@ -83,27 +122,39 @@ free_wind_grid (void)
 void
 free_plasma_grid (void)
 {
-  int n_plasma;
+  /* Free contiguous blocks instead of per-cell pointers, since all cell
+   * pointers now index into contiguous blocks managed by plasma_block_ptrs.
+   * For MPI shared memory blocks, use MPI_Win_free instead of free. */
 
-  for (n_plasma = 0; n_plasma < NPLASMA + 1; ++n_plasma)
+  int is_shared = FALSE;
+#ifdef MPI_ON
+  is_shared = plasma_block_ptrs.shared_memory_active;
+#endif
+
+  /* state blocks (shared in MPI mode) */
+  if (plasma_block_ptrs.density_block != NULL)
   {
-    free (plasmamain[n_plasma].state.density);
-    free (plasmamain[n_plasma].state.partition);
-    free (plasmamain[n_plasma].est.ioniz);
-    free (plasmamain[n_plasma].derived.recomb);
-    free (plasmamain[n_plasma].derived.scatters);
-    free (plasmamain[n_plasma].derived.xscatters);
-    free (plasmamain[n_plasma].est.heat_ion);
-    free (plasmamain[n_plasma].est.heat_inner_ion);
-    free (plasmamain[n_plasma].derived.cool_rr_ion);
-    free (plasmamain[n_plasma].derived.lum_rr_ion);
-    free (plasmamain[n_plasma].derived.inner_recomb);
-    free (plasmamain[n_plasma].est.inner_ioniz);
-    free (plasmamain[n_plasma].derived.cool_dr_ion);
-    free (plasmamain[n_plasma].state.levden);
-    free (plasmamain[n_plasma].state.recomb_simple);
-    free (plasmamain[n_plasma].state.recomb_simple_upweight);
-    free (plasmamain[n_plasma].state.kbf_use);
+    free_plasma_block ((void **) &plasma_block_ptrs.density_block, is_shared);
+    free_plasma_block ((void **) &plasma_block_ptrs.partition_block, is_shared);
+    free_plasma_block ((void **) &plasma_block_ptrs.levden_block, is_shared);
+    free_plasma_block ((void **) &plasma_block_ptrs.recomb_simple_block, is_shared);
+    free_plasma_block ((void **) &plasma_block_ptrs.recomb_simple_upweight_block, is_shared);
+    free_plasma_block ((void **) &plasma_block_ptrs.kbf_use_block, is_shared);
+
+    /* est blocks (always private) */
+    free_plasma_block ((void **) &plasma_block_ptrs.ioniz_block, FALSE);
+    free_plasma_block ((void **) &plasma_block_ptrs.heat_ion_block, FALSE);
+    free_plasma_block ((void **) &plasma_block_ptrs.heat_inner_ion_block, FALSE);
+    free_plasma_block ((void **) &plasma_block_ptrs.inner_ioniz_block, FALSE);
+
+    /* derived blocks (shared in MPI mode, except scatters/xscatters which are private) */
+    free_plasma_block ((void **) &plasma_block_ptrs.recomb_block, is_shared);
+    free_plasma_block ((void **) &plasma_block_ptrs.scatters_block, FALSE);
+    free_plasma_block ((void **) &plasma_block_ptrs.xscatters_block, FALSE);
+    free_plasma_block ((void **) &plasma_block_ptrs.cool_rr_ion_block, is_shared);
+    free_plasma_block ((void **) &plasma_block_ptrs.lum_rr_ion_block, is_shared);
+    free_plasma_block ((void **) &plasma_block_ptrs.cool_dr_ion_block, is_shared);
+    free_plasma_block ((void **) &plasma_block_ptrs.inner_recomb_block, is_shared);
   }
 
   free (plasmamain);
@@ -122,25 +173,41 @@ free_macro_grid (void)
 {
   int n_plasma;
 
+  /* Free contiguous blocks instead of per-cell pointers */
+  int is_shared = FALSE;
+#ifdef MPI_ON
+  is_shared = macro_block_ptrs.shared_memory_active;
+#endif
+
+  if (macro_block_ptrs.jbar_block != NULL)
+  {
+    /* state blocks (shared in MPI mode) */
+    free_plasma_block ((void **) &macro_block_ptrs.jbar_old_block, is_shared);
+    free_plasma_block ((void **) &macro_block_ptrs.gamma_old_block, is_shared);
+    free_plasma_block ((void **) &macro_block_ptrs.gamma_e_old_block, is_shared);
+    free_plasma_block ((void **) &macro_block_ptrs.alpha_st_old_block, is_shared);
+    free_plasma_block ((void **) &macro_block_ptrs.alpha_st_e_old_block, is_shared);
+
+    /* est blocks (always private) */
+    free_plasma_block ((void **) &macro_block_ptrs.jbar_block, FALSE);
+    free_plasma_block ((void **) &macro_block_ptrs.gamma_block, FALSE);
+    free_plasma_block ((void **) &macro_block_ptrs.gamma_e_block, FALSE);
+    free_plasma_block ((void **) &macro_block_ptrs.alpha_st_block, FALSE);
+    free_plasma_block ((void **) &macro_block_ptrs.alpha_st_e_block, FALSE);
+    free_plasma_block ((void **) &macro_block_ptrs.recomb_sp_block, FALSE);
+    free_plasma_block ((void **) &macro_block_ptrs.recomb_sp_e_block, FALSE);
+    free_plasma_block ((void **) &macro_block_ptrs.matom_abs_block, FALSE);
+    free_plasma_block ((void **) &macro_block_ptrs.cooling_bf_block, FALSE);
+    free_plasma_block ((void **) &macro_block_ptrs.cooling_bf_col_block, FALSE);
+    free_plasma_block ((void **) &macro_block_ptrs.cooling_bb_block, FALSE);
+
+    /* derived blocks (shared in MPI mode) */
+    free_plasma_block ((void **) &macro_block_ptrs.matom_emiss_block, is_shared);
+  }
+
+  /* matom_matrix is still allocated per-cell (not part of contiguous blocks) */
   for (n_plasma = 0; n_plasma < NPLASMA + 1; n_plasma++)
   {
-    free (macromain[n_plasma].est.jbar);
-    free (macromain[n_plasma].state.jbar_old);
-    free (macromain[n_plasma].est.gamma);
-    free (macromain[n_plasma].state.gamma_old);
-    free (macromain[n_plasma].est.gamma_e);
-    free (macromain[n_plasma].state.gamma_e_old);
-    free (macromain[n_plasma].est.alpha_st);
-    free (macromain[n_plasma].state.alpha_st_old);
-    free (macromain[n_plasma].est.alpha_st_e);
-    free (macromain[n_plasma].state.alpha_st_e_old);
-    free (macromain[n_plasma].est.recomb_sp);
-    free (macromain[n_plasma].est.recomb_sp_e);
-    free (macromain[n_plasma].derived.matom_emiss);
-    free (macromain[n_plasma].est.matom_abs);
-    free (macromain[n_plasma].est.cooling_bf);
-    free (macromain[n_plasma].est.cooling_bf_col);
-    free (macromain[n_plasma].est.cooling_bb);
     if (macromain[n_plasma].state.store_matom_matrix == TRUE)
     {
       free (macromain[n_plasma].derived.matom_matrix[0]);

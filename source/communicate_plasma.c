@@ -401,6 +401,10 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
   }
 
   free (comm_buffer);
+
+  /* Barrier to ensure shared memory writes are visible to all node-local ranks */
+  MPI_Barrier (node_comm);
+
   d_xsignal (files.root, "%-20s Finished communicating plasma grid\n", "OK");
 #endif
 }
@@ -487,6 +491,9 @@ broadcast_wind_luminosity (const int n_start, const int n_stop, const int n_cell
       }
     }
   }
+
+  /* Barrier to ensure shared memory writes are visible to all node-local ranks */
+  MPI_Barrier (node_comm);
 
   d_xsignal (files.root, "%-20s Finished communicating wind luminosity\n", "OK");
   free (comm_buffer);
@@ -584,6 +591,9 @@ broadcast_wind_cooling (const int n_start, const int n_stop, const int n_cells_r
       }
     }
   }
+
+  /* Barrier to ensure shared memory writes are visible to all node-local ranks */
+  MPI_Barrier (node_comm);
 
   d_xsignal (files.root, "%-20s Finished communicating wind cooling\n", "OK");
   free (comm_buffer);
@@ -1025,6 +1035,10 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
   }
 
   free (comm_buffer);
+
+  /* Barrier to ensure shared memory writes are visible to all node-local ranks */
+  MPI_Barrier (node_comm);
+
   d_xsignal (files.root, "%-20s Finished communicating updated plasma properties\n", "OK");
 #endif
   return EXIT_SUCCESS;

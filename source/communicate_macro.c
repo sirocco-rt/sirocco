@@ -89,6 +89,10 @@ broadcast_macro_atom_emissivities (const int n_start, const int n_stop, const in
   }
 
   free (comm_buffer);
+
+  /* Barrier to ensure shared memory writes are visible to all node-local ranks */
+  MPI_Barrier (node_comm);
+
   d_xsignal (files.root, "%-20s Finished macro atom emissivity communication\n", "OK");
 #endif
 }
@@ -190,6 +194,10 @@ broadcast_macro_atom_recomb (const int n_start, const int n_stop, const int n_ce
   }
 
   free (comm_buffer);
+
+  /* Barrier to ensure shared memory writes are visible to all node-local ranks */
+  MPI_Barrier (node_comm);
+
   d_xsignal (files.root, "%-20s Finished macro atom recombination communication\n", "OK");
 #endif
 }
@@ -289,6 +297,10 @@ broadcast_updated_macro_atom_properties (const int n_start, const int n_stop, co
   }
 
   free (comm_buffer);
+
+  /* Barrier to ensure shared memory writes are visible to all node-local ranks */
+  MPI_Barrier (node_comm);
+
   d_xsignal (files.root, "%-20s Finished macro atom updated properties communication\n", "OK");
 #endif
   return EXIT_SUCCESS;
@@ -374,6 +386,10 @@ broadcast_macro_atom_state_matrix (int n_start, int n_stop, int n_cells_rank)
   }
 
   free (comm_buffer);
+
+  /* Barrier to ensure shared memory writes are visible to all node-local ranks */
+  MPI_Barrier (node_comm);
+
   d_xsignal (files.root, "%-20s Finished macro atom state matrix communication\n", "OK");
 #endif
   return (0);

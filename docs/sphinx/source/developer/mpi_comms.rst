@@ -210,13 +210,124 @@ function.  For ``state`` or ``derived`` fields, update the broadcast function.
 In both cases, remember to update the buffer size calculation (the integer and double
 counts) to account for the new variable.
 
-Future shared-memory model
---------------------------
+MPI-3 shared memory model
+-------------------------
 
-The sub-structure split is designed to enable a future MPI-3 shared memory optimization.
-The idea is that ranks on the same node can share a single copy of the ``state`` and
-``derived`` sub-structures (which are read-only during transport) via ``MPI_Win_allocate_shared``,
-while each rank maintains its own private copy of the ``est`` sub-structure for accumulating
-estimators.  After transport, a two-level reduction would sum the estimators: first within
-each node (intra-node), then across nodes (inter-node).  This would significantly reduce
-memory usage for large models run on multi-core nodes.
+When running with more than one MPI rank, SIROCCO uses MPI-3 shared memory windows
+to reduce per-node memory consumption.  The key idea is that ranks on the same
+physical node share a single copy of data that is read-only during photon transport,
+rather than duplicating it across every rank.
+
+During MPI initialisation (in ``sirocco.c``), a *node-local communicator*
+is created with ``MPI_Comm_split_type(MPI_COMM_TYPE_SHARED, ...)``.  Three global
+variables track the node topology:
+
+- ``node_comm`` — communicator for ranks sharing the same node
+- ``node_rank`` — rank index within the node (0 = node leader)
+- ``node_size`` — number of ranks on the node
+
+Contiguous block allocation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+All variable-length plasma arrays (density, partition, ioniz, etc.) are allocated
+as contiguous blocks in ``calloc_dyn_plasma()`` (in ``gridwind.c``), with each
+cell's pointer set to the appropriate offset within the block.  This replaces the
+earlier pattern of separate ``calloc`` calls per cell and is a prerequisite for
+shared memory, since ``MPI_Win_allocate_shared`` requires contiguous regions.
+
+The allocation is performed by two helper functions, ``alloc_block_double()`` and
+``alloc_block_int()``, which accept a ``use_shared`` flag:
+
+- When ``use_shared`` is TRUE and ``np_mpi_global > 1``, only the node leader
+  (``node_rank == 0``) allocates memory via ``MPI_Win_allocate_shared``; other
+  ranks on the same node obtain a pointer to the same physical memory via
+  ``MPI_Win_shared_query``.
+- When ``use_shared`` is FALSE, each rank allocates its own private block with
+  regular ``calloc``.
+
+The same contiguous block layout is used in non-MPI builds and with a single MPI
+rank; the only difference is that ``calloc`` is used unconditionally.
+
+Which arrays are shared
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The allocation strategy mirrors the three sub-structures:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 55 15 15
+
+   * - Category
+     - Arrays
+     - Allocation
+     - Reason
+   * - **State**
+     - ``density``, ``partition``, ``levden``, ``recomb_simple``, ``recomb_simple_upweight``, ``kbf_use``
+     - Shared
+     - Read-only during photon transport
+   * - **Estimators**
+     - ``ioniz``, ``heat_ion``, ``heat_inner_ion``, ``inner_ioniz``
+     - Private
+     - Each rank accumulates independently
+   * - **Derived**
+     - ``recomb``, ``cool_rr_ion``, ``lum_rr_ion``, ``cool_dr_ion``, ``inner_recomb``
+     - Shared
+     - Computed during wind updates, then broadcast
+   * - **Derived (exceptions)**
+     - ``scatters``, ``xscatters``
+     - Private
+     - Incremented during photon transport (would race in shared memory)
+
+The same shared/private split applies to macro-atom dynamic arrays in
+``calloc_estimators()`` (also in ``gridwind.c``).  State and derived arrays
+(``jbar_old``, ``gamma_old``, ``matom_emiss``, etc.) are shared, while
+estimator arrays (``jbar``, ``gamma``, ``cooling_bf``, etc.) are private.
+
+Block pointer management
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Base pointers for all contiguous blocks are stored in global structs
+``plasma_block_ptrs`` (type ``plasma_blocks``) and ``macro_block_ptrs``
+(type ``macro_blocks``), declared in ``sirocco.h``.  These structs also hold
+the ``MPI_Win`` handles needed to free shared windows and a
+``shared_memory_active`` flag that records whether the current allocation
+used shared memory.
+
+Synchronisation
+^^^^^^^^^^^^^^^
+
+After any broadcast that writes to shared dynamic arrays, an
+``MPI_Barrier(node_comm)`` ensures all node-local ranks see the new data
+before proceeding.  These barriers appear at the end of:
+
+- ``broadcast_updated_plasma_properties()``
+- ``broadcast_plasma_grid()``
+- ``broadcast_wind_luminosity()``
+- ``broadcast_wind_cooling()``
+- ``broadcast_updated_macro_atom_properties()``
+- ``broadcast_macro_atom_emissivities()``
+- ``reduce_macro_atom_estimators()``
+
+During photon transport, state arrays are read-only so no synchronisation
+is required.  The ``sobolev()`` function in ``resonate.c`` previously
+modified ``state.density`` temporarily during transport; it now passes a
+density override to ``two_level_atom()`` instead, avoiding a race condition
+on shared memory.
+
+Cleanup
+^^^^^^^
+
+At program exit, ``free_plasma_grid()`` and ``free_macro_grid()`` in
+``janitor.c`` free the contiguous blocks.  For shared blocks the memory is
+owned by the MPI window, so the pointer is simply NULLed (the MPI runtime
+frees it at ``MPI_Finalize``).  Private blocks are freed with ``free()``
+as usual.
+
+Memory savings
+^^^^^^^^^^^^^^
+
+For a model with *N* plasma cells, *I* ions, and *R* ranks on one node,
+the dominant dynamic arrays total roughly ``N * I * 14 * 8`` bytes per rank.
+With shared memory the state and derived arrays exist only once per node,
+reducing the per-node footprint by approximately ``(R-1)/R`` of the shared
+portion.  Estimator arrays remain duplicated across ranks.

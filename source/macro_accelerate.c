@@ -481,7 +481,7 @@ fill_kpkt_rates (PlasmaPtr xplasma, int *escape, PhotPtr p)
       }
       else
       {
-        two_level_atom (line_ptr, xplasma, &lower_density, &upper_density);
+        two_level_atom (line_ptr, xplasma, &lower_density, &upper_density, -1.0);
 
         coll_rate = q21 (line_ptr, electron_temperature) * (1. - exp (-H_OVER_K * line_ptr->freq / electron_temperature));
 
