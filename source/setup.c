@@ -93,6 +93,7 @@ init_geo ()
 
 
   geo.run_type = 0;             // Not a restart of a previous run
+  geo.nbins_in_cell_spec = 100; // Default number of bins for cell spectra (max NBINS_IN_CELL_SPEC)
 
   geo.star_ion_spectype = geo.star_spectype
     = geo.disk_ion_spectype = geo.disk_spectype = geo.bl_ion_spectype = geo.bl_spectype = SPECTYPE_BB;

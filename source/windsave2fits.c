@@ -433,12 +433,12 @@ make_spec (char *inroot)
 
   printf ("Hello World %s \n", inroot);
   printf ("Plasma  %d \n", NPLASMA);
-  printf ("NBINS in spec %d \n", NBINS_IN_CELL_SPEC);
+  printf ("NBINS in spec %d \n", geo.nbins_in_cell_spec);
 
 
   Spectra spectra;
   spectra.num_spectra = NPLASMA;
-  spectra.num_wavelengths = NBINS_IN_CELL_SPEC;
+  spectra.num_wavelengths = geo.nbins_in_cell_spec;
   spectra.data = calloc (spectra.num_spectra, sizeof (float *));
 
   for (int i = 0; i < spectra.num_spectra; i++)
@@ -471,30 +471,30 @@ make_spec (char *inroot)
 
   Spectra freq;
   freq.num_spectra = 1;
-  freq.num_wavelengths = NBINS_IN_CELL_SPEC;
+  freq.num_wavelengths = geo.nbins_in_cell_spec;
   freq.data = calloc (freq.num_spectra, sizeof (float *));
   freq.data[0] = calloc (freq.num_wavelengths, sizeof (float));
 
-  for (int i = 0; i < NBINS_IN_CELL_SPEC; i++)
+  for (int i = 0; i < geo.nbins_in_cell_spec; i++)
   {
     freq.data[0][i] = (float) pow (10., geo.cell_log_freq_min + i * geo.cell_delta_lfreq);
   }
 
 
-  float *image_data2 = prepare_image_data (freq.data, NBINS_IN_CELL_SPEC, 1);
+  float *image_data2 = prepare_image_data (freq.data, geo.nbins_in_cell_spec, 1);
 /*
   double freq[2000][1];
   int i;
 
-  for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
+  for (i = 0; i < geo.nbins_in_cell_spec; i++)
   {
     freq[i][0] = (float) pow (10., geo.cell_log_freq_min + i * geo.cell_delta_lfreq);
   }
 
-  float *image_data2 = prepare_image_data (freq, NBINS_IN_CELL_SPEC, 1);
+  float *image_data2 = prepare_image_data (freq, geo.nbins_in_cell_spec, 1);
 */
-  // status = write_image_extension (fptr, image_data2, NBINS_IN_CELL_SPEC, 1, "nu");
-  status = write_1d_image_extension (fptr, image_data2, NBINS_IN_CELL_SPEC, "nu");
+  // status = write_image_extension (fptr, image_data2, geo.nbins_in_cell_spec, 1, "nu");
+  status = write_1d_image_extension (fptr, image_data2, geo.nbins_in_cell_spec, "nu");
 
   /* Elimainate this for now
 

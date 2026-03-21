@@ -578,11 +578,12 @@ struct geometry
   int nxfreq;                   /**<  the number of frequency intervals actually used */
   double xfreq[NXBANDS + 1];    /**<  the frequency boundaries for the coarse spectra  */
 
-#define NBINS_IN_CELL_SPEC   1000       /**< The number of bins in the cell spectra  */
+#define NBINS_IN_CELL_SPEC   1000       /**< The maximum number of bins in the cell spectra  */
 
+  int nbins_in_cell_spec;             /**< Runtime number of bins in cell spectra (default 100, max NBINS_IN_CELL_SPEC) */
   double cell_log_freq_min, cell_log_freq_max, cell_delta_lfreq;        /**< Parameters defining freqency intervals for cell spectra.
                                                                            These are defined as logarithmic frequency intervals */
-  double cell_freq[NBINS_IN_CELL_SPEC +1];  
+  double *cell_freq;                  /**< Frequency bin boundaries for cell spectra (nbins_in_cell_spec+1 elements) */  
 
 
   /* The next set pf variables assign a SPECTYPE (see above) for
@@ -1041,7 +1042,7 @@ typedef struct plasma_estimators
   double F_UV_ang_r[NFLUX_ANGLES];
 
   /* Cell spectrum (accumulated during ionization cycles) */
-  double cell_spec_flux[NBINS_IN_CELL_SPEC];    /**< The array where the cell spectra are accumulated. */
+  double *cell_spec_flux;             /**< The array where the cell spectra are accumulated (nbins_in_cell_spec elements). */
 
   /* Ionization estimators (dynamically allocated) */
   double *ioniz;                /**<  Number of ionizations for each ion */
@@ -1319,6 +1320,9 @@ typedef struct plasma_blocks
   /* derived fixed-size arrays moved to contiguous blocks (shared in MPI-3 mode) */
   double *derived_persist_force_block;  /**< NPLASMA * 6 * NFORCE_DIRECTIONS doubles */
   double *derived_persist_angle_block;  /**< NPLASMA * 3 * NFLUX_ANGLES doubles */
+
+  /* est cell_spec_flux block (private — accumulated during transport) */
+  double *cell_spec_flux_block;         /**< NPLASMA * nbins_in_cell_spec doubles */
 
   /* derived n_bf diagnostic counters (private — written during transport) */
   int *n_bf_in_block;                   /**< NPLASMA * nphot_total ints */

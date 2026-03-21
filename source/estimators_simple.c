@@ -148,9 +148,9 @@ update_banded_estimators (PlasmaPtr xplasma, PhotPtr p, double ds, double w_ave,
   i = (log_freq - geo.cell_log_freq_min) / geo.cell_delta_lfreq;
   if (i < 0)
     i = 0;
-  if (i > NBINS_IN_CELL_SPEC - 1)
+  if (i > geo.nbins_in_cell_spec - 1)
   {
-    i = NBINS_IN_CELL_SPEC - 1;
+    i = geo.nbins_in_cell_spec - 1;
   }
   xplasma->est.cell_spec_flux[i] += w_ave * ds;
 
@@ -647,10 +647,10 @@ normalise_simple_estimators (PlasmaPtr xplasma)
       xplasma->est.xsd_freq[i] = 0;
       xplasma->est.xj[i] = 0;
       xplasma->est.nxtot[i] = 0;
-      xplasma->est.fmin[i] = geo.cell_freq[NBINS_IN_CELL_SPEC];
+      xplasma->est.fmin[i] = geo.cell_freq[geo.nbins_in_cell_spec];
       xplasma->est.fmax[i] = geo.cell_freq[0];
 
-      while (geo.cell_freq[j] < xplasma->state.f2[i] && j < NBINS_IN_CELL_SPEC)
+      while (geo.cell_freq[j] < xplasma->state.f2[i] && j < geo.nbins_in_cell_spec)
       {
         double ave_freq;
         if (xplasma->est.cell_spec_flux[j] > 0)
@@ -704,7 +704,7 @@ normalise_simple_estimators (PlasmaPtr xplasma)
 
   /* Normalize the cell spectra to J_nu - erg/s/cm^3/Sr/Hz */
 
-  for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
+  for (i = 0; i < geo.nbins_in_cell_spec; i++)
   {
     freq_min = geo.cell_log_freq_min + (i) * geo.cell_delta_lfreq;
     freq_max = freq_min + geo.cell_delta_lfreq;

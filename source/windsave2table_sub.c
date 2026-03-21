@@ -2024,34 +2024,22 @@ create_detailed_cell_spec_table (int ncell, char rootname[])
   FILE *fptr;
   char filename[132];
 
-  double freq[NBINS_IN_CELL_SPEC];
-  double flux[NBINS_IN_CELL_SPEC];
   int i, nplasma;
 
   printf ("%e %e\n", geo.cell_log_freq_min, geo.cell_delta_lfreq);
 
   sprintf (filename, "%s.xspec.%d.txt", rootname, ncell);
 
-  for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
-  {
-    freq[i] = pow (10., geo.cell_log_freq_min + i * geo.cell_delta_lfreq);
-  }
-
   nplasma = wmain[ncell].nplasma;
-
-  for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
-  {
-    flux[i] = plasmamain[nplasma].est.cell_spec_flux[i];
-  }
-
 
   fptr = fopen (filename, "w");
 
   fprintf (fptr, "Freq.          Flux\n");
 
-  for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
+  for (i = 0; i < geo.nbins_in_cell_spec; i++)
   {
-    fprintf (fptr, "%10.3e  %10.3e\n", freq[i], flux[i]);
+    double freq = pow (10., geo.cell_log_freq_min + i * geo.cell_delta_lfreq);
+    fprintf (fptr, "%10.3e  %10.3e\n", freq, plasmamain[nplasma].est.cell_spec_flux[i]);
   }
 
 
@@ -2101,7 +2089,7 @@ create_big_detailed_spec_table (int ndom, char *rootname)
 
   FILE *fptr;
   char filename[132];
-  double freq[NBINS_IN_CELL_SPEC];
+  double *freq;
   int nstart, nstop;
 
   /* Identify the range of wind cells for this domain */
@@ -2144,7 +2132,8 @@ create_big_detailed_spec_table (int ndom, char *rootname)
 
 
   /* Calculate the frequencies */
-  for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
+  freq = calloc (geo.nbins_in_cell_spec, sizeof (double));
+  for (i = 0; i < geo.nbins_in_cell_spec; i++)
   {
     freq[i] = pow (10., geo.cell_log_freq_min + i * geo.cell_delta_lfreq);
   }
@@ -2176,7 +2165,7 @@ create_big_detailed_spec_table (int ndom, char *rootname)
     }
     fprintf (fptr, "\n");
 
-    for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
+    for (i = 0; i < geo.nbins_in_cell_spec; i++)
     {
       fprintf (fptr, "%10.3e ", freq[i]);
 
@@ -2195,11 +2184,7 @@ create_big_detailed_spec_table (int ndom, char *rootname)
     nstop = nstart + MAX_IN_TABLE;
   }
 
+  free (freq);
+
   return (0);
-
-
-
-
-
-
 }

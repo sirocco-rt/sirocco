@@ -607,9 +607,13 @@ bands_init (imode, band)
   /* Now define the freqquency boundaries for the cell spectra */
   geo.cell_log_freq_min = log10 (band->f1[0]);
   geo.cell_log_freq_max = log10 (band->f2[band->nbands - 1]);
-  geo.cell_delta_lfreq = (geo.cell_log_freq_max - geo.cell_log_freq_min) / NBINS_IN_CELL_SPEC;
+  geo.cell_delta_lfreq = (geo.cell_log_freq_max - geo.cell_log_freq_min) / geo.nbins_in_cell_spec;
 
-  for (ii = 0; ii <= NBINS_IN_CELL_SPEC; ii++)
+  if (geo.cell_freq != NULL)
+    free (geo.cell_freq);
+  geo.cell_freq = calloc (geo.nbins_in_cell_spec + 1, sizeof (double));
+
+  for (ii = 0; ii <= geo.nbins_in_cell_spec; ii++)
   {
     geo.cell_freq[ii] = pow (10., (geo.cell_log_freq_min + ii * geo.cell_delta_lfreq));
   }

@@ -59,7 +59,7 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
 
   const int num_ints = 1 + n_cells_max * (N_BASIC_INTS + nphot_total + nions + 2 * NXBANDS + 2 * nphot_total);
   const int num_doubles = n_cells_max * (N_BASIC_DOUBLES + 11 * nions + nlte_levels + 2 * nphot_total + n_inner_tot +
-                                         11 * NXBANDS + NBINS_IN_CELL_SPEC + 6 * NFLUX_ANGLES +
+                                         11 * NXBANDS + geo.nbins_in_cell_spec + 6 * NFLUX_ANGLES +
                                          N_DMO_DT_DIRECTIONS + 12 * NFORCE_DIRECTIONS);
 
 
@@ -162,7 +162,7 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
         MPI_Pack (cell->state.pl_log_w, NXBANDS, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (cell->state.exp_temp, NXBANDS, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (cell->state.exp_w, NXBANDS, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (cell->est.cell_spec_flux, NBINS_IN_CELL_SPEC, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (cell->est.cell_spec_flux, geo.nbins_in_cell_spec, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (cell->est.F_vis, NFORCE_DIRECTIONS, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (cell->est.F_UV, NFORCE_DIRECTIONS, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (cell->est.F_Xray, NFORCE_DIRECTIONS, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
@@ -324,7 +324,7 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->state.pl_log_w, NXBANDS, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->state.exp_temp, NXBANDS, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->state.exp_w, NXBANDS, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->est.cell_spec_flux, NBINS_IN_CELL_SPEC, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->est.cell_spec_flux, geo.nbins_in_cell_spec, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->est.F_vis, NFORCE_DIRECTIONS, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->est.F_UV, NFORCE_DIRECTIONS, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->est.F_Xray, NFORCE_DIRECTIONS, MPI_DOUBLE, MPI_COMM_WORLD);
@@ -635,7 +635,7 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
   const int num_ints = 1 + n_cells_max * (N_BASIC_INTS + nphot_total + 2 * NXBANDS + 2 * nphot_total + nions);
   const int num_doubles =
     n_cells_max * (N_BASIC_DOUBLES + 1 * 3 + 9 * 4 + 6 * NFLUX_ANGLES + 3 * NFORCE_DIRECTIONS + 9 * nions + 1 * nlte_levels +
-                   3 * nphot_total + 1 * n_inner_tot + 9 * NXBANDS + 1 * NBINS_IN_CELL_SPEC);
+                   3 * nphot_total + 1 * n_inner_tot + 9 * NXBANDS + 1 * geo.nbins_in_cell_spec);
 
   const int size_of_comm_buffer = calculate_comm_buffer_size (num_ints, num_doubles);
   char *const comm_buffer = malloc (size_of_comm_buffer);
@@ -735,7 +735,7 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
         MPI_Pack (plasmamain[n_plasma].state.pl_log_w, NXBANDS, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (plasmamain[n_plasma].state.exp_temp, NXBANDS, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (plasmamain[n_plasma].state.exp_w, NXBANDS, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
-        MPI_Pack (plasmamain[n_plasma].est.cell_spec_flux, NBINS_IN_CELL_SPEC, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position,
+        MPI_Pack (plasmamain[n_plasma].est.cell_spec_flux, geo.nbins_in_cell_spec, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position,
                   MPI_COMM_WORLD);
         MPI_Pack (plasmamain[n_plasma].est.F_vis, NFORCE_DIRECTIONS, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position,
                   MPI_COMM_WORLD);
@@ -927,8 +927,8 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, plasmamain[n_plasma].state.pl_log_w, NXBANDS, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, plasmamain[n_plasma].state.exp_temp, NXBANDS, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, plasmamain[n_plasma].state.exp_w, NXBANDS, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, plasmamain[n_plasma].est.cell_spec_flux, NBINS_IN_CELL_SPEC, MPI_DOUBLE,
-                    MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, plasmamain[n_plasma].est.cell_spec_flux, geo.nbins_in_cell_spec,
+                    MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, plasmamain[n_plasma].est.F_vis, NFORCE_DIRECTIONS, MPI_DOUBLE,
                     MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, plasmamain[n_plasma].est.F_UV, NFORCE_DIRECTIONS, MPI_DOUBLE,
@@ -1368,12 +1368,12 @@ reduce_simple_estimators (void)
 
   if (geo.ioniz_or_extract == CYCLE_IONIZ)
   {
-    size_of_commbuffer = NPLASMA * NBINS_IN_CELL_SPEC;
+    size_of_commbuffer = NPLASMA * geo.nbins_in_cell_spec;
 
     redhelper = calloc (sizeof (double), size_of_commbuffer);
     redhelper2 = calloc (sizeof (double), size_of_commbuffer);
 
-    for (mpi_i = 0; mpi_i < NBINS_IN_CELL_SPEC; mpi_i++)
+    for (mpi_i = 0; mpi_i < geo.nbins_in_cell_spec; mpi_i++)
     {
       for (mpi_j = 0; mpi_j < NPLASMA; mpi_j++)
       {
@@ -1384,7 +1384,7 @@ reduce_simple_estimators (void)
 
     MPI_Allreduce (redhelper, redhelper2, size_of_commbuffer, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-    for (mpi_i = 0; mpi_i < NBINS_IN_CELL_SPEC; mpi_i++)
+    for (mpi_i = 0; mpi_i < geo.nbins_in_cell_spec; mpi_i++)
     {
       for (mpi_j = 0; mpi_j < NPLASMA; mpi_j++)
       {

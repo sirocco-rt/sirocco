@@ -235,6 +235,11 @@ wind_read (char filename[])
 
   n += fread (&geo, sizeof (geo), 1, fptr);
 
+  /* Null out pointer fields that were serialized as raw bytes — they will be
+   * re-allocated when bands_init() runs.  Without this, the stale pointer
+   * from the previous process could cause a double-free or corruption. */
+  geo.cell_freq = NULL;
+
   /* Read the atomic data file.  This is necessary to do here in order to establish the 
    * values for the dimensionality of some of the variable length structures, associated 
    * with macro atoms, especially but likely to be a good idea ovrall

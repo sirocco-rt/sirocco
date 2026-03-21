@@ -798,6 +798,7 @@ calloc_dyn_plasma (int nelem)
     free_block ((void **) &plasma_block_ptrs.state_spec_mod_type_block, &PLASMA_WIN (win_state_spec_mod_type), was_shared);
     free_block ((void **) &plasma_block_ptrs.derived_persist_force_block, &PLASMA_WIN (win_derived_persist_force), was_shared);
     free_block ((void **) &plasma_block_ptrs.derived_persist_angle_block, &PLASMA_WIN (win_derived_persist_angle), was_shared);
+    free_block ((void **) &plasma_block_ptrs.cell_spec_flux_block, NULL, FALSE);
     free_block ((void **) &plasma_block_ptrs.n_bf_in_block, NULL, FALSE);
     free_block ((void **) &plasma_block_ptrs.n_bf_out_block, NULL, FALSE);
   }
@@ -845,6 +846,9 @@ calloc_dyn_plasma (int nelem)
                       &PLASMA_WIN (win_derived_persist_force), use_shared);
   alloc_block_double ((long) nelem_alloc * 3 * NFLUX_ANGLES, &plasma_block_ptrs.derived_persist_angle_block,
                       &PLASMA_WIN (win_derived_persist_angle), use_shared);
+
+  /* est cell_spec_flux — private (accumulated during transport) */
+  alloc_block_double ((long) nelem_alloc * geo.nbins_in_cell_spec, &plasma_block_ptrs.cell_spec_flux_block, NULL, FALSE);
 
   /* derived n_bf diagnostic counters — private (incremented during transport) */
   alloc_block_int (nalloc_phot, &plasma_block_ptrs.n_bf_in_block, NULL, FALSE);
@@ -911,6 +915,8 @@ calloc_dyn_plasma (int nelem)
       plasmamain[n].derived.F_UV_ang_r_persist = dbase + 2 * NFLUX_ANGLES;
     }
 
+    plasmamain[n].est.cell_spec_flux = plasma_block_ptrs.cell_spec_flux_block + n * geo.nbins_in_cell_spec;
+
     plasmamain[n].derived.n_bf_in = plasma_block_ptrs.n_bf_in_block + n * nphot_total;
     plasmamain[n].derived.n_bf_out = plasma_block_ptrs.n_bf_out_block + n * nphot_total;
   }
@@ -932,7 +938,8 @@ calloc_dyn_plasma (int nelem)
                                                              + 6.0 * NXBANDS + 2.0 * (NXBANDS + 1)
                                                              + 6.0 * NFORCE_DIRECTIONS + 3.0 * NFLUX_ANGLES) + sizeof (int) * NXBANDS);
     private_bytes =
-      (double) nelem_alloc *(sizeof (double) * (3.0 * nions + n_inner_tot + nions) + sizeof (int) * (nions + 2.0 * nphot_total));
+      (double) nelem_alloc *(sizeof (double) * (3.0 * nions + n_inner_tot + nions + geo.nbins_in_cell_spec) +
+                             sizeof (int) * (nions + 2.0 * nphot_total));
     double base_struct_bytes = (double) nelem_alloc * sizeof (plasma_dummy);
 
     Log

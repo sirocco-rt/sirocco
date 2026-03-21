@@ -654,7 +654,7 @@ init_plasma_rad_properties (void)
       plasmamain[i].est.fmin[j] = 0.0;
       plasmamain[i].est.fmax[j] = 0.0;
     }
-    for (j = 0; j < NBINS_IN_CELL_SPEC; ++j)
+    for (j = 0; j < geo.nbins_in_cell_spec; ++j)
     {
       plasmamain[i].est.cell_spec_flux[j] = 0.0;
     }

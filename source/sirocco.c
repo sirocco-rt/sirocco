@@ -164,6 +164,9 @@ main (int argc, char *argv[])
 
   restart_stat = parse_command_line (argc, argv);
 
+  /* Save the command-line cell_spec_dim setting (if specified) so it survives wind_read overwriting geo */
+  int cmd_nbins_in_cell_spec = geo.nbins_in_cell_spec;
+
   /* If the restart flag has been set, we check to see if a windsave file exists.  If it doues we will
      we will restart from that point.  If the windsave file does not exist we will start from scratch */
 
@@ -217,6 +220,17 @@ main (int argc, char *argv[])
       Exit (0);
     }
     //OLD w = wmain;
+
+    /* Restore command-line cell_spec_dim or validate the value read from windsave */
+    if (cmd_nbins_in_cell_spec > 0)
+    {
+      geo.nbins_in_cell_spec = cmd_nbins_in_cell_spec;
+    }
+    if (geo.nbins_in_cell_spec < 1 || geo.nbins_in_cell_spec > NBINS_IN_CELL_SPEC)
+    {
+      Log ("Windsave had invalid nbins_in_cell_spec=%d, resetting to 100\n", geo.nbins_in_cell_spec);
+      geo.nbins_in_cell_spec = 100;
+    }
 
     geo.run_type = RUN_TYPE_RESTART;
 
@@ -281,6 +295,17 @@ main (int argc, char *argv[])
       {
         Error ("sirocco: Unable to open %s\n", files.old_windsave);
         Exit (0);
+      }
+
+      /* Restore command-line cell_spec_dim or validate the value read from windsave */
+      if (cmd_nbins_in_cell_spec > 0)
+      {
+        geo.nbins_in_cell_spec = cmd_nbins_in_cell_spec;
+      }
+      if (geo.nbins_in_cell_spec < 1 || geo.nbins_in_cell_spec > NBINS_IN_CELL_SPEC)
+      {
+        Log ("Windsave had invalid nbins_in_cell_spec=%d, resetting to 100\n", geo.nbins_in_cell_spec);
+        geo.nbins_in_cell_spec = 100;
       }
 
       geo.run_type = RUN_TYPE_PREVIOUS;
