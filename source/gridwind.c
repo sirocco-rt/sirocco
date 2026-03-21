@@ -751,6 +751,8 @@ calloc_dyn_plasma (int nelem)
     free_block ((void **) &plasma_block_ptrs.state_spec_mod_type_block, &PLASMA_WIN (win_state_spec_mod_type), was_shared);
     free_block ((void **) &plasma_block_ptrs.derived_persist_force_block, &PLASMA_WIN (win_derived_persist_force), was_shared);
     free_block ((void **) &plasma_block_ptrs.derived_persist_angle_block, &PLASMA_WIN (win_derived_persist_angle), was_shared);
+    free_block ((void **) &plasma_block_ptrs.n_bf_in_block, NULL, FALSE);
+    free_block ((void **) &plasma_block_ptrs.n_bf_out_block, NULL, FALSE);
   }
 
   /* Allocate contiguous blocks for all dynamic plasma arrays.
@@ -796,6 +798,10 @@ calloc_dyn_plasma (int nelem)
                       &PLASMA_WIN (win_derived_persist_force), use_shared);
   alloc_block_double ((long) nelem_alloc * 3 * NFLUX_ANGLES, &plasma_block_ptrs.derived_persist_angle_block,
                       &PLASMA_WIN (win_derived_persist_angle), use_shared);
+
+  /* derived n_bf diagnostic counters — private (incremented during transport) */
+  alloc_block_int (nalloc_phot, &plasma_block_ptrs.n_bf_in_block, NULL, FALSE);
+  alloc_block_int (nalloc_phot, &plasma_block_ptrs.n_bf_out_block, NULL, FALSE);
 
 #ifdef MPI_ON
   plasma_block_ptrs.shared_memory_active = use_shared;
@@ -857,6 +863,9 @@ calloc_dyn_plasma (int nelem)
       plasmamain[n].derived.F_UV_ang_phi_persist = dbase + NFLUX_ANGLES;
       plasmamain[n].derived.F_UV_ang_r_persist = dbase + 2 * NFLUX_ANGLES;
     }
+
+    plasmamain[n].derived.n_bf_in = plasma_block_ptrs.n_bf_in_block + n * nphot_total;
+    plasmamain[n].derived.n_bf_out = plasma_block_ptrs.n_bf_out_block + n * nphot_total;
   }
 
   /* Report memory breakdown: shared (one copy per node) vs private (per rank) vs base struct */
@@ -871,11 +880,12 @@ calloc_dyn_plasma (int nelem)
      * Shared derived: recomb(nions) + cool_rr_ion(nions) + lum_rr_ion(nions) + cool_dr_ion(nions) + inner_recomb(nions) = 5*nions
      *   + persist_force(6*NFORCE_DIRECTIONS) + persist_angle(3*NFLUX_ANGLES)
      * Private est: ioniz(nions) + heat_ion(nions) + heat_inner_ion(nions) + inner_ioniz(n_inner) = 3*nions + n_inner
-     * Private derived: scatters(nions, int) + xscatters(nions, double) = nions*(4+8) */
+     * Private derived: scatters(nions, int) + xscatters(nions, double) + n_bf_in(nphot, int) + n_bf_out(nphot, int) */
     shared_bytes = (double) nelem_alloc *(sizeof (double) * (2.0 * nions + nlte_levels + 3.0 * nphot_total + 5.0 * nions
                                                              + 6.0 * NXBANDS + 2.0 * (NXBANDS + 1)
                                                              + 6.0 * NFORCE_DIRECTIONS + 3.0 * NFLUX_ANGLES) + sizeof (int) * NXBANDS);
-    private_bytes = (double) nelem_alloc *(sizeof (double) * (3.0 * nions + n_inner_tot + nions) + sizeof (int) * nions);
+    private_bytes =
+      (double) nelem_alloc *(sizeof (double) * (3.0 * nions + n_inner_tot + nions) + sizeof (int) * (nions + 2.0 * nphot_total));
     double base_struct_bytes = (double) nelem_alloc * sizeof (plasma_dummy);
 
     Log

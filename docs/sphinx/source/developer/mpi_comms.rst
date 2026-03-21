@@ -282,9 +282,9 @@ The allocation strategy mirrors the three sub-structures:
      - Shared
      - Persistent radiation field averages, read-only during transport
    * - **Derived (exceptions)**
-     - ``scatters``, ``xscatters``
+     - ``scatters``, ``xscatters``, ``n_bf_in``, ``n_bf_out``
      - Private
-     - Incremented during photon transport (would race in shared memory)
+     - Incremented during photon transport (would race in shared memory).  ``n_bf_in``/``n_bf_out`` are dynamically sized to ``nphot_total`` (formerly fixed at ``N_PHOT_PROC=500``).
 
 The same shared/private split applies to macro-atom dynamic arrays in
 ``calloc_estimators()`` (also in ``gridwind.c``).  State and derived arrays

@@ -136,6 +136,8 @@ in the plasma structure */
     n += fwrite (plasmamain[m].derived.F_UV_ang_theta_persist, sizeof (double), NFLUX_ANGLES, fptr);
     n += fwrite (plasmamain[m].derived.F_UV_ang_phi_persist, sizeof (double), NFLUX_ANGLES, fptr);
     n += fwrite (plasmamain[m].derived.F_UV_ang_r_persist, sizeof (double), NFLUX_ANGLES, fptr);
+    n += fwrite (plasmamain[m].derived.n_bf_in, sizeof (int), nphot_total, fptr);
+    n += fwrite (plasmamain[m].derived.n_bf_out, sizeof (int), nphot_total, fptr);
   }
 
 /* Now write out the macro atom info */
@@ -330,6 +332,8 @@ wind_read (char filename[])
     n += fread (plasmamain[m].derived.F_UV_ang_theta_persist, sizeof (double), NFLUX_ANGLES, fptr);
     n += fread (plasmamain[m].derived.F_UV_ang_phi_persist, sizeof (double), NFLUX_ANGLES, fptr);
     n += fread (plasmamain[m].derived.F_UV_ang_r_persist, sizeof (double), NFLUX_ANGLES, fptr);
+    n += fread (plasmamain[m].derived.n_bf_in, sizeof (int), nphot_total, fptr);
+    n += fread (plasmamain[m].derived.n_bf_out, sizeof (int), nphot_total, fptr);
   }
 
 

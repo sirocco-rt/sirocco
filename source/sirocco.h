@@ -895,7 +895,7 @@ extern WindPtr wmain;
 
 /* Constants used in plasma sub-structs (moved out of the struct body) */
 #define NFLUX_ANGLES 36 /**< The number of bins into which the directional flux is calculated */
-#define N_PHOT_PROC 500
+/* N_PHOT_PROC removed: n_bf_in/n_bf_out are now dynamically sized to nphot_total */
 #define N_DMO_DT_DIRECTIONS 3
 #define NFORCE_DIRECTIONS 4
 
@@ -1108,7 +1108,7 @@ typedef struct plasma_derived
 
   /* BF diagnostics */
   double bf_simple_ionpool_in, bf_simple_ionpool_out; /**< Track net flow of energy into/from ionization pool */
-  int n_bf_in[N_PHOT_PROC], n_bf_out[N_PHOT_PROC]; /**< Counters for bf excitations and de-excitations */
+  int *n_bf_in, *n_bf_out;      /**< Counters for bf excitations and de-excitations (nphot_total, contiguous block) */
 
   /* Compton integral */
   double comp_nujnu;            /**<  The integral of alpha(nu)nuj(nu) used to
@@ -1303,6 +1303,10 @@ typedef struct plasma_blocks
   /* derived fixed-size arrays moved to contiguous blocks (shared in MPI-3 mode) */
   double *derived_persist_force_block;  /**< NPLASMA * 6 * NFORCE_DIRECTIONS doubles */
   double *derived_persist_angle_block;  /**< NPLASMA * 3 * NFLUX_ANGLES doubles */
+
+  /* derived n_bf diagnostic counters (private — written during transport) */
+  int *n_bf_in_block;                   /**< NPLASMA * nphot_total ints */
+  int *n_bf_out_block;                  /**< NPLASMA * nphot_total ints */
 
 #ifdef MPI_ON
   /* MPI shared memory windows for state/derived blocks */

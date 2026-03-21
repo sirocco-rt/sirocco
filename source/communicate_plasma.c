@@ -57,7 +57,7 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
   d_xsignal (files.root, "%-20s Begin communicating plasma grid\n", "NOK");
   const int n_cells_max = get_max_cells_per_rank (NPLASMA);
 
-  const int num_ints = 1 + n_cells_max * (N_BASIC_INTS + nphot_total + nions + 2 * NXBANDS + 2 * N_PHOT_PROC);
+  const int num_ints = 1 + n_cells_max * (N_BASIC_INTS + nphot_total + nions + 2 * NXBANDS + 2 * nphot_total);
   const int num_doubles = n_cells_max * (N_BASIC_DOUBLES + 11 * nions + nlte_levels + 2 * nphot_total + n_inner_tot +
                                          11 * NXBANDS + NBINS_IN_CELL_SPEC + 6 * NFLUX_ANGLES +
                                          N_DMO_DT_DIRECTIONS + 12 * NFORCE_DIRECTIONS);
@@ -207,8 +207,8 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
         MPI_Pack (&cell->derived.heat_shock, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->derived.bf_simple_ionpool_in, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->derived.bf_simple_ionpool_out, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (cell->derived.n_bf_in, N_PHOT_PROC, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (cell->derived.n_bf_out, N_PHOT_PROC, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (cell->derived.n_bf_in, nphot_total, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (cell->derived.n_bf_out, nphot_total, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->derived.comp_nujnu, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (cell->derived.dmo_dt, N_DMO_DT_DIRECTIONS, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (cell->est.rad_force_es, NFORCE_DIRECTIONS, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
@@ -372,8 +372,8 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->derived.heat_shock, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->derived.bf_simple_ionpool_in, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->derived.bf_simple_ionpool_out, 1, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->derived.n_bf_in, N_PHOT_PROC, MPI_INT, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->derived.n_bf_out, N_PHOT_PROC, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->derived.n_bf_in, nphot_total, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->derived.n_bf_out, nphot_total, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->derived.comp_nujnu, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->derived.dmo_dt, N_DMO_DT_DIRECTIONS, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->est.rad_force_es, NFORCE_DIRECTIONS, MPI_DOUBLE, MPI_COMM_WORLD);
@@ -631,8 +631,8 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
 
   d_xsignal (files.root, "%-20s Begin communicating updated plasma properties\n", "NOK");
   const int n_cells_max = get_max_cells_per_rank (NPLASMA);
-  //OLD  const int num_ints = 1 + n_cells_max * (20 + nphot_total + 2 * NXBANDS + 2 * N_PHOT_PROC + nions);
-  const int num_ints = 1 + n_cells_max * (N_BASIC_INTS + nphot_total + 2 * NXBANDS + 2 * N_PHOT_PROC + nions);
+  //OLD  const int num_ints = 1 + n_cells_max * (20 + nphot_total + 2 * NXBANDS + 2 * nphot_total + nions);
+  const int num_ints = 1 + n_cells_max * (N_BASIC_INTS + nphot_total + 2 * NXBANDS + 2 * nphot_total + nions);
   const int num_doubles =
     n_cells_max * (N_BASIC_DOUBLES + 1 * 3 + 9 * 4 + 6 * NFLUX_ANGLES + 3 * NFORCE_DIRECTIONS + 9 * nions + 1 * nlte_levels +
                    3 * nphot_total + 1 * n_inner_tot + 9 * NXBANDS + 1 * NBINS_IN_CELL_SPEC);
@@ -799,9 +799,8 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
                   MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].derived.bf_simple_ionpool_out, 1, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position,
                   MPI_COMM_WORLD);
-        MPI_Pack (&plasmamain[n_plasma].derived.n_bf_in, N_PHOT_PROC, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
-        MPI_Pack (&plasmamain[n_plasma].derived.n_bf_out, N_PHOT_PROC, MPI_INT, comm_buffer, size_of_comm_buffer, &position,
-                  MPI_COMM_WORLD);
+        MPI_Pack (plasmamain[n_plasma].derived.n_bf_in, nphot_total, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
+        MPI_Pack (plasmamain[n_plasma].derived.n_bf_out, nphot_total, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].derived.comp_nujnu, 1, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (plasmamain[n_plasma].derived.dmo_dt, N_DMO_DT_DIRECTIONS, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position,
                   MPI_COMM_WORLD);
@@ -1000,9 +999,9 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
                     MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].derived.bf_simple_ionpool_out, 1, MPI_DOUBLE,
                     MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].derived.n_bf_in, N_PHOT_PROC, MPI_INT,
+        MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, plasmamain[n_plasma].derived.n_bf_in, nphot_total, MPI_INT,
                     MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].derived.n_bf_out, N_PHOT_PROC, MPI_INT,
+        MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, plasmamain[n_plasma].derived.n_bf_out, nphot_total, MPI_INT,
                     MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].derived.comp_nujnu, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, plasmamain[n_plasma].derived.dmo_dt, N_DMO_DT_DIRECTIONS, MPI_DOUBLE,

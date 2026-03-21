@@ -161,6 +161,8 @@ free_plasma_grid (void)
     free_plasma_block ((void **) &plasma_block_ptrs.state_spec_mod_type_block, is_shared);
     free_plasma_block ((void **) &plasma_block_ptrs.derived_persist_force_block, is_shared);
     free_plasma_block ((void **) &plasma_block_ptrs.derived_persist_angle_block, is_shared);
+    free_plasma_block ((void **) &plasma_block_ptrs.n_bf_in_block, FALSE);
+    free_plasma_block ((void **) &plasma_block_ptrs.n_bf_out_block, FALSE);
   }
 
   free (plasmamain);
