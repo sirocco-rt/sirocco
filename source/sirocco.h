@@ -947,18 +947,17 @@ typedef struct plasma_state
 
   /* Spectral model parameters (set during wind update) */
   int nbands;                   /* The number of spectral bands for this cell */
-  double f1[NXBANDS + 1];      /* Spectral band boundaries for this cell */
-  double f2[NXBANDS + 1];      /* Spectral band boundaries for this cell */
-  enum spec_mod_type_enum spec_mod_type[NXBANDS];     /**<  A switch to say which type of representation we are using for this band in this cell.
-                                   Negative means we have no useful representation, 0 means power law, 1 means exponential */
-  double pl_alpha[NXBANDS];     /**< Computed spectral index for a power law spectrum representing this cell */
-  double pl_log_w[NXBANDS];     /**< This is the log version of the power law weight. It is in an attempt to allow very large
-                                   values of alpha to work with the PL spectral model to avoide NAN problems.
-                                   The pl_w version can be deleted once testing is complete */
-  double exp_temp[NXBANDS];     /**<  The effective temperature of an exponential representation of the radiation field in a cell */
-  double exp_w[NXBANDS];        /**<  The prefactor of an exponential representation of the radiation field in a cell */
-  double fmin_mod[NXBANDS];     /**<  Minimum frequency of the band-limited model */
-  double fmax_mod[NXBANDS];     /**<  Maximum frequency of the band-limited model */
+  double *f1;                   /* Spectral band boundaries for this cell (NXBANDS+1, contiguous block) */
+  double *f2;                   /* Spectral band boundaries for this cell (NXBANDS+1, contiguous block) */
+  enum spec_mod_type_enum *spec_mod_type;     /**<  A switch to say which type of representation we are using for this band in this cell.
+                                   Negative means we have no useful representation, 0 means power law, 1 means exponential
+                                   (NXBANDS, contiguous block) */
+  double *pl_alpha;             /**< Computed spectral index for a power law spectrum representing this cell (NXBANDS, contiguous block) */
+  double *pl_log_w;             /**< This is the log version of the power law weight (NXBANDS, contiguous block) */
+  double *exp_temp;             /**<  The effective temperature of an exponential representation of the radiation field in a cell (NXBANDS, contiguous block) */
+  double *exp_w;                /**<  The prefactor of an exponential representation of the radiation field in a cell (NXBANDS, contiguous block) */
+  double *fmin_mod;             /**<  Minimum frequency of the band-limited model (NXBANDS, contiguous block) */
+  double *fmax_mod;             /**<  Maximum frequency of the band-limited model (NXBANDS, contiguous block) */
 } plasma_state;
 
 /**
@@ -1094,15 +1093,15 @@ typedef struct plasma_derived
   double *inner_recomb;
 
   /* Persistent/averaged radiation field */
-  double F_vis_persistent[NFORCE_DIRECTIONS];
-  double F_UV_persistent[NFORCE_DIRECTIONS];
-  double F_Xray_persistent[NFORCE_DIRECTIONS];
-  double rad_force_es_persist[NFORCE_DIRECTIONS];
-  double rad_force_ff_persist[NFORCE_DIRECTIONS];
-  double rad_force_bf_persist[NFORCE_DIRECTIONS];
-  double F_UV_ang_theta_persist[NFLUX_ANGLES];
-  double F_UV_ang_phi_persist[NFLUX_ANGLES];
-  double F_UV_ang_r_persist[NFLUX_ANGLES];
+  double *F_vis_persistent;             /**< (NFORCE_DIRECTIONS, contiguous block) */
+  double *F_UV_persistent;              /**< (NFORCE_DIRECTIONS, contiguous block) */
+  double *F_Xray_persistent;            /**< (NFORCE_DIRECTIONS, contiguous block) */
+  double *rad_force_es_persist;          /**< (NFORCE_DIRECTIONS, contiguous block) */
+  double *rad_force_ff_persist;          /**< (NFORCE_DIRECTIONS, contiguous block) */
+  double *rad_force_bf_persist;          /**< (NFORCE_DIRECTIONS, contiguous block) */
+  double *F_UV_ang_theta_persist;        /**< (NFLUX_ANGLES, contiguous block) */
+  double *F_UV_ang_phi_persist;          /**< (NFLUX_ANGLES, contiguous block) */
+  double *F_UV_ang_r_persist;            /**< (NFLUX_ANGLES, contiguous block) */
 
   /* Momentum/force */
   double dmo_dt[N_DMO_DT_DIRECTIONS];             /**< Radiative force of wind */
@@ -1288,6 +1287,10 @@ typedef struct plasma_blocks
   double *heat_inner_ion_block;         /**< NPLASMA * nions */
   double *inner_ioniz_block;            /**< NPLASMA * n_inner_tot */
 
+  /* state fixed-size arrays moved to contiguous blocks (shared in MPI-3 mode) */
+  double *state_xbands_dblock;          /**< NPLASMA * (6*NXBANDS + 2*(NXBANDS+1)) doubles: f1,f2,pl_alpha,pl_log_w,exp_temp,exp_w,fmin_mod,fmax_mod */
+  int *state_spec_mod_type_block;       /**< NPLASMA * NXBANDS ints: spec_mod_type */
+
   /* derived arrays (shared in MPI-3 mode) */
   double *recomb_block;                 /**< NPLASMA * nions */
   int *scatters_block;                  /**< NPLASMA * nions */
@@ -1297,13 +1300,19 @@ typedef struct plasma_blocks
   double *cool_dr_ion_block;            /**< NPLASMA * nions */
   double *inner_recomb_block;           /**< NPLASMA * nions */
 
+  /* derived fixed-size arrays moved to contiguous blocks (shared in MPI-3 mode) */
+  double *derived_persist_force_block;  /**< NPLASMA * 6 * NFORCE_DIRECTIONS doubles */
+  double *derived_persist_angle_block;  /**< NPLASMA * 3 * NFLUX_ANGLES doubles */
+
 #ifdef MPI_ON
   /* MPI shared memory windows for state/derived blocks */
   MPI_Win win_density, win_partition, win_levden;
   MPI_Win win_recomb_simple, win_recomb_simple_upweight, win_kbf_use;
+  MPI_Win win_state_xbands_d, win_state_spec_mod_type;
   MPI_Win win_recomb;
   /* win_scatters and win_xscatters removed: these are always private (written during transport) */
   MPI_Win win_cool_rr_ion, win_lum_rr_ion, win_cool_dr_ion, win_inner_recomb;
+  MPI_Win win_derived_persist_force, win_derived_persist_angle;
   int shared_memory_active;             /**< TRUE if using MPI shared memory for this allocation */
 #endif
 } plasma_blocks;

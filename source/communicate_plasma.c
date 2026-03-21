@@ -57,7 +57,7 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
   d_xsignal (files.root, "%-20s Begin communicating plasma grid\n", "NOK");
   const int n_cells_max = get_max_cells_per_rank (NPLASMA);
 
-  const int num_ints = 1 + n_cells_max * (1 + N_BASIC_INTS + nphot_total + nions + NXBANDS + 2 * N_PHOT_PROC);
+  const int num_ints = 1 + n_cells_max * (N_BASIC_INTS + nphot_total + nions + 2 * NXBANDS + 2 * N_PHOT_PROC);
   const int num_doubles = n_cells_max * (N_BASIC_DOUBLES + 11 * nions + nlte_levels + 2 * nphot_total + n_inner_tot +
                                          11 * NXBANDS + NBINS_IN_CELL_SPEC + 6 * NFLUX_ANGLES +
                                          N_DMO_DT_DIRECTIONS + 12 * NFORCE_DIRECTIONS);
@@ -157,7 +157,7 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
         MPI_Pack (cell->state.fmax_mod, NXBANDS, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (cell->est.xsd_freq, NXBANDS, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (cell->est.nxtot, NXBANDS, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (&cell->state.spec_mod_type, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (cell->state.spec_mod_type, NXBANDS, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (cell->state.pl_alpha, NXBANDS, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (cell->state.pl_log_w, NXBANDS, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (cell->state.exp_temp, NXBANDS, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
@@ -319,7 +319,7 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->state.fmax_mod, NXBANDS, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->est.xsd_freq, NXBANDS, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->est.nxtot, NXBANDS, MPI_INT, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->state.spec_mod_type, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->state.spec_mod_type, NXBANDS, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->state.pl_alpha, NXBANDS, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->state.pl_log_w, NXBANDS, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->state.exp_temp, NXBANDS, MPI_DOUBLE, MPI_COMM_WORLD);

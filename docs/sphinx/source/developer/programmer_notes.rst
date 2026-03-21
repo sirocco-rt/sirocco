@@ -60,12 +60,14 @@ The three sub-structures are:
 * **plasma_state** -- Thermodynamic state, ion/level populations, spectral model
   parameters, and bound-free process data.  These fields are set during initialization
   or the wind update phase.  During photon transport, all ranks read them but none
-  write them.  In the MPI shared-memory model the dynamic state arrays (``density``,
-  ``partition``, ``levden``, etc.) reside in shared memory, so it is critical that
-  transport code never modifies them — use local variables or function parameters
-  (e.g. the ``density_override`` argument to ``two_level_atom()``) instead.
+  write them.  In the MPI shared-memory model, both the variable-length dynamic arrays
+  (``density``, ``partition``, ``levden``, etc.) and the fixed-size spectral model
+  arrays (``f1``, ``f2``, ``spec_mod_type``, ``pl_alpha``, ``pl_log_w``, ``exp_temp``,
+  ``exp_w``, ``fmin_mod``, ``fmax_mod``) reside in shared contiguous blocks, so it is
+  critical that transport code never modifies them — use local variables or function
+  parameters (e.g. the ``density_override`` argument to ``two_level_atom()``) instead.
   Fields are accessed as ``xplasma->state.ne``, ``xplasma->state.t_e``,
-  ``xplasma->state.density[n]``, etc.
+  ``xplasma->state.density[n]``, ``xplasma->state.pl_alpha[band]``, etc.
 
 * **plasma_estimators** -- Radiation field estimators (mean intensity, heating rates,
   ionization rates, flux estimators, photon counters, cell spectra).  Every rank
@@ -81,7 +83,9 @@ The three sub-structures are:
   to all ranks via ``broadcast_updated_plasma_properties()``.
   Most derived dynamic arrays reside in shared memory, but ``scatters`` and
   ``xscatters`` are kept private per rank because they are incremented during
-  photon transport.
+  photon transport.  The persistent radiation field arrays (``F_vis_persistent``,
+  ``F_UV_persistent``, ``F_Xray_persistent``, ``rad_force_*_persist``,
+  ``F_UV_ang_*_persist``) also reside in shared contiguous blocks.
   Fields are accessed as ``xplasma->derived.lum_tot``, ``xplasma->derived.cool_comp``,
   ``xplasma->derived.xi``, etc.
 

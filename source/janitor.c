@@ -155,6 +155,12 @@ free_plasma_grid (void)
     free_plasma_block ((void **) &plasma_block_ptrs.lum_rr_ion_block, is_shared);
     free_plasma_block ((void **) &plasma_block_ptrs.cool_dr_ion_block, is_shared);
     free_plasma_block ((void **) &plasma_block_ptrs.inner_recomb_block, is_shared);
+
+    /* Fixed-size array blocks (shared in MPI mode) */
+    free_plasma_block ((void **) &plasma_block_ptrs.state_xbands_dblock, is_shared);
+    free_plasma_block ((void **) &plasma_block_ptrs.state_spec_mod_type_block, is_shared);
+    free_plasma_block ((void **) &plasma_block_ptrs.derived_persist_force_block, is_shared);
+    free_plasma_block ((void **) &plasma_block_ptrs.derived_persist_angle_block, is_shared);
   }
 
   free (plasmamain);

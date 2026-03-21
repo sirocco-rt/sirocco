@@ -116,6 +116,26 @@ in the plasma structure */
     n += fwrite (plasmamain[m].state.recomb_simple, sizeof (double), nphot_total, fptr);
     n += fwrite (plasmamain[m].state.recomb_simple_upweight, sizeof (double), nphot_total, fptr);
     n += fwrite (plasmamain[m].state.kbf_use, sizeof (double), nphot_total, fptr);
+
+    /* Fixed-size arrays now in contiguous blocks */
+    n += fwrite (plasmamain[m].state.f1, sizeof (double), NXBANDS + 1, fptr);
+    n += fwrite (plasmamain[m].state.f2, sizeof (double), NXBANDS + 1, fptr);
+    n += fwrite (plasmamain[m].state.spec_mod_type, sizeof (int), NXBANDS, fptr);
+    n += fwrite (plasmamain[m].state.pl_alpha, sizeof (double), NXBANDS, fptr);
+    n += fwrite (plasmamain[m].state.pl_log_w, sizeof (double), NXBANDS, fptr);
+    n += fwrite (plasmamain[m].state.exp_temp, sizeof (double), NXBANDS, fptr);
+    n += fwrite (plasmamain[m].state.exp_w, sizeof (double), NXBANDS, fptr);
+    n += fwrite (plasmamain[m].state.fmin_mod, sizeof (double), NXBANDS, fptr);
+    n += fwrite (plasmamain[m].state.fmax_mod, sizeof (double), NXBANDS, fptr);
+    n += fwrite (plasmamain[m].derived.F_vis_persistent, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fwrite (plasmamain[m].derived.F_UV_persistent, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fwrite (plasmamain[m].derived.F_Xray_persistent, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fwrite (plasmamain[m].derived.rad_force_es_persist, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fwrite (plasmamain[m].derived.rad_force_ff_persist, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fwrite (plasmamain[m].derived.rad_force_bf_persist, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fwrite (plasmamain[m].derived.F_UV_ang_theta_persist, sizeof (double), NFLUX_ANGLES, fptr);
+    n += fwrite (plasmamain[m].derived.F_UV_ang_phi_persist, sizeof (double), NFLUX_ANGLES, fptr);
+    n += fwrite (plasmamain[m].derived.F_UV_ang_r_persist, sizeof (double), NFLUX_ANGLES, fptr);
   }
 
 /* Now write out the macro atom info */
@@ -290,6 +310,26 @@ wind_read (char filename[])
     n += fread (plasmamain[m].state.recomb_simple, sizeof (double), nphot_total, fptr);
     n += fread (plasmamain[m].state.recomb_simple_upweight, sizeof (double), nphot_total, fptr);
     n += fread (plasmamain[m].state.kbf_use, sizeof (double), nphot_total, fptr);
+
+    /* Fixed-size arrays now in contiguous blocks */
+    n += fread (plasmamain[m].state.f1, sizeof (double), NXBANDS + 1, fptr);
+    n += fread (plasmamain[m].state.f2, sizeof (double), NXBANDS + 1, fptr);
+    n += fread (plasmamain[m].state.spec_mod_type, sizeof (int), NXBANDS, fptr);
+    n += fread (plasmamain[m].state.pl_alpha, sizeof (double), NXBANDS, fptr);
+    n += fread (plasmamain[m].state.pl_log_w, sizeof (double), NXBANDS, fptr);
+    n += fread (plasmamain[m].state.exp_temp, sizeof (double), NXBANDS, fptr);
+    n += fread (plasmamain[m].state.exp_w, sizeof (double), NXBANDS, fptr);
+    n += fread (plasmamain[m].state.fmin_mod, sizeof (double), NXBANDS, fptr);
+    n += fread (plasmamain[m].state.fmax_mod, sizeof (double), NXBANDS, fptr);
+    n += fread (plasmamain[m].derived.F_vis_persistent, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fread (plasmamain[m].derived.F_UV_persistent, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fread (plasmamain[m].derived.F_Xray_persistent, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fread (plasmamain[m].derived.rad_force_es_persist, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fread (plasmamain[m].derived.rad_force_ff_persist, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fread (plasmamain[m].derived.rad_force_bf_persist, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fread (plasmamain[m].derived.F_UV_ang_theta_persist, sizeof (double), NFLUX_ANGLES, fptr);
+    n += fread (plasmamain[m].derived.F_UV_ang_phi_persist, sizeof (double), NFLUX_ANGLES, fptr);
+    n += fread (plasmamain[m].derived.F_UV_ang_r_persist, sizeof (double), NFLUX_ANGLES, fptr);
   }
 
 

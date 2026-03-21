@@ -657,9 +657,12 @@ calloc_estimators (int nelem)
 
   if (nlevels_macro > 0 || geo.nmacro > 0)
   {
+    double macro_shared_bytes = (double) nelem * sizeof (double) * (size_Jbar_est + 4.0 * size_gamma_est + nlevels_macro);
+    double macro_private_bytes = (double) nelem * sizeof (double) *
+      (size_Jbar_est + 4.0 * size_gamma_est + 2.0 * size_alpha_est + nlevels_macro + 2.0 * nphot_total + nlines);
     Log
-      ("Allocated %10.1f Mb for MA estimators \n",
-       1.e-6 * (nelem + 1) * (2. * nlevels_macro + 2. * size_alpha_est + 8. * size_gamma_est + 2. * size_Jbar_est) * sizeof (double));
+      ("Macro-atom memory per rank: dynamic shared %.1f MB (one copy/node), dynamic private %.1f MB (per rank)\n",
+       1.e-6 * macro_shared_bytes, 1.e-6 * macro_private_bytes);
 
   }
   else
@@ -744,6 +747,10 @@ calloc_dyn_plasma (int nelem)
     free_block ((void **) &plasma_block_ptrs.lum_rr_ion_block, &PLASMA_WIN (win_lum_rr_ion), was_shared);
     free_block ((void **) &plasma_block_ptrs.cool_dr_ion_block, &PLASMA_WIN (win_cool_dr_ion), was_shared);
     free_block ((void **) &plasma_block_ptrs.inner_recomb_block, &PLASMA_WIN (win_inner_recomb), was_shared);
+    free_block ((void **) &plasma_block_ptrs.state_xbands_dblock, &PLASMA_WIN (win_state_xbands_d), was_shared);
+    free_block ((void **) &plasma_block_ptrs.state_spec_mod_type_block, &PLASMA_WIN (win_state_spec_mod_type), was_shared);
+    free_block ((void **) &plasma_block_ptrs.derived_persist_force_block, &PLASMA_WIN (win_derived_persist_force), was_shared);
+    free_block ((void **) &plasma_block_ptrs.derived_persist_angle_block, &PLASMA_WIN (win_derived_persist_angle), was_shared);
   }
 
   /* Allocate contiguous blocks for all dynamic plasma arrays.
@@ -775,6 +782,21 @@ calloc_dyn_plasma (int nelem)
   alloc_block_double (nalloc_ions, &plasma_block_ptrs.cool_dr_ion_block, &PLASMA_WIN (win_cool_dr_ion), use_shared);
   alloc_block_double (nalloc_ions, &plasma_block_ptrs.inner_recomb_block, &PLASMA_WIN (win_inner_recomb), use_shared);
 
+  /* state fixed-size arrays — combined contiguous blocks (shared) */
+  {
+    int state_xbands_stride = 6 * NXBANDS + 2 * (NXBANDS + 1);
+    alloc_block_double ((long) nelem_alloc * state_xbands_stride, &plasma_block_ptrs.state_xbands_dblock,
+                        &PLASMA_WIN (win_state_xbands_d), use_shared);
+  }
+  alloc_block_int ((long) nelem_alloc * NXBANDS, &plasma_block_ptrs.state_spec_mod_type_block,
+                   &PLASMA_WIN (win_state_spec_mod_type), use_shared);
+
+  /* derived fixed-size arrays — combined contiguous blocks (shared) */
+  alloc_block_double ((long) nelem_alloc * 6 * NFORCE_DIRECTIONS, &plasma_block_ptrs.derived_persist_force_block,
+                      &PLASMA_WIN (win_derived_persist_force), use_shared);
+  alloc_block_double ((long) nelem_alloc * 3 * NFLUX_ANGLES, &plasma_block_ptrs.derived_persist_angle_block,
+                      &PLASMA_WIN (win_derived_persist_angle), use_shared);
+
 #ifdef MPI_ON
   plasma_block_ptrs.shared_memory_active = use_shared;
 #endif
@@ -801,11 +823,68 @@ calloc_dyn_plasma (int nelem)
     plasmamain[n].derived.lum_rr_ion = plasma_block_ptrs.lum_rr_ion_block + n * nions;
     plasmamain[n].derived.cool_dr_ion = plasma_block_ptrs.cool_dr_ion_block + n * nions;
     plasmamain[n].derived.inner_recomb = plasma_block_ptrs.inner_recomb_block + n * nions;
+
+    /* State spectral block: stride = 6*NXBANDS + 2*(NXBANDS+1) = 162 */
+    {
+      int state_xbands_stride = 6 * NXBANDS + 2 * (NXBANDS + 1);
+      double *sbase = plasma_block_ptrs.state_xbands_dblock + n * state_xbands_stride;
+      plasmamain[n].state.f1 = sbase;
+      plasmamain[n].state.f2 = sbase + (NXBANDS + 1);
+      plasmamain[n].state.pl_alpha = sbase + 2 * (NXBANDS + 1);
+      plasmamain[n].state.pl_log_w = sbase + 2 * (NXBANDS + 1) + NXBANDS;
+      plasmamain[n].state.exp_temp = sbase + 2 * (NXBANDS + 1) + 2 * NXBANDS;
+      plasmamain[n].state.exp_w = sbase + 2 * (NXBANDS + 1) + 3 * NXBANDS;
+      plasmamain[n].state.fmin_mod = sbase + 2 * (NXBANDS + 1) + 4 * NXBANDS;
+      plasmamain[n].state.fmax_mod = sbase + 2 * (NXBANDS + 1) + 5 * NXBANDS;
+    }
+    plasmamain[n].state.spec_mod_type = (enum spec_mod_type_enum *) (plasma_block_ptrs.state_spec_mod_type_block + n * NXBANDS);
+
+    /* Derived persistent force block: stride = 6 * NFORCE_DIRECTIONS */
+    {
+      double *dbase = plasma_block_ptrs.derived_persist_force_block + n * 6 * NFORCE_DIRECTIONS;
+      plasmamain[n].derived.F_vis_persistent = dbase;
+      plasmamain[n].derived.F_UV_persistent = dbase + NFORCE_DIRECTIONS;
+      plasmamain[n].derived.F_Xray_persistent = dbase + 2 * NFORCE_DIRECTIONS;
+      plasmamain[n].derived.rad_force_es_persist = dbase + 3 * NFORCE_DIRECTIONS;
+      plasmamain[n].derived.rad_force_ff_persist = dbase + 4 * NFORCE_DIRECTIONS;
+      plasmamain[n].derived.rad_force_bf_persist = dbase + 5 * NFORCE_DIRECTIONS;
+    }
+
+    /* Derived persistent angle block: stride = 3 * NFLUX_ANGLES */
+    {
+      double *dbase = plasma_block_ptrs.derived_persist_angle_block + n * 3 * NFLUX_ANGLES;
+      plasmamain[n].derived.F_UV_ang_theta_persist = dbase;
+      plasmamain[n].derived.F_UV_ang_phi_persist = dbase + NFLUX_ANGLES;
+      plasmamain[n].derived.F_UV_ang_r_persist = dbase + 2 * NFLUX_ANGLES;
+    }
   }
 
-  Log
-    ("Allocated %10d bytes for each of %5d elements variable length plasma arrays totaling %10.1f Mb \n",
-     sizeof (double) * nions * 14, nelem_alloc, 1.e-6 * nelem_alloc * sizeof (double) * (nions * 14 + nlte_levels + nphot_total * 2));
+  /* Report memory breakdown: shared (one copy per node) vs private (per rank) vs base struct */
+  {
+    double shared_bytes =
+      (double) nelem_alloc * sizeof (double) * (2.0 * nions + nlte_levels + 3.0 * nphot_total + 5.0 * nions + n_inner_tot);
+    double private_bytes = (double) nelem_alloc * sizeof (double) * (3.0 * nions + n_inner_tot) + (double) nelem_alloc * sizeof (int) * nions;  /* scatters(int) + xscatters(double) already in shared_bytes above... */
+
+    /* Recalculate properly:
+     * Shared state: density(nions) + partition(nions) + levden(nlte) + recomb_simple(nphot) + recomb_simple_upweight(nphot) + kbf_use(nphot) = 2*nions + nlte + 3*nphot
+     *   + state_xbands_d(6*NXBANDS + 2*(NXBANDS+1)) + spec_mod_type(NXBANDS ints)
+     * Shared derived: recomb(nions) + cool_rr_ion(nions) + lum_rr_ion(nions) + cool_dr_ion(nions) + inner_recomb(nions) = 5*nions
+     *   + persist_force(6*NFORCE_DIRECTIONS) + persist_angle(3*NFLUX_ANGLES)
+     * Private est: ioniz(nions) + heat_ion(nions) + heat_inner_ion(nions) + inner_ioniz(n_inner) = 3*nions + n_inner
+     * Private derived: scatters(nions, int) + xscatters(nions, double) = nions*(4+8) */
+    shared_bytes = (double) nelem_alloc *(sizeof (double) * (2.0 * nions + nlte_levels + 3.0 * nphot_total + 5.0 * nions
+                                                             + 6.0 * NXBANDS + 2.0 * (NXBANDS + 1)
+                                                             + 6.0 * NFORCE_DIRECTIONS + 3.0 * NFLUX_ANGLES) + sizeof (int) * NXBANDS);
+    private_bytes = (double) nelem_alloc *(sizeof (double) * (3.0 * nions + n_inner_tot + nions) + sizeof (int) * nions);
+    double base_struct_bytes = (double) nelem_alloc * sizeof (plasma_dummy);
+
+    Log
+      ("Plasma memory per rank: base struct %.1f MB, dynamic shared %.1f MB (one copy/node), dynamic private %.1f MB (per rank)\n",
+       1.e-6 * base_struct_bytes, 1.e-6 * shared_bytes, 1.e-6 * private_bytes);
+    Log
+      ("  nions=%d, nlte_levels=%d, nphot_total=%d, n_inner_tot=%d, nelem=%d\n",
+       nions, nlte_levels, nphot_total, n_inner_tot, nelem_alloc - 1);
+  }
 
   return (0);
 }

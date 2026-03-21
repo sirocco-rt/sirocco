@@ -261,18 +261,26 @@ The allocation strategy mirrors the three sub-structures:
      - Arrays
      - Allocation
      - Reason
-   * - **State**
+   * - **State (dynamic)**
      - ``density``, ``partition``, ``levden``, ``recomb_simple``, ``recomb_simple_upweight``, ``kbf_use``
      - Shared
      - Read-only during photon transport
+   * - **State (fixed-size)**
+     - ``f1``, ``f2``, ``spec_mod_type``, ``pl_alpha``, ``pl_log_w``, ``exp_temp``, ``exp_w``, ``fmin_mod``, ``fmax_mod``
+     - Shared
+     - Spectral model parameters, read-only during transport
    * - **Estimators**
      - ``ioniz``, ``heat_ion``, ``heat_inner_ion``, ``inner_ioniz``
      - Private
      - Each rank accumulates independently
-   * - **Derived**
+   * - **Derived (dynamic)**
      - ``recomb``, ``cool_rr_ion``, ``lum_rr_ion``, ``cool_dr_ion``, ``inner_recomb``
      - Shared
      - Computed during wind updates, then broadcast
+   * - **Derived (fixed-size)**
+     - ``F_vis_persistent``, ``F_UV_persistent``, ``F_Xray_persistent``, ``rad_force_es_persist``, ``rad_force_ff_persist``, ``rad_force_bf_persist``, ``F_UV_ang_theta_persist``, ``F_UV_ang_phi_persist``, ``F_UV_ang_r_persist``
+     - Shared
+     - Persistent radiation field averages, read-only during transport
    * - **Derived (exceptions)**
      - ``scatters``, ``xscatters``
      - Private
@@ -331,3 +339,14 @@ the dominant dynamic arrays total roughly ``N * I * 14 * 8`` bytes per rank.
 With shared memory the state and derived arrays exist only once per node,
 reducing the per-node footprint by approximately ``(R-1)/R`` of the shared
 portion.  Estimator arrays remain duplicated across ranks.
+
+In addition to the variable-length dynamic arrays, fixed-size arrays that
+were previously embedded in the ``plasma_state`` and ``plasma_derived``
+sub-structures (spectral model parameters, persistent flux averages) have
+been moved to shared contiguous blocks.  These arrays are declared as
+pointers in the struct and point into combined blocks allocated in
+``calloc_dyn_plasma()``.  This reduces ``sizeof(plasma_dummy)`` by
+approximately 2.3 KB per cell, yielding additional PSS savings of
+roughly ``2.3 * N * (R-1)/R`` KB.  The savings scale linearly with
+NPLASMA: for a model with 80K cells and 29 ranks, this adds approximately
+177 MB of per-rank savings.
