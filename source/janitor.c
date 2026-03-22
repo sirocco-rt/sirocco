@@ -192,8 +192,6 @@ free_plasma_grid (void)
 void
 free_macro_grid (void)
 {
-  int n_plasma;
-
   /* Free contiguous blocks instead of per-cell pointers */
   int is_shared = FALSE;
 #ifdef MPI_ON
@@ -226,14 +224,12 @@ free_macro_grid (void)
     free_plasma_block ((void **) &macro_block_ptrs.matom_emiss_block, is_shared);
   }
 
-  /* matom_matrix is still allocated per-cell (not part of contiguous blocks) */
-  for (n_plasma = 0; n_plasma < NPLASMA + 1; n_plasma++)
+  /* matom_matrix flat data block (shared in MPI mode) */
+  if (macro_block_ptrs.matom_matrix_block != NULL)
   {
-    if (macromain[n_plasma].state.store_matom_matrix == TRUE)
-    {
-      free (macromain[n_plasma].derived.matom_matrix[0]);
-      free (macromain[n_plasma].derived.matom_matrix);
-    }
+    free_plasma_block ((void **) &macro_block_ptrs.matom_matrix_block, is_shared);
+    free (macro_block_ptrs.matom_matrix_rowptrs);
+    macro_block_ptrs.matom_matrix_rowptrs = NULL;
   }
 
   free (macromain);

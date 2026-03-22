@@ -182,10 +182,8 @@ cleanup_model (const char *root_name)
       free (macro_cell->est.cooling_bf_col);
       free (macro_cell->est.cooling_bb);
 
-      if (macro_cell->state.store_matom_matrix == TRUE)
-      {
-        free_and_null ((void **) &macro_cell->derived.matom_matrix);
-      }
+      /* matom_matrix points into macro_block_ptrs.matom_matrix_block — freed via free_macro_grid */
+      macro_cell->derived.matom_matrix = NULL;
     }
 
     free_and_null ((void **) &macromain);

@@ -1372,11 +1372,18 @@ typedef struct macro_blocks
   /* derived arrays (shared in MPI-3 mode) */
   double *matom_emiss_block;            /**< NPLASMA * nlevels_macro */
 
+  /* matom_matrix flat data (shared in MPI-3 mode when store_matom_matrix is TRUE) */
+  double *matom_matrix_block;           /**< NPLASMA * nrows * nrows, nrows = nlevels_macro + 1 */
+
+  /* per-rank row-pointer arrays for matom_matrix (always private calloc) */
+  double **matom_matrix_rowptrs;        /**< NPLASMA * nrows double* pointers into matom_matrix_block */
+
 #ifdef MPI_ON
   /* MPI shared memory windows for state/derived blocks */
   MPI_Win win_jbar_old, win_gamma_old, win_gamma_e_old;
   MPI_Win win_alpha_st_old, win_alpha_st_e_old;
   MPI_Win win_matom_emiss;
+  MPI_Win win_matom_matrix;
   int shared_memory_active;             /**< TRUE if using MPI shared memory for this allocation */
 #endif
 } macro_blocks;

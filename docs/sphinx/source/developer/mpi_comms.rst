@@ -200,9 +200,9 @@ when adding a new variable:
      - Reduced (summed) across ranks after transport
      - ``reduce_macro_atom_estimators()``
    * - ``derived``
-     - Macro-atom emissivities (``matom_emiss``), k-packet rate flags, transition probability matrix
-     - Broadcast after computation
-     - ``broadcast_macro_atom_emissivities()``
+     - Macro-atom emissivities (``matom_emiss``), k-packet rate flags, transition probability matrix (``matom_matrix``)
+     - Broadcast after computation; matrix placed in shared memory
+     - ``broadcast_macro_atom_emissivities()``, ``broadcast_macro_atom_state_matrix()``
 
 When adding a new variable, place it in the appropriate sub-structure and update
 the corresponding communication function.  For ``est`` fields, update the reduction
@@ -287,9 +287,23 @@ The allocation strategy mirrors the three sub-structures:
      - Incremented during photon transport (would race in shared memory).  ``n_bf_in``/``n_bf_out`` are dynamically sized to ``nphot_total`` (formerly fixed at ``N_PHOT_PROC=500``).
 
 The same shared/private split applies to macro-atom dynamic arrays in
-``calloc_estimators()`` (also in ``gridwind.c``).  State and derived arrays
-(``jbar_old``, ``gamma_old``, ``matom_emiss``, etc.) are shared, while
-estimator arrays (``jbar``, ``gamma``, ``cooling_bf``, etc.) are private.
+``calloc_estimators()`` and ``calloc_matom_matrix()`` (both in ``gridwind.c``).
+State and derived arrays (``jbar_old``, ``gamma_old``, ``matom_emiss``, and the
+transition probability matrix ``matom_matrix``) are shared, while estimator arrays
+(``jbar``, ``gamma``, ``cooling_bf``, ``cooling_bb``, etc.) are private.
+
+The ``matom_matrix`` (an *nrows × nrows* transition probability matrix per cell,
+where *nrows = nlevels_macro + 1*) is allocated as a single contiguous shared
+block in ``calloc_matom_matrix()``.  The flat data (``NPLASMA × nrows × nrows``
+doubles) lives in ``macro_block_ptrs.matom_matrix_block`` (shared), while a
+private per-rank array of row-pointers (``matom_matrix_rowptrs``) points into
+the shared block to preserve the ``double **`` interface used throughout the code.
+The matrix is computed during wind updates — each rank fills its own cell slice —
+then broadcast via ``broadcast_macro_atom_state_matrix()`` so all nodes obtain
+a complete copy.  The ``MPI_Barrier(node_comm)`` at the end of that function
+ensures node-local ranks see the written data before transport begins.  Because
+the matrix is strictly read-only during photon transport, no further
+synchronisation is required.
 
 Block pointer management
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -350,6 +364,15 @@ approximately 2.3 KB per cell, yielding additional PSS savings of
 roughly ``2.3 * N * (R-1)/R`` KB.  The savings scale linearly with
 NPLASMA: for a model with 80K cells and 29 ranks, this adds approximately
 177 MB of per-rank savings.
+
+The transition probability matrix ``matom_matrix`` (``nrows × nrows`` doubles
+per cell, allocated by ``calloc_matom_matrix()``) is also placed in shared
+memory.  For the ``h20_hetop_standard80`` atomic dataset (85 macro-atom levels,
+*nrows* = 86) and a 300×300 grid with ~12,000 active plasma cells, this matrix
+totals approximately 726 MB.  Without shared memory each of the *R* ranks holds
+its own copy; with shared memory there is one copy per node.  On a 24-rank
+single-node run this saves roughly ``726 × 23 ≈ 16.7 GB`` of physical memory,
+making it the single largest shared-memory saving in the code.
 
 Shared wind structure
 ^^^^^^^^^^^^^^^^^^^^^

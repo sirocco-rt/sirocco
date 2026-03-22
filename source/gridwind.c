@@ -704,7 +704,8 @@ calloc_estimators (int nelem)
 
   if (nlevels_macro > 0 || geo.nmacro > 0)
   {
-    double macro_shared_bytes = (double) nelem * sizeof (double) * (size_Jbar_est + 4.0 * size_gamma_est + nlevels_macro);
+    double nrows = nlevels_macro + 1;
+    double macro_shared_bytes = (double) nelem * sizeof (double) * (size_Jbar_est + 4.0 * size_gamma_est + nlevels_macro + nrows * nrows);
     double macro_private_bytes = (double) nelem * sizeof (double) *
       (size_Jbar_est + 4.0 * size_gamma_est + 2.0 * size_alpha_est + nlevels_macro + 2.0 * nphot_total + nlines);
     Log
@@ -973,8 +974,10 @@ int
 calloc_matom_matrix (int nelem)
 {
   int nrows = nlevels_macro + 1;
-  int n;
-  int nmatrices_allocated = 0;
+  int n, row;
+  int use_shared = FALSE;
+  int was_shared = FALSE;
+
   if (nlevels_macro == 0 && geo.nmacro == 0)
   {
     geo.nmacro = 0;
@@ -982,19 +985,47 @@ calloc_matom_matrix (int nelem)
     return (0);
   }
 
-  for (n = 0; n < nelem; n++)
+  /* Free any previously allocated blocks */
+  if (macro_block_ptrs.matom_matrix_block != NULL)
   {
-    if (macromain[n].state.store_matom_matrix == TRUE)
-    {
-      allocate_macro_matrix (&macromain[n].derived.matom_matrix, nrows);
-      nmatrices_allocated += 1;
-    }
+#ifdef MPI_ON
+    was_shared = macro_block_ptrs.shared_memory_active;
+#endif
+    free_block ((void **) &macro_block_ptrs.matom_matrix_block, &MACRO_WIN (win_matom_matrix), was_shared);
+    free (macro_block_ptrs.matom_matrix_rowptrs);
+    macro_block_ptrs.matom_matrix_rowptrs = NULL;
   }
 
-  if (nlevels_macro > 0 && nmatrices_allocated > 0)
+#ifdef MPI_ON
+  use_shared = (np_mpi_global > 1) ? TRUE : FALSE;
+#endif
+
+  /* Allocate one contiguous shared block for all cell data: NPLASMA * nrows * nrows doubles */
+  alloc_block_double ((long) nelem * nrows * nrows, &macro_block_ptrs.matom_matrix_block, &MACRO_WIN (win_matom_matrix), use_shared);
+
+  /* Allocate private per-rank row-pointer arrays: NPLASMA * nrows double* */
+  macro_block_ptrs.matom_matrix_rowptrs = calloc ((long) nelem * nrows, sizeof (double *));
+  if (macro_block_ptrs.matom_matrix_rowptrs == NULL)
   {
-    Log ("Allocated %10.1f Mb for MA matrix \n", 1.e-6 * (nmatrices_allocated + 1) * (nrows * nrows) * sizeof (double));
+    Error ("calloc_matom_matrix: failed to allocate matom_matrix_rowptrs\n");
+    Exit (EXIT_FAILURE);
   }
+
+  /* Point each cell's matom_matrix into the shared block */
+  for (n = 0; n < nelem; n++)
+  {
+    if (macromain[n].state.store_matom_matrix == FALSE)
+      continue;
+
+    double *flat = macro_block_ptrs.matom_matrix_block + (long) n * nrows * nrows;
+    double **rowptrs = macro_block_ptrs.matom_matrix_rowptrs + (long) n * nrows;
+    for (row = 0; row < nrows; row++)
+      rowptrs[row] = flat + row * nrows;
+    macromain[n].derived.matom_matrix = rowptrs;
+  }
+
+  Log ("Allocated %10.1f Mb for MA matrix (%s)\n",
+       1.e-6 * (long) nelem * nrows * nrows * sizeof (double), use_shared ? "shared" : "private");
 
   return (0);
 }
