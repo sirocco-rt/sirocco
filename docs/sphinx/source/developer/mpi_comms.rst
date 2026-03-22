@@ -392,3 +392,37 @@ these via ``wind_paths_main[cell_index]`` instead of ``wmain[cell_index]``.
 For a 300x300 grid (NDIM2 = 90,000, ``sizeof(wind_dummy)`` = 288 bytes),
 this saves approximately ``90000 * 288 * (R-1)/R`` bytes, or about 25 MB
 per rank with 29 ranks.
+
+Single-node optimisation for matom_matrix broadcast
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``broadcast_macro_atom_state_matrix()`` in ``communicate_macro.c`` normally
+packs the full transition-probability matrix for each rank's cell range into a
+comm buffer and broadcasts it to all other ranks.  When ``matom_matrix`` lives
+in shared memory (the normal MPI build) and all ranks are on the same node
+(``num_nodes == 1``), this broadcast is unnecessary: the writing rank's data
+is already visible to all node-local ranks through shared memory.  The function
+therefore returns early with a ``MPI_Barrier(node_comm)`` to ensure coherence,
+skipping the pack/Bcast/unpack cycle entirely.  On a single-node run this
+avoids allocating the comm buffer (~100 KB) and removes latency proportional
+to the number of ranks.
+
+Chunked Allreduce for cooling_bb
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``reduce_macro_atom_estimators()`` in ``communicate_macro.c`` uses
+``MPI_Allreduce`` to sum the per-rank ``cooling_bb`` estimator across all
+ranks.  The naive approach allocates two temporary buffers of size
+``NPLASMA × nlines`` doubles each.  For big.pf (12270 cells, 5964 lines)
+this is approximately 2 × 585 MB = 1.17 GB of transient peak memory per
+rank.
+
+The function instead processes cells in chunks, targeting a peak buffer size
+of ~50 MB.  For each chunk of cells the data is packed into a single
+``chunk_cells × nlines`` buffer, reduced in place with
+``MPI_Allreduce(MPI_IN_PLACE, ...)``, and unpacked back to ``macromain``.
+The chunk size is computed at runtime as
+``chunk_size = 50 MB / (nlines × sizeof(double))``, giving approximately
+1000 cells per chunk and 13 Allreduce calls instead of one for big.pf.
+Peak transient memory is reduced from ~1.17 GB to ~50 MB at the cost of
+a small increase in Allreduce call overhead.

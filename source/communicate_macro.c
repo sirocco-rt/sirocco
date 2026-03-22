@@ -333,6 +333,17 @@ broadcast_macro_atom_state_matrix (int n_start, int n_stop, int n_cells_rank)
   int n, position;
 
   d_xsignal (files.root, "%-20s Begin macro atom state matrix communication\n", "NOK");
+
+  /* matom_matrix lives in shared memory on each node, so for a single-node run
+   * the writing rank's data is already visible to all node-local ranks.
+   * A barrier is sufficient; no cross-rank data transfer is needed. */
+  if (num_nodes == 1)
+  {
+    MPI_Barrier (node_comm);
+    d_xsignal (files.root, "%-20s Finished macro atom state matrix communication\n", "OK");
+    return (0);
+  }
+
   const int matrix_size = nlevels_macro + 1;
   const int n_cells_max = get_max_cells_per_rank (NPLASMA);
   const int comm_buffer_size = calculate_comm_buffer_size (1 + n_cells_max, n_cells_max * (matrix_size * matrix_size));
@@ -417,8 +428,8 @@ reduce_macro_atom_estimators (void)
   double *level_helper, *cell_helper, *jbar_helper;
   double *gamma_helper2, *alpha_helper2;
   double *level_helper2, *cell_helper2, *jbar_helper2;
-  double *cooling_bf_helper, *cooling_bb_helper;
-  double *cooling_bf_helper2, *cooling_bb_helper2;
+  double *cooling_bf_helper;
+  double *cooling_bf_helper2;
 
   d_xsignal (files.root, "%-20s Begin reduction of macro atom estimators\n", "NOK");
 
@@ -440,7 +451,6 @@ reduce_macro_atom_estimators (void)
   level_helper = calloc (sizeof (double), NPLASMA * nlevels_macro);
   cell_helper = calloc (sizeof (double), 8 * NPLASMA);
   cooling_bf_helper = calloc (sizeof (double), NPLASMA * 2 * nphot_total);
-  cooling_bb_helper = calloc (sizeof (double), NPLASMA * nlines);
 
   jbar_helper2 = calloc (sizeof (double), NPLASMA * size_Jbar_est);
   gamma_helper2 = calloc (sizeof (double), NPLASMA * 4 * size_gamma_est);
@@ -448,7 +458,6 @@ reduce_macro_atom_estimators (void)
   level_helper2 = calloc (sizeof (double), NPLASMA * nlevels_macro);
   cell_helper2 = calloc (sizeof (double), 8 * NPLASMA);
   cooling_bf_helper2 = calloc (sizeof (double), NPLASMA * 2 * nphot_total);
-  cooling_bb_helper2 = calloc (sizeof (double), NPLASMA * nlines);
 
   /* now we loop through each cell and copy the values of our variables
      into our helper arrays */
@@ -498,10 +507,6 @@ reduce_macro_atom_estimators (void)
       cooling_bf_helper[mpi_i + ((n + nphot_total) * NPLASMA)] = macromain[mpi_i].est.cooling_bf_col[n] / np_mpi_global;
     }
 
-    for (n = 0; n < nlines; n++)
-    {
-      cooling_bb_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].est.cooling_bb[n] / np_mpi_global;
-    }
   }
 
   /* because in the above loop we have already divided by number of processes, we can now do a sum
@@ -512,7 +517,44 @@ reduce_macro_atom_estimators (void)
   MPI_Allreduce (gamma_helper, gamma_helper2, NPLASMA * 4 * size_gamma_est, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (alpha_helper, alpha_helper2, NPLASMA * 2 * size_alpha_est, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (cooling_bf_helper, cooling_bf_helper2, NPLASMA * 2 * nphot_total, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-  MPI_Allreduce (cooling_bb_helper, cooling_bb_helper2, NPLASMA * nlines, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+  /* cooling_bb: chunked MPI_IN_PLACE Allreduce to avoid a 2x peak allocation of
+   * NPLASMA*nlines doubles (~2x585 MB for big.pf). Target ~50 MB per chunk. */
+  {
+    int chunk_size = (int) ((long) 50 * 1024 * 1024 / ((long) nlines * sizeof (double)));
+    if (chunk_size < 1)
+      chunk_size = 1;
+    double *cooling_bb_chunk = malloc ((long) chunk_size * nlines * sizeof (double));
+    if (cooling_bb_chunk == NULL)
+    {
+      Error ("reduce_macro_atom_estimators: Error allocating cooling_bb_chunk\n");
+      Exit (EXIT_FAILURE);
+    }
+    int chunk_start, chunk_end, chunk_cells, ci;
+    for (chunk_start = 0; chunk_start < NPLASMA; chunk_start += chunk_size)
+    {
+      chunk_end = chunk_start + chunk_size;
+      if (chunk_end > NPLASMA)
+        chunk_end = NPLASMA;
+      chunk_cells = chunk_end - chunk_start;
+      for (ci = 0; ci < chunk_cells; ci++)
+      {
+        for (n = 0; n < nlines; n++)
+        {
+          cooling_bb_chunk[ci + (long) n * chunk_cells] = macromain[chunk_start + ci].est.cooling_bb[n] / np_mpi_global;
+        }
+      }
+      MPI_Allreduce (MPI_IN_PLACE, cooling_bb_chunk, chunk_cells * nlines, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      for (ci = 0; ci < chunk_cells; ci++)
+      {
+        for (n = 0; n < nlines; n++)
+        {
+          macromain[chunk_start + ci].est.cooling_bb[n] = cooling_bb_chunk[ci + (long) n * chunk_cells];
+        }
+      }
+    }
+    free (cooling_bb_chunk);
+  }
 
   /* We now need to copy these reduced variables to the plasma structure in each thread */
 
@@ -562,10 +604,6 @@ reduce_macro_atom_estimators (void)
       macromain[mpi_i].est.cooling_bf_col[n] = cooling_bf_helper2[mpi_i + ((n + nphot_total) * NPLASMA)];
     }
 
-    for (n = 0; n < nlines; n++)
-    {
-      macromain[mpi_i].est.cooling_bb[n] = cooling_bb_helper2[mpi_i + (n * NPLASMA)];
-    }
   }
 
   free (cell_helper);
@@ -574,7 +612,6 @@ reduce_macro_atom_estimators (void)
   free (gamma_helper);
   free (alpha_helper);
   free (cooling_bf_helper);
-  free (cooling_bb_helper);
 
   free (cell_helper2);
   free (level_helper2);
@@ -582,7 +619,6 @@ reduce_macro_atom_estimators (void)
   free (gamma_helper2);
   free (alpha_helper2);
   free (cooling_bf_helper2);
-  free (cooling_bb_helper2);
 
   d_xsignal (files.root, "%-20s Finished reduction of macro atom estimators\n", "OK");
 #endif
