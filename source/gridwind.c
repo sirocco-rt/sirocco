@@ -321,12 +321,20 @@ calloc_wind (int nelem)
 #ifdef MPI_ON
   if (wmain != NULL)
   {
+#ifdef __APPLE__
+    /* On macOS wmain is always calloc'd (see below) */
+    free (wmain);
+#else
     MPI_Win_free (&wmain_win);
+#endif
     wmain = NULL;
   }
 
   if (np_mpi_global > 1)
   {
+#ifndef __APPLE__
+    /* Linux: use MPI-3 shared memory so all ranks on a node share one copy
+     * of wmain, avoiding per-rank duplication of large wind grids. */
     MPI_Aint win_size;
     int disp_unit;
     void *base;
@@ -342,6 +350,12 @@ calloc_wind (int nelem)
       MPI_Win_shared_query (wmain_win, 0, &win_size, &disp_unit, &base);
     }
     wmain = (WindPtr) base;
+#else
+    /* macOS: MPI-3 shared memory windows are mapped with invalid permissions
+     * for non-allocating ranks, causing SEGV_ACCERR.  Use private calloc on
+     * every rank instead; broadcast_wind_grid() keeps copies in sync. */
+    wmain = (WindPtr) calloc (nelem + 1, sizeof (wind_dummy));
+#endif
   }
   else
 #endif
@@ -364,7 +378,11 @@ calloc_wind (int nelem)
       ("Allocated %10d bytes for each of %5d elements of      wind totaling %10.1f Mb (%s)\n",
        sizeof (wind_dummy), nelem + 1, 1.e-6 * alloc_size,
 #ifdef MPI_ON
+#ifndef __APPLE__
        (np_mpi_global > 1) ? "shared" : "private"
+#else
+       "private"
+#endif
 #else
        "private"
 #endif
