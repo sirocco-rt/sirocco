@@ -113,7 +113,11 @@ free_wind_grid (void)
 #ifdef MPI_ON
   if (np_mpi_global > 1)
   {
+#ifndef __APPLE__
     MPI_Win_free (&wmain_win);
+#else
+    free (wmain);
+#endif
     wmain = NULL;
   }
   else
