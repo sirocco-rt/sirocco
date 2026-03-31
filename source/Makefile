@@ -147,7 +147,7 @@ LDFLAGS+= -L$(LIB) -lm -lgsl -lgslcblas $(CUDA_LIBS)
 #Note that version should be a single string without spaces.
 
 
-VERSION = 2.0
+VERSION = 2.1
 
 
 
@@ -207,7 +207,7 @@ sirocco_source = agn.c anisowind.c atomic_extern_init.c atomicdata.c atomicdata_
 	recomb.c resonate.c reverb.c roche.c rtheta.c run.c saha.c setup.c setup_disk.c setup_domains.c  \
 	setup_files.c setup_line_transfer.c setup_reverb.c setup_star_bh.c shell_wind.c signal.c  \
 	spectra.c spectral_estimators.c spherical.c stellar_wind.c sv.c synonyms.c time.c  \
-	trans_phot.c vvector.c walls.c wind.c wind2d.c wind_sum.c wind_updates2d.c wind_util.c  \
+	trans_phot.c transport_grid.c vvector.c walls.c wind.c wind2d.c wind_sum.c wind_updates2d.c wind_util.c  \
 	windsave.c windsave2table_sub.c xlog.c xtest.c zeta.c
 
 # these are the objects required for compilation of sirocco. We are using pattern

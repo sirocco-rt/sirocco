@@ -235,6 +235,7 @@ double get_dvds_max(PhotPtr p);
 /* gridwind.c */
 int create_wind_and_plasma_cell_maps(void);
 int calloc_wind(int nelem);
+int make_transport_grid(void);
 int calloc_plasma(int nelem);
 int check_plasma(PlasmaPtr xplasma, char message[]);
 int calloc_macro(int nelem);

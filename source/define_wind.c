@@ -618,7 +618,7 @@ create_wind_grid (void)
   }
   geo.ndim2 = NDIM2;
 
-  calloc_wind (NDIM2);
+  calloc_wind (2 * NDIM2);
 
   /* Assign the domain for each cell in the wind grid */
   int offset = 0;
@@ -759,6 +759,10 @@ define_wind (void)
       free_import (zdom[n].coord_type, n);
     }
   }
+
+  /* Build lower-hemisphere transport cells.  Must be called after
+   * create_plasma_grid() so that wmain[k].nplasma is populated. */
+  make_transport_grid ();
 
   /* For purely diagnostic purposes, a very (very) approximate value of
    * mdot_wind is calculated which can be compared to the input in the

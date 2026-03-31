@@ -277,6 +277,7 @@ typedef struct domain
   int ndim, mdim, ndim2;        /**< ndim is the size in the x direction, while mdim is the
                                   size in z or theta direction */
   int nstart, nstop;            /**< the beginning and end (-1) location in wmain of this component */
+  int nstart_2, nstop_2;       /**< start and end of lower-hemisphere transport cells in wmain */
   enum coord_type_enum coord_type;  /**< The type of coordinate system used for this domain */
   int log_linear;               /**< 0 -> the grid spacing will be logarithmic in x and z, 1-> linear */
   double xlog_scale, zlog_scale;        /**< Scale factors for setting up a logarithmic grid, the [1,1] cell

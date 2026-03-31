@@ -277,7 +277,7 @@ wind_read (char filename[])
     }
   }
 
-  calloc_wind (NDIM2);
+  calloc_wind (2 * NDIM2);
 #ifdef MPI_ON
   if (np_mpi_global > 1)
   {
@@ -297,6 +297,10 @@ wind_read (char filename[])
   {
     n += fread (wmain, sizeof (wind_dummy), NDIM2, fptr);
   }
+
+  /* Reconstruct lower-hemisphere transport cells from the upper-hemisphere
+   * cells that were just read from disk. */
+  make_transport_grid ();
 
   /* Read the disk and qdisk structures */
 
