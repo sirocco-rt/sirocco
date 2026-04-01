@@ -225,14 +225,10 @@ ds_to_cone (ConePtr cc, struct photon *p)
   int i;
   struct photon pp;
 
-  /* First of all let's work only in the "northern" hemisphere */
+  /* Work on a local copy of the photon.  Lower-hemisphere cells carry
+   * a negated wcone.z (set by make_transport_grid), so the cone
+   * intersection is correct for both hemispheres without reflection. */
   stuff_phot (p, &pp);
-
-  if (pp.x[2] < 0.0)
-  {                             /*move the photon to the northen hemisphere */
-    pp.x[2] = -pp.x[2];
-    pp.lmn[2] = -pp.lmn[2];
-  }
 
   /* Set up and solve the quadratic equation that gives the cone intercept */
 

@@ -64,17 +64,31 @@ make_transport_grid (void)
 
       wmain[k_lower] = wmain[k];        /* copy all fields from upper cell */
 
-      wmain[k_lower].x[2] *= -1.0;     /* reflect z position */
-      wmain[k_lower].xcen[2] *= -1.0;  /* reflect z cell centre */
-      wmain[k_lower].nwind = k_lower;  /* correct self-index */
-      wmain[k_lower].nwind_dom = k_lower;   /* correct domain-local index */
+      wmain[k_lower].x[2] *= -1.0;      /* reflect z position */
+      wmain[k_lower].xcen[2] *= -1.0;   /* reflect z cell centre */
+      wmain[k_lower].nwind = k_lower;   /* correct self-index */
+      wmain[k_lower].nwind_dom = k_lower;       /* correct domain-local index */
 
       /* nplasma is already correct from the copy: both hemispheres share
        * the same plasma cell, so no change needed. */
+
+      /* Reflect the cone boundary: the lower-hemisphere cone is the mirror
+       * image of the upper one, so its z-intercept changes sign. dzdr
+       * is unchanged (same slope). */
+      wmain[k_lower].wcone.z *= -1.0;
+
+      /* Fix the velocity gradient tensor for the lower hemisphere.
+       * For a wind symmetric about z=0, v_rho and v_phi are even in z
+       * while v_z is odd.  This means components where exactly one index
+       * is the z-direction (index 2) change sign under z -> -z. */
+      int j, kk;
+      for (j = 0; j < 3; j++)
+        for (kk = 0; kk < 3; kk++)
+          if ((j == 2) != (kk == 2))
+            wmain[k_lower].v_grad[j][kk] *= -1.0;
     }
 
-    Log ("make_transport_grid: domain %d lower-hemisphere cells %d to %d\n",
-         ndom, zdom[ndom].nstart_2, zdom[ndom].nstop_2 - 1);
+    Log ("make_transport_grid: domain %d lower-hemisphere cells %d to %d\n", ndom, zdom[ndom].nstart_2, zdom[ndom].nstop_2 - 1);
   }
 
   return 0;

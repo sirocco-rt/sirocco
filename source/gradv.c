@@ -63,19 +63,11 @@ dvwind_ds_cmf (PhotPtr p)
 
   ndom = wmain[p->grid].ndom;
 
-  /* We want the change in velocity along the line of sight, but we
-     need to be careful because of the fact that we have elected to
-     combine the upper and lower hemispheres in the wind array.  Since
-     we are only concerned with the the scalar dv_ds, the safest thing
-     to do is to create a new photon that is only in the upper hemisphere
-     02jan ksl */
+  /* Work on a local copy of the photon.  Lower-hemisphere cells carry
+   * corrected v_grad tensors (set by make_transport_grid), so no
+   * reflection to the northern hemisphere is needed. */
 
   stuff_phot (p, &pp);
-  if (pp.x[2] < 0.0)
-  {                             /*move the photon to the northern hemisphere */
-    pp.x[2] = -pp.x[2];
-    pp.lmn[2] = -pp.lmn[2];
-  }
 
   /* JM 1411 -- ideally, we want to do an interpolation on v_grad here. However,
      the interpolation was incorrect in spherical coordinates (see issue #118).
