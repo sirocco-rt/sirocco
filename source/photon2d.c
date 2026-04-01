@@ -509,7 +509,7 @@ translate_in_wind (WindPtr w, PhotPtr p, double tau_scat, double *tau, int *nres
         move_phot (&phot_mid, 0.5 * ds_current);
         observer_to_local_frame (&phot_mid, &phot_mid_cmf);
         ds_cmf = observer_to_local_frame_ds (&phot_mid, ds_current);
-        if (p->grid >= 0 && p->grid < geo.ndim2)
+        if (p->grid >= 0 && p->grid < 2 * geo.ndim2)
         {
           bf_estimators_increment (&w[p->grid], &phot_mid_cmf, ds_cmf);
         }
