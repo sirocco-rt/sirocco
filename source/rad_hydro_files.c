@@ -143,7 +143,7 @@ main (int argc, char *argv[])
 
   struct photon ptest;          //We need a test photon structure in order to compute t
 
-  FILE *fptr_hc, *fptr_drive, *fptr_ion, *fptr_spec, *fptr_pcon, *fptr_debug, *fptr_flux, *fptr_flux_theta, *fptr_flux_phi, *fptr_flux_r, *fopen ();    /*This is the file to communicate with zeus */
+  FILE *fptr_hc, *fptr_drive, *fptr_ion, *fptr_spec, *fptr_pcon, *fptr_debug, *fptr_flux, *fptr_flux_theta, *fptr_flux_phi, *fptr_flux_r;       /*This is the file to communicate with zeus */
   domain = geo.hydro_domain_number;
 
   /* Initialize  MPI, which is needed because some of the routines are MPI enabled */
