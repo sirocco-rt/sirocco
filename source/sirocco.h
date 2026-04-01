@@ -867,6 +867,8 @@ typedef struct wind
   double xgamma, xgamma_cen;    /**<  1./sqrt(1-beta**2) at x at edge and center of cell */
   double dfudge;                /**<  A number which defines a push through distance for this cell, which replaces the
                                    global variable DFUDGE in many instances */
+  double cell_z_min;            /**< minimum (signed) z boundary of this cell; negative for lower-hemisphere cells */
+  double cell_z_max;            /**< maximum (signed) z boundary of this cell; negative for lower-hemisphere cells */
   enum inwind_enum
   { W_IN_DISK = -5, W_IN_STAR = -4, W_IGNORE = -2, W_NOT_INWIND = -1,
     W_ALL_INWIND = 0, W_PART_INWIND = 1, W_NOT_ASSIGNED = -999
@@ -1144,6 +1146,8 @@ typedef struct plasma_derived
   int nscat_bf;                 /**< Number of bf scatters in the cell. (macro_only) */
   int nscat_ff;                 /**< Number of ff scatters in the cell. (macro_only) */
   int nrad;                     /**<  Total number of photons created within the cell */
+  int nscat_upper;              /**< Number of scatters occurring in upper-hemisphere wind cells */
+  int nscat_lower;              /**< Number of scatters occurring in lower-hemisphere wind cells */
 
   /* Ionization parameter (final merged value) */
   double xi;                    /**<  Ionization parameter as defined by Tarter, Tucker, and Salpeter 1969 */

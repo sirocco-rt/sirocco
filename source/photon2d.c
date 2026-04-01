@@ -490,6 +490,10 @@ translate_in_wind (WindPtr w, PhotPtr p, double tau_scat, double *tau, int *nres
       xplasma->derived.nscat_ff++;
     }
 
+    if (p->grid < geo.ndim2)
+      xplasma->derived.nscat_upper++;
+    else
+      xplasma->derived.nscat_lower++;
 
     /* We now increment the radiation field in the cell, translate the photon and wrap
      * things up.  For simple atoms, the routine radiation also reduces

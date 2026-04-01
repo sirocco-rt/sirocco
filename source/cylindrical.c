@@ -50,7 +50,7 @@ double
 cylind_ds_in_cell (int ndom, PhotPtr p)
 {
 
-  int n, ix, iz, iroot;
+  int n, ix, iz_unused, iroot;
   double a, b, c, root[2];
   double z1, z2, q;
   double smax;
@@ -67,7 +67,7 @@ cylind_ds_in_cell (int ndom, PhotPtr p)
     return (n);                 /* Photon was not in wind */
   }
 
-  wind_n_to_ij (ndom, n, &ix, &iz);     /*Convert the index n to two dimensions */
+  wind_n_to_ij (ndom, n, &ix, &iz_unused);      /*Convert the index n to two dimensions */
 
   smax = VERY_BIG;
 
@@ -89,15 +89,12 @@ cylind_ds_in_cell (int ndom, PhotPtr p)
     smax = root[iroot];
 
   /* At this point we have found how far the photon can travel in rho in its
-     current direction.  Now we must worry about motion in the z direction  */
+   * current direction.  Now find the distances to the z boundaries.
+   * cell_z_min and cell_z_max are signed and stored per-cell (negative for
+   * lower-hemisphere cells), so no z-flip is needed here. */
 
-  z1 = zdom[ndom].wind_z[iz];
-  z2 = zdom[ndom].wind_z[iz + 1];
-  if (p->x[2] < 0)
-  {                             /* We need to worry about which side of the plane the photon is on! */
-    z1 *= (-1.);
-    z2 *= (-1.);
-  }
+  z1 = wmain[n].cell_z_min;
+  z2 = wmain[n].cell_z_max;
 
   if (p->lmn[2] != 0.0)
   {

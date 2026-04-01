@@ -77,6 +77,11 @@ make_transport_grid (void)
        * is unchanged (same slope). */
       wmain[k_lower].wcone.z *= -1.0;
 
+      /* Reflect the explicit z cell boundaries for CYLIND cells.
+       * The lower-hemisphere cell occupies [-cell_z_max, -cell_z_min]. */
+      wmain[k_lower].cell_z_min = -wmain[k].cell_z_max;
+      wmain[k_lower].cell_z_max = -wmain[k].cell_z_min;
+
       /* Fix the velocity gradient tensor for the lower hemisphere.
        * For a wind symmetric about z=0, v_rho and v_phi are even in z
        * while v_z is odd.  This means components where exactly one index

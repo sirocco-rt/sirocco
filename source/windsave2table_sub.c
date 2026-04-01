@@ -237,9 +237,15 @@ create_master_table (int ndom, char rootname[])
   c[22] = get_one (ndom, "nscat_bf");
   strcpy (column_name[22], "nscat_bf");
 
+  c[23] = get_one (ndom, "nscat_upper");
+  strcpy (column_name[23], "nscat_upper");
+
+  c[24] = get_one (ndom, "nscat_lower");
+  strcpy (column_name[24], "nscat_lower");
+
 
   /* This should be the maxium number above +1 */
-  ncols = 23;
+  ncols = 25;
 
 
   converge = get_one (ndom, "converge");
@@ -1500,6 +1506,14 @@ get_one (int ndom, char variable_name[])
       else if (strcmp (variable_name, "nscat_ff") == 0)
       {
         x[n] = plasmamain[nplasma].derived.nscat_ff;
+      }
+      else if (strcmp (variable_name, "nscat_upper") == 0)
+      {
+        x[n] = plasmamain[nplasma].derived.nscat_upper;
+      }
+      else if (strcmp (variable_name, "nscat_lower") == 0)
+      {
+        x[n] = plasmamain[nplasma].derived.nscat_lower;
       }
       else if (strcmp (variable_name, "heat_shock") == 0)
       {

@@ -684,6 +684,17 @@ create_wind_grid (void)
     calculate_cell_dvds_ave (cell->ndom, cell); /* Defined at cell center */
     calculate_cell_dvds_max (cell->ndom, cell); /* Defined at cell vertex */
 
+    /* Store explicit cell z-boundaries for CYLIND cells so that
+     * cylind_ds_in_cell can use them directly (without relying on
+     * domain arrays and a z-sign flip). */
+    if (zdom[cell->ndom].coord_type == CYLIND)
+    {
+      int ix, iz;
+      wind_n_to_ij (cell->ndom, n, &ix, &iz);
+      cell->cell_z_min = zdom[cell->ndom].wind_z[iz];
+      cell->cell_z_max = zdom[cell->ndom].wind_z[iz + 1];
+    }
+
     if (rel_mode == REL_MODE_FULL)
     {
       cell->xgamma = calculate_gamma_factor (cell->v);

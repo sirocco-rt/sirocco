@@ -63,10 +63,6 @@ dvwind_ds_cmf (PhotPtr p)
 
   ndom = wmain[p->grid].ndom;
 
-  /* Work on a local copy of the photon.  Lower-hemisphere cells carry
-   * corrected v_grad tensors (set by make_transport_grid), so no
-   * reflection to the northern hemisphere is needed. */
-
   stuff_phot (p, &pp);
 
   /* JM 1411 -- ideally, we want to do an interpolation on v_grad here. However,
@@ -116,6 +112,17 @@ dvwind_ds_cmf (PhotPtr p)
 
   else                          // for non spherical coords we interpolate on v_grad
   {
+
+    /* coord_fraction uses fabs(x[2]) internally and always returns upper-hemisphere
+     * cell indices.  For a lower-hemisphere photon the interpolated v_grad is correct
+     * only if we also reflect the photon to the upper hemisphere: flip both x[2] and
+     * lmn[2].  By symmetry of the wind (v_z odd in z, v_rho even in z), dvds is
+     * invariant under this simultaneous reflection. */
+    if (pp.x[2] < 0.0)
+    {
+      pp.x[2] *= -1.0;
+      pp.lmn[2] *= -1.0;
+    }
 
     coord_fraction (ndom, 0, pp.x, nnn, frac, &nelem);
 
