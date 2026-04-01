@@ -368,9 +368,7 @@ sv_rho (int ndom, double x[])
  **********************************************************/
 
 double
-sv_find_wind_rzero (ndom, p)
-     int ndom;
-     double p[];                /* Note that p is a 3 vector and not a photon structure */
+sv_find_wind_rzero (int ndom, double p[])
 {
   double x, z;
   double rho_min, rho_max, rho;

@@ -354,12 +354,7 @@ find_function_minimum (double a, double m, double b, double (*func) (double, voi
  **********************************************************/
 
 int
-fraction (value, array, npts, ival, f, mode)
-     double array[];            // The array in we want to search
-     int npts, *ival;           // ival is the lower point
-     double value;              // The value we want to index
-     double *f;                 // The fractional "distance" to the next point in the array
-     int mode;                  // 0 = compute in linear space, 1=compute in log space
+fraction (double value, double array[], int npts, int *ival, double *f, int mode)
 {
   int imin, imax, ihalf;
 
@@ -462,12 +457,7 @@ to reflect the behavior of the search routine in where_in_grid. */
  **********************************************************/
 
 int
-linterp (x, xarray, yarray, xdim, y, mode)
-     double x;                  // The value that we wish to index i
-     double xarray[], yarray[];
-     int xdim;
-     double *y;
-     int mode;                  //0 = linear, 1 = log
+linterp (double x, double xarray[], double yarray[], int xdim, double *y, int mode)
 {
   int nelem = 0;
   double frac;

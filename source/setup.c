@@ -192,7 +192,7 @@ get_spectype (int yesno, char *question, int *spectype)
   char model_list[LINELENGTH];
   char one_choice[LINELENGTH];
   char choices[LINELENGTH];
-  int get_models ();            // Note: Needed because get_models cannot be included in templates.h
+  int get_models (char modellist[], int npars, int *spectype);
   int i;
 
 

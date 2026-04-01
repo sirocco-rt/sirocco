@@ -71,7 +71,7 @@ main (int argc, char *argv[])
   double freqmin, freqmax;
   int n;
   char values[LINELENGTH], answer[LINELENGTH];
-  int get_models ();            // Note: Needed because get_models cannot be included in templates.h
+  int get_models (char modellist[], int npars, int *spectype);
   int dummy_spectype;
   int opar_stat, restart_stat;
   double time_max;

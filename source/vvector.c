@@ -555,10 +555,7 @@ create_basis (double u[], double v[], struct basis *basis_new)
  **********************************************************/
 
 int
-project_from (basis_from, v_in, v_out)
-     struct basis *basis_from;  /* direction cosines to go from rotated to unrotated frame */
-     double v_in[], v_out[];    /*v_in here is in rotated frame, v_out in unrotated frame */
-
+project_from (struct basis *basis_from, double v_in[], double v_out[])
 {
   int i, j;
   for (i = 0; i < 3; i++)
@@ -590,10 +587,7 @@ project_from (basis_from, v_in, v_out)
  **********************************************************/
 
 int
-project_to (basis_from, v_in, v_out)
-     struct basis *basis_from;  /* direction cosines to go from rotated to unrotated frame */
-     double v_in[], v_out[];    /*v_in here is in unrotated frame, v_out in rotated frame */
-
+project_to (struct basis *basis_from, double v_in[], double v_out[])
 {
   int i, j;
   for (i = 0; i < 3; i++)

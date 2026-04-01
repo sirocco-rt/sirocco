@@ -560,9 +560,7 @@ rtheta_where_in_grid (int ndom, double x[])
  **********************************************************/
 
 int
-rtheta_get_random_location (n, x)
-     int n;                     // Wind cell in which to create position
-     double x[];                // Returned position
+rtheta_get_random_location (int n, double x[])
 {
   int i, j;
   int inwind;
@@ -723,8 +721,7 @@ rtheta_extend_density (int ndom, WindPtr w)
  **********************************************************/
 
 int
-rtheta_is_cell_in_wind (n)
-     int n;                     /* The wind cell number */
+rtheta_is_cell_in_wind (int n)
 {
   int i, j;
   double r, theta;

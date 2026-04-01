@@ -120,10 +120,7 @@ cooling (PlasmaPtr xplasma, double t)
  **********************************************************/
 
 double
-xtotal_emission (one, f1, f2)
-     WindPtr one;               /* WindPtr to a specific cell in the wind */
-     double f1, f2;             /* The minimum and maximum frequency over which the emission is
-                                   integrated */
+xtotal_emission (WindPtr one, double f1, double f2)
 {
   double t_e;
   int nplasma;

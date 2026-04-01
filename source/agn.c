@@ -343,13 +343,7 @@ emittance_bpow (double freqmin, double freqmax, double alpha)
  **********************************************************/
 
 int
-photo_gen_agn (p, r, alpha, weight, f1, f2, spectype, istart, nphot)
-     PhotPtr p;
-     double r, alpha, weight;
-     double f1, f2;             /* The freqency mininimum and maximum if a uniform distribution is selected */
-     int spectype;              /*The spectrum type to generate: 0 is bb, 1 (or in fact anything but 0)
-                                   is uniform in frequency space */
-     int istart, nphot;         /* Respecitively the starting point in p and the number of photons to generate */
+photo_gen_agn (PhotPtr p, double r, double alpha, double weight, double f1, double f2, int spectype, int istart, int nphot)
 {
   double freqmin, freqmax, t;
   int i, iend;

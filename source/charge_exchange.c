@@ -121,10 +121,7 @@ compute_ch_ex_coeffs (double T)
  **********************************************************/
 
 double
-ch_ex_heat (one, t_e)
-     WindPtr one;               // Pointer to the current wind cell - we need the cell volume, this is not in the plasma structure
-     double t_e;                //Current electron temperature of the cell
-
+ch_ex_heat (WindPtr one, double t_e)
 {
   double x;                     //The returned variable
   int nplasma;                  //The cell number in the plasma array

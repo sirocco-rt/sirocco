@@ -240,11 +240,7 @@ int ierr_where_in_2dcell = 0;
  **********************************************************/
 
 int
-where_in_2dcell (ichoice, x, n, fx, fz)
-     int ichoice;
-     double x[];
-     int n;                     // A known wind cell
-     double *fx, *fz;
+where_in_2dcell (int ichoice, double x[], int n, double *fx, double *fz)
 {
   double *x00, *x01, *x10, *x11;
   double z[3];

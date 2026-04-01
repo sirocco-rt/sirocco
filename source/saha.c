@@ -712,10 +712,7 @@ int nforce;
  **********************************************************/
 
 int
-fix_concentrations (xplasma, mode)
-     PlasmaPtr xplasma;
-     int mode;                  // 0=saha using tr, 1=saha using te, 2= Lucy & Mazzali
-
+fix_concentrations (PlasmaPtr xplasma, int mode)
 {
   int nelem, nion;
   int n;
