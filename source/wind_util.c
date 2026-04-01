@@ -335,6 +335,10 @@ int
 wind_n_to_ij (int ndom, int n, int *i, int *j)
 {
   int n_use;
+  /* Lower-hemisphere transport cells are offset by NDIM2; strip the
+   * offset to recover the upper-hemisphere (i,j) grid indices. */
+  if (n >= NDIM2)
+    n -= NDIM2;
   if (zdom[ndom].coord_type == SPHERICAL)
   {
     *i = n - zdom[ndom].nstart;
