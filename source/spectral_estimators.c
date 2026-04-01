@@ -449,10 +449,7 @@ pl_logmean (double alpha, double lnumin, double lnumax)
  **********************************************************/
 
 double
-pl_log_w (j, alpha, lnumin, lnumax)
-     double j;                  //the band limited spectral density
-     double alpha;              //Computed spectral index for the cell
-     double lnumin, lnumax;     //Range of frequencies we are considering
+pl_log_w (double j, double alpha, double lnumin, double lnumax)
 {
   double logw;                  //the answer
   double logk;                  //scaling prefactor to permit huge numbers to be dealt with
@@ -487,9 +484,7 @@ pl_log_w (j, alpha, lnumin, lnumax)
  **********************************************************/
 
 double
-pl_log_stddev (alpha, lnumin, lnumax)
-     double alpha;              //Computed spectral index for the cell
-     double lnumin, lnumax;     //Range of frequencies we are considering
+pl_log_stddev (double alpha, double lnumin, double lnumax)
 {
   double answer;                //the answer
 
@@ -618,10 +613,7 @@ exp_mean (double exp_temp, double numin, double numax)
  **********************************************************/
 
 double
-exp_w (j, exp_temp, numin, numax)
-     double j;                  //the band limited spectral density
-     double exp_temp;           //Computed effective temperature for the cell
-     double numin, numax;       //Range of frequencies we are considering
+exp_w (double j, double exp_temp, double numin, double numax)
 {
   double w;                     //the answer
 
@@ -660,9 +652,7 @@ exp_w (j, exp_temp, numin, numax)
  **********************************************************/
 
 double
-exp_stddev (exp_temp, numin, numax)
-     double exp_temp;           //Computed spectral index for the cell
-     double numin, numax;       //Range of frequencies we are considering
+exp_stddev (double exp_temp, double numin, double numax)
 {
   double answer;                //the answer
   double exp1;                  /* We supply a temperature, but actually we expect the correct function to be of the form e^-hnu/kt, so this will hold -1*h/kt */

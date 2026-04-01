@@ -77,12 +77,7 @@
  **********************************************************/
 
 int
-translate (w, pp, tau_scat, tau, nres)
-     WindPtr w;                 //w here refers to entire wind, not a single element
-     PhotPtr pp;
-     double tau_scat;
-     double *tau;
-     int *nres;
+translate (WindPtr w, PhotPtr pp, double tau_scat, double *tau, int *nres)
 {
   int istat;
   int ndomain;
@@ -429,11 +424,7 @@ ds_to_wind (PhotPtr pp, int *ndom_current)
  *
  **********************************************************/
 int
-translate_in_wind (w, p, tau_scat, tau, nres)
-     WindPtr w;                 //w here refers to entire wind, not a single element
-     PhotPtr p;
-     double tau_scat, *tau;
-     int *nres;
+translate_in_wind (WindPtr w, PhotPtr p, double tau_scat, double *tau, int *nres)
 {
   int n;
   double smax, ds_current, ds_cmf;

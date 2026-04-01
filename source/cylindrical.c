@@ -705,8 +705,7 @@ History:
  **********************************************************/
 
 int
-cylind_is_cell_in_wind (n)
-     int n;                     // cell number
+cylind_is_cell_in_wind (int n)
 {
   int i, j;
   double r, z, dr, dz;

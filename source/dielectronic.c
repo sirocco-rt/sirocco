@@ -102,9 +102,7 @@ compute_dr_coeffs (double temp)
  **********************************************************/
 
 double
-total_dr (one, t_e)
-     WindPtr one;               // Pointer to the current wind cell - we need the cell volume, this is not in the plasma structure
-     double t_e;                //Current electron temperature of the cell
+total_dr (WindPtr one, double t_e)
 {
   double x;                     //The returned variable
 //OLD  double meanv, meanke;         //The mean velocity and kinetic energy of electrons in the cell

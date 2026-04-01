@@ -129,10 +129,7 @@ xband;
  **********************************************************/
 
 int
-bands_init (imode, band)
-     int imode;                 // A switch used for determining how the bands are to be populated
-     struct xbands *band;
-
+bands_init (int imode, struct xbands *band)
 {
   int mode;
   int nband;

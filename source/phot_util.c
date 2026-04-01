@@ -502,10 +502,7 @@ ds_to_plane (struct plane *pl, struct photon *p, int force_positive_z)
  **********************************************************/
 
 double
-ds_to_closest_approach (x, p, impact_parameter)
-     double x[];                /* point for which impact parameter is calculated */
-     struct photon *p;          /* Photon ptr of interest */
-     double *impact_parameter;  /* distance of ray to point a closest approach */
+ds_to_closest_approach (double x[], struct photon *p, double *impact_parameter)
 {
   double diff[3], s, result[3];
 

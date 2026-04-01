@@ -757,7 +757,7 @@ collision_summary (WindPtr w, char rootname[], int ochoice)
   int nline, int_te;
   double t_e, qup, qdown, A, wavelength;
   char filename[LINELENGTH], suffix[LINELENGTH];
-  FILE *fopen (), *fptr = NULL;
+  FILE *fptr = NULL;
 
   t_e = 10000.0;
 

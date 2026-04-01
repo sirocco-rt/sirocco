@@ -3319,7 +3319,7 @@ complete_ion_summary (WindPtr w, char rootname[], int ochoice)
 {
   char cell[5];
   PlasmaPtr xplasma;
-  FILE *fptr = NULL, *fopen ();
+  FILE *fptr = NULL;
   char filename[LINELENGTH];
 
 

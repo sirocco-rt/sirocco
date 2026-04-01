@@ -769,11 +769,7 @@ hydro_frac (double coord, double coord_array[], int imax, int *cell1, int *cell2
 
 
 double
-hydro_interp_value (array, im, ii, jm, jj, f1, f2)
-     double array[];
-     int im, ii;                //the two cells surrounding the cell in the first dim (r)
-     int jm, jj;                //the two cells surrounding the cell in the second dim (theta)
-     double f1, f2;             //the fraction between the two values in first and second dim
+hydro_interp_value (double array[], int im, int ii, int jm, int jj, double f1, double f2)
 {
   double value;
   double d1, d2;

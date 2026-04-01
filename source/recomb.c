@@ -288,12 +288,7 @@ fb_topbase_partial2 (double freq, void *params)
  **********************************************************/
 
 double
-integ_fb (t, f1, f2, nion, fb_choice, mode)
-     double t;                  // The temperature at which to calculate the emissivity
-     double f1, f2;             // The frequencies over which to integrate the emissivity
-     int nion;                  // The ion for which the "specific emissivity" is calculateed
-     int fb_choice;             // 0=full, 1=reduced, 2= rate
-     int mode;                  // 1- outer shell 2-inner shell
+integ_fb (double t, double f1, double f2, int nion, int fb_choice, int mode)
 {
   double fnu;
   int n;
@@ -538,9 +533,7 @@ double one_fb_f1, one_fb_f2, one_fb_te; /* Old values */
  **********************************************************/
 
 double
-one_fb (xplasma, f1, f2)
-     PlasmaPtr xplasma;         /* a single cell */
-     double f1, f2;             /* freqmin and freqmax */
+one_fb (PlasmaPtr xplasma, double f1, double f2)
 {
   double freq, tt, delta;
   int n, nn, nnn;
@@ -1170,11 +1163,7 @@ get_fb (double t, int nion, int narray, int fb_choice, int mode)
  **********************************************************/
 
 double
-xinteg_fb (t, f1, f2, nion, fb_choice)
-     double t;                  // The temperature at which to calculate the emissivity
-     double f1, f2;             // The frequencies overwhich to integrate the emissivity
-     int nion;                  // The ion for which the "specific emissivity is calculateed
-     int fb_choice;             // 0=full, otherwise reduced
+xinteg_fb (double t, double f1, double f2, int nion, int fb_choice)
 {
   int n;
   double fnu;
@@ -1299,11 +1288,7 @@ xinteg_fb (t, f1, f2, nion, fb_choice)
  **********************************************************/
 
 double
-xinteg_inner_fb (t, f1, f2, nion, fb_choice)
-     double t;                  // The temperature at which to calculate the emissivity
-     double f1, f2;             // The frequencies overwhich to integrate the emissivity
-     int nion;                  // The ion for which the "specific emissivity is calculateed
-     int fb_choice;             // 0=full, otherwise reduced
+xinteg_inner_fb (double t, double f1, double f2, int nion, int fb_choice)
 {
   int n, nn;
   double fnu;

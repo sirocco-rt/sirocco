@@ -159,12 +159,7 @@ calloc_models (int nmods)
  **********************************************************/
 
 int
-get_models (modellist, npars, spectype)
-     char modellist[];          // filename containing location and associated parameters of models
-     int npars;                 // Number of parameters which vary for these models
-     int *spectype;             //  The returned spectrum type
-
-
+get_models (char modellist[], int npars, int *spectype)
 {
   FILE *mptr;
   char dummy[LINELENGTH];

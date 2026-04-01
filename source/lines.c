@@ -51,9 +51,7 @@
  **********************************************************/
 
 double
-total_line_emission (xplasma, f1, f2)
-     PlasmaPtr xplasma;         /* WindPtr to a specific cell in the wind */
-     double f1, f2;             /* Minimum and maximum frequency */
+total_line_emission (PlasmaPtr xplasma, double f1, double f2)
 {
 
   double lum;
@@ -103,9 +101,7 @@ total_line_emission (xplasma, f1, f2)
  **********************************************************/
 
 double
-lum_lines (xplasma, nmin, nmax)
-     PlasmaPtr xplasma;
-     int nmin, nmax;            /* The min and max index in lptr array for which the power is to be calculated */
+lum_lines (PlasmaPtr xplasma, int nmin, int nmax)
 {
   int n;
   double lum, x, z;

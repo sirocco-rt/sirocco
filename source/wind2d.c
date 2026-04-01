@@ -384,10 +384,7 @@ rho (WindPtr w, double x[])
  **********************************************************/
 
 int
-mdot_wind (w, z, rmax)
-     WindPtr w;
-     double z;                  // The height (usually small) above the disk at which mdot will be calculated
-     double rmax;               // The radius at which mdot will be calculated
+mdot_wind (WindPtr w, double z, double rmax)
 {
   struct photon p;
   double r, dr, rmin;
@@ -468,9 +465,7 @@ mdot_wind (w, z, rmax)
  **********************************************************/
 
 int
-get_random_location (n, x)
-     int n;                     // Cell in which to create position
-     double x[];                // Returned position
+get_random_location (int n, double x[])
 {
   int ndom;
 

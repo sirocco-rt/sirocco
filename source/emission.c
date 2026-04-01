@@ -731,9 +731,7 @@ double one_ff_f1, one_ff_f2, one_ff_te;
  **********************************************************/
 
 double
-one_ff (xplasma, f1, f2)
-     PlasmaPtr xplasma;         /* a single cell */
-     double f1, f2;             /* freqmin and freqmax */
+one_ff (PlasmaPtr xplasma, double f1, double f2)
 {
   double freq, dfreq;
   int n;

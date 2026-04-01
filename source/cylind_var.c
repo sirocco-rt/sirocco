@@ -659,9 +659,7 @@ cylvar_where_in_grid (int ndom, double x[], int ichoice, double *fx, double *fz)
  **********************************************************/
 
 int
-cylvar_get_random_location (n, x)
-     int n;                     // Cell in which to create position
-     double x[];                // Returned position
+cylvar_get_random_location (int n, double x[])
 {
   int i, j;
   int inwind, incell;

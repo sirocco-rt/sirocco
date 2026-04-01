@@ -36,8 +36,7 @@ PlasmaPtr xplasma;              /// Pointer to current plasma cell
 
 
 int
-compton_scatter (p)
-     PhotPtr p;                 // Pointer to the current photon
+compton_scatter (PhotPtr p)
 {
   double t_e;
   double vel[3];
@@ -344,8 +343,7 @@ total_comp (WindPtr one, double t_e)
  **********************************************************/
 
 double
-klein_nishina (nu)
-     double nu;                 //The frequency of the photon packet
+klein_nishina (double nu)
 {
   double x;                     //h nu / kt
   double x1, x2, x3, x4;        //variables to store intermediate results.
@@ -445,9 +443,7 @@ set_comp_func_values (double rand_cs, double max_cs, double energy_ratio)
  **********************************************************/
 
 int
-compton_dir (p)
-     PhotPtr p;                 // Pointer to the current photon
-
+compton_dir (PhotPtr p)
 {
   double f_min, f_max, f;       //Fractional energy changes - E_old/E_new - minimum possible, maximum possible, actual as implied by random cross section
   double n, l, m, phi, len;     //The direction cosines of the new photon direction in the frame of reference with q along the photon path
@@ -643,9 +639,7 @@ compton_func (double f, void *params)
  **********************************************************/
 
 double
-sigma_compton_partial (f, x)
-     double f;                  //This is the fractional energy change, nu/nu'
-     double x;                  //h nu/mec**2 - the energy of the photon divided by the rest energy of an electron
+sigma_compton_partial (double f, double x)
 {
   double term1, term2, term3, tot;
 
