@@ -519,8 +519,9 @@ cylvar_where_in_grid (int ndom, double x[], int ichoice, double *fx, double *fz)
   /* copy x to a dummy vector z, so that the z[0] component is really rho */
   z[0] = rho = sqrt (x[0] * x[0] + x[1] * x[1]);
   z[1] = 0;
-  z[2] = fabs (x[2]);           /* This is necessary to get correct answer above
-                                   and below plane */
+  z[2] = fabs (x[2]);           /* Use |z| for the upper-hemisphere grid lookup;
+                                   sign of x[2] is used at the end to select the
+                                   upper or lower transport cell */
   if (z[2] == 0)
     z[2] = 1.e4;                //Force z to be positive  02feb ksl
 
@@ -626,6 +627,10 @@ cylvar_where_in_grid (int ndom, double x[], int ichoice, double *fx, double *fz)
     else
       n++;
   }
+
+  /* offset to lower-hemisphere transport cell if needed */
+  if (x[2] < 0.0)
+    n += NDIM2;
 
   return (n);
 

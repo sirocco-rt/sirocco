@@ -485,7 +485,10 @@ cylind_where_in_grid (int ndom, double x[])
 
   wind_ij_to_n (ndom, i, j, &n);
 
-  /* n is the array element in wmain */
+  /* n is the array element in wmain; offset to lower-hemisphere transport cell if needed */
+  if (x[2] < 0.0)
+    n += NDIM2;
+
   return (n);
 }
 
