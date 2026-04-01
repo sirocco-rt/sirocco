@@ -235,20 +235,15 @@ spectrum_init (double f1, double f2, int nangle, double angle[], double phase[],
 
     /* Initialize variables needed for live or die option.
 
-       There are  various issues associated with extracting a spectrum
-       at inclinations near 0 or 90 deg in the live or die mode
+       Each observer angle now collects photons from a single-sided band
+       [angle-DANG, angle+DANG] using the signed cos(theta) of the escape
+       direction.  Angles < 90 deg collect above-disk photons (lmn[2] > 0)
+       and angles > 90 deg collect below-disk photons (lmn[2] < 0).  This
+       replaces the old biconical assumption (fabs) that combined both sides
+       into one spectrum, allowing asymmetric winds to be tested.
 
-       At 90 degrees, the isseus arise, because we normally
-       extract on both sides of the disk, that is to say if we want to
-       get the flux at 45d, we actually use bands at 45 and 135 degrees,
-       explicitly assuming that the program only deals with winds which are
-       biconical.
-
-       But if we choose 90 degrees for extraction we are extracting
-       basically from 88-92 degrees, not as in the case of 45, from 43-47, and
-       133-137.
-
-       Similar issues occur at very low inclination angles near the poles.
+       The band is clipped so it never crosses 90 deg (the disk plane),
+       and similarly clipped at 0 and 180 deg near the poles.
 
      */
 
@@ -276,8 +271,8 @@ spectrum_init (double f1, double f2, int nangle, double angle[], double phase[],
       }
     }
 
-    x1 = fabs (cos (x1 / RADIAN));
-    x2 = fabs (cos (x2 / RADIAN));
+    x1 = cos (x1 / RADIAN);
+    x2 = cos (x2 / RADIAN);
     if (x1 > x2)
     {
       xxspec[n].mmax = x1;
@@ -291,7 +286,7 @@ spectrum_init (double f1, double f2, int nangle, double angle[], double phase[],
 
     if (select_extract == FALSE)        // We are in Live or Die mode
     {
-      xxspec[n].renorm = 1. / (xxspec[n].mmax - xxspec[n].mmin);
+      xxspec[n].renorm = 2. / (xxspec[n].mmax - xxspec[n].mmin);
 
     }
     else                        // No renormalization in extract mode
@@ -578,7 +573,7 @@ spectrum_create (PhotPtr p, int nangle, int select_extract)
       /* For Live or Die option, increment the spectra here */
       if (select_extract == FALSE)
       {
-        x1 = fabs (p[nphot].lmn[2]);
+        x1 = p[nphot].lmn[2];
         for (n = MSPEC; n < nspec; n++)
         {
 
