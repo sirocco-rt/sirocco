@@ -419,14 +419,19 @@ spherical_get_random_location (int n, double x[])
   rmax = zdom[ndom].wind_x[i + 1];
 
 
-  /* Generate a position which is both in the cell and in the wind */
+  /* Generate a position which is both in the cell and in the wind.
+   * For lower-hemisphere cells (n >= NDIM2) restrict theta to the lower
+   * hemisphere (cos theta < 0) so the position has negative z. */
   inwind = W_NOT_INWIND;
   while (inwind != W_ALL_INWIND)
   {
     r = (rmin * rmin * rmin) + (rmax * rmax * rmax - rmin * rmin * rmin) * random_number (0.0, 1.0);
 
     r = pow (r, (1. / 3.));
-    theta = acos (random_number (-1.0, 1.0));
+    if (n < NDIM2)
+      theta = acos (random_number (-1.0, 1.0));
+    else
+      theta = acos (random_number (-1.0, 0.0));
 
     phi = 2. * PI * random_number (0.0, 1.0);
 

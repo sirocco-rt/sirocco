@@ -143,6 +143,14 @@ endif
 # LDFLAGS= -L$(LIB)  -lm -lkpar -lcfitsio -lgsl -lgslcblas
 LDFLAGS+= -L$(LIB) -lm -lgsl -lgslcblas $(CUDA_LIBS)
 
+# Check whether cfitsio is available by trying to link a trivial program.
+# windsave2fits and windstruct2fits require cfitsio; all other targets do not.
+HAVE_CFITSIO := $(shell echo 'int main(void){return 0;}' | $(CC) -x c - -lcfitsio -o /dev/null 2>/dev/null && echo yes || echo no)
+ifeq ($(HAVE_CFITSIO),yes)
+  FITS_TOOLS = windsave2fits windstruct2fits
+else
+  FITS_TOOLS =
+endif
 
 #Note that version should be a single string without spaces.
 
@@ -343,7 +351,11 @@ check:
 
 # The next line runs recompiles all of the routines after first cleaning the directory
 # all: clean run_indent sirocco windsave2table swind
-all: clean sirocco windsave2table swind indent rad_hydro_files modify_wind inspect_wind sirocco_optd
+all: clean sirocco windsave2table swind indent rad_hydro_files modify_wind inspect_wind sirocco_optd $(FITS_TOOLS)
+	@if [ "$(HAVE_CFITSIO)" != "yes" ]; then \
+	  echo "WARNING: cfitsio not found -- windsave2fits and windstruct2fits were not built" ; \
+	  echo "         Install cfitsio and run 'make windsave2fits windstruct2fits' to build them" ; \
+	fi
 
 FILE = atomicdata.o atomicdata_init.o atomicdata_sub.o atomic.o
 

@@ -619,6 +619,7 @@ create_wind_grid (void)
   geo.ndim2 = NDIM2;
 
   calloc_wind (2 * NDIM2);
+  calloc_wind_counts (2 * NDIM2);
 
   /* Assign the domain for each cell in the wind grid */
   int offset = 0;

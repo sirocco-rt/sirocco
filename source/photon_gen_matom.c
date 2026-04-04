@@ -211,11 +211,24 @@ photo_gen_kpkt (PhotPtr p, double weight, int photstart, int nphot)
 
     /* The photon frequency is now known. */
 
-    /* Determine the position of the photon in the moving frame */
-
-    get_random_location (icell, p[n].x);
-
-    p[n].grid = icell;
+    /* Determine the position of the photon in the moving frame.
+     * icell is an upper-hemisphere cell; randomly pick upper or lower hemisphere
+     * transport cell, weighted by volume, so both hemispheres are equally sampled
+     * for a symmetric wind. */
+    {
+      int k_upper = icell;
+      int k_lower = k_upper + NDIM2;
+      double vol_upper = wmain[k_upper].vol;
+      double vol_lower = wmain[k_lower].vol;
+      int chosen_cell;
+      if (random_number (0.0, 1.0) < vol_upper / (vol_upper + vol_lower))
+        chosen_cell = k_upper;
+      else
+        chosen_cell = k_lower;
+      get_random_location (chosen_cell, p[n].x);
+      p[n].grid = chosen_cell;
+    }
+    wind_counts_main[p[n].grid].nrad++;
     p[n].frame = F_LOCAL;
 
     nnscat = 1;
@@ -390,13 +403,23 @@ photo_gen_matom (PhotPtr p, double weight, int photstart, int nphot)
 
     /* The photon frequency is now known. */
 
-    /* Determine the position of the photon in the moving frame */
-
-
-    get_random_location (icell, p[n].x);
-
-    p[n].grid = icell;
-
+    /* Determine the position of the photon in the moving frame.
+     * icell is an upper-hemisphere cell; randomly pick upper or lower hemisphere
+     * transport cell, weighted by volume. */
+    {
+      int k_upper = icell;
+      int k_lower = k_upper + NDIM2;
+      double vol_upper = wmain[k_upper].vol;
+      double vol_lower = wmain[k_lower].vol;
+      int chosen_cell;
+      if (random_number (0.0, 1.0) < vol_upper / (vol_upper + vol_lower))
+        chosen_cell = k_upper;
+      else
+        chosen_cell = k_lower;
+      get_random_location (chosen_cell, p[n].x);
+      p[n].grid = chosen_cell;
+    }
+    wind_counts_main[p[n].grid].nrad++;
 
     /* Determine the direction of the photon
        Need to allow for anisotropic emission here

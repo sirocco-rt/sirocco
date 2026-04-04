@@ -73,6 +73,10 @@ int previous_nioniz_nplasma = -1;
 int previous_nioniz_np = -1;
 int previous_nplasma = -1;
 int previous_np = -1;
+int previous_grid = -1;
+int previous_grid_np = -1;
+int previous_grid_nioniz = -1;
+int previous_grid_nioniz_np = -1;
 
 int
 update_banded_estimators (PlasmaPtr xplasma, PhotPtr p, double ds, double w_ave, int ndom)
@@ -178,6 +182,13 @@ update_banded_estimators (PlasmaPtr xplasma, PhotPtr p, double ds, double w_ave,
     previous_np = p->np;
   }
 
+  if (p->grid != previous_grid || p->np != previous_grid_np)
+  {
+    wind_counts_main[p->grid].ntot++;
+    previous_grid = p->grid;
+    previous_grid_np = p->np;
+  }
+
 
   /*
    * Calculate the number of H ionizing photons, see #255
@@ -193,6 +204,13 @@ update_banded_estimators (PlasmaPtr xplasma, PhotPtr p, double ds, double w_ave,
       xplasma->est.nioniz++;
       previous_nioniz_nplasma = xplasma->nplasma;
       previous_nioniz_np = p->np;
+    }
+
+    if (p->grid != previous_grid_nioniz || p->np != previous_grid_nioniz_np)
+    {
+      wind_counts_main[p->grid].nioniz++;
+      previous_grid_nioniz = p->grid;
+      previous_grid_nioniz_np = p->np;
     }
 
     /* IP needs to be radiation density in the cell. We sum contributions from

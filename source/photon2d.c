@@ -475,19 +475,23 @@ translate_in_wind (WindPtr w, PhotPtr p, double tau_scat, double *tau, int *nres
     if (p->nres == NRES_ES)
     {
       xplasma->derived.nscat_es++;
+      wind_counts_main[p->grid].nscat_es++;
     }
     if (p->nres > NLINES)
     {
       xplasma->derived.nscat_bf++;
+      wind_counts_main[p->grid].nscat_bf++;
     }
 
     else if (p->nres > 0)
     {
       xplasma->derived.nscat_res++;
+      wind_counts_main[p->grid].nscat_res++;
     }
     else if (p->nres == NRES_FF)
     {
       xplasma->derived.nscat_ff++;
+      wind_counts_main[p->grid].nscat_ff++;
     }
 
     if (p->grid < geo.ndim2)

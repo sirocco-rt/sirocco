@@ -570,7 +570,6 @@ rtheta_get_random_location (int n, double x[])
   int inwind;
   double r, rmin, rmax, sthetamin, sthetamax;
   double theta, phi;
-  double zz;
   int ndom, ndomain;
 
   ndom = wmain[n].ndom;
@@ -602,11 +601,10 @@ rtheta_get_random_location (int n, double x[])
                                                    because the boundaries of the wind split the grid cell */
   }
 
-  zz = random_number (-1.0, 1.0);       //positions above are all at +z distances
-
-
-  if (zz < 0)
-    x[2] *= -1;                 /* The photon is in the bottom half of the wind */
+  /* Place the photon in the correct hemisphere for this transport cell.
+   * Lower-hemisphere cells (n >= NDIM2) need negative z. */
+  if (n >= NDIM2)
+    x[2] *= -1;
 
   return (inwind);
 

@@ -168,3 +168,30 @@ broadcast_wind_grid (const int n_start, const int n_stop, const int n_cells_rank
   d_xsignal (files.root, "%-20s Finished communication of wind grid\n", "NOK");
 #endif
 }
+
+
+/**********************************************************/
+/**
+ * @brief Sum per-wind-cell diagnostic counters across all MPI ranks.
+ *
+ * @details
+ *
+ * Each rank accumulates wind_counts_main independently during photon
+ * transport.  After transport, this routine uses MPI_Allreduce to sum
+ * the counters so that every rank holds the total counts.  In non-MPI
+ * builds the function is a no-op.
+ *
+ **********************************************************/
+
+void
+sum_wind_counts (void)
+{
+#ifdef MPI_ON
+  if (np_mpi_global > 1)
+  {
+    int ncells = 2 * geo.ndim2;
+    MPI_Allreduce (MPI_IN_PLACE, wind_counts_main, ncells * (int) (sizeof (wind_counts_dummy) / sizeof (long)),
+                   MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+  }
+#endif
+}

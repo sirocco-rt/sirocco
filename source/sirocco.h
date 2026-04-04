@@ -895,6 +895,27 @@ typedef struct wind_paths_store
 
 extern wind_paths_store *wind_paths_main;
 
+/**
+ * Per-wind-cell transport diagnostic counters, stored separately from wind_dummy
+ * so that wmain can remain in MPI-3 shared memory while these are private per rank
+ * (accumulated independently during transport and summed via MPI_Allreduce).
+ * Indexed by wind cell index 0..2*NDIM2-1, covering both upper- and
+ * lower-hemisphere transport cells so scatter rates can be compared between
+ * hemispheres.
+ */
+typedef struct wind_counts
+{
+  long ntot;                    /**< Number of photon bundles that traversed this wind cell */
+  long nrad;                    /**< Number of photon bundles generated (emitted) in this wind cell */
+  long nioniz;                  /**< Number of H-ionizing photon bundles in this wind cell */
+  long nscat_es;                /**< Number of electron scatters in this wind cell */
+  long nscat_res;               /**< Number of resonant line scatters in this wind cell */
+  long nscat_ff;                /**< Number of free-free scatters in this wind cell */
+  long nscat_bf;                /**< Number of bound-free scatters in this wind cell */
+} wind_counts_dummy, *WindCountsPtr;
+
+extern WindCountsPtr wind_counts_main;
+
 /*****************************PLASMA STRUCTURE**************************/
 /** Plasma is a structure that contains information about the properties of the
  * plasma in regions of the geometry that are actually included in the wind.
@@ -1148,6 +1169,8 @@ typedef struct plasma_derived
   int nrad;                     /**<  Total number of photons created within the cell */
   int nscat_upper;              /**< Number of scatters occurring in upper-hemisphere wind cells */
   int nscat_lower;              /**< Number of scatters occurring in lower-hemisphere wind cells */
+  int nrad_upper;               /**< Number of photons created in upper-hemisphere wind cells */
+  int nrad_lower;               /**< Number of photons created in lower-hemisphere wind cells */
 
   /* Ionization parameter (final merged value) */
   double xi;                    /**<  Ionization parameter as defined by Tarter, Tucker, and Salpeter 1969 */

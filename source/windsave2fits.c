@@ -693,6 +693,7 @@ main (int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
+  init_rand (1);                /* dvds calculations in make_transport_grid need the RNG */
   wind_read (infile);
 
   make_spec (inroot);

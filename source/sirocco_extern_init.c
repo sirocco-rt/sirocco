@@ -82,6 +82,7 @@ WindPtr wmain;
 MPI_Win wmain_win;
 #endif
 wind_paths_store *wind_paths_main;
+WindCountsPtr wind_counts_main;
 
 PlasmaPtr plasmamain;
 

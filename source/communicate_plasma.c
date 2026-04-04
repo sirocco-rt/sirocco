@@ -19,7 +19,7 @@
    in the plasma structure to be packed (i.e. things that are not arrays or pointers and
    have a size of MPI_INT or MPI_DOUBLE)*/
 #define N_BASIC_DOUBLES 73
-#define N_BASIC_INTS 24
+#define N_BASIC_INTS 26
 
 /**********************************************************/
 /**
@@ -137,6 +137,8 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
         MPI_Pack (&cell->est.mean_ds, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->est.n_ds, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->derived.nrad, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (&cell->derived.nrad_upper, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (&cell->derived.nrad_lower, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->est.nioniz, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (cell->est.ioniz, nions, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (cell->derived.recomb, nions, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
@@ -301,6 +303,8 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->est.mean_ds, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->est.n_ds, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->derived.nrad, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->derived.nrad_upper, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->derived.nrad_lower, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->est.nioniz, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->est.ioniz, nions, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, cell->derived.recomb, nions, MPI_DOUBLE, MPI_COMM_WORLD);
@@ -717,6 +721,8 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
         MPI_Pack (&plasmamain[n_plasma].est.mean_ds, 1, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].est.n_ds, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].derived.nrad, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
+        MPI_Pack (&plasmamain[n_plasma].derived.nrad_upper, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
+        MPI_Pack (&plasmamain[n_plasma].derived.nrad_lower, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].est.nioniz, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (plasmamain[n_plasma].est.ioniz, nions, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (plasmamain[n_plasma].derived.recomb, nions, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
@@ -907,6 +913,8 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].est.mean_ds, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].est.n_ds, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].derived.nrad, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].derived.nrad_upper, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].derived.nrad_lower, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].est.nioniz, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, plasmamain[n_plasma].est.ioniz, nions, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, plasmamain[n_plasma].derived.recomb, nions, MPI_DOUBLE, MPI_COMM_WORLD);

@@ -76,6 +76,7 @@ int reduce_simple_estimators(void);
 int normalize_spectra_across_ranks(void);
 /* communicate_wind.c */
 void broadcast_wind_grid(const int n_start, const int n_stop, const int n_cells_rank);
+void sum_wind_counts(void);
 /* compton.c */
 int compton_scatter(PhotPtr p);
 double kappa_comp(PlasmaPtr xplasma, double freq);
@@ -235,6 +236,7 @@ double get_dvds_max(PhotPtr p);
 /* gridwind.c */
 int create_wind_and_plasma_cell_maps(void);
 int calloc_wind(int nelem);
+int calloc_wind_counts(int nelem);
 int make_transport_grid(void);
 int calloc_plasma(int nelem);
 int check_plasma(PlasmaPtr xplasma, char message[]);

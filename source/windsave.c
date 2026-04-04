@@ -302,6 +302,10 @@ wind_read (char filename[])
    * cells that were just read from disk. */
   make_transport_grid ();
 
+  /* Allocate per-wind-cell diagnostic counters (zero-initialized by calloc;
+   * not persisted in the save file since they are reset each cycle). */
+  calloc_wind_counts (2 * NDIM2);
+
   /* Read the disk and qdisk structures */
 
   n += fread (&disk, sizeof (disk), 1, fptr);

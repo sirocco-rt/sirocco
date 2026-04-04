@@ -526,7 +526,6 @@ cylind_get_random_location (int n, double x[])
   int i, j;
   int inwind;
   double r, rmin, rmax, zmin, zmax;
-  double zz;
   double phi;
   int ndom, ndomain;
   DomainPtr one_dom;
@@ -539,8 +538,12 @@ cylind_get_random_location (int n, double x[])
 
   rmin = one_dom->wind_x[i];
   rmax = one_dom->wind_x[i + 1];
-  zmin = one_dom->wind_z[j];
-  zmax = one_dom->wind_z[j + 1];
+  /* Use the signed cell boundaries from wmain so that lower-hemisphere cells
+   * (where cell_z_min and cell_z_max are both negative) generate positions
+   * with negative z.  For upper-hemisphere cells these equal wind_z[j] and
+   * wind_z[j+1] as before. */
+  zmin = wmain[n].cell_z_min;
+  zmax = wmain[n].cell_z_max;
 
   /* Generate a position which is both in the cell and in the wind */
 
@@ -560,10 +563,6 @@ cylind_get_random_location (int n, double x[])
     inwind = where_in_wind (x, &ndomain);       /* Some photons will not be in the wind
                                                    because the boundaries of the wind split the grid cell */
   }
-
-  zz = random_number (-0.5, 0.5);       //positions above are all at +z distances
-  if (zz < 0)
-    x[2] *= -1;                 /* The photon is in the bottom half of the wind */
 
   return (inwind);
 }

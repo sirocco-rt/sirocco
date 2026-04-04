@@ -276,6 +276,8 @@ main (int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
+  init_rand (1);                /* dvds calculations in make_transport_grid need the RNG */
+
   if (wind_read (windsavefile) < 0)
   {
     Error ("swind: Could not open %s", windsavefile);

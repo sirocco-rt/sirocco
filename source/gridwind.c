@@ -407,6 +407,41 @@ calloc_wind (int nelem)
 
 
 
+/**********************************************************/
+/**
+ * @brief      Allocate per-wind-cell diagnostic counters (always private per rank).
+ *
+ * @param [in] int  nelem   Number of wind cells (typically 2*NDIM2 for both hemispheres)
+ * @return     0 on success; exits on failure
+ *
+ * @details
+ *
+ * wind_counts_main is indexed 0..nelem-1, covering both upper- and
+ * lower-hemisphere transport cells so scatter rates can be compared
+ * between hemispheres.  Counters are accumulated independently per rank
+ * and summed via MPI_Allreduce after each transport cycle.
+ *
+ **********************************************************/
+
+int
+calloc_wind_counts (int nelem)
+{
+  if (wind_counts_main != NULL)
+  {
+    free (wind_counts_main);
+  }
+  wind_counts_main = (WindCountsPtr) calloc (nelem + 1, sizeof (wind_counts_dummy));
+  if (wind_counts_main == NULL)
+  {
+    Error ("calloc_wind_counts: unable to allocate memory for %d wind count cells\n", nelem);
+    Exit (0);
+  }
+  Log ("Allocated per-wind-cell diagnostic counters: %d cells (%10.1f Mb, private)\n",
+       nelem + 1, 1e-6 * (nelem + 1) * sizeof (wind_counts_dummy));
+  return (0);
+}
+
+
 
 
 /**********************************************************/

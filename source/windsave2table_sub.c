@@ -162,6 +162,10 @@ create_master_table (int ndom, char rootname[])
   strcpy (filename, rootname);
   strcat (filename, ".master.txt");
 
+  /* Ensure wind_counts_main is allocated (wind_read should have done this,
+   * but guard against stale object files or alternative call paths). */
+  if (wind_counts_main == NULL)
+    calloc_wind_counts (2 * NDIM2);
 
   fptr = fopen (filename, "w");
 
@@ -243,9 +247,50 @@ create_master_table (int ndom, char rootname[])
   c[24] = get_one (ndom, "nscat_lower");
   strcpy (column_name[24], "nscat_lower");
 
+  c[25] = get_one (ndom, "wc_ntot");
+  strcpy (column_name[25], "wc_ntot");
+
+  c[26] = get_one (ndom, "wc_nrad");
+  strcpy (column_name[26], "wc_nrad");
+
+  c[27] = get_one (ndom, "wc_nioniz");
+  strcpy (column_name[27], "wc_nioniz");
+
+  c[28] = get_one (ndom, "wc_nscat_es");
+  strcpy (column_name[28], "wc_nscat_es");
+
+  c[29] = get_one (ndom, "wc_nscat_res");
+  strcpy (column_name[29], "wc_nscat_res");
+
+  c[30] = get_one (ndom, "wc_nscat_ff");
+  strcpy (column_name[30], "wc_nscat_ff");
+
+  c[31] = get_one (ndom, "wc_nscat_bf");
+  strcpy (column_name[31], "wc_nscat_bf");
+
+  c[32] = get_one (ndom, "wc_ntot_lo");
+  strcpy (column_name[32], "wc_ntot_lo");
+
+  c[33] = get_one (ndom, "wc_nrad_lo");
+  strcpy (column_name[33], "wc_nrad_lo");
+
+  c[34] = get_one (ndom, "wc_nioniz_lo");
+  strcpy (column_name[34], "wc_nioniz_lo");
+
+  c[35] = get_one (ndom, "wc_nscat_es_lo");
+  strcpy (column_name[35], "wc_nscat_es_lo");
+
+  c[36] = get_one (ndom, "wc_nscat_res_lo");
+  strcpy (column_name[36], "wc_nscat_res_lo");
+
+  c[37] = get_one (ndom, "wc_nscat_ff_lo");
+  strcpy (column_name[37], "wc_nscat_ff_lo");
+
+  c[38] = get_one (ndom, "wc_nscat_bf_lo");
+  strcpy (column_name[38], "wc_nscat_bf_lo");
 
   /* This should be the maxium number above +1 */
-  ncols = 25;
+  ncols = 39;
 
 
   converge = get_one (ndom, "converge");
@@ -1514,6 +1559,64 @@ get_one (int ndom, char variable_name[])
       else if (strcmp (variable_name, "nscat_lower") == 0)
       {
         x[n] = plasmamain[nplasma].derived.nscat_lower;
+      }
+      /* Per-wind-cell diagnostic counters from wind_counts_main (upper hemisphere) */
+      else if (strcmp (variable_name, "wc_ntot") == 0)
+      {
+        x[n] = wind_counts_main[n + nstart].ntot;
+      }
+      else if (strcmp (variable_name, "wc_nrad") == 0)
+      {
+        x[n] = wind_counts_main[n + nstart].nrad;
+      }
+      else if (strcmp (variable_name, "wc_nioniz") == 0)
+      {
+        x[n] = wind_counts_main[n + nstart].nioniz;
+      }
+      else if (strcmp (variable_name, "wc_nscat_es") == 0)
+      {
+        x[n] = wind_counts_main[n + nstart].nscat_es;
+      }
+      else if (strcmp (variable_name, "wc_nscat_res") == 0)
+      {
+        x[n] = wind_counts_main[n + nstart].nscat_res;
+      }
+      else if (strcmp (variable_name, "wc_nscat_ff") == 0)
+      {
+        x[n] = wind_counts_main[n + nstart].nscat_ff;
+      }
+      else if (strcmp (variable_name, "wc_nscat_bf") == 0)
+      {
+        x[n] = wind_counts_main[n + nstart].nscat_bf;
+      }
+      /* Per-wind-cell diagnostic counters from wind_counts_main (lower hemisphere) */
+      else if (strcmp (variable_name, "wc_ntot_lo") == 0)
+      {
+        x[n] = wind_counts_main[n + nstart + NDIM2].ntot;
+      }
+      else if (strcmp (variable_name, "wc_nrad_lo") == 0)
+      {
+        x[n] = wind_counts_main[n + nstart + NDIM2].nrad;
+      }
+      else if (strcmp (variable_name, "wc_nioniz_lo") == 0)
+      {
+        x[n] = wind_counts_main[n + nstart + NDIM2].nioniz;
+      }
+      else if (strcmp (variable_name, "wc_nscat_es_lo") == 0)
+      {
+        x[n] = wind_counts_main[n + nstart + NDIM2].nscat_es;
+      }
+      else if (strcmp (variable_name, "wc_nscat_res_lo") == 0)
+      {
+        x[n] = wind_counts_main[n + nstart + NDIM2].nscat_res;
+      }
+      else if (strcmp (variable_name, "wc_nscat_ff_lo") == 0)
+      {
+        x[n] = wind_counts_main[n + nstart + NDIM2].nscat_ff;
+      }
+      else if (strcmp (variable_name, "wc_nscat_bf_lo") == 0)
+      {
+        x[n] = wind_counts_main[n + nstart + NDIM2].nscat_bf;
       }
       else if (strcmp (variable_name, "heat_shock") == 0)
       {

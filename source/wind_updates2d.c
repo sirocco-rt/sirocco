@@ -561,6 +561,8 @@ init_plasma_rad_properties (void)
     plasmamain[i].derived.nscat_ff = 0;
     plasmamain[i].est.ntot_wind = 0;
     plasmamain[i].derived.nrad = 0;
+    plasmamain[i].derived.nrad_upper = 0;
+    plasmamain[i].derived.nrad_lower = 0;
     plasmamain[i].est.nioniz = 0;
     for (j = 0; j < nphot_total; j++)
     {
@@ -673,6 +675,18 @@ init_plasma_rad_properties (void)
     {
       plasmamain[i].est.inner_ioniz[j] = 0.0;
     }
+  }
+
+  /* Zero per-wind-cell diagnostic counters for both hemispheres */
+  for (i = 0; i < 2 * geo.ndim2; i++)
+  {
+    wind_counts_main[i].ntot = 0;
+    wind_counts_main[i].nrad = 0;
+    wind_counts_main[i].nioniz = 0;
+    wind_counts_main[i].nscat_es = 0;
+    wind_counts_main[i].nscat_res = 0;
+    wind_counts_main[i].nscat_ff = 0;
+    wind_counts_main[i].nscat_bf = 0;
   }
 }
 

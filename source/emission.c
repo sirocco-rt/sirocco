@@ -402,8 +402,32 @@ photo_gen_wind (PhotPtr p, double weight, double freqmin, double freqmax, int ph
       }
 
       p[np].w = weight;
-      get_random_location (plasmamain[nplasma].nwind, p[np].x);
-      p[np].grid = plasmamain[nplasma].nwind;
+      /* Select which transport cell to generate this photon in.  Both the
+       * upper-hemisphere cell (nwind) and the lower-hemisphere cell (nwind+NDIM2)
+       * share this plasma cell.  Weight by cell volume so the selection is
+       * correct for asymmetric winds; for the current symmetric case both
+       * volumes are equal and each hemisphere is chosen with probability 0.5. */
+      {
+        int k_upper = plasmamain[nplasma].nwind;
+        int k_lower = k_upper + NDIM2;
+        double vol_upper = wmain[k_upper].vol;
+        double vol_lower = wmain[k_lower].vol;
+        int chosen_cell;
+
+        if (random_number (0.0, 1.0) < vol_upper / (vol_upper + vol_lower))
+          chosen_cell = k_upper;
+        else
+          chosen_cell = k_lower;
+
+        get_random_location (chosen_cell, p[np].x);
+        p[np].grid = chosen_cell;
+      }
+
+      if (p[np].grid < NDIM2)
+        plasmamain[nplasma].derived.nrad_upper++;
+      else
+        plasmamain[nplasma].derived.nrad_lower++;
+      wind_counts_main[p[np].grid].nrad++;
 
       nnscat = 1;
 

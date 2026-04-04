@@ -275,6 +275,7 @@ calculate_ionization (int restart_stat)
        that has been accumulated on different MPI tasks */
     reduce_simple_estimators ();
     reduce_macro_atom_estimators ();
+    sum_wind_counts ();
 
     /* Calculate and store the amount of heating of the disk due to radiation impinging on the disk */
     /* We only want one process to write to the file, and we only do this if there is a disk */
@@ -592,6 +593,7 @@ make_spectra (int restart_stat)
 
     /* Do an MPI reduce to get the spectra all gathered to the master thread */
 #ifdef MPI_ON
+    sum_wind_counts ();
     normalize_spectra_across_ranks ();
 
     if (rank_global == 0)
