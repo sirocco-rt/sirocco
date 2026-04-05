@@ -14,20 +14,30 @@ or to add spectral cycles to get better spectra.
 .spec_save
   A binary file that contains all of the information about the spectra that have created.  This file is not of interest to users directly.  It is used when restarting
 
-Two routines exist as part of the SIROCCO distribution allow the user to gain insight into the actual model
+Several routines in the SIROCCO distribution allow the user to examine the wind model after a run.
 
 windsave2table
   Executed from the command line with :code:`windsave2table rootname`.
 
-  Produces a set of standard set ascii tables that that show for each grid cell quantities such as wind velocity,
-  :math:`n_e`, temperatures, and densities of prominent ions.
+  Produces a standard set of ASCII tables showing, for each grid cell, quantities such as wind velocity,
+  :math:`n_e`, temperatures, and densities of prominent ions.  Each table has a header row identifying
+  columns including ``x``, ``z``, ``xcen``, ``zcen``, ``i``, ``j`` (cylindrical coordinates and grid
+  indices), followed by the quantity of interest.
 
-  There are varrious options for how much data is to be printed out.  A summary of these can be
-  obtained with code:`windsave2table -h`
+  Various options control how much data is printed.  A summary can be obtained with :code:`windsave2table -h`.
+  See :doc:`fits_tools` for the FITS equivalent.
 
 swind
   Executed from the command line with :code:`swind rootname`
 
-  Allows the user to query for information about the model interactively.  The results can be written to ascii files for future reference
+  Allows the user to query for information about the model interactively.  The results can be written to ASCII files for future reference.
 
-  Again, there are various options, and a summary can be obtained with :code:`swind -h`
+  Various options are available; a summary can be obtained with :code:`swind -h`.
+
+FITS tools
+  Three programs export wind-save data to FITS binary tables that can be read with Python/astropy or TOPCAT:
+
+  * :code:`windsave2fits` — per-cell spectral models (``root_cellspec.fits``)
+  * :code:`windstruct2fits` — full wind structure and plasma state including both hemispheres (``root_windstruct.fits``)
+
+  See :doc:`fits_tools` for full column documentation.

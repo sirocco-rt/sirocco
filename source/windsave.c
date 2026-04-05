@@ -164,6 +164,11 @@ in the plasma structure */
     }
   }
 
+  /* Per-wind-cell diagnostic counters: both hemispheres (2*NDIM2 entries).
+   * Written last so that files produced before this field was added can still
+   * be read — wind_read() silently leaves the array at zero on EOF. */
+  n += fwrite (wind_counts_main, sizeof (wind_counts_dummy), 2 * NDIM2, fptr);
+
   fclose (fptr);
 
   Log_silent
@@ -302,8 +307,8 @@ wind_read (char filename[])
    * cells that were just read from disk. */
   make_transport_grid ();
 
-  /* Allocate per-wind-cell diagnostic counters (zero-initialized by calloc;
-   * not persisted in the save file since they are reset each cycle). */
+  /* Allocate per-wind-cell diagnostic counters; populated from the save file
+   * below (backward-compatible: silently zero if the file predates this). */
   calloc_wind_counts (2 * NDIM2);
 
   /* Read the disk and qdisk structures */
@@ -400,6 +405,15 @@ wind_read (char filename[])
       macromain[m].derived.matrix_rates_known = FALSE;
     }
 
+  }
+
+  /* Per-wind-cell diagnostic counters — appended last for backward compat.
+   * If the file was written before this field existed, fread returns 0 and
+   * wind_counts_main stays zero (already calloc'd above). */
+  {
+    int nwc = fread (wind_counts_main, sizeof (wind_counts_dummy), 2 * NDIM2, fptr);
+    if (nwc < 2 * NDIM2)
+      Log_silent ("wind_read: wind_counts_main not in save file; counters zeroed\n");
   }
 
   fclose (fptr);

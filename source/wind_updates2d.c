@@ -681,6 +681,11 @@ init_plasma_rad_properties (void)
   for (i = 0; i < 2 * geo.ndim2; i++)
   {
     wind_counts_main[i].ntot = 0;
+    wind_counts_main[i].ntot_star = 0;
+    wind_counts_main[i].ntot_bl = 0;
+    wind_counts_main[i].ntot_disk = 0;
+    wind_counts_main[i].ntot_wind = 0;
+    wind_counts_main[i].ntot_agn = 0;
     wind_counts_main[i].nrad = 0;
     wind_counts_main[i].nioniz = 0;
     wind_counts_main[i].nscat_es = 0;

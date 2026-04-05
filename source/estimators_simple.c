@@ -185,6 +185,16 @@ update_banded_estimators (PlasmaPtr xplasma, PhotPtr p, double ds, double w_ave,
   if (p->grid != previous_grid || p->np != previous_grid_np)
   {
     wind_counts_main[p->grid].ntot++;
+    if (p->origin == PTYPE_STAR)
+      wind_counts_main[p->grid].ntot_star++;
+    else if (p->origin == PTYPE_BL)
+      wind_counts_main[p->grid].ntot_bl++;
+    else if (p->origin == PTYPE_DISK)
+      wind_counts_main[p->grid].ntot_disk++;
+    else if (p->origin == PTYPE_WIND)
+      wind_counts_main[p->grid].ntot_wind++;
+    else if (p->origin == PTYPE_AGN)
+      wind_counts_main[p->grid].ntot_agn++;
     previous_grid = p->grid;
     previous_grid_np = p->np;
   }

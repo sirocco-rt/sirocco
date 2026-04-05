@@ -906,6 +906,11 @@ extern wind_paths_store *wind_paths_main;
 typedef struct wind_counts
 {
   long ntot;                    /**< Number of photon bundles that traversed this wind cell */
+  long ntot_star;               /**< Number of photon bundles from the central star */
+  long ntot_bl;                 /**< Number of photon bundles from the boundary layer */
+  long ntot_disk;               /**< Number of photon bundles from the disk */
+  long ntot_wind;               /**< Number of photon bundles from the wind */
+  long ntot_agn;                /**< Number of photon bundles from the AGN */
   long nrad;                    /**< Number of photon bundles generated (emitted) in this wind cell */
   long nioniz;                  /**< Number of H-ionizing photon bundles in this wind cell */
   long nscat_es;                /**< Number of electron scatters in this wind cell */

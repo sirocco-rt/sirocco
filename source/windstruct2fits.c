@@ -41,14 +41,29 @@
  *   ndom       J   - domain number
  *   nplasma    J   - plasma cell index (upper+lower share same)
  *   inwind     J   - W_ALL_INWIND / W_NOT_INWIND / ...
- *   x         3E   - inner vertex position (cm)
- *   xcen      3E   - cell centre position (cm)
+ *   x          E   - cylindrical R position of inner vertex (cm)
+ *   z          E   - cylindrical z position of inner vertex (cm)
+ *   xcen       E   - cylindrical R position of cell centre (cm)
+ *   zcen       E   - cylindrical z position of cell centre (cm)
+ *   i          J   - radial grid index
+ *   j          J   - axial grid index
+ *   x_3d      3E   - full 3-vector inner vertex position (cm)
+ *   xcen_3d   3E   - full 3-vector cell centre position (cm)
  *   v         3E   - velocity at inner vertex (cm/s)
  *   v_grad    9E   - velocity gradient tensor (row-major, 1/s)
  *   cell_z_min E   - signed lower z boundary (cm)
  *   cell_z_max E   - signed upper z boundary (cm)
  *   dvds_ave   E   - direction-averaged |dv/ds| (1/s)
  *   dvds_max   E   - maximum |dv/ds| at vertex (1/s)
+ *   nscat      J   - scatter count (hemisphere-specific)
+ *   nrad       J   - emission count (hemisphere-specific)
+ *   ntot       K   - wind_counts: total photon passages
+ *   ntot_star  K   - wind_counts: passages from central star
+ *   ntot_bl    K   - wind_counts: passages from boundary layer
+ *   ntot_disk  K   - wind_counts: passages from disk
+ *   ntot_wind  K   - wind_counts: passages from wind
+ *   ntot_agn   K   - wind_counts: passages from AGN
+ *   nioniz     K   - wind_counts: H-ionizing photon passages
  *
  **********************************************************/
 
@@ -61,29 +76,38 @@ write_wind_table (fitsfile *fptr)
   WindPtr cell;
 
   num_rows = 2 * NDIM2;
-  num_cols = 14;
+  num_cols = 27;
 
   /* Column definitions */
   char *ttype[] = {
     "nwind", "ndom", "nplasma", "inwind",
-    "x", "xcen", "v", "v_grad",
+    "x", "z", "xcen", "zcen", "i", "j",
+    "x_3d", "xcen_3d", "v", "v_grad",
     "cell_z_min", "cell_z_max",
     "dvds_ave", "dvds_max",
-    "nscat", "nrad"
+    "nscat", "nrad",
+    "ntot", "ntot_star", "ntot_bl", "ntot_disk", "ntot_wind", "ntot_agn",
+    "nioniz"
   };
   char *tform[] = {
     "J", "J", "J", "J",
+    "E", "E", "E", "E", "J", "J",
     "3E", "3E", "3E", "9E",
     "E", "E",
     "E", "E",
-    "J", "J"
+    "J", "J",
+    "K", "K", "K", "K", "K", "K",
+    "K"
   };
   char *tunit[] = {
     "", "", "", "",
+    "cm", "cm", "cm", "cm", "", "",
     "cm", "cm", "cm/s", "1/s",
     "cm", "cm",
     "1/s", "1/s",
-    "", ""
+    "", "",
+    "", "", "", "", "", "",
+    ""
   };
 
   if (fits_create_tbl (fptr, BINARY_TBL, num_rows, num_cols, ttype, tform, tunit, "windstruct", &status))
@@ -97,8 +121,14 @@ write_wind_table (fitsfile *fptr)
   int *col_ndom = calloc (num_rows, sizeof (int));
   int *col_nplasma = calloc (num_rows, sizeof (int));
   int *col_inwind = calloc (num_rows, sizeof (int));
-  float *col_x = calloc (num_rows * 3, sizeof (float));
-  float *col_xcen = calloc (num_rows * 3, sizeof (float));
+  float *col_x = calloc (num_rows, sizeof (float));
+  float *col_z = calloc (num_rows, sizeof (float));
+  float *col_xcen = calloc (num_rows, sizeof (float));
+  float *col_zcen = calloc (num_rows, sizeof (float));
+  int *col_i = calloc (num_rows, sizeof (int));
+  int *col_j = calloc (num_rows, sizeof (int));
+  float *col_x_3d = calloc (num_rows * 3, sizeof (float));
+  float *col_xcen_3d = calloc (num_rows * 3, sizeof (float));
   float *col_v = calloc (num_rows * 3, sizeof (float));
   float *col_v_grad = calloc (num_rows * 9, sizeof (float));
   float *col_cell_z_min = calloc (num_rows, sizeof (float));
@@ -107,10 +137,20 @@ write_wind_table (fitsfile *fptr)
   float *col_dvds_max = calloc (num_rows, sizeof (float));
   int *col_nscat = calloc (num_rows, sizeof (int));
   int *col_nrad = calloc (num_rows, sizeof (int));
+  long long *col_wc_ntot = calloc (num_rows, sizeof (long long));
+  long long *col_wc_ntot_star = calloc (num_rows, sizeof (long long));
+  long long *col_wc_ntot_bl = calloc (num_rows, sizeof (long long));
+  long long *col_wc_ntot_disk = calloc (num_rows, sizeof (long long));
+  long long *col_wc_ntot_wind = calloc (num_rows, sizeof (long long));
+  long long *col_wc_ntot_agn = calloc (num_rows, sizeof (long long));
+  long long *col_wc_nioniz = calloc (num_rows, sizeof (long long));
 
   if (!col_nwind || !col_ndom || !col_nplasma || !col_inwind ||
-      !col_x || !col_xcen || !col_v || !col_v_grad || !col_cell_z_min || !col_cell_z_max || !col_dvds_ave || !col_dvds_max || !col_nscat
-      || !col_nrad)
+      !col_x || !col_z || !col_xcen || !col_zcen || !col_i || !col_j ||
+      !col_x_3d || !col_xcen_3d || !col_v || !col_v_grad ||
+      !col_cell_z_min || !col_cell_z_max || !col_dvds_ave || !col_dvds_max ||
+      !col_nscat || !col_nrad ||
+      !col_wc_ntot || !col_wc_ntot_star || !col_wc_ntot_bl || !col_wc_ntot_disk || !col_wc_ntot_wind || !col_wc_ntot_agn || !col_wc_nioniz)
   {
     fprintf (stderr, "windstruct2fits: memory allocation failed\n");
     return -1;
@@ -118,6 +158,7 @@ write_wind_table (fitsfile *fptr)
 
   for (n = 0; n < num_rows; n++)
   {
+    int ii, jj;
     cell = &wmain[n];
 
     col_nwind[n] = cell->nwind;
@@ -125,13 +166,25 @@ write_wind_table (fitsfile *fptr)
     col_nplasma[n] = cell->nplasma;
     col_inwind[n] = (int) cell->inwind;
 
-    col_x[n * 3 + 0] = (float) cell->x[0];
-    col_x[n * 3 + 1] = (float) cell->x[1];
-    col_x[n * 3 + 2] = (float) cell->x[2];
+    /* Scalar cylindrical coordinates (matching windsave2table convention) */
+    col_x[n] = (float) cell->x[0];
+    col_z[n] = (float) cell->x[2];
+    col_xcen[n] = (float) cell->xcen[0];
+    col_zcen[n] = (float) cell->xcen[2];
 
-    col_xcen[n * 3 + 0] = (float) cell->xcen[0];
-    col_xcen[n * 3 + 1] = (float) cell->xcen[1];
-    col_xcen[n * 3 + 2] = (float) cell->xcen[2];
+    /* Grid indices */
+    wind_n_to_ij (cell->ndom, n, &ii, &jj);
+    col_i[n] = ii;
+    col_j[n] = jj;
+
+    /* Full 3-vector positions */
+    col_x_3d[n * 3 + 0] = (float) cell->x[0];
+    col_x_3d[n * 3 + 1] = (float) cell->x[1];
+    col_x_3d[n * 3 + 2] = (float) cell->x[2];
+
+    col_xcen_3d[n * 3 + 0] = (float) cell->xcen[0];
+    col_xcen_3d[n * 3 + 1] = (float) cell->xcen[1];
+    col_xcen_3d[n * 3 + 2] = (float) cell->xcen[2];
 
     col_v[n * 3 + 0] = (float) cell->v[0];
     col_v[n * 3 + 1] = (float) cell->v[1];
@@ -152,8 +205,7 @@ write_wind_table (fitsfile *fptr)
     col_dvds_ave[n] = (float) cell->dvds_ave;
     col_dvds_max[n] = (float) cell->dvds_max;
 
-    /* Scatter count for this wind cell: upper-hemisphere cells use nscat_upper,
-     * lower-hemisphere cells (n >= NDIM2) use nscat_lower from the shared plasma cell. */
+    /* Scatter/emission counts: hemisphere-specific from plasma_derived */
     if (n < NDIM2)
     {
       col_nscat[n] = plasmamain[cell->nplasma].derived.nscat_upper;
@@ -164,6 +216,15 @@ write_wind_table (fitsfile *fptr)
       col_nscat[n] = plasmamain[cell->nplasma].derived.nscat_lower;
       col_nrad[n] = plasmamain[cell->nplasma].derived.nrad_lower;
     }
+
+    /* Per-cell photon passage counters from wind_counts_main */
+    col_wc_ntot[n] = (long long) wind_counts_main[n].ntot;
+    col_wc_ntot_star[n] = (long long) wind_counts_main[n].ntot_star;
+    col_wc_ntot_bl[n] = (long long) wind_counts_main[n].ntot_bl;
+    col_wc_ntot_disk[n] = (long long) wind_counts_main[n].ntot_disk;
+    col_wc_ntot_wind[n] = (long long) wind_counts_main[n].ntot_wind;
+    col_wc_ntot_agn[n] = (long long) wind_counts_main[n].ntot_agn;
+    col_wc_nioniz[n] = (long long) wind_counts_main[n].nioniz;
   }
 
   /* Write columns */
@@ -171,16 +232,29 @@ write_wind_table (fitsfile *fptr)
   fits_write_col (fptr, TINT, 2, 1, 1, num_rows, col_ndom, &status);
   fits_write_col (fptr, TINT, 3, 1, 1, num_rows, col_nplasma, &status);
   fits_write_col (fptr, TINT, 4, 1, 1, num_rows, col_inwind, &status);
-  fits_write_col (fptr, TFLOAT, 5, 1, 1, num_rows * 3, col_x, &status);
-  fits_write_col (fptr, TFLOAT, 6, 1, 1, num_rows * 3, col_xcen, &status);
-  fits_write_col (fptr, TFLOAT, 7, 1, 1, num_rows * 3, col_v, &status);
-  fits_write_col (fptr, TFLOAT, 8, 1, 1, num_rows * 9, col_v_grad, &status);
-  fits_write_col (fptr, TFLOAT, 9, 1, 1, num_rows, col_cell_z_min, &status);
-  fits_write_col (fptr, TFLOAT, 10, 1, 1, num_rows, col_cell_z_max, &status);
-  fits_write_col (fptr, TFLOAT, 11, 1, 1, num_rows, col_dvds_ave, &status);
-  fits_write_col (fptr, TFLOAT, 12, 1, 1, num_rows, col_dvds_max, &status);
-  fits_write_col (fptr, TINT, 13, 1, 1, num_rows, col_nscat, &status);
-  fits_write_col (fptr, TINT, 14, 1, 1, num_rows, col_nrad, &status);
+  fits_write_col (fptr, TFLOAT, 5, 1, 1, num_rows, col_x, &status);
+  fits_write_col (fptr, TFLOAT, 6, 1, 1, num_rows, col_z, &status);
+  fits_write_col (fptr, TFLOAT, 7, 1, 1, num_rows, col_xcen, &status);
+  fits_write_col (fptr, TFLOAT, 8, 1, 1, num_rows, col_zcen, &status);
+  fits_write_col (fptr, TINT, 9, 1, 1, num_rows, col_i, &status);
+  fits_write_col (fptr, TINT, 10, 1, 1, num_rows, col_j, &status);
+  fits_write_col (fptr, TFLOAT, 11, 1, 1, num_rows * 3, col_x_3d, &status);
+  fits_write_col (fptr, TFLOAT, 12, 1, 1, num_rows * 3, col_xcen_3d, &status);
+  fits_write_col (fptr, TFLOAT, 13, 1, 1, num_rows * 3, col_v, &status);
+  fits_write_col (fptr, TFLOAT, 14, 1, 1, num_rows * 9, col_v_grad, &status);
+  fits_write_col (fptr, TFLOAT, 15, 1, 1, num_rows, col_cell_z_min, &status);
+  fits_write_col (fptr, TFLOAT, 16, 1, 1, num_rows, col_cell_z_max, &status);
+  fits_write_col (fptr, TFLOAT, 17, 1, 1, num_rows, col_dvds_ave, &status);
+  fits_write_col (fptr, TFLOAT, 18, 1, 1, num_rows, col_dvds_max, &status);
+  fits_write_col (fptr, TINT, 19, 1, 1, num_rows, col_nscat, &status);
+  fits_write_col (fptr, TINT, 20, 1, 1, num_rows, col_nrad, &status);
+  fits_write_col (fptr, TLONGLONG, 21, 1, 1, num_rows, col_wc_ntot, &status);
+  fits_write_col (fptr, TLONGLONG, 22, 1, 1, num_rows, col_wc_ntot_star, &status);
+  fits_write_col (fptr, TLONGLONG, 23, 1, 1, num_rows, col_wc_ntot_bl, &status);
+  fits_write_col (fptr, TLONGLONG, 24, 1, 1, num_rows, col_wc_ntot_disk, &status);
+  fits_write_col (fptr, TLONGLONG, 25, 1, 1, num_rows, col_wc_ntot_wind, &status);
+  fits_write_col (fptr, TLONGLONG, 26, 1, 1, num_rows, col_wc_ntot_agn, &status);
+  fits_write_col (fptr, TLONGLONG, 27, 1, 1, num_rows, col_wc_nioniz, &status);
 
   if (status)
     fits_report_error (stderr, status);
@@ -190,7 +264,13 @@ write_wind_table (fitsfile *fptr)
   free (col_nplasma);
   free (col_inwind);
   free (col_x);
+  free (col_z);
   free (col_xcen);
+  free (col_zcen);
+  free (col_i);
+  free (col_j);
+  free (col_x_3d);
+  free (col_xcen_3d);
   free (col_v);
   free (col_v_grad);
   free (col_cell_z_min);
@@ -199,6 +279,13 @@ write_wind_table (fitsfile *fptr)
   free (col_dvds_max);
   free (col_nscat);
   free (col_nrad);
+  free (col_wc_ntot);
+  free (col_wc_ntot_star);
+  free (col_wc_ntot_bl);
+  free (col_wc_ntot_disk);
+  free (col_wc_ntot_wind);
+  free (col_wc_ntot_agn);
+  free (col_wc_nioniz);
 
   return status;
 }
@@ -213,6 +300,14 @@ write_wind_table (fitsfile *fptr)
  *   Cross-references:
  *     nwind      J   - upper-hemisphere wind cell for this plasma cell
  *     nplasma    J   - self index
+ *
+ *   Grid location (matching windsave2table convention):
+ *     x          E   - cylindrical R of inner vertex (cm)
+ *     z          E   - cylindrical z of inner vertex (cm)
+ *     xcen       E   - cylindrical R of cell centre (cm)
+ *     zcen       E   - cylindrical z of cell centre (cm)
+ *     i          J   - radial grid index
+ *     jj         J   - axial grid index (named jj to avoid conflict with j mean intensity)
  *
  *   State (plasma_state):
  *     ne         E   - electron number density (cm^-3)
@@ -280,10 +375,11 @@ write_plasma_table (fitsfile *fptr)
   PlasmaPtr cell;
 
   num_rows = NPLASMA;
-  num_cols = 54;
+  num_cols = 60;
 
   char *ttype[] = {
     "nwind", "nplasma",
+    "x", "z", "xcen", "zcen", "i", "jj",
     "ne", "rho", "vol", "t_r", "t_e", "t_r_old", "t_e_old", "w",
     "j", "j_direct", "j_scatt", "ave_freq", "ip",
     "heat_tot", "heat_lines", "heat_ff", "heat_photo", "heat_auger", "heat_comp",
@@ -301,6 +397,7 @@ write_plasma_table (fitsfile *fptr)
 
   char *tform[] = {
     "J", "J",
+    "E", "E", "E", "E", "J", "J",
     "E", "E", "E", "E", "E", "E", "E", "E",
     "E", "E", "E", "E", "E",
     "E", "E", "E", "E", "E", "E",
@@ -318,6 +415,7 @@ write_plasma_table (fitsfile *fptr)
 
   char *tunit[] = {
     "", "",
+    "cm", "cm", "cm", "cm", "", "",
     "cm^-3", "g cm^-3", "cm^3", "K", "K", "K", "K", "",
     "erg s^-1 cm^-2 sr^-1", "erg s^-1 cm^-2 sr^-1", "erg s^-1 cm^-2 sr^-1", "Hz", "",
     "erg s^-1", "erg s^-1", "erg s^-1", "erg s^-1", "erg s^-1", "erg s^-1",
@@ -342,6 +440,12 @@ write_plasma_table (fitsfile *fptr)
   /* Allocate column buffers */
   int *col_nwind = calloc (num_rows, sizeof (int));
   int *col_nplasma = calloc (num_rows, sizeof (int));
+  float *col_p_x = calloc (num_rows, sizeof (float));
+  float *col_p_z = calloc (num_rows, sizeof (float));
+  float *col_p_xcen = calloc (num_rows, sizeof (float));
+  float *col_p_zcen = calloc (num_rows, sizeof (float));
+  int *col_p_i = calloc (num_rows, sizeof (int));
+  int *col_p_jj = calloc (num_rows, sizeof (int));
   float *col_ne = calloc (num_rows, sizeof (float));
   float *col_rho = calloc (num_rows, sizeof (float));
   float *col_vol = calloc (num_rows, sizeof (float));
@@ -395,7 +499,9 @@ write_plasma_table (fitsfile *fptr)
   int *col_nrad_upper = calloc (num_rows, sizeof (int));
   int *col_nrad_lower = calloc (num_rows, sizeof (int));
 
-  if (!col_nwind || !col_nplasma || !col_ne || !col_rho || !col_vol ||
+  if (!col_nwind || !col_nplasma ||
+      !col_p_x || !col_p_z || !col_p_xcen || !col_p_zcen || !col_p_i || !col_p_jj ||
+      !col_ne || !col_rho || !col_vol ||
       !col_t_r || !col_t_e || !col_t_r_old || !col_t_e_old || !col_w ||
       !col_j || !col_j_direct || !col_j_scatt || !col_ave_freq || !col_ip ||
       !col_heat_tot || !col_heat_lines || !col_heat_ff || !col_heat_photo ||
@@ -416,11 +522,22 @@ write_plasma_table (fitsfile *fptr)
 
   for (n = 0; n < num_rows; n++)
   {
-    int k;
+    int k, ii, jj;
+    WindPtr wcell;
     cell = &plasmamain[n];
 
     col_nwind[n] = cell->nwind;
     col_nplasma[n] = cell->nplasma;
+
+    /* Grid location from the corresponding upper-hemisphere wind cell */
+    wcell = &wmain[cell->nwind];
+    col_p_x[n] = (float) wcell->x[0];
+    col_p_z[n] = (float) wcell->x[2];
+    col_p_xcen[n] = (float) wcell->xcen[0];
+    col_p_zcen[n] = (float) wcell->xcen[2];
+    wind_n_to_ij (wcell->ndom, cell->nwind, &ii, &jj);
+    col_p_i[n] = ii;
+    col_p_jj[n] = jj;
 
     col_ne[n] = (float) cell->state.ne;
     col_rho[n] = (float) cell->state.rho;
@@ -489,6 +606,12 @@ write_plasma_table (fitsfile *fptr)
   int col = 1;
   fits_write_col (fptr, TINT, col++, 1, 1, num_rows, col_nwind, &status);
   fits_write_col (fptr, TINT, col++, 1, 1, num_rows, col_nplasma, &status);
+  fits_write_col (fptr, TFLOAT, col++, 1, 1, num_rows, col_p_x, &status);
+  fits_write_col (fptr, TFLOAT, col++, 1, 1, num_rows, col_p_z, &status);
+  fits_write_col (fptr, TFLOAT, col++, 1, 1, num_rows, col_p_xcen, &status);
+  fits_write_col (fptr, TFLOAT, col++, 1, 1, num_rows, col_p_zcen, &status);
+  fits_write_col (fptr, TINT, col++, 1, 1, num_rows, col_p_i, &status);
+  fits_write_col (fptr, TINT, col++, 1, 1, num_rows, col_p_jj, &status);
   fits_write_col (fptr, TFLOAT, col++, 1, 1, num_rows, col_ne, &status);
   fits_write_col (fptr, TFLOAT, col++, 1, 1, num_rows, col_rho, &status);
   fits_write_col (fptr, TFLOAT, col++, 1, 1, num_rows, col_vol, &status);
@@ -547,6 +670,12 @@ write_plasma_table (fitsfile *fptr)
 
   free (col_nwind);
   free (col_nplasma);
+  free (col_p_x);
+  free (col_p_z);
+  free (col_p_xcen);
+  free (col_p_zcen);
+  free (col_p_i);
+  free (col_p_jj);
   free (col_ne);
   free (col_rho);
   free (col_vol);
