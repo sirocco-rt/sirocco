@@ -50,10 +50,11 @@ double
 cylind_ds_in_cell (int ndom, PhotPtr p)
 {
 
-  int n, ix, iz, iroot;
+  int n, iroot;
   double a, b, c, root[2];
   double z1, z2, q;
   double smax;
+  double rho_min, rho_max;
 
 
 
@@ -67,9 +68,12 @@ cylind_ds_in_cell (int ndom, PhotPtr p)
     return (n);                 /* Photon was not in wind */
   }
 
-  wind_n_to_ij (ndom, n, &ix, &iz);     /*Convert the index n to two dimensions */
-
   smax = VERY_BIG;
+
+  /* Cell rho and z boundaries come directly from the wind cell,
+   * avoiding the need to convert n back to (i,j) indices. */
+  rho_min = wmain[n].x[0];
+  rho_max = wmain[n].xmax[0];
 
   /* Set up the quadratic equations in the radial rho direction */
 
@@ -77,13 +81,13 @@ cylind_ds_in_cell (int ndom, PhotPtr p)
   b = 2. * (p->lmn[0] * p->x[0] + p->lmn[1] * p->x[1]);
   c = p->x[0] * p->x[0] + p->x[1] * p->x[1];
 
-  iroot = quadratic (a, b, c - zdom[ndom].wind_x[ix] * zdom[ndom].wind_x[ix], root);    /* iroot will be the smallest positive root
-                                                                                           if one exists or negative otherwise */
+  iroot = quadratic (a, b, c - rho_min * rho_min, root);        /* iroot will be the smallest positive root
+                                                                   if one exists or negative otherwise */
 
   if (iroot >= 0 && root[iroot] < smax)
     smax = root[iroot];
 
-  iroot = quadratic (a, b, c - zdom[ndom].wind_x[ix + 1] * zdom[ndom].wind_x[ix + 1], root);
+  iroot = quadratic (a, b, c - rho_max * rho_max, root);
 
   if (iroot >= 0 && root[iroot] < smax)
     smax = root[iroot];
@@ -91,8 +95,8 @@ cylind_ds_in_cell (int ndom, PhotPtr p)
   /* At this point we have found how far the photon can travel in rho in its
      current direction.  Now we must worry about motion in the z direction  */
 
-  z1 = zdom[ndom].wind_z[iz];
-  z2 = zdom[ndom].wind_z[iz + 1];
+  z1 = wmain[n].x[2];
+  z2 = wmain[n].xmax[2];
   if (p->x[2] < 0)
   {                             /* We need to worry about which side of the plane the photon is on! */
     z1 *= (-1.);
@@ -140,11 +144,15 @@ int
 cylind_make_grid (int ndom, WindPtr w)
 {
   double dr, dz, dlogr, dlogz, xfudge;
-  int i, j, n;
+  int i, j, j_half, n;
+  int mdim_half;                /* number of z cells per hemisphere */
+  double zsign;                 /* +1 for upper hemisphere, -1 for lower */
+  double z_j, z_jp1, z_jcen;    /* z boundaries and centre for cell j_half */
   DomainPtr one_dom;
 
 
   one_dom = &zdom[ndom];
+  mdim_half = one_dom->mdim / 2;        /* mdim was doubled in setup_domains */
 
   if (zdom[ndom].zmax == 0)
   {
@@ -160,6 +168,10 @@ cylind_make_grid (int ndom, WindPtr w)
      to define the wind at least one grid cell outside the region in which we want photons
      to propagate.  */
 
+  /* Grid layout (Layout B): j=0..mdim_half-1 is the lower hemisphere (negative z, sorted
+     from outermost to innermost), j=mdim_half..mdim-1 is the upper hemisphere (positive z,
+     innermost to outermost).  wind_z is therefore monotonically increasing across the full
+     range, which allows a single binary search to locate any photon in step 2.  */
 
   /* First calculate parameters that are to be calculated at the edge of the grid cell.  This is
      mainly the positions and the velocity */
@@ -170,24 +182,38 @@ cylind_make_grid (int ndom, WindPtr w)
       wind_ij_to_n (ndom, i, j, &n);
       w[n].x[1] = w[n].xcen[1] = 0;     /*The cells are all defined in the xz plane */
 
+      /* Map j to a within-hemisphere index j_half (0 = innermost, mdim_half-1 = outermost)
+         and the sign of z for this hemisphere. */
+      if (j >= mdim_half)
+      {
+        j_half = j - mdim_half; /* upper hemisphere */
+        zsign = 1.0;
+      }
+      else
+      {
+        j_half = mdim_half - 1 - j;     /* lower hemisphere: j=0 is outermost */
+        zsign = -1.0;
+      }
+
       /*Define the grid points */
       if (one_dom->log_linear == 1)
       {                         // linear intervals
 
         dr = one_dom->rmax / (one_dom->ndim - 3);
-        dz = one_dom->zmax / (one_dom->mdim - 3);
-        w[n].x[0] = i * dr;     /* The first zone is at the inner radius of
-                                   the wind */
-        w[n].x[2] = j * dz;
+        dz = one_dom->zmax / (mdim_half - 3);   /* spacing based on cells per hemisphere */
+        w[n].x[0] = i * dr;
         w[n].xcen[0] = w[n].x[0] + 0.5 * dr;
-        w[n].xcen[2] = w[n].x[2] + 0.5 * dz;
+
+        z_j = j_half * dz;
+        z_jp1 = (j_half + 1) * dz;
+        z_jcen = z_j + 0.5 * dz;
 
       }
       else
       {                         //logarithmic intervals
 
         dlogr = (log10 (one_dom->rmax / one_dom->xlog_scale)) / (one_dom->ndim - 3);
-        dlogz = (log10 (one_dom->zmax / one_dom->zlog_scale)) / (one_dom->mdim - 3);
+        dlogz = (log10 (one_dom->zmax / one_dom->zlog_scale)) / (mdim_half - 3);
 
         if (dlogr <= 0)
         {
@@ -212,19 +238,36 @@ cylind_make_grid (int ndom, WindPtr w)
           w[n].xcen[0] = 0.5 * one_dom->xlog_scale * (pow (10., dlogr * (i - 1)) + pow (10., dlogr * (i)));
         }
 
-        if (j == 0)
+        if (j_half == 0)
         {
-          w[n].x[2] = 0.0;
-          w[n].xcen[2] = 0.5 * one_dom->zlog_scale;
+          z_j = 0.0;
+          z_jp1 = one_dom->zlog_scale;
+          z_jcen = 0.5 * one_dom->zlog_scale;
         }
         else
         {
-          w[n].x[2] = one_dom->zlog_scale * pow (10, dlogz * (j - 1));
-          w[n].xcen[2] = 0.5 * one_dom->zlog_scale * (pow (10., dlogz * (j - 1)) + pow (10., dlogz * (j)));
+          z_j = one_dom->zlog_scale * pow (10., dlogz * (j_half - 1));
+          z_jp1 = one_dom->zlog_scale * pow (10., dlogz * j_half);
+          z_jcen = 0.5 * one_dom->zlog_scale * (pow (10., dlogz * (j_half - 1)) + pow (10., dlogz * (j_half)));
         }
       }
 
-      xfudge = fmin ((w[n].xcen[0] - w[n].x[0]), (w[n].xcen[2] - w[n].x[2]));
+      /* Apply hemisphere sign.  For the upper hemisphere x[2] is the inner (lower) boundary
+         and xmax[2] the outer (upper) boundary — both positive.  For the lower hemisphere
+         x[2] is the inner (more negative) boundary and xmax[2] is the outer (less negative)
+         boundary; z_jp1 gives the larger magnitude so it becomes the more-negative x[2]. */
+      if (zsign > 0)
+      {
+        w[n].x[2] = z_j;
+        w[n].xcen[2] = z_jcen;
+      }
+      else
+      {
+        w[n].x[2] = -z_jp1;
+        w[n].xcen[2] = -z_jcen;
+      }
+
+      xfudge = fmin ((w[n].xcen[0] - w[n].x[0]), fabs (w[n].xcen[2] - w[n].x[2]));
       w[n].dfudge = XFUDGE * xfudge;
 
     }
@@ -260,8 +303,9 @@ cylind_make_grid (int ndom, WindPtr w)
 int
 cylind_wind_complete (int ndom, WindPtr w)
 {
-  int i, j;
+  int i, j, n;
   int nstart, mdim, ndim;
+  double xmax_rho, xmax_z;
   DomainPtr one_dom;
 
   one_dom = &zdom[ndom];
@@ -284,9 +328,27 @@ cylind_wind_complete (int ndom, WindPtr w)
   for (j = 0; j < one_dom->mdim - 1; j++)
     one_dom->wind_midz[j] = 0.5 * (w[nstart + j].x[2] + w[nstart + j + 1].x[2]);
 
-  /* Add something plausible for the edges */
+  /* Add something plausible for the edges.  With both hemispheres present wind_midz also
+     needs a plausible value at the lower (j=0) boundary of the lower hemisphere. */
   one_dom->wind_midx[one_dom->ndim - 1] = 2. * one_dom->wind_x[nstart + ndim - 1] - one_dom->wind_midx[nstart + ndim - 2];
   one_dom->wind_midz[one_dom->mdim - 1] = 2. * one_dom->wind_z[nstart + mdim - 1] - one_dom->wind_midz[nstart + mdim - 2];
+  one_dom->wind_midz[0] = 2. * one_dom->wind_z[0] - one_dom->wind_midz[1];
+
+  /* Set xmax (the far corner of each cell) using the now-populated wind_x and wind_z
+     arrays.  For guard cells at the outer boundary of the grid the edge is extrapolated
+     one grid spacing beyond the last defined value. */
+  for (i = 0; i < ndim; i++)
+  {
+    xmax_rho = (i < ndim - 1) ? one_dom->wind_x[i + 1] : 2.0 * one_dom->wind_x[ndim - 1] - one_dom->wind_x[ndim - 2];
+    for (j = 0; j < mdim; j++)
+    {
+      wind_ij_to_n (ndom, i, j, &n);
+      xmax_z = (j < mdim - 1) ? one_dom->wind_z[j + 1] : 2.0 * one_dom->wind_z[mdim - 1] - one_dom->wind_z[mdim - 2];
+      w[n].xmax[0] = xmax_rho;
+      w[n].xmax[1] = 0.0;
+      w[n].xmax[2] = xmax_z;
+    }
+  }
 
   return (0);
 }
@@ -322,7 +384,6 @@ cylind_wind_complete (int ndom, WindPtr w)
 int
 cylind_cell_volume (WindPtr w)
 {
-  int i, j;
   int jj, kk;
   double fraction, cell_volume;
   double num, denom;
@@ -336,17 +397,17 @@ cylind_cell_volume (WindPtr w)
 
   ndom = w->ndom;
   one_dom = &zdom[ndom];
-  wind_n_to_ij (ndom, w->nwind, &i, &j);
 
-  rmin = one_dom->wind_x[i];
-  rmax = one_dom->wind_x[i + 1];
-  zmin = one_dom->wind_z[j];
-  zmax = one_dom->wind_z[j + 1];
+  rmin = w->x[0];
+  rmax = w->xmax[0];
+  zmin = w->x[2];
+  zmax = w->xmax[2];
 
-  /* this is the full cell volume, which is adjusted by the fraction
-     of the cell that is in the wind later if necessary leading factor of 2
-     added to allow for volume above and below plane (SSMay04) */
-  cell_volume = 2 * PI * (rmax * rmax - rmin * rmin) * (zmax - zmin);
+  /* Full cell volume for this single hemisphere cell; adjusted later by the
+     fraction of the cell actually in the wind.  The historical factor-of-2 that
+     accounted for both hemispheres is removed now that each hemisphere has its
+     own cells. */
+  cell_volume = PI * (rmax * rmax - rmin * rmin) * (zmax - zmin);
 
   if (w->inwind == W_NOT_ASSIGNED)
   {
@@ -456,20 +517,23 @@ int
 cylind_where_in_grid (int ndom, double x[])
 {
   int i, j, n;
+  int mdim_half;                /* cells per hemisphere */
   double z;
   double rho;
   double f;
   DomainPtr one_dom;
 
   one_dom = &zdom[ndom];
+  mdim_half = one_dom->mdim / 2;
 
-  z = fabs (x[2]);              /* This is necessary to get correct answer above
-                                   and below plane */
+  z = fabs (x[2]);              /* fold to upper hemisphere — bilateral symmetry still assumed
+                                   in step 1; step 2 will replace this with signed z */
   if (z == 0)
     z = 1.e4;                   //Force z to be positive  02feb ksl
-  rho = sqrt (x[0] * x[0] + x[1] * x[1]);       /* This is distance from z
-                                                   axis */
-  /* Check to see if x is outside the region of the calculation */
+  rho = sqrt (x[0] * x[0] + x[1] * x[1]);       /* This is distance from z axis */
+
+  /* Check to see if x is outside the region of the calculation.
+     Upper hemisphere occupies wind_z[mdim_half..mdim-1]. */
   if (rho > one_dom->wind_x[one_dom->ndim - 1] || z > one_dom->wind_z[one_dom->mdim - 1])
   {
     return (-2);                /* x is outside grid */
@@ -479,7 +543,12 @@ cylind_where_in_grid (int ndom, double x[])
     return (-1);
 
   fraction (rho, one_dom->wind_x, one_dom->ndim, &i, &f, 0);
-  fraction (z, one_dom->wind_z, one_dom->mdim, &j, &f, 0);
+
+  /* Search only the upper-hemisphere portion of wind_z (indices mdim_half..mdim-1).
+     The pointer offset passes the sub-array; j is then the offset within that sub-array,
+     so add mdim_half to get the actual j index in the full doubled grid. */
+  fraction (z, one_dom->wind_z + mdim_half, mdim_half, &j, &f, 0);
+  j += mdim_half;
 
   /* At this point i,j are just outside the x position */
 
@@ -704,19 +773,23 @@ History:
 int
 cylind_is_cell_in_wind (int n)
 {
-  int i, j;
+  int i, j, j_hemi;
+  int mdim_half;
   double r, z, dr, dz;
   double rmin, rmax, zmin, zmax;
   double x[3];
   int ndom, ndomain;
-  DomainPtr one_dom;
 
   ndom = wmain[n].ndom;
-  one_dom = &zdom[ndom];
+  mdim_half = zdom[ndom].mdim / 2;
   wind_n_to_ij (ndom, n, &i, &j);
 
+  /* Convert j to a within-hemisphere index for the guard-cell check.
+     The outermost two cells of each hemisphere are guard cells. */
+  j_hemi = (j >= mdim_half) ? (j - mdim_half) : (mdim_half - 1 - j);
+
   /* First check if the cell is in the boundary */
-  if (i >= (one_dom->ndim - 2) || j >= (one_dom->mdim - 2))
+  if (i >= (zdom[ndom].ndim - 2) || j_hemi >= (mdim_half - 2))
   {
     return (W_NOT_INWIND);
   }
@@ -735,11 +808,10 @@ cylind_is_cell_in_wind (int n)
      boundary and when all the edges of the cell are in the wind.
    */
 
-
-  rmin = one_dom->wind_x[i];
-  rmax = one_dom->wind_x[i + 1];
-  zmin = one_dom->wind_z[j];
-  zmax = one_dom->wind_z[j + 1];
+  rmin = wmain[n].x[0];
+  rmax = wmain[n].xmax[0];
+  zmin = wmain[n].x[2];
+  zmax = wmain[n].xmax[2];
 
   dr = (rmax - rmin) / RESOLUTION;
   dz = (zmax - zmin) / RESOLUTION;

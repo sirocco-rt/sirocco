@@ -338,6 +338,28 @@ rtheta_wind_complete (int ndom, WindPtr w)
 
   rtheta_make_cones (ndom, w);
 
+  /* Set xmax (the far corner of each cell).  wind_x stores r values and wind_z stores
+     theta values in degrees.  xmax is the Cartesian position of the (r_{i+1}, theta_{j+1})
+     corner, capped at theta = 90 degrees.  Guard cell edges are extrapolated. */
+  {
+    int n;
+    double r_outer, theta_outer_deg, theta_outer_rad;
+    for (i = 0; i < ndim; i++)
+    {
+      r_outer = (i < ndim - 1) ? zdom[ndom].wind_x[i + 1] : 2.0 * zdom[ndom].wind_x[ndim - 1] - zdom[ndom].wind_x[ndim - 2];
+      for (j = 0; j < mdim; j++)
+      {
+        wind_ij_to_n (ndom, i, j, &n);
+        theta_outer_deg = (j < mdim - 1) ? zdom[ndom].wind_z[j + 1] : 2.0 * zdom[ndom].wind_z[mdim - 1] - zdom[ndom].wind_z[mdim - 2];
+        if (theta_outer_deg > 90.0)
+          theta_outer_deg = 90.0;
+        theta_outer_rad = theta_outer_deg / RADIAN;
+        w[n].xmax[0] = r_outer * sin (theta_outer_rad);
+        w[n].xmax[1] = 0.0;
+        w[n].xmax[2] = r_outer * cos (theta_outer_rad);
+      }
+    }
+  }
 
   return (0);
 }

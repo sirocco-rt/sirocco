@@ -843,8 +843,25 @@ typedef struct wind
   int nwind;                    /**< A self-reference to this cell in the wind structure */
   int nwind_dom;                /**< The element number of the wind cell in its wind domain */
   int nplasma;                  /**< A cross refrence to the corresponding cell in the plasma structure */
-  double x[3];                  /**< position of inner vertex of cell */
+  double x[3];                  /**< position of inner vertex of cell — the corner with the
+                                   smallest coordinate values.  For cylindrical grids x[0] is
+                                   rho_min and x[2] is z_min; for rtheta grids this is the
+                                   Cartesian position of the (r_i, theta_j) corner; for
+                                   spherical grids x[0] = x[2] = r * sin(PI/4).  x[1] = 0
+                                   for all 2D coordinate systems. @see xcen, xmax */
   double xcen[3];               /**< position of the "center" of a cell */
+  double xmax[3];               /**< position of the outer vertex of the cell — the corner
+                                   diagonally opposite to x[3], i.e. the corner with the
+                                   largest coordinate values.  For cylindrical (CYLIND) grids
+                                   xmax[0] = rho_max and xmax[2] = z_max of the cell.  For
+                                   spherical polar (RTHETA) grids this is the Cartesian
+                                   position of the (r_{i+1}, theta_{j+1}) corner.  For
+                                   spherical (SPHERICAL) grids xmax[0] = xmax[2] =
+                                   r_{i+1} * sin(PI/4).  xmax[1] = 0 for all 2D coordinate
+                                   systems.  Not meaningful for CYLVAR grids, where cells are
+                                   non-rectangular quadrilaterals defined by the positions of
+                                   the four surrounding wmain cells.  Populated by the
+                                   coord-type-specific wind_complete routines. @see x, xcen */
   double r, rcen;               /**< radial location of cell (Used for spherical, spherical polar
                                    coordinates. */
   double theta, thetacen;       /**< Angle of coordinate from z axis in degrees  */

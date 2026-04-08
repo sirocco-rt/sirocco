@@ -341,6 +341,12 @@ cylvar_wind_complete (int ndom, WindPtr w)
     }
   }
 
+  /* xmax is intentionally not set for CYLVAR grids.  CYLVAR cells are non-rectangular
+     quadrilaterals whose shape is fully described only by the positions of all four
+     surrounding wmain corner cells (w[n].x, w[n+1].x, w[n+mdim].x, w[n+mdim+1].x).
+     A single far-corner point is not sufficient to represent the cell boundary; use
+     those four corner positions directly rather than xmax for any CYLVAR calculations. */
+
   return (0);
 }
 

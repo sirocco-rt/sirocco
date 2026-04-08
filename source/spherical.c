@@ -210,6 +210,21 @@ spherical_wind_complete (int ndom, WindPtr w)
   zdom[ndom].wind_midx[ndim - 1] = 2. * zdom[ndom].wind_x[ndim - 1] - zdom[ndom].wind_midx[ndim - 2];
   zdom[ndom].wind_midz[0] = zdom[ndom].wind_z[0] / 2;
 
+  /* Set xmax (the outer edge of each cell).  For spherical grids xmax follows the same
+     45-degree convention as x: xmax[0] = xmax[2] = r_{i+1} * sin(PI/4).
+     The guard cell edge is extrapolated one grid spacing. */
+  {
+    int n;
+    double r_outer;
+    for (i = 0; i < ndim; i++)
+    {
+      n = nstart + i;
+      r_outer = (i < ndim - 1) ? zdom[ndom].wind_x[i + 1] : 2.0 * zdom[ndom].wind_x[ndim - 1] - zdom[ndom].wind_x[ndim - 2];
+      w[n].xmax[0] = w[n].xmax[2] = r_outer * sin (PI / 4.);
+      w[n].xmax[1] = 0.0;
+    }
+  }
+
   return (0);
 }
 
