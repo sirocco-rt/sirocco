@@ -43,7 +43,7 @@ double
 rtheta_ds_in_cell (int ndom, PhotPtr p)
 {
 
-  int n, ix, iz;
+  int n;
   double s, smax;
 
   /* Check that that the photon is in the domain it is supposed to be
@@ -55,12 +55,12 @@ rtheta_ds_in_cell (int ndom, PhotPtr p)
     return (n);                 /* Photon was not in wind */
   }
 
-  wind_n_to_ij (ndom, n, &ix, &iz);     /*Convert the index n to two dimensions */
+  /* Use per-cell boundaries stored in wmain during wind_complete.
+     wmain[n].r / rmax are the inner/outer radial boundaries;
+     wmain[n].wcone / wcone_max are the inner/outer theta cones. */
 
-  /* Set up the quadratic equations in the radial  direction */
-
-  smax = ds_to_sphere (zdom[ndom].wind_x[ix], p);
-  s = ds_to_sphere (zdom[ndom].wind_x[ix + 1], p);
+  smax = ds_to_sphere (wmain[n].r, p);
+  s = ds_to_sphere (wmain[n].rmax, p);
   if (s < smax)
   {
     smax = s;
@@ -69,13 +69,13 @@ rtheta_ds_in_cell (int ndom, PhotPtr p)
   /* At this point we have found how far the photon can travel in r in its
      current direction.  Now we must worry about motion in the theta direction  */
 
-  s = ds_to_cone (&zdom[ndom].cones_rtheta[iz], p);
+  s = ds_to_cone (&wmain[n].wcone, p);
   if (s < smax)
   {
     smax = s;
   }
 
-  s = ds_to_cone (&zdom[ndom].cones_rtheta[iz + 1], p);
+  s = ds_to_cone (&wmain[n].wcone_max, p);
   if (s < smax)
   {
     smax = s;

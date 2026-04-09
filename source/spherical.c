@@ -59,7 +59,7 @@ double
 spherical_ds_in_cell (int ndom, PhotPtr p)
 {
 
-  int n, ix;
+  int n;
   double s, smax;
 
 
@@ -69,12 +69,11 @@ spherical_ds_in_cell (int ndom, PhotPtr p)
     return (n);
   }
 
-  ix = n;
+  /* Set up the quadratic equations in the radial direction.
+     Use per-cell boundaries stored in wmain during wind_complete. */
 
-  /* Set up the quadratic equations in the radial  direction */
-
-  smax = ds_to_sphere (zdom[ndom].wind_x[ix], p);
-  s = ds_to_sphere (zdom[ndom].wind_x[ix + 1], p);
+  smax = ds_to_sphere (wmain[n].r, p);
+  s = ds_to_sphere (wmain[n].rmax, p);
 
   if (smax == VERY_BIG && s == VERY_BIG)
   {
