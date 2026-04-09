@@ -672,7 +672,73 @@ create_wind_grid (void)
 
     if (zdom[cell->ndom].wind_type != IMPORT)
     {
+      int coord_type = zdom[cell->ndom].coord_type;
+      double xc[3];
+
       model_velocity (cell->ndom, cell->x, cell->v);
+
+      /* Populate the three additional corner velocities needed for self-contained
+         bilinear interpolation.  CYLVAR cells are deferred (non-rectangular
+         quadrilateral geometry requires a different approach). */
+      if (coord_type == CYLIND)
+      {
+        /* (rho_max, z_min) corner */
+        xc[0] = cell->xmax[0];
+        xc[1] = 0.0;
+        xc[2] = cell->x[2];
+        model_velocity (cell->ndom, xc, cell->v_rmax);
+        /* (rho_min, z_max) corner */
+        xc[0] = cell->x[0];
+        xc[1] = 0.0;
+        xc[2] = cell->xmax[2];
+        model_velocity (cell->ndom, xc, cell->v_thetamax);
+        /* (rho_max, z_max) corner = xmax */
+        model_velocity (cell->ndom, cell->xmax, cell->vmax);
+      }
+      else if (coord_type == RTHETA)
+      {
+        double scale;
+        /* (r_outer, theta_inner) corner: same direction as x, scaled to rmax */
+        if (cell->r > 0.0)
+        {
+          scale = cell->rmax / cell->r;
+          xc[0] = scale * cell->x[0];
+          xc[1] = 0.0;
+          xc[2] = scale * cell->x[2];
+        }
+        else
+        {
+          xc[0] = xc[1] = xc[2] = 0.0;
+        }
+        model_velocity (cell->ndom, xc, cell->v_rmax);
+        /* (r_inner, theta_outer) corner: same direction as xmax, scaled to r */
+        if (cell->rmax > 0.0)
+        {
+          scale = cell->r / cell->rmax;
+          xc[0] = scale * cell->xmax[0];
+          xc[1] = 0.0;
+          xc[2] = scale * cell->xmax[2];
+        }
+        else
+        {
+          xc[0] = xc[1] = xc[2] = 0.0;
+        }
+        model_velocity (cell->ndom, xc, cell->v_thetamax);
+        /* (r_outer, theta_outer) corner = xmax */
+        model_velocity (cell->ndom, cell->xmax, cell->vmax);
+      }
+      else if (coord_type == SPHERICAL)
+      {
+        /* 1D: only inner (v at x) and outer (vmax at xmax) are meaningful.
+           Set v_rmax and v_thetamax to the same values to avoid undefined data. */
+        model_velocity (cell->ndom, cell->xmax, cell->vmax);
+        for (int k = 0; k < 3; k++)
+        {
+          cell->v_rmax[k] = cell->v[k];
+          cell->v_thetamax[k] = cell->vmax[k];
+        }
+      }
+      /* CYLVAR: corner velocities not set (deferred). */
     }
 
     model_vgrad (cell->ndom, cell->x, cell->v_grad);

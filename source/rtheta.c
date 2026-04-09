@@ -338,25 +338,47 @@ rtheta_wind_complete (int ndom, WindPtr w)
 
   rtheta_make_cones (ndom, w);
 
-  /* Set xmax (the far corner of each cell).  wind_x stores r values and wind_z stores
-     theta values in degrees.  xmax is the Cartesian position of the (r_{i+1}, theta_{j+1})
-     corner, capped at theta = 90 degrees.  Guard cell edges are extrapolated. */
+  /* Set xmax, rmax, thetamax, wcone (inner theta cone), and wcone_max (outer theta cone)
+     for each cell.  wind_x stores r values and wind_z stores theta values in degrees.
+     xmax is the Cartesian position of the (r_{i+1}, theta_{j+1}) corner, capped at 90°.
+     rmax and thetamax store the outer r and theta boundaries directly for use in
+     ds_in_cell without referencing domain arrays.  wcone and wcone_max hold the inner
+     and outer theta cones respectively (cones_rtheta[iz] and cones_rtheta[iz+1]).
+     Guard cell edges are extrapolated. */
   {
     int n;
     double r_outer, theta_outer_deg, theta_outer_rad;
+    double theta_inner_deg, theta_inner_rad;
     for (i = 0; i < ndim; i++)
     {
       r_outer = (i < ndim - 1) ? zdom[ndom].wind_x[i + 1] : 2.0 * zdom[ndom].wind_x[ndim - 1] - zdom[ndom].wind_x[ndim - 2];
       for (j = 0; j < mdim; j++)
       {
         wind_ij_to_n (ndom, i, j, &n);
+
         theta_outer_deg = (j < mdim - 1) ? zdom[ndom].wind_z[j + 1] : 2.0 * zdom[ndom].wind_z[mdim - 1] - zdom[ndom].wind_z[mdim - 2];
         if (theta_outer_deg > 90.0)
           theta_outer_deg = 90.0;
         theta_outer_rad = theta_outer_deg / RADIAN;
+
         w[n].xmax[0] = r_outer * sin (theta_outer_rad);
         w[n].xmax[1] = 0.0;
         w[n].xmax[2] = r_outer * cos (theta_outer_rad);
+
+        w[n].rmax = r_outer;
+        w[n].thetamax = theta_outer_deg;
+
+        /* Inner theta cone: same as cones_rtheta[j] */
+        theta_inner_deg = w[n].theta;
+        if (theta_inner_deg > 90.0)
+          theta_inner_deg = 90.0;
+        theta_inner_rad = theta_inner_deg / RADIAN;
+        w[n].wcone.z = 0.0;
+        w[n].wcone.dzdr = (theta_inner_rad > 0.0) ? (1.0 / tan (theta_inner_rad)) : VERY_BIG;
+
+        /* Outer theta cone: same as cones_rtheta[j+1] */
+        w[n].wcone_max.z = 0.0;
+        w[n].wcone_max.dzdr = (theta_outer_rad > 0.0) ? (1.0 / tan (theta_outer_rad)) : VERY_BIG;
       }
     }
   }

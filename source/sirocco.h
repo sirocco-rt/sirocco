@@ -862,14 +862,41 @@ typedef struct wind
                                    non-rectangular quadrilaterals defined by the positions of
                                    the four surrounding wmain cells.  Populated by the
                                    coord-type-specific wind_complete routines. @see x, xcen */
-  double r, rcen;               /**< radial location of cell (Used for spherical, spherical polar
-                                   coordinates. */
-  double theta, thetacen;       /**< Angle of coordinate from z axis in degrees  */
+  double r, rcen;               /**< radial location of cell inner vertex and center (SPHERICAL and
+                                   RTHETA coordinates). */
+  double rmax;                  /**< radial location of cell outer boundary (SPHERICAL and RTHETA).
+                                   Equal to wind_x[ix+1] for the cell at radial index ix.
+                                   Populated by spherical_wind_complete and rtheta_wind_complete.
+                                   @see r, rcen */
+  double theta, thetacen;       /**< polar angle (degrees from z axis) of inner vertex and center
+                                   (RTHETA coordinates). */
+  double thetamax;              /**< polar angle (degrees) of outer boundary of cell (RTHETA only).
+                                   Equal to wind_z[iz+1] for the cell at theta index iz.
+                                   Populated by rtheta_wind_complete. @see theta, thetacen */
   double dtheta, dr;            /**<  widths of bins, used in hydro import mode */
-  struct cone wcone;            /**<  cone structure that defines the bottom edge of the cell in
-                                   CYLVAR coordinates */
-  double v[3];                  /**< velocity at inner vertex of cell in the observer frame.  For 2d coordinate systems this
-                                   is defined in the xz plane */
+  struct cone wcone;            /**<  For CYLVAR: cone structure defining the bottom edge of the cell.
+                                   For RTHETA: cone structure defining the inner theta boundary
+                                   (theta_j), i.e. cones_rtheta[iz].  Populated by
+                                   rtheta_wind_complete for RTHETA cells. */
+  struct cone wcone_max;        /**<  Outer theta cone for RTHETA cells: defines the outer theta
+                                   boundary (theta_{j+1}), i.e. cones_rtheta[iz+1].  Analogous
+                                   to wcone which defines the inner edge.  Populated by
+                                   rtheta_wind_complete. Not used for CYLVAR or CYLIND. */
+  double v[3];                  /**< velocity at inner vertex (x) of cell in the observer frame.
+                                   For 2d coordinate systems this is defined in the xz plane.
+                                   @see v_rmax, v_thetamax, vmax */
+  double v_rmax[3];             /**< velocity at the outer-r, inner-theta/z corner of the cell,
+                                   i.e. the corner at (rho_max, z_min) for CYLIND or
+                                   (r_max, theta_min) for RTHETA.  Populated by define_wind.
+                                   Together with v, v_thetamax, and vmax these form the four
+                                   corners needed for bilinear interpolation within a cell. */
+  double v_thetamax[3];         /**< velocity at the inner-r, outer-theta/z corner of the cell,
+                                   i.e. the corner at (rho_min, z_max) for CYLIND or
+                                   (r_min, theta_max) for RTHETA.  Populated by define_wind. */
+  double vmax[3];               /**< velocity at the outer corner xmax of the cell, diagonally
+                                   opposite to v at x.  For CYLIND: (rho_max, z_max); for RTHETA:
+                                   (r_max, theta_max); for SPHERICAL: r_max.  Populated by
+                                   define_wind. @see v, v_rmax, v_thetamax */
   double v_grad[3][3];          /**< velocity gradient tensor  at the inner vertex of the cell in the co-moving frame */
   double div_v;                 /**< Divergence of v at center of cell in the co-moving frame */
   double dvds_ave;              /**<  Average value of dvds */
