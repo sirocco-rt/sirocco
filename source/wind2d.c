@@ -185,16 +185,95 @@ vwind_xyz (int ndom, PhotPtr p, double v[])
     Error ("vwind_xyz: Received invalid domain  %d\n", ndom);
   }
 
-  coord_fraction (ndom, 0, p->x, nnn, frac, &nelem);
-
-  for (i = 0; i < 3; i++)
   {
+    int coord_type = zdom[ndom].coord_type;
+    double dr, dz, denom;
 
-    x = 0;
-    for (nn = 0; nn < nelem; nn++)
-      x += wmain[nnn[nn]].v[i] * frac[nn];
-
-    vv[i] = x;
+    if (coord_type == CYLVAR)
+    {
+      /* CYLVAR cells are non-rectangular; use domain-level coord_fraction */
+      coord_fraction (ndom, 0, p->x, nnn, frac, &nelem);
+      for (i = 0; i < 3; i++)
+      {
+        x = 0;
+        for (nn = 0; nn < nelem; nn++)
+          x += wmain[nnn[nn]].v[i] * frac[nn];
+        vv[i] = x;
+      }
+    }
+    else
+    {
+      /* For CYLIND, RTHETA, SPHERICAL: use per-cell corner velocities stored
+       * in wmain, avoiding coord_fraction's domain-array lookups. */
+      n = where_in_grid (ndom, p->x);
+      if (n < 0)
+      {
+        /* Outside grid — fall back to coord_fraction */
+        coord_fraction (ndom, 0, p->x, nnn, frac, &nelem);
+        for (i = 0; i < 3; i++)
+        {
+          x = 0;
+          for (nn = 0; nn < nelem; nn++)
+            x += wmain[nnn[nn]].v[i] * frac[nn];
+          vv[i] = x;
+        }
+      }
+      else if (coord_type == SPHERICAL)
+      {
+        /* 1D: linear interpolation in r between wmain[n].v and wmain[n].vmax */
+        r = length (p->x);
+        denom = wmain[n].rmax - wmain[n].r;
+        dr = (denom > 0.0) ? (r - wmain[n].r) / denom : 0.5;
+        if (dr < 0.0)
+          dr = 0.0;
+        if (dr > 1.0)
+          dr = 1.0;
+        for (i = 0; i < 3; i++)
+          vv[i] = (1.0 - dr) * wmain[n].v[i] + dr * wmain[n].vmax[i];
+      }
+      else if (coord_type == CYLIND)
+      {
+        /* 2D bilinear in (rho, z): corners stored as v, v_rmax, v_thetamax, vmax */
+        double rho_here = sqrt (p->x[0] * p->x[0] + p->x[1] * p->x[1]);
+        double z_here = fabs (p->x[2]);
+        denom = wmain[n].xmax[0] - wmain[n].x[0];
+        dr = (denom > 0.0) ? (rho_here - wmain[n].x[0]) / denom : 0.5;
+        denom = wmain[n].xmax[2] - wmain[n].x[2];
+        dz = (denom > 0.0) ? (z_here - wmain[n].x[2]) / denom : 0.5;
+        if (dr < 0.0)
+          dr = 0.0;
+        if (dr > 1.0)
+          dr = 1.0;
+        if (dz < 0.0)
+          dz = 0.0;
+        if (dz > 1.0)
+          dz = 1.0;
+        for (i = 0; i < 3; i++)
+          vv[i] = (1.0 - dr) * (1.0 - dz) * wmain[n].v[i]
+            + dr * (1.0 - dz) * wmain[n].v_rmax[i] + (1.0 - dr) * dz * wmain[n].v_thetamax[i] + dr * dz * wmain[n].vmax[i];
+      }
+      else                      /* RTHETA */
+      {
+        /* 2D bilinear in (r, theta_deg): corners stored as v, v_rmax, v_thetamax, vmax */
+        r = length (p->x);
+        double theta_here = (r > 0.0) ? acos (fabs (p->x[2]) / r) * RADIAN : 0.0;
+        denom = wmain[n].rmax - wmain[n].r;
+        dr = (denom > 0.0) ? (r - wmain[n].r) / denom : 0.5;
+        denom = wmain[n].thetamax - wmain[n].theta;
+        dz = (denom > 0.0) ? (theta_here - wmain[n].theta) / denom : 0.5;
+        if (dr < 0.0)
+          dr = 0.0;
+        if (dr > 1.0)
+          dr = 1.0;
+        if (dz < 0.0)
+          dz = 0.0;
+        if (dz > 1.0)
+          dz = 1.0;
+        for (i = 0; i < 3; i++)
+          vv[i] = (1.0 - dr) * (1.0 - dz) * wmain[n].v[i]
+            + dr * (1.0 - dz) * wmain[n].v_rmax[i] + (1.0 - dr) * dz * wmain[n].v_thetamax[i] + dr * dz * wmain[n].vmax[i];
+      }
+    }
   }
 
   rho = sqrt (p->x[0] * p->x[0] + p->x[1] * p->x[1]);
@@ -206,7 +285,7 @@ vwind_xyz (int ndom, PhotPtr p, double v[])
     vv[0] = rho / r * x;
     vv[2] = p->x[2] / r * x;
   }
-  else if (p->x[2] < 0)         // For 2d coord syatems, velocity is reversed if the photon is in the lower hemisphere.
+  else if (p->x[2] < 0)         // For 2d coord systems, velocity is reversed if the photon is in the lower hemisphere.
     vv[2] *= -1;
 
   if (rho == 0)
