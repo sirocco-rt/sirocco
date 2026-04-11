@@ -124,12 +124,12 @@ coord_fraction (int ndom, int ichoice, double x[], int ii[], double frac[], int 
   if (zdom[ndom].coord_type == CYLIND)
   {
     r = sqrt (x[0] * x[0] + x[1] * x[1]);
-    z = fabs (x[2]);
+    z = x[2];                   /* signed: lower-hemisphere cells have wind_z[j] < 0 */
   }
   else if (zdom[ndom].coord_type == RTHETA)
   {
     r = length (x);
-    z = acos (fabs (x[2]) / r) * RADIAN;
+    z = acos (x[2] / r) * RADIAN;       /* signed: gives 0-180 deg for full doubled grid */
   }
   else if (zdom[ndom].coord_type == SPHERICAL)
   {

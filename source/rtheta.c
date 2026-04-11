@@ -557,7 +557,7 @@ rtheta_where_in_grid (int ndom, double x[])
   mdim = zdom[ndom].mdim;
 
   r = length (x);
-  theta = acos ((fabs (x[2] / r))) * RADIAN;
+  theta = acos (x[2] / r) * RADIAN;     /* signed: gives 0-180 deg for full doubled grid */
 
   /* Check to see if x is outside the region of the calculation */
 
@@ -611,14 +611,23 @@ rtheta_get_random_location (int n, double x[])
   int inwind;
   double r, rmin, rmax, sthetamin, sthetamax;
   double theta, phi;
-  double zz;
   int ndom, ndomain;
+  int mdim_half, is_lower_hemi;
 
   ndom = wmain[n].ndom;
   wind_n_to_ij (ndom, n, &i, &j);
 
+  mdim_half = zdom[ndom].mdim / 2;
+  is_lower_hemi = (j >= mdim_half);
+
   rmin = zdom[ndom].wind_x[i];
   rmax = zdom[ndom].wind_x[i + 1];
+
+  /* sin(theta) is the same for theta and (180-theta), so sthetamin/sthetamax
+     work identically for upper and lower hemisphere cells.  asin always returns
+     a value in [0,90] deg, giving a position with x[2]>=0.  We flip x[2] at
+     the end for lower-hemisphere cells.  where_in_wind uses fabs(x[2]) so the
+     in-wind test is correct before the flip. */
   sthetamin = sin (zdom[ndom].wind_z[j] / RADIAN);
   sthetamax = sin (zdom[ndom].wind_z[j + 1] / RADIAN);
 
@@ -631,11 +640,9 @@ rtheta_get_random_location (int n, double x[])
 
     theta = asin (sthetamin + random_number (0.0, 1.0) * (sthetamax - sthetamin));
 
-
     phi = 2. * PI * random_number (0.0, 1.0);
 
-/* Project from r, theta phi to x y z  */
-
+    /* Project from r, theta, phi to x y z (always upper hemisphere here) */
     x[0] = r * cos (phi) * sin (theta);
     x[1] = r * sin (phi) * sin (theta);
     x[2] = r * cos (theta);
@@ -643,11 +650,9 @@ rtheta_get_random_location (int n, double x[])
                                                    because the boundaries of the wind split the grid cell */
   }
 
-  zz = random_number (-1.0, 1.0);       //positions above are all at +z distances
-
-
-  if (zz < 0)
-    x[2] *= -1;                 /* The photon is in the bottom half of the wind */
+  /* Place in the correct hemisphere: lower hemisphere cells have x[2] < 0 */
+  if (is_lower_hemi)
+    x[2] = -x[2];
 
   return (inwind);
 

@@ -278,8 +278,8 @@ update_flux_estimators (PlasmaPtr xplasma, PhotPtr phot_mid, double ds_obs, doub
   double theta;
   double r = sqrt (pow (phot_mid->x[0], 2) + pow (phot_mid->x[1], 2));
 
-  if (phot_mid->x[2] < 0)
-  {                             //If the photon is in the lower hemisphere - we need to reverse the sense of the z flux
+  if (zdom[ndom].coord_type == CYLVAR && phot_mid->x[2] < 0)
+  {                             //If the photon is in the lower hemisphere in CYLVAR - we need to reverse the sense of the z flux
     flux[2] *= (-1);
     theta = atan2 (r, -phot_mid->x[2]);
   }
@@ -407,7 +407,10 @@ update_force_estimators (PlasmaPtr xplasma, PhotPtr p, PhotPtr phot_mid, double 
   else
   {
     project_from_xyz_cyl (phot_mid->x, p_out, dp_cyl);
-    if (p->x[2] < 0)
+    /* CYLIND and RTHETA have per-hemisphere cells; project_from_xyz_cyl gives the
+       correct signed dp_cyl[2] directly.  Only CYLVAR still uses bilateral symmetry
+       and needs the z-component flipped for lower-hemisphere photons. */
+    if (zdom[ndom].coord_type == CYLVAR && p->x[2] < 0)
       dp_cyl[2] *= (-1);
   }
   for (i = 0; i < 3; i++)
@@ -426,7 +429,7 @@ update_force_estimators (PlasmaPtr xplasma, PhotPtr p, PhotPtr phot_mid, double 
   else
   {
     project_from_xyz_cyl (phot_mid->x, p_out, dp_cyl);
-    if (p->x[2] < 0)
+    if (zdom[ndom].coord_type == CYLVAR && p->x[2] < 0)
       dp_cyl[2] *= (-1);
   }
   for (i = 0; i < 3; i++)
@@ -446,7 +449,7 @@ update_force_estimators (PlasmaPtr xplasma, PhotPtr p, PhotPtr phot_mid, double 
   else
   {
     project_from_xyz_cyl (phot_mid->x, p_out, dp_cyl);
-    if (p->x[2] < 0)
+    if (zdom[ndom].coord_type == CYLVAR && p->x[2] < 0)
       dp_cyl[2] *= (-1);
   }
   for (i = 0; i < 3; i++)

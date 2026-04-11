@@ -1223,7 +1223,7 @@ if fixed.
 
     project_from_xyz_cyl (p_orig.x, dp, dp_cyl);
 
-    if (p_orig.x[2] < 0)
+    if (zdom[ndom].coord_type == CYLVAR && p_orig.x[2] < 0)
       dp_cyl[2] *= (-1);
     for (i = 0; i < 3; i++)
     {
