@@ -97,11 +97,7 @@ cylind_ds_in_cell (int ndom, PhotPtr p)
 
   z1 = wmain[n].x[2];
   z2 = wmain[n].xmax[2];
-  if (p->x[2] < 0)
-  {                             /* We need to worry about which side of the plane the photon is on! */
-    z1 *= (-1.);
-    z2 *= (-1.);
-  }
+  /* Lower-hemisphere cells have x[2] < 0 and xmax[2] < 0 already; no sign flip needed. */
 
   if (p->lmn[2] != 0.0)
   {
@@ -517,24 +513,19 @@ int
 cylind_where_in_grid (int ndom, double x[])
 {
   int i, j, n;
-  int mdim_half;                /* cells per hemisphere */
   double z;
   double rho;
   double f;
   DomainPtr one_dom;
 
   one_dom = &zdom[ndom];
-  mdim_half = one_dom->mdim / 2;
 
-  z = fabs (x[2]);              /* fold to upper hemisphere — bilateral symmetry still assumed
-                                   in step 1; step 2 will replace this with signed z */
-  if (z == 0)
-    z = 1.e4;                   //Force z to be positive  02feb ksl
+  z = x[2];                     /* signed z — each hemisphere has its own cells */
   rho = sqrt (x[0] * x[0] + x[1] * x[1]);       /* This is distance from z axis */
 
   /* Check to see if x is outside the region of the calculation.
-     Upper hemisphere occupies wind_z[mdim_half..mdim-1]. */
-  if (rho > one_dom->wind_x[one_dom->ndim - 1] || z > one_dom->wind_z[one_dom->mdim - 1])
+     wind_z[0] is the lower boundary of the lower hemisphere. */
+  if (rho > one_dom->wind_x[one_dom->ndim - 1] || z > one_dom->wind_z[one_dom->mdim - 1] || z < one_dom->wind_z[0])
   {
     return (-2);                /* x is outside grid */
   }
@@ -544,11 +535,9 @@ cylind_where_in_grid (int ndom, double x[])
 
   fraction (rho, one_dom->wind_x, one_dom->ndim, &i, &f, 0);
 
-  /* Search only the upper-hemisphere portion of wind_z (indices mdim_half..mdim-1).
-     The pointer offset passes the sub-array; j is then the offset within that sub-array,
-     so add mdim_half to get the actual j index in the full doubled grid. */
-  fraction (z, one_dom->wind_z + mdim_half, mdim_half, &j, &f, 0);
-  j += mdim_half;
+  /* Search the full wind_z array — lower hemisphere in [0..mdim_half-1],
+     upper hemisphere in [mdim_half..mdim-1]. */
+  fraction (z, one_dom->wind_z, one_dom->mdim, &j, &f, 0);
 
   /* At this point i,j are just outside the x position */
 

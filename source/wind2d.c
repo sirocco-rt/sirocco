@@ -235,7 +235,7 @@ vwind_xyz (int ndom, PhotPtr p, double v[])
       {
         /* 2D bilinear in (rho, z): corners stored as v, v_rmax, v_thetamax, vmax */
         double rho_here = sqrt (p->x[0] * p->x[0] + p->x[1] * p->x[1]);
-        double z_here = fabs (p->x[2]);
+        double z_here = p->x[2];        /* signed z — lower hemisphere cells have negative x[2] and xmax[2] */
         denom = wmain[n].xmax[0] - wmain[n].x[0];
         dr = (denom > 0.0) ? (rho_here - wmain[n].x[0]) / denom : 0.5;
         denom = wmain[n].xmax[2] - wmain[n].x[2];
@@ -285,7 +285,10 @@ vwind_xyz (int ndom, PhotPtr p, double v[])
     vv[0] = rho / r * x;
     vv[2] = p->x[2] / r * x;
   }
-  else if (p->x[2] < 0)         // For 2d coord systems, velocity is reversed if the photon is in the lower hemisphere.
+  else if (zdom[ndom].coord_type != CYLIND && p->x[2] < 0)
+    /* For RTHETA and CYLVAR, bilateral symmetry is still in effect: the lower-hemisphere
+       photon maps to a +z cell, so the z-velocity must be flipped. CYLIND has been
+       doubled to cover both hemispheres independently, so no flip is needed there. */
     vv[2] *= -1;
 
   if (rho == 0)

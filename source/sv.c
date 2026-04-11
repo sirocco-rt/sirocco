@@ -332,7 +332,7 @@ sv_rho (int ndom, double x[])
   dtheta_drzero = (sv_theta_wind (ndom, rzero) - sv_theta_wind (ndom, (1. - EPSILON) * rzero)) / (EPSILON * rzero);
 
   dr_drzero = 1. + ldist * dtheta_drzero / cos (theta);
-  rho = rzero * dmdot_da / (dr_drzero * r * v[2]);
+  rho = rzero * dmdot_da / (dr_drzero * r * fabs (v[2]));
 
   return (rho);
 }

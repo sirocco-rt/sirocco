@@ -297,7 +297,11 @@ create_master_table (int ndom, char rootname[])
 
     /* First assemble the header line */
 
-    sprintf (start, "%8s %8s %8s %8s %4s %4s %7s %7s %6s %8s %9s %9s %9s ", "x", "z", "xcen", "zcen", "i", "j", "nwind", "nplasma",
+    /* z and zcen use %9s/%+9.2e so the sign character doesn't shift columns:
+       positive values print as " x.xxe+xx" (9 chars with leading space),
+       negative values print as "-x.xxe+xx" (9 chars).
+       nwind header matches %8d data; nplasma data changed to %7d to match %7s header. */
+    sprintf (start, "%8s %9s %8s %9s %4s %4s %8s %7s %6s %8s %9s %9s %9s ", "x", "z", "xcen", "zcen", "i", "j", "nwind", "nplasma",
              "inwind", "converge", "v_x", "v_y", "v_z");
     strcpy (one_line, start);
     n = 0;
@@ -317,7 +321,7 @@ create_master_table (int ndom, char rootname[])
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
       sprintf (start,
-               "%8.2e %8.2e %8.2e %8.2e %4d %4d %8d %6d %6d %8.0f %9.2e %9.2e %9.2e ",
+               "%8.2e % 9.2e %8.2e % 9.2e %4d %4d %8d %7d %6d %8.0f %9.2e %9.2e %9.2e ",
                wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                jj, wmain[nstart + i].nwind, wmain[nstart + i].nplasma, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0],
                wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
