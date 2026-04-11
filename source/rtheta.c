@@ -151,8 +151,9 @@ rtheta_make_grid (int ndom, WindPtr w)
      to define the wind at least one grid cell outside the region in which we want photons
      to propagate. */
 
-/* Next two lines for linear intervals */
-  dtheta = 90. / (mdim - 2);
+  /* Cover the full 0-180 deg range so that both hemispheres have their own cells.
+     Each hemisphere spans 90 deg, with mdim/2 cells per hemisphere. */
+  dtheta = 180. / (mdim - 2);
 
 
   /* First calculate parameters that are to be calculated at the edge of the grid cell.  This is
@@ -185,15 +186,9 @@ rtheta_make_grid (int ndom, WindPtr w)
 
       theta = w[n].theta = dtheta * j;
       thetacen = w[n].thetacen = w[n].theta + 0.5 * dtheta;
-      if (theta > 90.)
-      {
-        theta = 90.;
-      }
-      if (thetacen > 90.)
-      {
-        thetacen = 90.;
-      }
-
+      /* No clamping at 90 deg: upper hemisphere covers 0-90 deg (j < mdim/2),
+         lower hemisphere covers 90-180 deg (j >= mdim/2).  sin/cos handle the
+         full range correctly: x[2] = r*cos(theta) < 0 for theta > 90 deg. */
 
       /* Now calculate the positions of these points in the xz plane */
       theta /= RADIAN;
@@ -206,7 +201,9 @@ rtheta_make_grid (int ndom, WindPtr w)
       w[n].xcen[0] = w[n].rcen * sin (thetacen);
       w[n].xcen[2] = w[n].rcen * cos (thetacen);
 
-      xfudge = (w[n].xcen[0] - w[n].x[0]);
+      xfudge = fabs (w[n].xcen[0] - w[n].x[0]);
+      if (xfudge == 0.0)
+        xfudge = fabs (w[n].xcen[2] - w[n].x[2]);
       w[n].dfudge = XFUDGE * xfudge;
 
     }
@@ -339,12 +336,16 @@ rtheta_wind_complete (int ndom, WindPtr w)
   rtheta_make_cones (ndom, w);
 
   /* Set xmax, rmax, thetamax, wcone (inner theta cone), and wcone_max (outer theta cone)
-     for each cell.  wind_x stores r values and wind_z stores theta values in degrees.
-     xmax is the Cartesian position of the (r_{i+1}, theta_{j+1}) corner, capped at 90°.
-     rmax and thetamax store the outer r and theta boundaries directly for use in
-     ds_in_cell without referencing domain arrays.  wcone and wcone_max hold the inner
-     and outer theta cones respectively (cones_rtheta[iz] and cones_rtheta[iz+1]).
-     Guard cell edges are extrapolated. */
+     for each cell.  wind_z now stores theta values in degrees over the full 0-180 range.
+     Upper hemisphere: j=0..mdim/2-1 (theta 0-90 deg, x[2]>=0).
+     Lower hemisphere: j=mdim/2..mdim-1 (theta 90-180 deg, x[2]<=0).
+     No clamping at 90 deg: wcone.dzdr = 1/tan(theta) is negative for theta>90 deg, which
+     ds_to_cone handles correctly via dzdr^2.  Special cases at theta=0 and theta=180 use
+     VERY_BIG (polar axis) and -VERY_BIG (south pole axis) respectively. */
+#define RTHETA_CONE_DZDR(theta_rad) \
+  ((theta_rad) < 1e-10 ? VERY_BIG : \
+   (theta_rad) > M_PI - 1e-10 ? -VERY_BIG : \
+   1.0 / tan (theta_rad))
   {
     int n;
     double r_outer, theta_outer_deg, theta_outer_rad;
@@ -357,8 +358,6 @@ rtheta_wind_complete (int ndom, WindPtr w)
         wind_ij_to_n (ndom, i, j, &n);
 
         theta_outer_deg = (j < mdim - 1) ? zdom[ndom].wind_z[j + 1] : 2.0 * zdom[ndom].wind_z[mdim - 1] - zdom[ndom].wind_z[mdim - 2];
-        if (theta_outer_deg > 90.0)
-          theta_outer_deg = 90.0;
         theta_outer_rad = theta_outer_deg / RADIAN;
 
         w[n].xmax[0] = r_outer * sin (theta_outer_rad);
@@ -368,20 +367,19 @@ rtheta_wind_complete (int ndom, WindPtr w)
         w[n].rmax = r_outer;
         w[n].thetamax = theta_outer_deg;
 
-        /* Inner theta cone: same as cones_rtheta[j] */
+        /* Inner theta cone */
         theta_inner_deg = w[n].theta;
-        if (theta_inner_deg > 90.0)
-          theta_inner_deg = 90.0;
         theta_inner_rad = theta_inner_deg / RADIAN;
         w[n].wcone.z = 0.0;
-        w[n].wcone.dzdr = (theta_inner_rad > 0.0) ? (1.0 / tan (theta_inner_rad)) : VERY_BIG;
+        w[n].wcone.dzdr = RTHETA_CONE_DZDR (theta_inner_rad);
 
-        /* Outer theta cone: same as cones_rtheta[j+1] */
+        /* Outer theta cone */
         w[n].wcone_max.z = 0.0;
-        w[n].wcone_max.dzdr = (theta_outer_rad > 0.0) ? (1.0 / tan (theta_outer_rad)) : VERY_BIG;
+        w[n].wcone_max.dzdr = RTHETA_CONE_DZDR (theta_outer_rad);
       }
     }
   }
+#undef RTHETA_CONE_DZDR
 
   return (0);
 }
@@ -437,8 +435,11 @@ rtheta_cell_volume (WindPtr w)
   thetamin = zdom[ndom].wind_z[j] / RADIAN;
   thetamax = zdom[ndom].wind_z[j + 1] / RADIAN;
 
-  /*leading factor of 2 allows for volume above and below plane */
-  cell_volume = 2. * 2. / 3. * PI * (rmax * rmax * rmax - rmin * rmin * rmin) * (cos (thetamin) - cos (thetamax));
+  /* Each cell now covers only one hemisphere; the old factor-of-2 for
+     "above and below the plane" is removed.  For lower-hemisphere cells
+     thetamin and thetamax are both in (90,180] deg, so cos(thetamin)>cos(thetamax)
+     and the difference is positive as required. */
+  cell_volume = 2. / 3. * PI * (rmax * rmax * rmax - rmin * rmin * rmin) * (cos (thetamin) - cos (thetamax));
 
   if (w->inwind == W_NOT_INWIND || w->inwind == W_IGNORE)
   {
@@ -783,9 +784,19 @@ rtheta_is_cell_in_wind (int n)
   ndim = zdom[ndom].ndim;
   mdim = zdom[ndom].mdim;
 
-  if (i >= (ndim - 2) || j >= (mdim - 2))
+  /* With the doubled grid (upper hemisphere j=0..mdim/2-1, lower j=mdim/2..mdim-1),
+     guard cells are the outer 2 cells of each hemisphere in the theta direction.
+     For the upper hemisphere "outer" means large theta (near 90 deg equatorial boundary).
+     For the lower hemisphere "outer" means large theta (near 180 deg south pole).
+     j_hemi is the within-hemisphere theta index: 0=innermost (near pole/equatorial
+     boundary), mdim_half-1=outermost (near equatorial boundary/south pole). */
   {
-    return (W_NOT_INWIND);
+    int mdim_half = mdim / 2;
+    int j_hemi = (j >= mdim_half) ? (j - mdim_half) : j;
+    if (i >= (ndim - 2) || j_hemi >= (mdim_half - 2))
+    {
+      return (W_NOT_INWIND);
+    }
   }
 
   /* Assume that if all four corners are in the wind that the
