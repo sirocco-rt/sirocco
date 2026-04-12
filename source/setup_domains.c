@@ -112,10 +112,10 @@ get_domain_params (int ndom)
         Error ("sirocco: domain mdim must be at least 4 to allow for boundaries\n");
         Exit (EXIT_FAILURE);
       }
-      /* For cylindrical grids the user specifies the number of z cells per hemisphere.
-         The internal grid covers both hemispheres, so we double mdim here.  All downstream
-         code (wind_ij_to_n, cylind_make_grid, etc.) uses the doubled value. */
-      if (zdom[ndom].coord_type == CYLIND)
+      /* For cylindrical and polar grids the user specifies the number of z/theta cells per
+         hemisphere.  The internal grid covers both hemispheres, so we double mdim here.
+         All downstream code uses the doubled value. */
+      if (zdom[ndom].coord_type == CYLIND || zdom[ndom].coord_type == RTHETA)
         zdom[ndom].mdim *= 2;
     }
     else

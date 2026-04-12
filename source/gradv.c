@@ -71,8 +71,10 @@ dvwind_ds_cmf (PhotPtr p)
      02jan ksl */
 
   stuff_phot (p, &pp);
-  if (pp.x[2] < 0.0)
-  {                             /*move the photon to the northern hemisphere */
+  if (pp.x[2] < 0.0 && zdom[ndom].coord_type == CYLVAR)
+  {                             /* CYLVAR still uses bilateral symmetry — move the photon to
+                                   the northern hemisphere.  CYLIND and RTHETA have doubled grids
+                                   with per-hemisphere cells; no flip needed or wanted there. */
     pp.x[2] = -pp.x[2];
     pp.lmn[2] = -pp.lmn[2];
   }

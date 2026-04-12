@@ -151,9 +151,12 @@ rtheta_make_grid (int ndom, WindPtr w)
      to define the wind at least one grid cell outside the region in which we want photons
      to propagate. */
 
-  /* Cover the full 0-180 deg range so that both hemispheres have their own cells.
-     Each hemisphere spans 90 deg, with mdim/2 cells per hemisphere. */
-  dtheta = 180. / (mdim - 2);
+  /* The user specifies cells per hemisphere; mdim was doubled in setup_domains.
+     Use mdim/2 (cells per hemisphere) to set dtheta, matching the v2.0 formula
+     dtheta = 90./(mdim_user-2) exactly. The full grid covers 0-180 deg:
+     j=0..mdim/2-1 is the upper hemisphere, j=mdim/2..mdim-1 is the lower hemisphere. */
+  int mdim_half = mdim / 2;
+  dtheta = 90. / (mdim_half - 2);
 
 
   /* First calculate parameters that are to be calculated at the edge of the grid cell.  This is
