@@ -177,10 +177,16 @@ import_rtheta (int ndom, char *filename)
     }
   }
 
+  /* Determine whether the imported grid covers both hemispheres (theta > 90
+     present in the file) or only the upper hemisphere. */
+  int both_hemi_import = (imported_model[ndom].wind_z[jz - 1] > 90.0);
+
   for (n = 0; n < jz - 1; n++)
   {
     mid_z = 0.5 * (imported_model[ndom].wind_z[n] + imported_model[ndom].wind_z[n + 1]);
-    if (mid_z > 90)
+    /* Cap at 90 only for single-hemisphere imports; two-hemisphere imports
+       may legitimately have mid_z > 90. */
+    if (!both_hemi_import && mid_z > 90)
       mid_z = 90;
     imported_model[ndom].wind_midz[n] = mid_z;
   }
@@ -359,6 +365,12 @@ rtheta_make_grid_import (WindPtr w, int ndom)
 {
   int n, nn;
   double theta;
+  int both_hemi_import;
+
+  /* Determine whether the imported grid covers both hemispheres.  If the
+     last theta value exceeds 90 deg the file contains lower-hemisphere cells;
+     otherwise only upper-hemisphere data are present. */
+  both_hemi_import = (imported_model[ndom].wind_z[imported_model[ndom].mdim - 1] > 90.0);
 
   /* As in the case of other models we assume that the grid has been
    * read in correctly and so now that the WindPtrs have been generated
@@ -382,7 +394,9 @@ rtheta_make_grid_import (WindPtr w, int ndom)
     w[nn].inwind = imported_model[ndom].inwind[n];
 
     w[nn].thetacen = imported_model[ndom].wind_midz[imported_model[ndom].j[n]];
-    if (w[nn].thetacen > 90)
+    /* Cap at 90 only for single-hemisphere imports; two-hemisphere imports
+       may have thetacen > 90 for lower-hemisphere cells. */
+    if (!both_hemi_import && w[nn].thetacen > 90)
       w[nn].thetacen = 90;
     theta = w[nn].thetacen / RADIAN;
 
@@ -522,7 +536,12 @@ rho_rtheta (int ndom, double *x)
 
   r = length (x);
 
-  z = fabs (x[2]);
+  /* For single-hemisphere imports fold lower-hemisphere positions; for
+     two-hemisphere imports use signed theta over the full 0-180 deg range. */
+  if (imported_model[ndom].wind_z[imported_model[ndom].mdim - 1] <= 90.0)
+    z = fabs (x[2]);
+  else
+    z = x[2];
   ctheta = z / r;
   angle = acos (ctheta) * RADIAN;
 
@@ -582,7 +601,12 @@ temperature_rtheta (int ndom, double *x, int return_t_e)
   else
   {
     r = length (x);
-    z = fabs (x[2]);
+    /* For single-hemisphere imports fold lower-hemisphere positions; for
+       two-hemisphere imports use signed theta over the full 0-180 deg range. */
+    if (imported_model[ndom].wind_z[imported_model[ndom].mdim - 1] <= 90.0)
+      z = fabs (x[2]);
+    else
+      z = x[2];
 
     ctheta = z / r;
     angle = acos (ctheta) * RADIAN;

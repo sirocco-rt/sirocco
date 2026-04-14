@@ -483,7 +483,12 @@ rho_cylindrical (int ndom, double *x)
   int i, j, n;
 
   r = sqrt (x[0] * x[0] + x[1] * x[1]);
-  z = fabs (x[2]);
+  /* For single-hemisphere imports fold lower-hemisphere positions; for
+     two-hemisphere imports use signed z directly. */
+  if (imported_model[ndom].wind_z[0] >= 0.0)
+    z = fabs (x[2]);
+  else
+    z = x[2];
 
   i = 0;
   while (z > imported_model[ndom].wind_z[i] && i < imported_model[ndom].mdim)
@@ -541,7 +546,12 @@ temperature_cylindrical (int ndom, double *x, int return_t_e)
   else
   {
     r = sqrt (x[0] * x[0] + x[1] * x[1]);
-    z = fabs (x[2]);
+    /* For single-hemisphere imports fold lower-hemisphere positions; for
+       two-hemisphere imports use signed z directly. */
+    if (imported_model[ndom].wind_z[0] >= 0.0)
+      z = fabs (x[2]);
+    else
+      z = x[2];
 
     i = 0;
     while (z > imported_model[ndom].wind_z[i] && i < imported_model[ndom].mdim)

@@ -506,10 +506,14 @@ cylind_cell_volume (WindPtr w)
  *
  * @details
  *
- * The routine uses signed z = x[2] directly and searches the full wind_z[]
- * array, which covers both hemispheres: lower hemisphere in indices
- * [0..mdim/2-1] (wind_z[] < 0) and upper hemisphere in [mdim/2..mdim-1]
- * (wind_z[] >= 0).  No folding to |z| is performed.
+ * For parameterized models the routine uses signed z = x[2] directly and
+ * searches the full wind_z[] array, which covers both hemispheres: lower
+ * hemisphere in indices [0..mdim/2-1] (wind_z[] < 0) and upper hemisphere
+ * in [mdim/2..mdim-1] (wind_z[] >= 0).  No folding to |z| is performed.
+ *
+ * For imported models the grid covers the upper hemisphere only (z >= 0),
+ * so lower-hemisphere positions are folded via fabs(x[2]) to preserve
+ * bilateral symmetry, as in the pre-doubled-grid code.
  *
  * ### Notes ###
  *
@@ -529,11 +533,20 @@ cylind_where_in_grid (int ndom, double x[])
 
   one_dom = &zdom[ndom];
 
-  z = x[2];                     /* signed z — each hemisphere has its own cells */
+  /* Data-based hemisphere detection: if wind_z[0] >= 0 the grid only covers
+     the upper hemisphere (either an imported single-hemisphere file or a
+     legacy grid), so fold lower-hemisphere positions via fabs.  If wind_z[0]
+     < 0 the grid covers both hemispheres (parameterized doubled grid or a
+     two-hemisphere import), so use signed z directly. */
+  if (zdom[ndom].wind_z[0] >= 0.0)
+    z = fabs (x[2]);
+  else
+    z = x[2];                   /* signed z — each hemisphere has its own cells */
   rho = sqrt (x[0] * x[0] + x[1] * x[1]);       /* This is distance from z axis */
 
   /* Check to see if x is outside the region of the calculation.
-     wind_z[0] is the lower boundary of the lower hemisphere. */
+     For parameterized grids wind_z[0] is the lower boundary of the lower
+     hemisphere; for imported grids wind_z[0] is near zero. */
   if (rho > one_dom->wind_x[one_dom->ndim - 1] || z > one_dom->wind_z[one_dom->mdim - 1] || z < one_dom->wind_z[0])
   {
     return (-2);                /* x is outside grid */
@@ -545,7 +558,8 @@ cylind_where_in_grid (int ndom, double x[])
   fraction (rho, one_dom->wind_x, one_dom->ndim, &i, &f, 0);
 
   /* Search the full wind_z array — lower hemisphere in [0..mdim_half-1],
-     upper hemisphere in [mdim_half..mdim-1]. */
+     upper hemisphere in [mdim_half..mdim-1] (parameterized); or the
+     single-hemisphere imported grid. */
   fraction (z, one_dom->wind_z, one_dom->mdim, &j, &f, 0);
 
   /* At this point i,j are just outside the x position */

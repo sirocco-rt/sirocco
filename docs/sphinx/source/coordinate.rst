@@ -32,18 +32,44 @@ The user specifies the number of grid cells in the z (or theta) direction
 **per hemisphere** via :doc:`/input/parameters/wind/Wind/Wind.dim.in.z_or_theta.direction`.
 The code doubles this internally so that the full grid covers both
 hemispheres.  For example, specifying 30 z-cells gives an internal grid
-of 60 z-cells: indices 0–29 for the lower hemisphere and 30–59 for the
-upper hemisphere in the cylindrical case, or indices 0–29 covering
-theta 0–90 deg and indices 30–59 covering theta 90–180 deg in the polar
-case.
+of 60 z-cells in the cylindrical case: indices 0–29 for the lower
+hemisphere (z < 0) and 30–59 for the upper hemisphere (z > 0).  For the
+polar case, indices 0–29 cover theta 0–90 deg (upper hemisphere) and
+indices 30–59 cover theta 90–180 deg (lower hemisphere).
 
-As a consequence, a few cells at each end of the theta (or z) range serve
-as guard (boundary buffer) cells and are set to ``W_NOT_INWIND``.  For
-polar grids the guard cells sit near the pole (theta ~ 0) and near the
-south pole (theta ~ 180 deg); for cylindrical grids they sit near the top
-and bottom of the grid.  The equatorial boundary between the two
-hemispheres has no guard cells: whether a cell adjacent to the disk plane
-is in the wind is determined purely by the wind-cone and disk geometry.
+Guard cells
+-----------
+
+A few cells at the outer boundary of each hemisphere are reserved as guard
+(boundary buffer) cells and are unconditionally set to ``W_NOT_INWIND``
+without consulting the wind-cone geometry.  Their purpose is to give the
+grid a well-defined outer edge and to prevent the interpolation stencil
+from reaching beyond the last real cell.
+
+For **cylindrical** grids, ``cylind_is_cell_in_wind`` excludes any cell
+for which the within-hemisphere z-index satisfies ``j_hemi >= mdim_half -
+2``, i.e. the two outermost cells of both the upper and lower hemispheres
+are guard cells.  In the radial direction, the two outermost r-cells
+(``i >= ndim - 2``) are also guard cells.
+
+For **polar** grids, ``rtheta_is_cell_in_wind`` excludes:
+
+* The two outermost radial cells (``i >= ndim - 2``), as in the
+  cylindrical case.
+* In the upper hemisphere (j = 0 .. mdim/2-1): the cell at j = 0 is a
+  north-pole guard (theta near 0).  There is **no equatorial guard** —
+  the cell immediately above the disk plane (j = mdim/2 - 1, theta just
+  below 90 deg) is classified by the wind-cone geometry, not pre-excluded.
+* In the lower hemisphere (j = mdim/2 .. mdim-1): the two cells closest
+  to the south pole (``j_hemi >= mdim_half - 2``, theta near 180 deg) are
+  guard cells.  Again, there is no equatorial guard on the lower-hemisphere
+  side.
+
+The asymmetry in polar guards (one guard at the north pole, two at the
+south pole, none at the equator) reflects the fact that the upper
+hemisphere is the primary wind domain and needs only minimal buffering at
+the pole, while the south pole acts as a true outer boundary that requires
+the same two-cell buffer used in the cylindrical case.
 
 The ``cyl_var`` coordinate system still uses a single-hemisphere internal
 grid with bilateral symmetry: lower-hemisphere photons are mapped to

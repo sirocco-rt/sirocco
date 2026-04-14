@@ -567,8 +567,16 @@ rtheta_cell_volume (WindPtr w)
  *
  * @details
  *
+ * For parameterized models theta = acos(x[2]/r)*RADIAN gives 0-180 deg
+ * over the full doubled grid so lower-hemisphere photons (theta > 90 deg)
+ * are correctly routed to lower-hemisphere cells.
+ *
+ * For imported models the grid covers the upper hemisphere only (theta
+ * 0-90 deg), so lower-hemisphere positions are folded via fabs(x[2]) to
+ * preserve bilateral symmetry, as in the pre-doubled-grid code.
+ *
  * ### Notes ###
- * Where_in grid does not tell you whether the x is in the wind or not.
+ * Where_in_grid does not tell you whether x is in the wind or not.
  *
  * What one means by inside or outside the grid may well be different
  * for different coordinate systems.
@@ -587,7 +595,16 @@ rtheta_where_in_grid (int ndom, double x[])
   mdim = zdom[ndom].mdim;
 
   r = length (x);
-  theta = acos (x[2] / r) * RADIAN;     /* signed: gives 0-180 deg for full doubled grid */
+  /* Data-based hemisphere detection: if wind_z[mdim-1] <= 90 the grid only
+     covers the upper hemisphere (imported single-hemisphere file or legacy
+     grid), so fold lower-hemisphere positions via fabs.  If wind_z[mdim-1]
+     > 90 the grid covers both hemispheres (parameterized doubled grid or a
+     two-hemisphere import), so use signed theta over the full 0-180 deg
+     range. */
+  if (zdom[ndom].wind_z[mdim - 1] <= 90.0)
+    theta = acos (fabs (x[2]) / r) * RADIAN;
+  else
+    theta = acos (x[2] / r) * RADIAN;   /* signed: gives 0-180 deg for full doubled grid */
 
   /* Check to see if x is outside the region of the calculation */
 

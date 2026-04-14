@@ -134,12 +134,28 @@ coord_fraction (int ndom, int ichoice, double x[], int ii[], double frac[], int 
   if (zdom[ndom].coord_type == CYLIND)
   {
     r = sqrt (x[0] * x[0] + x[1] * x[1]);
-    z = x[2];                   /* signed: lower-hemisphere cells have wind_z[j] < 0 */
+    /* Data-based hemisphere detection: if wind_z[0] >= 0 the grid only
+       covers the upper hemisphere (imported single-hemisphere file), so fold
+       lower-hemisphere positions via fabs.  If wind_z[0] < 0 the grid covers
+       both hemispheres (parameterized doubled grid or two-hemisphere import),
+       so use signed z directly. */
+    if (zdom[ndom].wind_z[0] >= 0.0)
+      z = fabs (x[2]);
+    else
+      z = x[2];                 /* signed: lower-hemisphere cells have wind_z[j] < 0 */
   }
   else if (zdom[ndom].coord_type == RTHETA)
   {
     r = length (x);
-    z = acos (x[2] / r) * RADIAN;       /* signed: gives 0-180 deg for full doubled grid */
+    /* Data-based hemisphere detection: if wind_z[mdim-1] <= 90 the grid only
+       covers the upper hemisphere (imported single-hemisphere file), so fold
+       lower-hemisphere positions.  If wind_z[mdim-1] > 90 the grid covers
+       both hemispheres (parameterized doubled grid or two-hemisphere import),
+       so use signed theta over the full 0-180 deg range. */
+    if (zdom[ndom].wind_z[zdom[ndom].mdim - 1] <= 90.0)
+      z = acos (fabs (x[2]) / r) * RADIAN;
+    else
+      z = acos (x[2] / r) * RADIAN;     /* signed: gives 0-180 deg for full doubled grid */
   }
   else if (zdom[ndom].coord_type == SPHERICAL)
   {

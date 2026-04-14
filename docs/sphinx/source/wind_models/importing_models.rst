@@ -91,10 +91,17 @@ Cylindrical Grids
 
 Using cylindrical coordinates, a 2.5D model can be read into SIROCCO.
 
-.. admonition :: Grid Coordinates
+.. admonition :: Grid Coordinates and hemisphere coverage
 
-    Note that the grid coordinates and the velocity is specified in Cartesian
-    coordinates.
+    Grid coordinates and velocities are specified in Cartesian coordinates.
+    The :math:`z` column gives the **signed** z coordinate.  SIROCCO detects
+    hemisphere coverage from the data:
+
+    * If all :math:`z` values are ≥ 0 (**single-hemisphere** file), lower-
+      hemisphere photons are automatically folded to their mirrored upper-
+      hemisphere cell so the wind is symmetric about the disk plane.
+    * If any :math:`z` value is < 0 (**two-hemisphere** file), each cell is
+      used for the hemisphere it belongs to, allowing asymmetric winds.
 
 To read in a grid of this type, the following columns are required for each cell:
 
@@ -142,11 +149,26 @@ Using polar coordinates, a 2.5D model can be read into SIROCCO.
 * :math:`T_{e}` (optional) :  the electron temperature in Kelvin
 * :math:`T_{r}` (optional) :  the radiation temperature in Kelvin
 
-.. admonition :: :math:`\theta`-cells
+.. admonition :: :math:`\theta`-cells and hemisphere coverage
 
-    The :math:`\theta` range should extend from at least 0 to 90°. It is
-    possible to extend beyond 90°, but these cells should not be inwind and
-    should be reserved as ghost cells.
+    The :math:`\theta` range must start near 0° (or have a guard cell at
+    the pole).  The range may stop at 90° (**single-hemisphere** file) or
+    extend beyond 90° up to 180° (**two-hemisphere** file).  SIROCCO
+    detects which case applies from the data itself:
+
+    * If the largest :math:`\theta` value in the file is ≤ 90°, the grid
+      is treated as covering only the upper hemisphere.  Lower-hemisphere
+      photons are automatically folded to their mirrored upper-hemisphere
+      cell, so the file is used symmetrically above and below the disk
+      plane.
+    * If any :math:`\theta` value exceeds 90°, the grid is treated as
+      covering both hemispheres.  Each cell is used for the hemisphere it
+      explicitly belongs to, allowing asymmetric upper/lower-hemisphere
+      winds.
+
+    In both cases guard cells at the pole (theta near 0°) and at the
+    south pole (theta near 180°, two-hemisphere only) must be included and
+    marked ``inwind = -1``.
 
 Setting Wind Temperatures
 -------------------------
@@ -198,10 +220,13 @@ have a velocity, but the mass density and temperatures should be zero.
 Cylindrical
 ^^^^^^^^^^^
 
-For cylindrical grids, the outer boundaries of the wind should have two layers
-of  guard cells in the same way as the a spherical grid, as above. For these
-cells, and all cells which do not make up the wind, an inwind value of -1 or -2
-should be set.
+For cylindrical grids, two guard cells are needed at the outer radial boundary
+(large x), and two guard cells at the outer z boundary of each hemisphere (the
+most negative z cells for the lower hemisphere, the most positive z cells for
+the upper hemisphere).  For single-hemisphere files the guard cells at z = 0
+(disk plane) are not required — SIROCCO classifies equatorial cells by wind
+geometry.  For all cells not in the wind, an inwind value of -1 or -2 should
+be set.
 
 .. figure:: ../images/import_cylindrical_inwind.png
     :width: 700px
@@ -213,13 +238,19 @@ should be set.
 Polar
 ^^^^^
 
-For polar grids, the outer boundaries of the wind should have two layers of
-guard cells in the same way as the a spherical grid, as above. For these cells,
-and all cells which do not make up the wind, an inwind value of -1 or -2 should be set.
+For polar grids, the outer boundaries of the wind should have guard cells in
+the same way as the spherical and cylindrical grids above.  For all cells not
+in the wind, an inwind value of -1 or -2 should be set.
 
-In this example, the theta cells extend beyond 90°. But, as they are not inwind,
-SIROCCO is happy to include these cells. For a stellar wind in polar coordinates,
-these extra :math:`\theta` cells extending beyond 90° are required.
+The required guard cells depend on the hemisphere coverage of the file:
+
+* **Single-hemisphere file** (theta ≤ 90°): include one guard cell at the pole
+  (theta near 0°) and at least one guard cell at theta = 90°.
+* **Two-hemisphere file** (theta up to 180°): include one guard cell at the
+  north pole (theta near 0°) and two guard cells at the south pole (theta near
+  180°).  Guard cells at the equatorial boundary (theta = 90°) are not required
+  because SIROCCO does not impose an equatorial guard for polar grids — cells
+  adjacent to the disk plane are classified by the wind-cone geometry.
 
 .. figure:: ../images/import_polar_inwind.png
     :width: 700px
