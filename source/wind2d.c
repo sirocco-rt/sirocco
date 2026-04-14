@@ -207,11 +207,16 @@ vwind_xyz (int ndom, PhotPtr p, double v[])
     else
     {
       /* For CYLIND, RTHETA, SPHERICAL: use per-cell corner velocities stored
-       * in wmain, avoiding coord_fraction's domain-array lookups. */
+       * in wmain, avoiding coord_fraction's domain-array lookups.
+       * Exception: imported models do not have corner velocities populated
+       * (create_wind_grid skips that step for IMPORT), so fall back to
+       * coord_fraction for them. coord_fraction handles the bilateral fold
+       * (fabs) for imported models internally. */
+      int use_corner_vels = (zdom[ndom].wind_type != IMPORT);
       n = where_in_grid (ndom, p->x);
-      if (n < 0)
+      if (n < 0 || !use_corner_vels)
       {
-        /* Outside grid — fall back to coord_fraction */
+        /* Outside grid, or imported model — use coord_fraction */
         coord_fraction (ndom, 0, p->x, nnn, frac, &nelem);
         for (i = 0; i < 3; i++)
         {
