@@ -8,15 +8,64 @@ tailored to handle vertically extended disks. These schemes are
 * 2-d cylindrical
 * 2-d polar or r-theta coordinates
 
-These options are controlled by the :doc:`/input/parameters/wind/Wind/Wind.coord_system` keyword. For vertically extended disks, a modified version of the a cylindrical schme is provided where the cells viewed along the x,z plane are parallelograms, so that the grid follows the disk surface.
+These options are controlled by the :doc:`/input/parameters/wind/Wind/Wind.coord_system` keyword. For vertically extended disks, a modified version of the cylindrical scheme is provided where the cells viewed along the x,z plane are parallelograms, so that the grid follows the disk surface.
 
-Although SIROCCO incorporates several models, such as the SV model for disk winds, that are continuous, the velocities and other proporites are placed on a grid, as part of the setup that goes on at the beginining of program execution.
+Although SIROCCO incorporates several models, such as the SV model for disk winds, that are continuous, the velocities and other properties are placed on a grid, as part of the setup that goes on at the beginning of program execution.
 
-It is up to the user to choose an appropriate coordinate system and the number of grid points 
+It is up to the user to choose an appropriate coordinate system and the number of grid points
 to include in any particular run of the program.
 
 As implemented within SIROCCO, the cells are created with a logarithmic spacing, that is the cells are larger the further they are from the central source (or disk plane).  The one exception to this is that for polar coordinates, the angular separation of cells is fixed.  For imported models, on
 the other hand, the user sets the exact coordinate gridding.
+
+Two-hemisphere grids
+====================
+
+For cylindrical and polar (r-theta) coordinate systems, SIROCCO uses a
+**full two-hemisphere grid** in which the upper hemisphere (z > 0 or
+theta < 90 deg) and the lower hemisphere (z < 0 or theta > 90 deg) each
+have their own independent set of cells.  This allows the wind to be
+asymmetric above and below the disk plane if desired, and ensures that
+estimators accumulated in one hemisphere do not contaminate the other.
+
+The user specifies the number of grid cells in the z (or theta) direction
+**per hemisphere** via :doc:`/input/parameters/wind/Wind/Wind.dim.in.z_or_theta.direction`.
+The code doubles this internally so that the full grid covers both
+hemispheres.  For example, specifying 30 z-cells gives an internal grid
+of 60 z-cells: indices 0–29 for the lower hemisphere and 30–59 for the
+upper hemisphere in the cylindrical case, or indices 0–29 covering
+theta 0–90 deg and indices 30–59 covering theta 90–180 deg in the polar
+case.
+
+As a consequence, a few cells at each end of the theta (or z) range serve
+as guard (boundary buffer) cells and are set to ``W_NOT_INWIND``.  For
+polar grids the guard cells sit near the pole (theta ~ 0) and near the
+south pole (theta ~ 180 deg); for cylindrical grids they sit near the top
+and bottom of the grid.  The equatorial boundary between the two
+hemispheres has no guard cells: whether a cell adjacent to the disk plane
+is in the wind is determined purely by the wind-cone and disk geometry.
+
+The ``cyl_var`` coordinate system still uses a single-hemisphere internal
+grid with bilateral symmetry: lower-hemisphere photons are mapped to
+their upper-hemisphere mirror cell before estimators are accumulated.
+This is a known limitation and may be addressed in a future release.
+
+Velocity interpolation
+======================
+
+Within each grid cell, SIROCCO performs a bilinear interpolation of the
+wind velocity using velocities stored at the four corners of the cell.
+For cylindrical cells the corners are at (rho_min, z_min), (rho_max, z_min),
+(rho_min, z_max) and (rho_max, z_max).  For polar cells the corners are at
+(r_inner, theta_inner), (r_outer, theta_inner), (r_inner, theta_outer) and
+(r_outer, theta_outer).  For 1-d spherical cells a linear interpolation in
+r between the inner and outer boundaries is used.
+
+The four corner velocities are computed during grid initialisation by
+``create_wind_grid`` and stored in the per-cell fields ``v``, ``v_rmax``,
+``v_thetamax``, and ``vmax`` of the ``WindPtr`` array.  This avoids
+repeated calls to the wind model during photon transport and gives a
+self-contained description of the velocity field within each cell.
 
 Obviously, the larger the coordinate grid, 100 x 100, say, compared to 30 x 30, the better the 
 grid reflects a model.  Equally obviously, the larger the coordiante grid, the larger the amount of memory the program will consume, and the larger the amount of computer time the program will take to run to completion.  The increased computing is largely associated with the fact that one needs a good representation of the spectral energy distribution in each cell in order to properly calculate the ionization state in each cell.
