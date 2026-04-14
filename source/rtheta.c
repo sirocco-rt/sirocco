@@ -104,20 +104,21 @@ rtheta_ds_in_cell (int ndom, PhotPtr p)
  *
  * @details
  *
+ * For spherical polar coordinates, i is the radial index (increasing i =
+ * increasing r) and j is the polar-angle index (increasing j = increasing
+ * theta measured from the z axis).
  *
- * 	For spherical polar, components we have defined the grid so that
- * 	i corresponds to a radial distance, and j corresponds to an angle,
- * 	e.g r theta.  increasing i corresponds to increasing distance,
- * 	and increasing j corresponds to increasing theta measured from
- * 	the z axis. (This it should be fairly easy to implement true
- * 	spherical coordinates in the future.
+ * The grid covers the full 0-180 degree range in theta, divided into two
+ * hemispheres.  The user specifies the number of cells per hemisphere;
+ * setup_domains doubles mdim so that:
+ *   - j = 0 .. mdim/2-1  : upper hemisphere (theta 0-90 deg, x[2] >= 0)
+ *   - j = mdim/2 .. mdim-1: lower hemisphere (theta 90-180 deg, x[2] <= 0)
  *
- * 	There are two basic options:
- *
- * 	The r-spacing can be linear, or logarithmic.
- *
- * 	The theta spacing is always linear
- *
+ * The radial spacing can be linear or logarithmic.  The theta spacing is
+ * always linear, with dtheta = 90/mdim_half.  This choice ensures that
+ * wind_z[mdim/2] = 90 deg exactly, so the binary search in
+ * rtheta_where_in_grid routes every photon with theta >= 90 deg correctly
+ * to a lower-hemisphere cell.
  *
  * ### Notes ###
  *
@@ -152,11 +153,23 @@ rtheta_make_grid (int ndom, WindPtr w)
      to propagate. */
 
   /* The user specifies cells per hemisphere; mdim was doubled in setup_domains.
-     Use mdim/2 (cells per hemisphere) to set dtheta, matching the v2.0 formula
-     dtheta = 90./(mdim_user-2) exactly. The full grid covers 0-180 deg:
-     j=0..mdim/2-1 is the upper hemisphere, j=mdim/2..mdim-1 is the lower hemisphere. */
+     The full grid covers 0-180 deg: j=0..mdim/2-1 is the upper hemisphere,
+     j=mdim/2..mdim-1 is the lower hemisphere.
+
+     dtheta = 90/mdim_half ensures that j=mdim_half gives theta=90 deg exactly,
+     so that any photon with theta>=90 (z<=0) is correctly routed to a lower
+     hemisphere cell by the binary search in rtheta_where_in_grid.  The old
+     formula 90/(mdim_half-2) was designed for a single-hemisphere grid where
+     the last two cells (at theta~90 and ~90+dtheta) were guard cells; when
+     applied to the doubled grid it made the lower hemisphere start at
+     theta=90*mdim_half/(mdim_half-2) > 90, leaving a gap around the equatorial
+     plane where lower-hemisphere photons were misrouted into upper-hemisphere
+     cells.  With the new formula the guard cells in each hemisphere sit at
+     theta=(mdim_half-2)*dtheta and (mdim_half-1)*dtheta, which are both
+     slightly below 90 deg (upper) or above 90 deg (lower) — still well clear
+     of the active wind zone for typical models. */
   int mdim_half = mdim / 2;
-  dtheta = 90. / (mdim_half - 2);
+  dtheta = 90. / mdim_half;
 
 
   /* First calculate parameters that are to be calculated at the edge of the grid cell.  This is
@@ -279,7 +292,7 @@ rtheta_make_cones (int ndom, WindPtr w)
 
 /**********************************************************/
 /**
- * @brief      Complete the creation of an rtheta wind comain by populating certain arrays used for interpolation
+ * @brief      Complete the creation of an rtheta wind domain by populating certain arrays used for interpolation
  *
  * @param [in] int  ndom   The domain containing this wind component
  * @param [in] WindPtr  w   The entire wind
@@ -287,12 +300,24 @@ rtheta_make_cones (int ndom, WindPtr w)
  *
  * @details
  *
- * ### Notes ###
+ * This routine sets up several arrays used to locate photons within the grid
+ * and to compute ds_in_cell distances:
  *
- * This routine sets up a few arrays in domains that have rtheta
- * coordiantes.  These arrays are used to determine where in
- * a cell one is, and how far it is to the edge of the cell
- * for photon bundles.
+ * - wind_x[]/wind_z[] and wind_midx[]/wind_midz[] 1-d lookup arrays for the
+ *   binary searches in rtheta_where_in_grid and coord_fraction.  wind_z[]
+ *   stores theta in degrees over the full 0-180 range.
+ *
+ * - Per-cell wcone and wcone_max structures (inner and outer theta-cone
+ *   boundaries).  For upper-hemisphere cells dzdr = 1/tan(theta) > 0; for
+ *   lower-hemisphere cells (theta > 90 deg) dzdr < 0.  ds_to_cone handles
+ *   both signs correctly via dzdr^2 in the quadratic it solves.  The polar
+ *   axis (theta = 0) and south-pole axis (theta = 180 deg) are represented
+ *   with dzdr = VERY_BIG and -VERY_BIG respectively.
+ *
+ * - Per-cell rmax and thetamax (outer radial and theta boundaries) and xmax
+ *   (corresponding Cartesian position).
+ *
+ * ### Notes ###
  *
  * The routine is called when the domain is set up, and called
  * again whenever the windsave file is read in.
@@ -405,11 +430,13 @@ rtheta_wind_complete (int ndom, WindPtr w)
  *
  * ### Notes ###
  *
+ * This is a brute-force integration of the volume.
  *
- * This is a brute-force integration of the volume
- *
- * In calculating volumes we allow for the fact that a cell
- * exists above and below the plane of the disk
+ * Each cell covers only one hemisphere: upper-hemisphere cells span
+ * theta in (0, 90) deg and lower-hemisphere cells span theta in (90, 180) deg.
+ * The analytic cell volume is 2*pi/3 * (r_max^3 - r_min^3) * (cos(theta_min) -
+ * cos(theta_max)), which is positive for both hemispheres because cos is a
+ * decreasing function.
  *
  *
  **********************************************************/
@@ -591,19 +618,20 @@ rtheta_where_in_grid (int ndom, double x[])
  * @brief  generate a position in cell that is in the wind.
  *
  * @param [in] int  n   Cell in which random position is to be generated
- * @param [out] double  x[]   The position that was randomly genrated in the cell
- * @return     An integer indicated whether 
- * whether this position is above or below the midplane
+ * @param [out] double  x[]   The position that was randomly generated in the cell
+ * @return     W_ALL_INWIND once a valid in-wind position has been found
  *
  * @details
  *
- * The routine generates a position that is in the cell and in the wind.
- *
+ * The routine generates a random position that is both within the cell and
+ * within the wind.  Positions are first generated as if in the upper hemisphere
+ * (x[2] >= 0), then flipped to x[2] < 0 if the cell belongs to the lower
+ * hemisphere (j >= mdim/2).
  *
  * ### Notes ###
  *
  * There is no check in the routine to see if there is any volume in the
- * wind, so one could get stuck here if there is no wind volume in the cell
+ * wind, so one could get stuck here if there is no wind volume in the cell.
  *
  **********************************************************/
 
@@ -764,11 +792,21 @@ rtheta_extend_density (int ndom, WindPtr w)
  *
  * The routine was created to speed up the evaluation of the volumes for the wind.  It
  * checks each of the four boundaries of the wind to see whether any portions
- * of these are in the wind
+ * of these are in the wind.
  *
- * Comment:  The routine is only called by rtheta_volumes, and so we
- * already know that this cell is part of an rtheta coordiante
- * system.
+ * Guard-cell logic:
+ * - Outer radial guard: the last 2 cells in the i (radial) direction are
+ *   always W_NOT_INWIND, providing an interpolation buffer at the outer edge.
+ * - Theta-direction guards differ between hemispheres.  Upper-hemisphere cells
+ *   (j < mdim/2) have no guard at the equatorial boundary: the equatorial
+ *   cells are classified purely by the wind-cone/disk geometry.  Lower-
+ *   hemisphere cells (j >= mdim/2) retain a 2-cell guard at the south-pole
+ *   end (j_hemi >= mdim_half-2), analogous to the top-of-grid guard in CYLIND.
+ *   The old equatorial guard for the upper hemisphere was vestigial from the
+ *   single-hemisphere code and caused an asymmetry between the two hemispheres.
+ *
+ * Comment:  The routine is only called by rtheta_cell_volume, and so we
+ * already know that this cell is part of an rtheta coordinate system.
  *
  *
  **********************************************************/
@@ -792,16 +830,27 @@ rtheta_is_cell_in_wind (int n)
   ndim = zdom[ndom].ndim;
   mdim = zdom[ndom].mdim;
 
-  /* With the doubled grid (upper hemisphere j=0..mdim/2-1, lower j=mdim/2..mdim-1),
-     guard cells are the outer 2 cells of each hemisphere in the theta direction.
-     For the upper hemisphere "outer" means large theta (near 90 deg equatorial boundary).
-     For the lower hemisphere "outer" means large theta (near 180 deg south pole).
-     j_hemi is the within-hemisphere theta index: 0=innermost (near pole/equatorial
-     boundary), mdim_half-1=outermost (near equatorial boundary/south pole). */
+  /* Outer radial guard: always exclude the last 2 cells in r. */
+  if (i >= (ndim - 2))
+  {
+    return (W_NOT_INWIND);
+  }
+
+  /* Theta-direction guards.
+     With the doubled grid (upper hemisphere j=0..mdim/2-1, lower j=mdim/2..mdim-1):
+     - Upper hemisphere: no guard at the equatorial boundary.  The equatorial cells are
+     now active and classified by the wind-cone/disk geometry below, just like the
+     lower hemisphere equatorial cells.  The old equatorial guard was inherited from
+     the single-hemisphere code and caused an asymmetry: upper hemisphere cells near
+     the disk were always W_NOT_INWIND while the mirror lower hemisphere cells were not.
+     - Lower hemisphere: retain the 2-cell guard at the south-pole end (large theta,
+     j_hemi near mdim_half-1).  These are a true outer boundary, analogous to the
+     top-of-grid guard in CYLIND. */
   {
     int mdim_half = mdim / 2;
-    int j_hemi = (j >= mdim_half) ? (j - mdim_half) : j;
-    if (i >= (ndim - 2) || j_hemi >= (mdim_half - 2))
+    int is_lower = (j >= mdim_half);
+    int j_hemi = is_lower ? (j - mdim_half) : j;
+    if (is_lower && j_hemi >= (mdim_half - 2))
     {
       return (W_NOT_INWIND);
     }

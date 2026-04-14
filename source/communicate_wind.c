@@ -34,6 +34,12 @@
  * bigger and a new `MPI_Pack` and `MPI_Unpack` call need to be added. See the
  * developer documentation for more details.
  *
+ * The packed fields per cell include: nwind, nplasma, inwind, ndom, coord_type;
+ * x, xcen, xmax (3-vectors); r, rcen, rmax, theta, thetacen, thetamax, dtheta,
+ * dr (scalars); wcone and wcone_max (cone structures); v, v_rmax, v_thetamax,
+ * vmax (3-vector velocities at the four cell corners); v_grad (9-component
+ * gradient tensor); div_v, dvds_ave, dfudge, vol (scalars).
+ *
  **********************************************************/
 
 void

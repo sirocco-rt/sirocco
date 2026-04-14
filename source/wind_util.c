@@ -65,8 +65,8 @@ int ierr_coord_fraction = 0;
  * 	is no easy way to interpolate the variable easily.
  * 	What this routine does is calculate the fractional
  * 	contributions of elements in the array to that
- * 	position.  Then one must sum up the actual values  
- * 	elsewhere
+ * 	position.  Then one must sum up the actual values
+ * 	elsewhere.
  *
  * 	If positions are outside the grid, coord_fraction
  * 	attempts to give you the value at the edge of the
@@ -75,7 +75,17 @@ int ierr_coord_fraction = 0;
  * 	It's possible that coord_fraction could be used
  * 	to interpolate beyond the edge of the grid where
  * 	a variable is defined, although this is not done
- * 	at present!
+ * 	at present.
+ *
+ * 	Coordinate conversion for each grid type:
+ * 	- CYLIND:  r = rho (cylindrical radius), z = x[2] (signed; negative for
+ * 	  lower hemisphere).  wind_z[] stores signed z values covering both
+ * 	  hemispheres.
+ * 	- RTHETA:  r = |x| (spherical radius), z = acos(x[2]/r)*RADIAN giving
+ * 	  theta in [0, 180] deg over the full doubled grid.  No fabs is applied
+ * 	  to x[2], so lower-hemisphere positions (x[2] < 0) give theta > 90 deg
+ * 	  and are correctly mapped to lower-hemisphere cells.
+ * 	- SPHERICAL: r = |x|, z unused (1d grid).
  *
  **********************************************************/
 

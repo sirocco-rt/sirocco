@@ -583,6 +583,16 @@ complete_wind_grid_creation (void)
  * domain structure are also defined in here, as well as the number of plasma
  * cells (e.g. cells with non-zero volume).
  *
+ * In addition to the velocity at the inner-corner position x (stored in v),
+ * this routine populates three further per-cell corner velocities used for
+ * bilinear interpolation in vwind_xyz:
+ *   - v_rmax:    velocity at (r_outer, theta_inner) for RTHETA; (rho_max, z_min) for CYLIND
+ *   - v_thetamax: velocity at (r_inner, theta_outer) for RTHETA; (rho_min, z_max) for CYLIND
+ *   - vmax:      velocity at the outer corner xmax (r_outer, theta_outer)
+ * For SPHERICAL only two corners are meaningful; v_rmax and v_thetamax are set
+ * to copies of v and vmax respectively.  CYLVAR cells are deferred (their
+ * non-rectangular geometry requires a different approach).
+ *
  * ### Notes ###
  *
  * To speed up grid creation, make_coordinate_grid(), calculate_cell_volume()

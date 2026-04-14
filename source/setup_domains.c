@@ -29,7 +29,7 @@
  *
  * Sets up the one domain, which includes defining wind type, e.g whether
  * it is a shell, or a biconical flow, or an imported model, as well
- * as the type of coordinate system and its simensions.
+ * as the type of coordinate system and its dimensions.
  *
  * If the wind is to be imported from a file, it is imported in this
  * routine.
@@ -37,8 +37,13 @@
  * ###Notes###
  * 1801 -   Refactored into this file in 1801.  Updates in the
  *          fall of 17 were made to allow for importing models.
- *          Note that cyl_var coordinates are not currently 
- *          working
+ *          Note that cyl_var coordinates are not currently
+ *          working.
+ *
+ * For CYLIND and RTHETA grids the user specifies the number of z or theta
+ * cells per hemisphere.  This routine doubles mdim so that the internal grid
+ * covers both hemispheres.  All downstream code (wind_ij_to_n,
+ * cylind_make_grid, rtheta_make_grid, etc.) uses the doubled value.
 ***********************************************************/
 
 

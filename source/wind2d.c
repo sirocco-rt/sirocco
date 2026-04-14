@@ -115,36 +115,39 @@ int ierr_vwind = 0;
  * photon position is not in the in the grid for the domain of interest.
  *
  * @details
- * This routine carries out a bilinear interpolation of the wind velocity.  The velocities
- * at the edges of the grid cells must have been defined elsewhere (e.g in wind_define).
+ * This routine carries out interpolation of the wind velocity using per-cell
+ * corner velocities stored in wmain (v, v_rmax, v_thetamax, vmax), which are
+ * populated by create_wind_grid.
  *
- * If the position is outside the wind grid, then the velocities will be returned as 0.
+ * For CYLIND and RTHETA: bilinear interpolation in (rho, z) or (r, theta)
+ * using the four per-cell corners.  Lower-hemisphere cells have correctly-signed
+ * coordinates (negative z or theta > 90 deg), so no hemisphere flip is needed.
+ *
+ * For SPHERICAL: linear interpolation in r between wmain[n].v (inner) and
+ * wmain[n].vmax (outer).
+ *
+ * For CYLVAR: falls back to coord_fraction on the domain-level arrays, because
+ * CYLVAR cells have non-rectangular geometry that does not fit the per-cell
+ * corner scheme.  CYLVAR still uses bilateral symmetry and the z-velocity is
+ * flipped for lower-hemisphere photons.
+ *
+ * If the position is outside the wind grid, coord_fraction is used as a fallback.
  *
  * ### Notes ###
- * For all of the 2d coordinate systems, the positions in the WindPtr array are
- * calculated in the xz plane.  As a result, the velocities in that array are
- * calcuated there as well.  Hence, to obtain the velocity in cartesion coordinates
- * one needs to do a simple rotation of the velocity vector.
+ * For all 2d coordinate systems, the positions in the WindPtr array are
+ * in the xz plane, so a rotation from xz to the actual photon azimuth is
+ * applied after the interpolation.
  *
- * For spherical (1d) coordinates the situation is complex, the philosopy that
- * has been adopted is to let the program run as if the wind model is intrinsically
- * 2d.   The xyz positions of the grid are defined are defined so that
- * are in the xz plane at an angle of 45 degrees to the x axis.  This was done
- * so that if one used, say an sv wind, in spherical coordinates, one would select
- * the wind velocities at a plausible location.   But it implies that the velocities
- * that have been accepted are not purely radial as one might expect.  The choice
- * that has been made is to assume that v[1] is preserved as a non zero value in
- * making the projection.  An alternative might have been to preserve the angular
- * rotation rate.
+ * For spherical (1d) coordinates the philosophy is to run as if the wind model
+ * is intrinsically 2d.  The xyz positions of the grid are in the xz plane at
+ * 45 degrees to the x axis.  The choice is to preserve v[1] as a non-zero
+ * value in making the projection.
  *
- * If we ever implement a real 3d coordinate system, one will need to look at
- * this routine again.
+ * The routine caches recent results and short-circuits the calculation if the
+ * same position is requested again.
  *
- * The routine checks to see whether the position for which the velocity is needed
- * and if so short-circuits the calculation returning a stored value
- *
- * vwind_xyz expects the photon position to be in the Observer frame
- * It returns the velocity in the Observer frame.
+ * vwind_xyz expects the photon position to be in the Observer frame and returns
+ * the velocity in the Observer frame.
  *
  **********************************************************/
 

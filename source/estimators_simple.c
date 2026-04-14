@@ -240,22 +240,23 @@ update_banded_estimators (PlasmaPtr xplasma, PhotPtr p, double ds, double w_ave,
  *
  * ### Notes ###
  *
- * 
- * In non macro atom mode, w_ave
- * this is an average weight (passed as w_ave), but 
- * in macro atom mode weights are never reduced (so p->w 
- * is used).
+ * In non macro atom mode, w_ave is an average weight (passed as w_ave), but
+ * in macro atom mode weights are never reduced (so p->w is used).
  *
  * This routine is called from bf_estimators in macro_atom modes
  * and from radiation.  Although the historical documentation
  * suggests it is only called for certain ionization modes, it appears
- * to be called in all cases, though clearly it is only provides diagnostic
+ * to be called in all cases, though clearly it only provides diagnostic
  * information in some of them.
  *
+ * The flux estimators are constructed in the Observer frame;
+ * inputs are expected to be in the Observer frame.
  *
- * The flux estimators are constructed in the Observer frame
- * As a result, inputs are also expected to be in the Observer frame
- * 
+ * The z-component sign flip (for lower-hemisphere photons contributing to
+ * the vertical flux) is applied only for CYLVAR, which still uses bilateral
+ * symmetry.  CYLIND and RTHETA have per-hemisphere cells with correctly-signed
+ * coordinates and need no flip.
+ *
  **********************************************************/
 
 
@@ -377,8 +378,13 @@ update_flux_estimators (PlasmaPtr xplasma, PhotPtr phot_mid, double ds_obs, doub
  *
  * ### Notes ###
  *
- * We calculate the force estimators in the observer
- * frame and thus require input quantities in the observer frame.
+ * We calculate the force estimators in the observer frame and thus require
+ * input quantities in the observer frame.
+ *
+ * The z-component sign flip of the cylindrical momentum increment (for
+ * lower-hemisphere photons) is applied only for CYLVAR, which still uses
+ * bilateral symmetry.  CYLIND and RTHETA have per-hemisphere cells and need
+ * no flip.
  *
  **********************************************************/
 

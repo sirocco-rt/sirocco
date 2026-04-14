@@ -36,10 +36,14 @@
  * to determine the distance a photon can travel within a cylindrical
  * cell before hitting the edge of the cell.
  *
+ * The z boundaries of the cell are taken directly from wmain[n].x[2]
+ * (inner z, signed) and wmain[n].xmax[2] (outer z, signed).  Lower-hemisphere
+ * cells have both values negative, so no sign flip is needed regardless of
+ * the hemisphere the photon is in.
  *
  * ### Notes ###
  *
- * The distance if the smallest positive root of the quadratic
+ * The distance is the smallest positive root of the quadratic
  * equation.
  *
  *
@@ -502,9 +506,14 @@ cylind_cell_volume (WindPtr w)
  *
  * @details
  *
+ * The routine uses signed z = x[2] directly and searches the full wind_z[]
+ * array, which covers both hemispheres: lower hemisphere in indices
+ * [0..mdim/2-1] (wind_z[] < 0) and upper hemisphere in [mdim/2..mdim-1]
+ * (wind_z[] >= 0).  No folding to |z| is performed.
+ *
  * ### Notes ###
  *
- * The routine does not tell you whether the x is in the wind or not,
+ * The routine does not tell you whether x is in the wind or not,
  * just that it is in the region covered by the grid.
  *
  **********************************************************/

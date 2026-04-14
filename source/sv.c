@@ -269,6 +269,10 @@ sv_velocity (double x[], double v[], int ndom)
  * 	trace back to the disk, and have the same properties at that radius
  * 	as they would have had except for a vertical offset.
  *
+ * The continuity equation involves v_z, which is negative for lower-hemisphere
+ * cells.  fabs(v[2]) is used so that the density is positive in both
+ * hemispheres.
+ *
  **********************************************************/
 
 double

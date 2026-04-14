@@ -139,8 +139,12 @@ do_windsave2table (char *root, int ion_switch, int edge_switch)
  * and send the appropriate call to either get_one or get_ion.
  *
  * There is some duplicated code in the routine that pertains
- * to whether one is dealing with a spherecial or a 2d coordinate
- * system.  It should be possible to delete this
+ * to whether one is dealing with a spherical or a 2d coordinate
+ * system.  It should be possible to delete this.
+ *
+ * The z and zcen columns use a leading-space format (% 9.2e) so that
+ * negative values in lower-hemisphere cells do not displace the column
+ * alignment.
  *
  **********************************************************/
 

@@ -31,7 +31,7 @@
  *
  * ### Notes ###
  * For spherical coordinates the routine calculates the gradient
- * on the fly, that is moves the photon a bit and calculates dvds
+ * on the fly, that is moves the photon a bit and calculates dvds.
  *
  * For 2d systems, the velocity gradient is calculated using
  * the velocity gradient tensors, which contain the velocity
@@ -39,13 +39,18 @@
  *
  * It's not clear how much faster the method used for 2d systems
  * actually is, and one might want to consider the on-the-
- * fly appoach for all systems.
+ * fly approach for all systems.
  *
  * Note that as calculated here dvds can be negative, although
  * in many cases what one wants is the absolute value of dvds.
  * But this has to be calculated at the spot where dvds is used,
- * since oftend dvds is calculated at two positions and interperlated.
+ * since often dvds is calculated at two positions and interpolated.
  * So it would be a mistake to calculate the absolute value here.
+ *
+ * The lower-hemisphere photon flip (x[2] -> -x[2] before grid lookup) is
+ * applied only for CYLVAR, which still uses bilateral symmetry.  CYLIND and
+ * RTHETA have been doubled to cover both hemispheres independently, so their
+ * photons must not be flipped.
  *
  **********************************************************/
 

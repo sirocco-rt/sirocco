@@ -857,11 +857,16 @@ calls to two_level atom
  *
  * ### Notes ###
  * This is the routine that is called when a resonant scatter does occur.  It is
- * relevant for both simple and macro atoms
+ * relevant for both simple and macro atoms.
  *
  * This routine should not move the photon at all, because other routines need to
  * take this photon in differing directions, and if one moves it here they may
- * encounter this resonance again
+ * encounter this resonance again.
+ *
+ * The z-component sign flip of the cylindrical momentum transfer (for lower-
+ * hemisphere photons) is applied only for CYLVAR, which still uses bilateral
+ * symmetry.  CYLIND and RTHETA have per-hemisphere cells with correctly-signed
+ * coordinates and need no flip.
  *
  **********************************************************/
 

@@ -46,10 +46,13 @@
  *
  * @details
  *
- * The routine simply determines which grid cell the photon is
- * in and then solves two quadradic equations for the distance
- * to the inner and outer boundary of the cell.  The routine
- * returns the smallest positive distance.
+ * The routine determines which grid cell the photon is in and then solves
+ * two quadratic equations for the distance to the inner and outer radial
+ * boundary of the cell.  The routine returns the smallest positive distance.
+ *
+ * The radial boundaries are taken from the per-cell values wmain[n].r and
+ * wmain[n].rmax, which are set by spherical_wind_complete.  This avoids
+ * indexing into the domain-level wind_x[] array.
  *
  * ### Notes ###
  *
@@ -185,8 +188,12 @@ spherical_make_grid (int ndom, WindPtr w)
  *
  * @details
  *
- * This simple little routine just populates one dimensional
- * arrays that are used for interpolation.
+ * This routine populates the one-dimensional lookup arrays (wind_x[],
+ * wind_midx[]) used for binary searches and interpolation, and sets the
+ * per-cell xmax and rmax fields in wmain.  xmax follows the 45-degree
+ * convention (xmax[0] = xmax[2] = r_outer * sin(pi/4)) consistent with
+ * how x is defined.  rmax stores the outer radial boundary r_outer directly
+ * for use in spherical_ds_in_cell.
  *
  * ### Notes ###
  *
