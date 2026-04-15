@@ -26,7 +26,7 @@ The first set of parameters which SIROCCO needs are information about the overal
    Central_object.rad_type_to_make_wind(bb,models,power,cloudy,brems,mono)                power
    Central_object.luminosity(ergs/s)          4.72063e+37
    Central_object.power_law_index                 -1.5
-   Central_object.geometry_for_source(sphere,lamp_post,bubble)               sphere
+   Central_object.geometry_for_source(sphere,lamp_post,bubble,iso)               sphere
 
 :ref:`System_type` is starting point, a basic classification of the type of object one is trying to model.
 This is used to guide further questions about the object and to set defaults.

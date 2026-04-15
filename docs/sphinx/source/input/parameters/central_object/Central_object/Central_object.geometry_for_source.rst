@@ -20,8 +20,13 @@ Values
     are re-generated.
 
   bubble
-    The central source radiates from random positions within a sphere of a given radius. 
-    This model generates isotropic photons.
+    The central source radiates from between two spheres, one with radius :ref:`Central_object.radius` 
+    and one with radius :ref:`Central_object.bubble_size`. The photon directions are individually isotropic but do not necessarily
+    create a truly isotropic source.
+
+  iso 
+    The central source radiates from the surface of a sphere with radius :ref:`Central_object.radius`.
+    Emission is truly isotropic, so photons are emitted in the same direction as the random point on the sphere surface where they are emitted.
 
 File
   `setup_star_bh.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup_star_bh.c>`_
@@ -35,4 +40,5 @@ Parent(s)
 
 Child(ren)
   * :ref:`Central_object.lamp_post_height`
+  * :ref:`Central_object.bubble_size`
 
