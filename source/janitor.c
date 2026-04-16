@@ -87,6 +87,7 @@ free_domains (void)
   }
 
   free (zdom);
+  zdom = NULL;
 }
 
 /**********************************************************/
@@ -124,6 +125,7 @@ free_wind_grid (void)
 #endif
   {
     free (wmain);
+    wmain = NULL;
   }
 }
 
@@ -183,6 +185,7 @@ free_plasma_grid (void)
   }
 
   free (plasmamain);
+  plasmamain = NULL;
 }
 
 /**********************************************************/
@@ -237,6 +240,7 @@ free_macro_grid (void)
   }
 
   free (macromain);
+  macromain = NULL;
 }
 
 /**********************************************************/

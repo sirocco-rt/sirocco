@@ -24,7 +24,7 @@ Wind.type(SV,star,hydro,corona,kwd,homologous,shell,imported)                   
 Wind.coord_system(spherical,cylindrical,polar,cyl_var)          cylindrical
 Wind.dim.in.x_or_r.direction               30
 Wind.dim.in.z_or_theta.direction           30
-Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,fixed,matrix_bb,matrix_pow,matrix_est)            matrix_bb
+Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,LTE_iterate,fixed,matrix_bb,matrix_pow,matrix_est,matrix_multishot)            matrix_bb
 Line_transfer(pure_abs,pure_scat,sing_scat,escape_prob,thermal_trapping,macro_atoms_escape_prob,macro_atoms_thermal_trapping)     thermal_trapping
 Wind.radiation(yes,no)                          yes
 Surface.reflection.or.absorption(reflect,absorb,thermalized.rerad)               absorb
