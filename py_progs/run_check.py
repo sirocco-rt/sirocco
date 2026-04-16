@@ -143,7 +143,7 @@ def xwindsave2table(root):
             xver=words[3]
             command='windsave2table%s %s' % (xver,root)
         else:
-            return FALSE
+            return False
 
 
     print('We will try this command instead :', command)

@@ -131,6 +131,10 @@ init_geo ()
 
   geo.wcycles = geo.pcycles = 1;
   geo.wcycle = geo.pcycle = 0;
+  geo.convergence_tolerance = 2;        /* 2% tolerance */
+  geo.convergence_fraction = 80;        /* 80% floor */
+  geo.min_ionization_cycles = 0;
+  geo.convergence_lookback = 5;
 
   // Note that geo.model_list is initialized through get_spectype
   geo.model_count = 0;          //The number of models read in
@@ -349,6 +353,7 @@ init_advanced_modes ()
   modes.partial_cells = PC_ZERO_DEN;    /* Default is to omit partial cells in calculation */
 
   modes.no_macro_pops_for_ions = FALSE; /* use the ion densities from macro_pops where applicable */
+  modes.early_stopping = FALSE; /* convergence-based early stopping of ionization cycles */
 
   return (0);
 }
@@ -627,6 +632,51 @@ init_photons ()
 
 
   rdint ("Ionization_cycles", &geo.wcycles);
+
+  if (modes.early_stopping)
+  {
+    rddoub ("@estop.Ionization_cycles.convergence_tolerance(%)", &geo.convergence_tolerance);
+    if (geo.convergence_tolerance > 50.0)
+    {
+      Error ("convergence_tolerance (%.1f%%) is very large, clamping to 50%%\n", geo.convergence_tolerance);
+      geo.convergence_tolerance = 50.0;
+    }
+    if (geo.convergence_tolerance <= 0.0)
+    {
+      Error ("convergence_tolerance (%.1f%%) must be > 0, setting to 2%%\n", geo.convergence_tolerance);
+      geo.convergence_tolerance = 2.0;
+    }
+    rddoub ("@estop.Ionization_cycles.convergence_fraction(%)", &geo.convergence_fraction);
+    if (geo.convergence_fraction < 0.0)
+    {
+      Error ("convergence_fraction (%.1f%%) cannot be negative, setting to 0%%\n", geo.convergence_fraction);
+      geo.convergence_fraction = 0.0;
+    }
+    if (geo.convergence_fraction > 100.0)
+    {
+      Error ("convergence_fraction (%.1f%%) cannot exceed 100%%, clamping to 100%%\n", geo.convergence_fraction);
+      geo.convergence_fraction = 100.0;
+    }
+    rdint ("@estop.Ionization_cycles.min_cycles", &geo.min_ionization_cycles);
+    if (geo.min_ionization_cycles < 0)
+    {
+      Error ("min_ionization_cycles (%d) must be >= 0, setting to 0\n", geo.min_ionization_cycles);
+      geo.min_ionization_cycles = 0;
+    }
+    rdint ("@estop.Ionization_cycles.convergence_lookback", &geo.convergence_lookback);
+    if (geo.convergence_lookback > CONVERGENCE_HISTORY_MAX)
+    {
+      Error ("convergence_lookback (%d) exceeds maximum (%d), clamping\n", geo.convergence_lookback, CONVERGENCE_HISTORY_MAX);
+      geo.convergence_lookback = CONVERGENCE_HISTORY_MAX;
+    }
+    if (geo.convergence_lookback < 2)
+    {
+      Error ("convergence_lookback (%d) must be >= 2, setting to 2\n", geo.convergence_lookback);
+      geo.convergence_lookback = 2;
+    }
+    Log ("Early stopping enabled: tolerance = %.1f%%, fraction floor = %.1f%%, min_cycles = %d, lookback = %d\n",
+         geo.convergence_tolerance, geo.convergence_fraction, geo.min_ionization_cycles, geo.convergence_lookback);
+  }
 
   /* On restarts, the spectra that are read in have to be renormalized if
    * the number of spectral cycles has been increased before a restart, and
