@@ -322,6 +322,7 @@ After any broadcast that writes to shared dynamic arrays, an
 ``MPI_Barrier(node_comm)`` ensures all node-local ranks see the new data
 before proceeding.  These barriers appear at the end of:
 
+- ``broadcast_wind_grid()``
 - ``broadcast_updated_plasma_properties()``
 - ``broadcast_plasma_grid()``
 - ``broadcast_wind_luminosity()``
@@ -329,6 +330,25 @@ before proceeding.  These barriers appear at the end of:
 - ``broadcast_updated_macro_atom_properties()``
 - ``broadcast_macro_atom_emissivities()``
 - ``reduce_macro_atom_estimators()``
+
+A barrier is also placed in ``calloc_wind()`` (``gridwind.c``) immediately after
+the node leader's ``memset`` that zero-initialises the shared ``wmain`` block,
+ensuring the zeroed memory is visible to all node-local ranks before any rank
+begins writing wind-cell fields.
+
+Two additional barriers appear in ``create_wind_grid()`` (``define_wind.c``):
+
+- Before ``make_coordinate_grid()`` — ensures all ranks have completed the
+  serial ``wmain`` field initialisation loop (which writes ``inwind =
+  W_NOT_ASSIGNED``) before any rank enters ``make_coordinate_grid()``, which
+  for imported models overwrites ``inwind`` with values from the import file.
+  Without this, a fast rank's import writes can be overwritten by a slow rank's
+  init-loop writes, leaving cells with ``inwind = W_NOT_ASSIGNED``.
+- After ``wind_complete()`` — ensures all ranks have finished
+  ``make_coordinate_grid()`` and ``wind_complete()`` before any rank enters
+  the parallel volume/velocity loop.  Without this, a fast rank can read a
+  cell's ``inwind`` value before a slow rank has finished writing it from the
+  coordinate grid setup.
 
 During photon transport, state arrays are read-only so no synchronisation
 is required.  The ``sobolev()`` function in ``resonate.c`` previously
@@ -426,3 +446,67 @@ The chunk size is computed at runtime as
 1000 cells per chunk and 13 Allreduce calls instead of one for big.pf.
 Peak transient memory is reduced from ~1.17 GB to ~50 MB at the cost of
 a small increase in Allreduce call overhead.
+
+Platform differences: macOS vs Linux
+=====================================
+
+The shared-memory code paths behave differently on macOS and Linux.  Because of
+this, certain classes of bug are only visible on Linux, and **any change to the
+shared-memory allocation or synchronisation logic must be tested on both
+platforms** before merging.
+
+macOS behaviour
+---------------
+
+On macOS with OpenMPI 5.x, ``MPI_Win_allocate_shared`` has two known
+limitations:
+
+1. **Permission fault (SEGV_ACCERR).**  Non-allocating ranks receive a window
+   pointer that is mapped read-only, so the first write from any rank other than
+   the node leader causes a ``SEGV_ACCERR`` (signal code 2, "address has wrong
+   permissions").
+
+2. **Tiny shared-memory limit.**  The ``kern.sysv.shmmax`` kernel parameter
+   defaults to 4 MB on macOS, far smaller than a typical wind grid.
+
+As a result, the ``wmain`` wind array uses a **private** ``calloc`` per rank on
+macOS (guarded by ``#ifdef __APPLE__`` in ``calloc_wind()`` and
+``free_wind_grid()``).  Each rank holds its own independent copy, kept in sync
+by ``broadcast_wind_grid()``.
+
+The plasma and macro-atom dynamic arrays (allocated by ``calloc_dyn_plasma()``
+and ``calloc_estimators()``) still use ``MPI_Win_allocate_shared`` on macOS via
+``alloc_block_double()`` / ``alloc_block_int()``.  Whether these work correctly
+on macOS under all OpenMPI versions has not been fully audited; if macOS
+``SEGV_ACCERR`` faults re-emerge for plasma arrays, the same ``#ifdef __APPLE__``
+fallback pattern should be applied.
+
+Linux behaviour
+---------------
+
+On Linux, ``MPI_Win_allocate_shared`` works as specified: all node-local ranks
+receive a pointer to the same physical pages.  Both ``wmain`` and the plasma/macro
+dynamic arrays are therefore genuinely shared in memory — one physical copy per
+node, not per rank.
+
+Consequences for testing and debugging
+---------------------------------------
+
+Because macOS uses a private copy of ``wmain`` per rank, **race conditions in
+the shared wind-grid code path are invisible on macOS**.  Specifically:
+
+- Missing ``MPI_Barrier(node_comm)`` calls after shared writes to ``wmain``
+  (e.g. the barriers in ``calloc_wind()`` and ``broadcast_wind_grid()``) have
+  no effect on macOS but are essential on Linux.  Without them, a rank can
+  proceed past a broadcast and read stale zero-initialised memory, producing
+  errors such as *"wind cell has zero volume but flagged inwind"* or silent
+  wrong results.
+
+- Similarly, any new code that allocates or writes to a shared MPI window must
+  include a ``MPI_Barrier(node_comm)`` before any rank reads from that window.
+  This requirement will not be caught by macOS testing alone.
+
+**Rule of thumb:** whenever you add, remove, or reorder a ``MPI_Barrier``,
+``MPI_Win_allocate_shared``, ``MPI_Win_shared_query``, or ``memset`` on a shared
+block, run the full regression suite on Linux before merging.  Mac testing is
+sufficient for everything else in the MPI layer.

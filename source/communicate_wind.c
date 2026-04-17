@@ -161,6 +161,10 @@ broadcast_wind_grid (const int n_start, const int n_stop, const int n_cells_rank
 
   free (comm_buffer);
   MPI_Type_free (&wcone_derived_type);
+
+  /* Barrier to ensure shared memory writes are visible to all node-local ranks */
+  MPI_Barrier (node_comm);
+
   d_xsignal (files.root, "%-20s Finished communication of wind grid\n", "NOK");
 #endif
 }

@@ -173,15 +173,15 @@ call_invert_matrix (const char *test_name)
     CU_FAIL_FATAL ("$SIROCCO has not been set");
   }
 
-  double *matrix;
-  double *inverse;
+  double *matrix = NULL;
+  double *inverse = NULL;
   char matrix_filepath[BUFFER_LENGTH];
   char inverse_filepath[BUFFER_LENGTH];
 
   sprintf (matrix_filepath, "%s/source/tests/test_data/matrix/%s/matrix.txt", sirocco_path, test_name);
   sprintf (inverse_filepath, "%s/source/tests/test_data/matrix/%s/inverse.txt", sirocco_path, test_name);
 
-  int matrix_size;
+  int matrix_size = 0;
   const int get_err = get_invert_matrix_test_data (matrix_filepath, inverse_filepath, &matrix, &inverse, &matrix_size);
   if (get_err)
   {
@@ -227,9 +227,9 @@ call_solve_matrix (const char *test_name)
     CU_FAIL_FATAL ("$SIROCCO has not been set");
   }
 
-  double *matrix_a;
-  double *vector_b;
-  double *vector_x;
+  double *matrix_a = NULL;
+  double *vector_b = NULL;
+  double *vector_x = NULL;
   char matrix_a_filepath[BUFFER_LENGTH];
   char vector_b_filepath[BUFFER_LENGTH];
   char vector_x_filepath[BUFFER_LENGTH];
@@ -238,7 +238,7 @@ call_solve_matrix (const char *test_name)
   sprintf (vector_b_filepath, "%s/source/tests/test_data/matrix/%s/b.txt", sirocco_path, test_name);
   sprintf (vector_x_filepath, "%s/source/tests/test_data/matrix/%s/x.txt", sirocco_path, test_name);
 
-  int vector_size;
+  int vector_size = 0;
   const int get_err =
     get_solve_matrix_test_data (matrix_a_filepath, vector_b_filepath, vector_x_filepath, &matrix_a, &vector_b, &vector_x, &vector_size);
   if (get_err)
