@@ -121,6 +121,11 @@ which may be useful in certain special cases.  These include:
   Instead of running sirocco, call the routine xtest so that one can diagnose issues associted with the 
   setup.  This is only useful to developers.
 
+-early_stopping
+  Enables convergence-based early stopping of ionization cycles. The user is then queried
+  for parameters (prefixed with ``@estop.``) that control when cycles can terminate early.
+  These options are described further in :ref:`early_stopping`.
+
 Running Different Versions of SIROCCO
 =========================================
 
