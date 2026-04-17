@@ -84,7 +84,7 @@ $(TARGET): $(C_OBJS) $(CUDA_OBJS)
 	$(CC) $(C_OBJS) $(CUDA_OBJS) $(L_FLAGS) $(LIBS) -o $@
 	mv $@ $(SIROCCO)/bin
 
-check: startup $(TARGET)
+check: startup clean $(TARGET)
 	$(SIROCCO)/bin/$(TARGET)
 
 clean:

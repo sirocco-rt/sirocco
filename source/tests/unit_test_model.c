@@ -15,6 +15,10 @@
 #include "../atomic.h"
 #include "../sirocco.h"
 
+/* rdpar_stat is defined in rdpar.c; reset it to 0 to allow opar to open a new
+ * file even if a previous test left it in the "file open" state (rdpar_stat==2). */
+extern int rdpar_stat;
+
 #define PATH_SEPARATOR '/'
 
 /** *******************************************************************************************************************
@@ -78,12 +82,8 @@ free_and_null (void **ptr)
 int
 cleanup_model (const char *root_name)
 {
-  int n_plasma;
   char *SIROCCO_ENV;
   char parameter_filepath[LINELENGTH];
-
-  PlasmaPtr plasma_cell;
-  MacroPtr macro_cell;
 
   (void) root_name;
 
@@ -100,93 +100,15 @@ cleanup_model (const char *root_name)
     return EXIT_FAILURE;
   }
 
-  /* free domains */
-  for (int n_dom = 0; n_dom < geo.ndomain; ++n_dom)
-  {
-    free_and_null ((void **) &zdom[n_dom].wind_x);
-    free_and_null ((void **) &zdom[n_dom].wind_midx);
-    free_and_null ((void **) &zdom[n_dom].wind_z);
-    free_and_null ((void **) &zdom[n_dom].wind_midz);
-
-    if (zdom[n_dom].coord_type == RTHETA)
-    {
-      free_and_null ((void **) &zdom[n_dom].cones_rtheta);
-    }
-    else if (zdom[n_dom].coord_type == CYLVAR)
-    {
-      free ((void **) &zdom[n_dom].wind_z_var[0]);
-      free ((void **) &zdom[n_dom].wind_z_var);
-      free ((void **) &zdom[n_dom].wind_midz_var[0]);
-      free ((void **) &zdom[n_dom].wind_midz_var);
-    }
-  }
-  free_and_null ((void **) &zdom);
-
-  /* free dynamic grid properties */
-
-  for (int n_wind = 0; n_wind < NDIM2; ++n_wind)
-  {
-    free_and_null ((void **) &wind_paths_main[n_wind].paths);
-    free_and_null ((void **) &wind_paths_main[n_wind].line_paths);
-  }
-
-  free_and_null ((void **) &wmain);
-
-  /* NPLASMA + 1 is the dummy plasma cell */
-  for (n_plasma = 0; n_plasma < NPLASMA + 1; ++n_plasma)
-  {
-    plasma_cell = &plasmamain[n_plasma];
-    free (plasma_cell->state.density);
-    free (plasma_cell->state.partition);
-    free (plasma_cell->est.ioniz);
-    free (plasma_cell->derived.recomb);
-    free (plasma_cell->derived.scatters);
-    free (plasma_cell->derived.xscatters);
-    free (plasma_cell->est.heat_ion);
-    free (plasma_cell->est.heat_inner_ion);
-    free (plasma_cell->derived.cool_rr_ion);
-    free (plasma_cell->derived.lum_rr_ion);
-    free (plasma_cell->derived.inner_recomb);
-    free (plasma_cell->est.inner_ioniz);
-    free (plasma_cell->derived.cool_dr_ion);
-    free (plasma_cell->state.levden);
-    free (plasma_cell->state.recomb_simple);
-    free (plasma_cell->state.recomb_simple_upweight);
-    free (plasma_cell->state.kbf_use);
-  }
-
-  free_and_null ((void **) &plasmamain);
+  free_domains ();
+  free_wind_grid ();
+  free_plasma_grid ();
   free_and_null ((void **) &photstoremain);
-  free_and_null ((void **) &matomphotstoremain);        /* This one doesn't care about if macro atoms are used or not */
+  free_and_null ((void **) &matomphotstoremain);
 
   if (nlevels_macro > 0)
   {
-    for (n_plasma = 0; n_plasma < NPLASMA + 1; n_plasma++)
-    {
-      macro_cell = &macromain[n_plasma];
-      free (macro_cell->est.jbar);
-      free (macro_cell->state.jbar_old);
-      free (macro_cell->est.gamma);
-      free (macro_cell->state.gamma_old);
-      free (macro_cell->est.gamma_e);
-      free (macro_cell->state.gamma_e_old);
-      free (macro_cell->est.alpha_st);
-      free (macro_cell->state.alpha_st_old);
-      free (macro_cell->est.alpha_st_e);
-      free (macro_cell->state.alpha_st_e_old);
-      free (macro_cell->est.recomb_sp);
-      free (macro_cell->est.recomb_sp_e);
-      free (macro_cell->derived.matom_emiss);
-      free (macro_cell->est.matom_abs);
-      free (macro_cell->est.cooling_bf);
-      free (macro_cell->est.cooling_bf_col);
-      free (macro_cell->est.cooling_bb);
-
-      /* matom_matrix points into macro_block_ptrs.matom_matrix_block — freed via free_macro_grid */
-      macro_cell->derived.matom_matrix = NULL;
-    }
-
-    free_and_null ((void **) &macromain);
+    free_macro_grid ();
   }
 
   NDIM2 = 0;
@@ -295,6 +217,10 @@ setup_model_grid (const char *root_name, const char *atomic_data_location)
   }
 
   geo.run_type = RUN_TYPE_NEW;
+
+  /* Reset rdpar input state in case a previous test left opar open (e.g. via a
+   * fatal CUnit assertion that skipped cleanup_model). */
+  rdpar_stat = 0;
 
   /* Set up parameter file, that way we can get all the parameters from that
    * instead of defining them manually */
