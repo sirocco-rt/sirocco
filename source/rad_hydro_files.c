@@ -155,6 +155,22 @@ main (int argc, char *argv[])
   MPI_Init (&argc, &argv);
   MPI_Comm_rank (MPI_COMM_WORLD, &my_rank);
   MPI_Comm_size (MPI_COMM_WORLD, &np_mpi);
+
+  /* Create node-local communicator for MPI-3 shared memory */
+  MPI_Comm_split_type (MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, my_rank, MPI_INFO_NULL, &node_comm);
+  MPI_Comm_rank (node_comm, &node_rank);
+  MPI_Comm_size (node_comm, &node_size);
+
+  /* Create inter-node leader communicator (one leader per node) */
+  MPI_Comm_split (MPI_COMM_WORLD, (node_rank == 0) ? 0 : MPI_UNDEFINED, my_rank, &leader_comm);
+
+  /* Determine total number of nodes */
+  num_nodes = 0;
+  if (leader_comm != MPI_COMM_NULL)
+  {
+    MPI_Comm_size (leader_comm, &num_nodes);
+  }
+  MPI_Bcast (&num_nodes, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #else
   my_rank = 0;
   np_mpi = 1;
@@ -192,6 +208,12 @@ main (int argc, char *argv[])
   if (wind_read (windsavefile) < 0)
   {
     Error ("swind: Could not open %s", windsavefile);
+#ifdef MPI_ON
+    MPI_Comm_free (&node_comm);
+    if (leader_comm != MPI_COMM_NULL)
+      MPI_Comm_free (&leader_comm);
+    MPI_Finalize ();
+#endif
     exit (0);
   }
 
@@ -538,5 +560,11 @@ main (int argc, char *argv[])
   fclose (fptr_flux_phi);
   fclose (fptr_flux_r);
 
+#ifdef MPI_ON
+  MPI_Comm_free (&node_comm);
+  if (leader_comm != MPI_COMM_NULL)
+    MPI_Comm_free (&leader_comm);
+  MPI_Finalize ();
+#endif
   exit (0);
 }
