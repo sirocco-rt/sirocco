@@ -117,20 +117,20 @@ ifeq (D,$(firstword $(MAKECMDGOALS)))
 # use pg when you want to use gprof the profiler
 # to use profiler make with arguments "make D sirocco"
 # this can be altered to whatever is best
-	CFLAGS = -std=gnu99 -g -pg -O0 -Wl,-Ttext-segment=0x68000000 -Wall -Werror $(EXTRA_FLAGS) -I$(INCLUDE) $(MPI_FLAG) ${CUDA_FLAG}
+	CFLAGS = -std=gnu99 -g -pg -O0 -Wl,-Ttext-segment=0x68000000 -Wall -Werror -fno-common $(EXTRA_FLAGS) -I$(INCLUDE) $(MPI_FLAG) ${CUDA_FLAG}
 	FFLAGS = -g -pg
 	PRINT_VAR = DEBUGGING, -g -pg -Wl,-Ttext-segment=0x68000000 -Wall flags
 	XDEBUG = True
 # Make the assumption that when using Clang the user is on MacOS, which doesn't
 # have (easy?) access to the GNU profiler or CUDA
 	ifeq ($(shell $(CC) -v 2>&1 | grep -c "clang version"), 1)
-		CFLAGS = -std=gnu99 -g -Wall $(EXTRA_FLAGS) -I$(INCLUDE) $(MPI_FLAG)
+		CFLAGS = -std=gnu99 -g -Wall -fno-common $(EXTRA_FLAGS) -I$(INCLUDE) $(MPI_FLAG)
 		FFLAGS = -g
 		PRINT_VAR = DEBUGGING, -g -Wall flags
 	endif
 else
 # Use this for large runs
-	CFLAGS = -std=gnu99 -O3 -Wall $(EXTRA_FLAGS) -I$(INCLUDE) $(MPI_FLAG) ${CUDA_FLAG}
+	CFLAGS = -std=gnu99 -O3 -Wall -fno-common $(EXTRA_FLAGS) -I$(INCLUDE) $(MPI_FLAG) ${CUDA_FLAG}
 	FFLAGS =
 	PRINT_VAR = LARGE RUNS, -03 -Wall flags
 endif

@@ -401,7 +401,7 @@ variables track the node topology:
 - ``node_size`` — number of ranks on the node
 
 Contiguous block allocation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------
 
 All variable-length plasma arrays (density, partition, ioniz, etc.) are
 allocated as contiguous blocks in ``calloc_dyn_plasma()`` (in
@@ -424,7 +424,7 @@ The same contiguous block layout is used in non-MPI builds and with a single
 MPI rank; the only difference is that ``calloc`` is used unconditionally.
 
 Which arrays are shared
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 
 The allocation strategy mirrors the three sub-structures:
 
@@ -483,7 +483,7 @@ Because the matrix is strictly read-only during photon transport, no further
 synchronisation is required.
 
 Block pointer management
-^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
 
 Base pointers for all contiguous blocks are stored in global structs
 ``plasma_block_ptrs`` (type ``plasma_blocks``) and ``macro_block_ptrs``
@@ -493,7 +493,7 @@ the ``MPI_Win`` handles needed to free shared windows and a
 used shared memory.
 
 Synchronisation
-^^^^^^^^^^^^^^^
+---------------
 
 After any broadcast that writes to shared dynamic arrays, an
 ``MPI_Barrier(node_comm)`` ensures all node-local ranks see the new data
@@ -535,7 +535,7 @@ override to ``two_level_atom()`` instead, avoiding a race condition on shared
 memory.
 
 Cleanup
-^^^^^^^
+-------
 
 At program exit, ``free_plasma_grid()`` and ``free_macro_grid()`` in
 ``janitor.c`` free the contiguous blocks.  For shared blocks the memory is
@@ -544,7 +544,7 @@ frees it at ``MPI_Finalize``).  Private blocks are freed with ``free()`` as
 usual.
 
 Memory savings
-^^^^^^^^^^^^^^
+--------------
 
 For a model with *N* plasma cells, *I* ions, and *R* ranks on one node, the
 dominant dynamic arrays total roughly ``N * I * 14 * 8`` bytes per rank.
@@ -574,7 +574,7 @@ physical memory, making it the single largest shared-memory saving in the
 code.
 
 Shared wind structure
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
 The wind geometry array ``wmain`` (type ``wind_dummy``, indexed by NDIM2) is
 allocated via ``MPI_Win_allocate_shared`` in ``calloc_wind()`` so that all
@@ -594,7 +594,7 @@ this saves approximately ``90000 * 288 * (R-1)/R`` bytes, or about 25 MB per
 rank with 29 ranks.
 
 Single-node optimisation for matom_matrix broadcast
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------------------------
 
 ``broadcast_macro_atom_state_matrix()`` in ``communicate_macro.c`` normally
 packs the full transition-probability matrix for each rank's cell range into a
@@ -608,7 +608,7 @@ run this avoids allocating the comm buffer (~100 KB) and removes latency
 proportional to the number of ranks.
 
 Chunked Allreduce for cooling_bb
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------------
 
 ``reduce_macro_atom_estimators()`` in ``communicate_macro.c`` uses
 ``MPI_Allreduce`` to sum the per-rank ``cooling_bb`` estimator across all
