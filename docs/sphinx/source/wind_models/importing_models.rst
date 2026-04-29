@@ -117,6 +117,14 @@ To read in a grid of this type, the following columns are required for each cell
 * :math:`T_{e}` (optional) :  the electron temperature in Kelvin
 * :math:`T_{r}` (optional) :  the radiation temperature in Kelvin
 
+.. admonition :: Two-hemisphere grids
+
+    SIROCCO supports cylindrical grids that span both hemispheres, with z
+    running from negative values (lower hemisphere) to positive values (upper
+    hemisphere).  The two-hemisphere case is detected automatically when the
+    first z coordinate in the file is negative.  Single-hemisphere grids have
+    z :math:`\geq 0` throughout.
+
 .. admonition :: Unstructed/non-linear Grids
 
     In principle, it is possible to read in an unstructured or non-linear
@@ -297,13 +305,20 @@ the routine :code:`windsave2table`, or more specifically:
 
    windsave2table test
 
-This produces a large number of ascii tables, which are described elsewhere
+This produces a large number of ascii tables, which are described elsewhere.
+For a single-domain model the master table is named :code:`test.master.txt`;
+for multi-domain models each domain gets its own file, e.g.
+:code:`test.0.master.txt`, :code:`test.1.master.txt`, etc.
 
-In the py_progs directory, you will find 3 scripts, :code:`import_1d.py`,
-:code:`import_cyl.py` and :code:`import_rtheta.py`, which will convert one of
-the output files :code:`test.0.master.txt` to an import file, :code:`test.import.txt`,
-that can be used with the import mode of SIROCCO. The 3 different routines are
-for 1d spherical coordinates, and polar (r-theta) coordinates respectively.
+In the py_progs directory, you will find 3 scripts:
+
+* :code:`import_1d.py` — 1D spherical models
+* :code:`import_cyl.py` — 2.5D cylindrical models (single- or two-hemisphere)
+* :code:`import_rtheta.py` — 2.5D polar (r-theta) models (single- or two-hemisphere)
+
+Each script reads the corresponding :code:`test.master.txt` file and writes
+:code:`test.import.txt`, which can be used directly with the import mode of
+SIROCCO.
 
 Assuming the py_progs directory is in your PATH, and given that our example is
 for cylindrical coordinates, one would run:

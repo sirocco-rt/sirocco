@@ -1,161 +1,103 @@
-#!/usr/bin/env python 
-
+#!/usr/bin/env python
 
 '''
-Create a cylindrical `.pf` file from a `windsave2table` file.
+Create a cylindrical-coordinate import file from a windsave2table master file.
 
-Read the master file produced by windsave2table for a
-model created in cylindrical coordinates and produce
-a file which can be imported into Sirocco and run
+Read the master file produced by windsave2table for a cylindrical-coordinate
+model and produce a file that can be imported into Sirocco.
 
+Command line usage:
+    import_cyl.py rootname [outputfile]
 
-Command line usage (if any):
-    ``import_cyl.py rootname``
-    where rootname is the rootname of the mastertable
-    or windsave file
+    e.g.
+        import_cyl.py agn_cyl_big
+    reads  agn_cyl_big.master.txt
+    writes agn_cyl_big.import.txt
 
-Description:  
-    This operates on the mastertable produced by windsavetable
-
-Primary routines:
-    doit
+Output columns (space-separated, readable by import_cylindrical.c):
+    i  j  inwind  x  z  v_x  v_y  v_z  rho  t_e  t_r
 
 Notes:
+    windsave2table stores rho in the CMF (co-moving) frame.  This script
+    converts it to the observer frame by multiplying by the Lorentz factor
+    gamma = 1/sqrt(1 - v^2/c^2).
 
-    Windsave2table saves the values of rho in the CMF frame,
-    but Sirocco expects models to be in the observer frame
-    so this routine corrects for this.
-                                       
+    For xmem3d two-hemisphere models z runs from negative (lower hemisphere)
+    to positive (upper hemisphere).  import_cylindrical.c detects the
+    two-hemisphere case automatically when wind_z[0] < 0.
+
+    For single-hemisphere models z runs from 0 upward and the file is
+    identical in format.
 '''
 
 import sys
+import numpy as np
 from astropy.io import ascii
-import numpy
+from astropy.table import Table
 
 
-def read_file(filename,char=''):
+def doit(root='cv', outputfile=''):
     '''
-    Read a file and split it into words, eliminating comments
-    
-    char is an optional parameter used as the delimiter for
-    splitting lines into words.  Otherwise white space is
-    assumed.
+    Read a master.txt file and write a Sirocco cylindrical import file.
+
+    Parameters
+    ----------
+    root : str
+        Rootname.  Reads <root>.master.txt.
+    outputfile : str, optional
+        Output path.  Defaults to <root>.import.txt.
+
+    Returns
+    -------
+    astropy.table.Table
+        The table that was written, or None on error.
     '''
+
+    filename = root + '.master.txt'
+    if outputfile == '':
+        outputfile = root + '.import.txt'
 
     try:
-        f=open(filename,'r')
-        xlines=f.readlines()
-        f.close()
-    except IOError :
-        print ("The file %s does not exist" % filename)
-        return []   
-    
-    lines=[]
-    
-    i=0
-    while i<len(xlines):
-        z=xlines[i].strip()
-        if char=='':
-            z=z.split()
-        else:
-            z=z.split(char)
-        if len(z)>0:
-            if z[0][0]!='#':
-                lines=lines+[z]
-        i=i+1
-    return lines
+        data = ascii.read(filename)
+    except Exception as e:
+        print('Error reading %s: %s' % (filename, e))
+        return None
+
+    C = 2.997925e10
+
+    v2 = data['v_x']**2 + data['v_y']**2 + data['v_z']**2
+    gamma = 1.0 / np.sqrt(1.0 - v2 / C**2)
+
+    out = Table()
+    out['i'] = data['i']
+    out['j'] = data['j']
+    out['inwind'] = data['inwind']
+    out['x'] = data['x']
+    out['z'] = data['z']
+    out['v_x'] = data['v_x']
+    out['v_y'] = data['v_y']
+    out['v_z'] = data['v_z']
+    out['rho'] = data['rho'] * gamma
+    out['t_e'] = data['t_e']
+    out['t_r'] = data['t_r']
+
+    for col in ('x', 'z', 'v_x', 'v_y', 'v_z', 'rho', 't_e', 't_r'):
+        out[col].format = '.4e'
+
+    ascii.write(out, outputfile, format='basic', overwrite=True)
+
+    z_min = float(np.min(data['z']))
+    hemi = 'two-hemisphere (z negative to positive)' if z_min < 0 else 'single-hemisphere (z >= 0)'
+    print('Read  %d rows from %s  [%s]' % (len(out), filename, hemi))
+    print('Wrote %d rows to   %s' % (len(out), outputfile))
+
+    return out
 
 
-
-
-def read_table(filename='foo.txt',format=''):
-    '''
-    Read a file using astropy.io.ascii and 
-    return this 
-
-    Description:
-
-    Notes:
-
-    History:
-
-
-    '''
-    try:
-        if format=='':
-            data=ascii.read(filename)
-        else:
-            data=ascii.read(filename,format=format)
-        for col in data.itercols():
-            if col.dtype.kind in 'SU':
-                data.replace_column(col.name,col.astype('object'))
-    except IOError:
-        print ('Error: file %s does not appear to exist' % filename)
-        return
-
-    print ('Here are the column names:')
-    
-    print (data.colnames)
-
-    return data
-
-
-def doit(root='cv',outputfile=''):
-    '''
-    Read a master.txt file for models in cylindrical coordinates
-    and produce a file which can be read in to python
-    
-
-    Description:
-
-    Notes:
-
-    History:
-
-    '''
-
-    filename=root+'.master.txt'
-    if outputfile=='':
-        outputfile=root+'.import.txt'
-    
-
-
-    data=read_table(filename)
-
-    v=data['v_x']**2+data['v_y']**2+data['v_z']**2
-    v=numpy.sqrt(v)
-
-    data['v']=v
-
-    xdata=data['i','j','inwind','x','z','v_x','v_y','v_z','rho','t_e','t_r']
-
-    C=2.997925e10
-
-    gamma=1./numpy.sqrt(1-(v/C)**2)
-    xdata['rho']*=gamma
-    xdata['rho'].format='.2e'
-
-
-    
-    print (xdata)
-
-
-    # This format is the easy to read back automatically
-    ascii.write(xdata,outputfile,format='fixed_width_two_line',overwrite=True)
-
-    return
-
-
-    
-
-
-
-
-
-# Next lines permit one to run the routine from the command line
-if __name__ == "__main__":
-    import sys
-    if len(sys.argv)>1:
+if __name__ == '__main__':
+    if len(sys.argv) > 2:
+        doit(sys.argv[1], sys.argv[2])
+    elif len(sys.argv) > 1:
         doit(sys.argv[1])
     else:
-        print ('usage: import_cyl.py filename')
+        print(__doc__)
