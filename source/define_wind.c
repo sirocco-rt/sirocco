@@ -645,6 +645,14 @@ create_wind_grid (void)
     offset += zdom[ndom].ndim;
   }
 
+  /* Barrier: ensure all ranks have finished initialising wmain fields above
+   * before any rank enters make_coordinate_grid.  With shared wmain, a fast
+   * rank could otherwise start writing import-derived inwind values while a
+   * slow rank's init loop is still writing W_NOT_ASSIGNED to the same cells. */
+#ifdef MPI_ON
+  MPI_Barrier (node_comm);
+#endif
+
   /* The first thing we need to do is to create the coordinate grid. We'll do
    * this in serial, as it's very difficult to untangle this process into
    * something done in parallel due to data dependencies and how certain/special
@@ -658,6 +666,14 @@ create_wind_grid (void)
    * also tangled up in other serial parts of the code and is also very short.
    * As above, it is impractical and not worthwhile to parallelise this step */
   wind_complete ();
+
+  /* Barrier: ensure all ranks have completed make_coordinate_grid and
+   * wind_complete before any rank enters the parallel volume/velocity loop.
+   * Without this, a fast rank could read a cell's inwind value before a slow
+   * rank has finished writing it from make_coordinate_grid. */
+#ifdef MPI_ON
+  MPI_Barrier (node_comm);
+#endif
 
 #ifdef MPI_ON
   n_cells_rank = get_parallel_nrange (rank_global, NDIM2, np_mpi_global, &n_start, &n_stop);

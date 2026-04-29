@@ -350,6 +350,8 @@ calloc_wind (int nelem)
       MPI_Win_shared_query (wmain_win, 0, &win_size, &disp_unit, &base);
     }
     wmain = (WindPtr) base;
+    /* Barrier to ensure node leader's memset is visible before any rank uses wmain */
+    MPI_Barrier (node_comm);
 #else
     /* macOS: MPI-3 shared memory windows are mapped with invalid permissions
      * for non-allocating ranks, causing SEGV_ACCERR.  Use private calloc on

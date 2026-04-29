@@ -417,7 +417,7 @@ cylind_cell_volume (WindPtr w)
       Exit (0);
     }
 
-    n_inwind = cylind_is_cell_in_wind (w->nwind);
+    n_inwind = cylind_is_cell_in_wind (w->nwind_dom);
 
     if (n_inwind == W_NOT_INWIND)
     {
