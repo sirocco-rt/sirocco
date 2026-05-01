@@ -125,6 +125,12 @@ To read in a grid of this type, the following columns are required for each cell
     first z coordinate in the file is negative.  Single-hemisphere grids have
     z :math:`\geq 0` throughout.
 
+    The z extent does **not** need to be equal above and below the disk plane:
+    the grid may reach further in one hemisphere than the other, and the wind
+    (as controlled by the ``inwind`` flags) may be confined entirely to one
+    hemisphere.  SIROCCO uses the actual signed z boundaries of each cell and
+    does not assume bilateral symmetry for two-hemisphere files.
+
 .. admonition :: Unstructed/non-linear Grids
 
     In principle, it is possible to read in an unstructured or non-linear
@@ -172,7 +178,11 @@ Using polar coordinates, a 2.5D model can be read into SIROCCO.
     * If any :math:`\theta` value exceeds 90°, the grid is treated as
       covering both hemispheres.  Each cell is used for the hemisphere it
       explicitly belongs to, allowing asymmetric upper/lower-hemisphere
-      winds.
+      winds.  The :math:`\theta` range in the two hemispheres need not be
+      symmetric about 90°: a grid running from 0° to 120°, or one whose
+      wind cells are confined entirely to theta > 90°, is equally valid.
+      SIROCCO uses each cell's actual :math:`\theta` boundaries and does
+      not assume bilateral symmetry.
 
     In both cases guard cells at the pole (theta near 0°) and at the
     south pole (theta near 180°, two-hemisphere only) must be included and

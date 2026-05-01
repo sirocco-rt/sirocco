@@ -298,9 +298,9 @@ import_rtheta_setup_boundaries (int ndom)
         rho_max = x_outer_next;
       }
 
-      if (z_outer > zmax)
+      if (fabs (z_outer) > zmax)
       {
-        zmax = z_outer;
+        zmax = fabs (z_outer);
       }
 
       if (z_inner_next < zmin && z_inner_next > 0)

@@ -641,9 +641,8 @@ rtheta_where_in_grid (int ndom, double x[])
  * @details
  *
  * The routine generates a random position that is both within the cell and
- * within the wind.  Positions are first generated as if in the upper hemisphere
- * (x[2] >= 0), then flipped to x[2] < 0 if the cell belongs to the lower
- * hemisphere (j >= mdim/2).
+ * within the wind.  For lower-hemisphere cells (j >= mdim/2) cos(theta) is
+ * negated directly so x[2] < 0 without any post-generation flip.
  *
  * ### Notes ###
  *
@@ -658,7 +657,7 @@ rtheta_get_random_location (int n, double x[])
   int i, j;
   int inwind;
   double r, rmin, rmax, sthetamin, sthetamax;
-  double theta, phi;
+  double s, cos_theta, phi;
   int ndom, ndomain;
   int mdim_half, is_lower_hemi;
 
@@ -671,11 +670,10 @@ rtheta_get_random_location (int n, double x[])
   rmin = zdom[ndom].wind_x[i];
   rmax = zdom[ndom].wind_x[i + 1];
 
-  /* sin(theta) is the same for theta and (180-theta), so sthetamin/sthetamax
-     work identically for upper and lower hemisphere cells.  asin always returns
-     a value in [0,90] deg, giving a position with x[2]>=0.  We flip x[2] for
-     lower-hemisphere cells before calling where_in_wind so that the in-wind
-     test checks the correct hemisphere. */
+  /* sin(theta) is symmetric about 90°, so sthetamin/sthetamax work for both
+     hemispheres.  We use sin(theta) directly as the sampling variable and
+     derive cos(theta) = sqrt(1 - sin²); the sign of cos(theta) is set by the
+     hemisphere so x[2] has the correct sign without any post-generation flip. */
   sthetamin = sin (zdom[ndom].wind_z[j] / RADIAN);
   sthetamax = sin (zdom[ndom].wind_z[j + 1] / RADIAN);
 
@@ -685,19 +683,16 @@ rtheta_get_random_location (int n, double x[])
   while (inwind != W_ALL_INWIND)
   {
     r = sqrt (rmin * rmin + random_number (0.0, 1.0) * (rmax * rmax - rmin * rmin));
-
-    theta = asin (sthetamin + random_number (0.0, 1.0) * (sthetamax - sthetamin));
-
     phi = 2. * PI * random_number (0.0, 1.0);
 
-    x[0] = r * cos (phi) * sin (theta);
-    x[1] = r * sin (phi) * sin (theta);
-    x[2] = r * cos (theta);
-
-    /* Flip to lower hemisphere before checking so where_in_wind searches
-       the correct hemisphere (rtheta_where_in_grid uses signed x[2]). */
+    s = sthetamin + random_number (0.0, 1.0) * (sthetamax - sthetamin);
+    cos_theta = sqrt (1.0 - s * s);
     if (is_lower_hemi)
-      x[2] = -x[2];
+      cos_theta = -cos_theta;
+
+    x[0] = r * cos (phi) * s;
+    x[1] = r * sin (phi) * s;
+    x[2] = r * cos_theta;
 
     inwind = where_in_wind (x, &ndomain);       /* Some photons will not be in the wind
                                                    because the boundaries of the wind split the grid cell */

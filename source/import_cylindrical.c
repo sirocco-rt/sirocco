@@ -222,7 +222,7 @@ int
 import_cylindrical_setup_boundaries (int ndom)
 {
   int n;
-  double rmin, rmax, rho_min, rho_max, zmin, zmax;
+  double rmin, rmax, rho_min, rho_max, zmin, zmax, abs_zmax;
   double x[3], r_inner, r_outer;
 
   /* Now add information used in zdom */
@@ -251,7 +251,7 @@ import_cylindrical_setup_boundaries (int ndom)
    *
    */
 
-  rmax = rho_max = zmax = 0;
+  rmax = rho_max = zmax = abs_zmax = 0;
   rmin = rho_min = zmin = VERY_BIG;
   for (n = 0; n < imported_model[ndom].ncell; n++)
   {
@@ -281,6 +281,14 @@ import_cylindrical_setup_boundaries (int ndom)
       {
         zmin = imported_model[ndom].z[n];
       }
+      if (fabs (imported_model[ndom].z[n + 1]) > abs_zmax)
+      {
+        abs_zmax = fabs (imported_model[ndom].z[n + 1]);
+      }
+      if (fabs (imported_model[ndom].z[n]) > abs_zmax)
+      {
+        abs_zmax = fabs (imported_model[ndom].z[n]);
+      }
       if (r_outer > rmax)
       {
         rmax = r_outer;
@@ -298,7 +306,7 @@ import_cylindrical_setup_boundaries (int ndom)
 
   zdom[ndom].wind_rhomin_at_disk = rho_min;
   zdom[ndom].wind_rhomax_at_disk = rho_max;
-  zdom[ndom].zmax = zmax;
+  zdom[ndom].zmax = abs_zmax;   /* max |z| used by where_in_wind coarse filter */
   zdom[ndom].zmin = zmin;
 
   zdom[ndom].rmax = rmax;
@@ -315,7 +323,7 @@ import_cylindrical_setup_boundaries (int ndom)
   zdom[ndom].windplane[0].lmn[2] = 1;
 
   zdom[ndom].windplane[1].x[0] = zdom[ndom].windplane[1].x[1] = 0;
-  zdom[ndom].windplane[1].x[2] = zdom[ndom].zmax;
+  zdom[ndom].windplane[1].x[2] = zmax;  /* actual upper z boundary, not abs_zmax */
 
   zdom[ndom].windplane[1].lmn[0] = zdom[ndom].windplane[1].lmn[1] = 0;
   zdom[ndom].windplane[1].lmn[2] = 1;
