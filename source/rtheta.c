@@ -673,9 +673,9 @@ rtheta_get_random_location (int n, double x[])
 
   /* sin(theta) is the same for theta and (180-theta), so sthetamin/sthetamax
      work identically for upper and lower hemisphere cells.  asin always returns
-     a value in [0,90] deg, giving a position with x[2]>=0.  We flip x[2] at
-     the end for lower-hemisphere cells.  where_in_wind uses fabs(x[2]) so the
-     in-wind test is correct before the flip. */
+     a value in [0,90] deg, giving a position with x[2]>=0.  We flip x[2] for
+     lower-hemisphere cells before calling where_in_wind so that the in-wind
+     test checks the correct hemisphere. */
   sthetamin = sin (zdom[ndom].wind_z[j] / RADIAN);
   sthetamax = sin (zdom[ndom].wind_z[j + 1] / RADIAN);
 
@@ -690,17 +690,18 @@ rtheta_get_random_location (int n, double x[])
 
     phi = 2. * PI * random_number (0.0, 1.0);
 
-    /* Project from r, theta, phi to x y z (always upper hemisphere here) */
     x[0] = r * cos (phi) * sin (theta);
     x[1] = r * sin (phi) * sin (theta);
     x[2] = r * cos (theta);
+
+    /* Flip to lower hemisphere before checking so where_in_wind searches
+       the correct hemisphere (rtheta_where_in_grid uses signed x[2]). */
+    if (is_lower_hemi)
+      x[2] = -x[2];
+
     inwind = where_in_wind (x, &ndomain);       /* Some photons will not be in the wind
                                                    because the boundaries of the wind split the grid cell */
   }
-
-  /* Place in the correct hemisphere: lower hemisphere cells have x[2] < 0 */
-  if (is_lower_hemi)
-    x[2] = -x[2];
 
   return (inwind);
 

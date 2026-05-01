@@ -642,9 +642,17 @@ cylind_get_random_location (int n, double x[])
                                                    because the boundaries of the wind split the grid cell */
   }
 
-  zz = random_number (-0.5, 0.5);       //positions above are all at +z distances
-  if (zz < 0)
-    x[2] *= -1;                 /* The photon is in the bottom half of the wind */
+  /* For single-hemisphere models wind_z values are all >= 0, so x[2] from the
+     loop above is always positive.  Randomly flip half the photons to z < 0
+     to populate both hemispheres symmetrically.
+     For two-hemisphere models wind_z[0] < 0 and x[2] already carries the
+     correct sign from the cell boundaries — do not flip. */
+  if (one_dom->wind_z[0] >= 0.0)
+  {
+    zz = random_number (-0.5, 0.5);
+    if (zz < 0)
+      x[2] *= -1;               /* The photon is in the bottom half of the wind */
+  }
 
   return (inwind);
 }
