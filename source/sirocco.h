@@ -840,8 +840,7 @@ typedef struct wind_paths
 typedef struct wind
 {
   int ndom;                     /**< The domain associated with this element of the wind */
-  int nwind;                    /**< A self-reference to this cell in the wind structure */
-  int nwind_dom;                /**< The element number of the wind cell in its wind domain */
+  int nwind;                    /**< The wmain array index of this cell */
   int nplasma;                  /**< A cross refrence to the corresponding cell in the plasma structure */
   double x[3];                  /**< position of inner vertex of cell — the corner with the
                                    smallest coordinate values.  For cylindrical grids x[0] is

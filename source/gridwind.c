@@ -254,7 +254,6 @@ create_wind_and_plasma_cell_maps ()
 
   for (i = 0; i < NDIM2; i++)
   {
-    wmain[i].nwind = i;
     if (wmain[i].vol > 0)
     {
       wmain[i].nplasma = j;

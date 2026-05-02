@@ -631,7 +631,6 @@ create_wind_grid (void)
   calloc_wind (NDIM2);
 
   /* Assign the domain for each cell in the wind grid */
-  int offset = 0;
   for (ndom = 0; ndom < geo.ndomain; ++ndom)
   {
     for (n = zdom[ndom].nstart; n < zdom[ndom].nstop; ++n)
@@ -639,10 +638,8 @@ create_wind_grid (void)
       wmain[n].ndom = ndom;
       wmain[n].inwind = W_NOT_ASSIGNED;
       wmain[n].dfudge = DFUDGE;
-      wmain[n].nwind = n + offset;
-      wmain[n].nwind_dom = n;
+      wmain[n].nwind = n;
     }
-    offset += zdom[ndom].ndim;
   }
 
   /* Barrier: ensure all ranks have finished initialising wmain fields above
