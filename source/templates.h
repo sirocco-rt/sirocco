@@ -118,6 +118,7 @@ int cylvar_make_grid(int ndom, WindPtr w);
 int cylvar_wind_complete(int ndom, WindPtr w);
 int cylvar_cell_volume(WindPtr w);
 int cylvar_where_in_grid(int ndom, double x[], int ichoice, double *fx, double *fz);
+int cylvar_where_in_grid_simple(int ndom, double *x);
 int cylvar_get_random_location(int n, double x[]);
 int cylvar_extend_density(int ndom, WindPtr w);
 int cylvar_coord_fraction(int ndom, int ichoice, double x[], int ii[], double frac[], int *nelem);
@@ -562,6 +563,7 @@ void setup_atomic_data(const char *atomic_filename);
 /* setup_disk.c */
 double get_disk_params(void);
 /* setup_domains.c */
+int setup_geometry_ops(int ndom);
 int get_domain_params(int ndom);
 void allocate_domain_wind_coords(int ndom);
 int get_wind_params(int ndom);

@@ -270,6 +270,11 @@ extern double velocity_electron[3];     // velocity of the electron when thermal
 #define COORD_TYPE_LOG 0
 #define COORD_TYPE_LINEAR 1
 
+typedef struct geom_ops
+{
+  int (*where_in_grid) (int ndom, double *x);
+} GeomOps;
+
 typedef struct domain
 {
   char name[LINELENGTH];
@@ -278,6 +283,7 @@ typedef struct domain
                                   size in z or theta direction */
   int nstart, nstop;            /**< the beginning and end (-1) location in wmain of this component */
   enum coord_type_enum coord_type;  /**< The type of coordinate system used for this domain */
+  GeomOps ops;                  /**< Function pointers for geometry dispatch */
   int log_linear;               /**< 0 -> the grid spacing will be logarithmic in x and z, 1-> linear */
   double xlog_scale, zlog_scale;        /**< Scale factors for setting up a logarithmic grid, the [1,1] cell
                                            will be located at xlog_scale,zlog_scale */

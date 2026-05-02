@@ -520,3 +520,33 @@ init_windcone (double r, double z, double dzdr, int allow_negative_dzdr, ConePtr
 
 
 }
+
+
+/**********************************************************/
+/**
+ * @brief Populate the geometry function-pointer table for a domain.
+ *
+ * @param [in] ndom  Domain index
+ * @return 0 on success
+ *
+ * Must be called after coord_type is set for the domain.
+ **********************************************************/
+
+int
+setup_geometry_ops (int ndom)
+{
+  if (zdom[ndom].coord_type == CYLIND)
+    zdom[ndom].ops.where_in_grid = cylind_where_in_grid;
+  else if (zdom[ndom].coord_type == RTHETA)
+    zdom[ndom].ops.where_in_grid = rtheta_where_in_grid;
+  else if (zdom[ndom].coord_type == SPHERICAL)
+    zdom[ndom].ops.where_in_grid = spherical_where_in_grid;
+  else if (zdom[ndom].coord_type == CYLVAR)
+    zdom[ndom].ops.where_in_grid = cylvar_where_in_grid_simple;
+  else
+  {
+    Error ("setup_geometry_ops: unknown coord_type %d for domain %d\n", zdom[ndom].coord_type, ndom);
+    Exit (0);
+  }
+  return (0);
+}

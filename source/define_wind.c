@@ -820,6 +820,9 @@ define_wind (void)
 {
   int n;
 
+  for (n = 0; n < geo.ndomain; n++)
+    setup_geometry_ops (n);
+
   /* The first thing we need to do is define the wind grid, as this is the base
    * grid everything else shoots off from. The wind grid defines the position
    * of cells, as well as the velocity of the wind and which cells are in

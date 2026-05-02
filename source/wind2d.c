@@ -59,34 +59,11 @@ int
 where_in_grid (int ndom, double x[])
 {
   int n;
-  double fx, fz;
 
 
   if (wig_x != x[0] || wig_y != x[1] || wig_z != x[2])  // Calculate if new position
   {
-
-    if (zdom[ndom].coord_type == CYLIND)
-    {
-      n = cylind_where_in_grid (ndom, x);
-    }
-    else if (zdom[ndom].coord_type == RTHETA)
-    {
-      n = rtheta_where_in_grid (ndom, x);
-    }
-    else if (zdom[ndom].coord_type == SPHERICAL)
-    {
-      n = spherical_where_in_grid (ndom, x);
-    }
-    else if (zdom[ndom].coord_type == CYLVAR)
-    {
-      n = cylvar_where_in_grid (ndom, x, 0, &fx, &fz);
-    }
-    else
-    {
-      Error ("where_in_grid: Unknown coord_type %d for domain %d\n", zdom[ndom].coord_type, ndom);
-      Exit (0);
-      return (0);
-    }
+    n = zdom[ndom].ops.where_in_grid (ndom, x);
 
 
     /* Store old positions to short-circuit calculation if asked for same position more
