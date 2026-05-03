@@ -270,6 +270,18 @@ extern double velocity_electron[3];     // velocity of the electron when thermal
 #define COORD_TYPE_LOG 0
 #define COORD_TYPE_LINEAR 1
 
+struct wind;
+struct photon;
+
+typedef struct geom_ops
+{
+  int (*where_in_grid) (int ndom, double *x);
+  double (*ds_in_cell) (int ndom, struct photon *p);
+  int (*cell_volume) (struct wind *w);
+  int (*make_grid) (int ndom, struct wind *w);
+  int (*get_random_location) (int n, double *x);
+} GeomOps;
+
 typedef struct domain
 {
   char name[LINELENGTH];
@@ -278,6 +290,7 @@ typedef struct domain
                                   size in z or theta direction */
   int nstart, nstop;            /**< the beginning and end (-1) location in wmain of this component */
   enum coord_type_enum coord_type;  /**< The type of coordinate system used for this domain */
+  GeomOps ops;                  /**< Function pointers for geometry dispatch */
   int log_linear;               /**< 0 -> the grid spacing will be logarithmic in x and z, 1-> linear */
   double xlog_scale, zlog_scale;        /**< Scale factors for setting up a logarithmic grid, the [1,1] cell
                                            will be located at xlog_scale,zlog_scale */
@@ -855,8 +868,7 @@ typedef struct wind_paths
 typedef struct wind
 {
   int ndom;                     /**< The domain associated with this element of the wind */
-  int nwind;                    /**< A self-reference to this cell in the wind structure */
-  int nwind_dom;                /**< The element number of the wind cell in its wind domain */
+  int nwind;                    /**< The wmain array index of this cell */
   int nplasma;                  /**< A cross refrence to the corresponding cell in the plasma structure */
   double x[3];                  /**< position of inner vertex of cell */
   double xcen[3];               /**< position of the "center" of a cell */

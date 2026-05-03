@@ -672,28 +672,7 @@ ds_in_cell (int ndom, PhotPtr p)
     return (n);
   }
 
-  if (zdom[ndom].coord_type == CYLIND)
-  {
-    smax = cylind_ds_in_cell (ndom, p); // maximum distance the photon can travel in a cell
-  }
-  else if (zdom[ndom].coord_type == RTHETA)
-  {
-    smax = rtheta_ds_in_cell (ndom, p);
-  }
-  else if (zdom[ndom].coord_type == SPHERICAL)
-  {
-    smax = spherical_ds_in_cell (ndom, p);
-  }
-  else if (zdom[ndom].coord_type == CYLVAR)
-  {
-    smax = cylvar_ds_in_cell (ndom, p);
-  }
-  else
-  {
-    smax = 0;
-    Error ("ds_in_cell: Don't know how to find ds_in_cell in this coord system %d\n", zdom[ndom].coord_type);
-    Exit (0);
-  }
+  smax = zdom[ndom].ops.ds_in_cell (ndom, p);
 
   return (smax);
 }

@@ -632,6 +632,14 @@ cylvar_where_in_grid (int ndom, double x[], int ichoice, double *fx, double *fz)
 }
 
 
+int
+cylvar_where_in_grid_simple (int ndom, double *x)
+{
+  double fx, fz;
+  return cylvar_where_in_grid (ndom, x, 0, &fx, &fz);
+}
+
+
 
 /**********************************************************/
 /**
