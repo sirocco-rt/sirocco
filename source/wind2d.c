@@ -540,27 +540,7 @@ get_random_location (int n, double x[])
 
   ndom = wmain[n].ndom;
 
-  if (zdom[ndom].coord_type == CYLIND)
-  {
-    cylind_get_random_location (n, x);
-  }
-  else if (zdom[ndom].coord_type == RTHETA)
-  {
-    rtheta_get_random_location (n, x);
-  }
-  else if (zdom[ndom].coord_type == SPHERICAL)
-  {
-    spherical_get_random_location (n, x);
-  }
-  else if (zdom[ndom].coord_type == CYLVAR)
-  {
-    cylvar_get_random_location (n, x);
-  }
-  else
-  {
-    Error ("get_random_location: Don't know this coord_type %d\n", zdom[ndom].coord_type);
-    Exit (0);
-  }
+  zdom[ndom].ops.get_random_location (n, x);
 
   return (0);
 }

@@ -270,9 +270,16 @@ extern double velocity_electron[3];     // velocity of the electron when thermal
 #define COORD_TYPE_LOG 0
 #define COORD_TYPE_LINEAR 1
 
+struct wind;
+struct photon;
+
 typedef struct geom_ops
 {
   int (*where_in_grid) (int ndom, double *x);
+  double (*ds_in_cell) (int ndom, struct photon *p);
+  int (*cell_volume) (struct wind *w);
+  int (*make_grid) (int ndom, struct wind *w);
+  int (*get_random_location) (int n, double *x);
 } GeomOps;
 
 typedef struct domain

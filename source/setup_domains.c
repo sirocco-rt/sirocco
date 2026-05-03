@@ -548,5 +548,48 @@ setup_geometry_ops (int ndom)
     Error ("setup_geometry_ops: unknown coord_type %d for domain %d\n", zdom[ndom].coord_type, ndom);
     Exit (0);
   }
+
+  if (zdom[ndom].coord_type == CYLIND)
+    zdom[ndom].ops.ds_in_cell = cylind_ds_in_cell;
+  else if (zdom[ndom].coord_type == RTHETA)
+    zdom[ndom].ops.ds_in_cell = rtheta_ds_in_cell;
+  else if (zdom[ndom].coord_type == SPHERICAL)
+    zdom[ndom].ops.ds_in_cell = spherical_ds_in_cell;
+  else if (zdom[ndom].coord_type == CYLVAR)
+    zdom[ndom].ops.ds_in_cell = cylvar_ds_in_cell;
+
+  if (zdom[ndom].coord_type == SPHERICAL)
+    zdom[ndom].ops.cell_volume = spherical_cell_volume;
+  else if (zdom[ndom].coord_type == CYLIND)
+    zdom[ndom].ops.cell_volume = cylind_cell_volume;
+  else if (zdom[ndom].coord_type == CYLVAR)
+    zdom[ndom].ops.cell_volume = cylvar_cell_volume;
+  else if (zdom[ndom].coord_type == RTHETA)
+    zdom[ndom].ops.cell_volume = (zdom[ndom].wind_type == HYDRO) ? rtheta_hydro_cell_volume : rtheta_cell_volume;
+
+  if (zdom[ndom].wind_type == IMPORT)
+    zdom[ndom].ops.make_grid = import_make_grid;
+  else if (zdom[ndom].wind_type == SHELL)
+    zdom[ndom].ops.make_grid = shell_make_grid;
+  else if (zdom[ndom].wind_type == HYDRO)
+    zdom[ndom].ops.make_grid = rtheta_make_hydro_grid;
+  else if (zdom[ndom].coord_type == SPHERICAL)
+    zdom[ndom].ops.make_grid = spherical_make_grid;
+  else if (zdom[ndom].coord_type == CYLIND)
+    zdom[ndom].ops.make_grid = cylind_make_grid;
+  else if (zdom[ndom].coord_type == RTHETA)
+    zdom[ndom].ops.make_grid = rtheta_make_grid;
+  else if (zdom[ndom].coord_type == CYLVAR)
+    zdom[ndom].ops.make_grid = cylvar_make_grid;
+
+  if (zdom[ndom].coord_type == CYLIND)
+    zdom[ndom].ops.get_random_location = cylind_get_random_location;
+  else if (zdom[ndom].coord_type == RTHETA)
+    zdom[ndom].ops.get_random_location = rtheta_get_random_location;
+  else if (zdom[ndom].coord_type == SPHERICAL)
+    zdom[ndom].ops.get_random_location = spherical_get_random_location;
+  else if (zdom[ndom].coord_type == CYLVAR)
+    zdom[ndom].ops.get_random_location = cylvar_get_random_location;
+
   return (0);
 }

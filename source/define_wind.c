@@ -383,41 +383,7 @@ make_coordinate_grid (void)
   /* This is done on domain-by-domain basis first */
   for (ndom = 0; ndom < geo.ndomain; ndom++)
   {
-    /* Checking first for two unique cases of wind type */
-    if (zdom[ndom].wind_type == IMPORT)
-    {
-      import_make_grid (ndom, wmain);
-    }
-    else if (zdom[ndom].wind_type == SHELL)
-    {
-      shell_make_grid (ndom, wmain);
-    }
-    else if (zdom[ndom].wind_type == HYDRO)
-    {
-      rtheta_make_hydro_grid (ndom, wmain);
-    }
-    /* Now we can check for coord types to define the coordinates */
-    else if (zdom[ndom].coord_type == SPHERICAL)
-    {
-      spherical_make_grid (ndom, wmain);
-    }
-    else if (zdom[ndom].coord_type == CYLIND)
-    {
-      cylind_make_grid (ndom, wmain);
-    }
-    else if (zdom[ndom].coord_type == RTHETA)
-    {
-      rtheta_make_grid (ndom, wmain);
-    }
-    else if (zdom[ndom].coord_type == CYLVAR)
-    {
-      cylvar_make_grid (ndom, wmain);
-    }
-    else
-    {
-      Error ("make_coordinate_grid: unknown wind or coordinate type\n");
-      Exit (EXIT_FAILURE);
-    }
+    zdom[ndom].ops.make_grid (ndom, wmain);
   }
 }
 
@@ -439,34 +405,7 @@ calculate_cell_volume (WindPtr cell)
 
   ndom = cell->ndom;
 
-  if (zdom[ndom].coord_type == SPHERICAL)
-  {
-    spherical_cell_volume (cell);
-  }
-  else if (zdom[ndom].coord_type == CYLIND)
-  {
-    cylind_cell_volume (cell);
-  }
-  else if (zdom[ndom].coord_type == CYLVAR)
-  {
-    cylvar_cell_volume (cell);
-  }
-  else if (zdom[ndom].coord_type == RTHETA)
-  {
-    if (zdom[ndom].wind_type == HYDRO)
-    {
-      rtheta_hydro_cell_volume (cell);
-    }
-    else
-    {
-      rtheta_cell_volume (cell);
-    }
-  }
-  else
-  {
-    Error ("calculate_cell_volume: unknown coordinate type %d for cell %d in domain %d\n", zdom[ndom].coord_type, cell->nwind, ndom);
-    Exit (EXIT_FAILURE);
-  }
+  zdom[ndom].ops.cell_volume (cell);
 }
 
 /**********************************************************/
