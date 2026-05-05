@@ -601,7 +601,12 @@ def do_all(run1='py82i_181127',run2='py82i_181126',outdir=''):
     for one in files:
         word=one.split('/')
         model=word[1].replace(ext,'')
-        doit_two(run1,run2,model,outdir)
+        try:
+            doit_two(run1,run2,model,outdir)
+        except Exception as e:
+            print('Failed on model %s' % model)
+            print(f"Error: {e}")
+
 
     # print(fig_num)
 
