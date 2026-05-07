@@ -103,10 +103,6 @@ int ierr_vwind = 0;
  * For SPHERICAL: linear interpolation in r between wmain[n].v (inner) and
  * wmain[n].vmax (outer).
  *
- * For CYLVAR: falls back to coord_fraction on the domain-level arrays, because
- * CYLVAR cells have non-rectangular geometry that does not fit the per-cell
- * corner scheme.  CYLVAR still uses bilateral symmetry and the z-velocity is
- * flipped for lower-hemisphere photons.
  *
  * If the position is outside the wind grid, coord_fraction is used as a fallback.
  *
@@ -169,19 +165,6 @@ vwind_xyz (int ndom, PhotPtr p, double v[])
     int coord_type = zdom[ndom].coord_type;
     double dr, dz, denom;
 
-    if (coord_type == CYLVAR)
-    {
-      /* CYLVAR cells are non-rectangular; use domain-level coord_fraction */
-      coord_fraction (ndom, 0, p->x, nnn, frac, &nelem);
-      for (i = 0; i < 3; i++)
-      {
-        x = 0;
-        for (nn = 0; nn < nelem; nn++)
-          x += wmain[nnn[nn]].v[i] * frac[nn];
-        vv[i] = x;
-      }
-    }
-    else
     {
       /* For CYLIND, RTHETA, SPHERICAL: use per-cell corner velocities stored
        * in wmain, avoiding coord_fraction's domain-array lookups.
@@ -272,12 +255,6 @@ vwind_xyz (int ndom, PhotPtr p, double v[])
     vv[0] = rho / r * x;
     vv[2] = p->x[2] / r * x;
   }
-  else if (zdom[ndom].coord_type == CYLVAR && p->x[2] < 0)
-    /* CYLVAR still uses bilateral symmetry (deferred); lower-hemisphere photons map to
-       +z cells so the z-velocity must be flipped.  CYLIND and RTHETA have been doubled
-       to cover both hemispheres independently and need no flip. */
-    vv[2] *= -1;
-
   if (rho == 0)
   {                             // Then we will not be able to project from a cylindrical ot a cartesian system
     Error ("vwind_xyz: Cannot determine an xyz velocity on z axis. Returnin 0,0,v[2]\n");

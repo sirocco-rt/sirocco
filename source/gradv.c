@@ -47,10 +47,6 @@
  * since often dvds is calculated at two positions and interpolated.
  * So it would be a mistake to calculate the absolute value here.
  *
- * The lower-hemisphere photon flip (x[2] -> -x[2] before grid lookup) is
- * applied only for CYLVAR, which still uses bilateral symmetry.  CYLIND and
- * RTHETA have been doubled to cover both hemispheres independently, so their
- * photons must not be flipped.
  *
  **********************************************************/
 
@@ -76,14 +72,6 @@ dvwind_ds_cmf (PhotPtr p)
      02jan ksl */
 
   stuff_phot (p, &pp);
-  if (pp.x[2] < 0.0 && zdom[ndom].coord_type == CYLVAR)
-  {                             /* CYLVAR still uses bilateral symmetry — move the photon to
-                                   the northern hemisphere.  CYLIND and RTHETA have doubled grids
-                                   with per-hemisphere cells; no flip needed or wanted there. */
-    pp.x[2] = -pp.x[2];
-    pp.lmn[2] = -pp.lmn[2];
-  }
-
   /* JM 1411 -- ideally, we want to do an interpolation on v_grad here. However,
      the interpolation was incorrect in spherical coordinates (see issue #118).
      For the moment, I've adopted an on the fly method for spherical coordinates.

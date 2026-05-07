@@ -529,8 +529,7 @@ complete_wind_grid_creation (void)
  *   - v_thetamax: velocity at (r_inner, theta_outer) for RTHETA; (rho_min, z_max) for CYLIND
  *   - vmax:      velocity at the outer corner xmax (r_outer, theta_outer)
  * For SPHERICAL only two corners are meaningful; v_rmax and v_thetamax are set
- * to copies of v and vmax respectively.  CYLVAR cells are deferred (their
- * non-rectangular geometry requires a different approach).
+ * to copies of v and vmax respectively.
  *
  * ### Notes ###
  *
@@ -640,8 +639,7 @@ create_wind_grid (void)
       model_velocity (cell->ndom, cell->x, cell->v);
 
       /* Populate the three additional corner velocities needed for self-contained
-         bilinear interpolation.  CYLVAR cells are deferred (non-rectangular
-         quadrilateral geometry requires a different approach). */
+         bilinear interpolation. */
       if (coord_type == CYLIND)
       {
         /* (rho_max, z_min) corner */
@@ -700,7 +698,6 @@ create_wind_grid (void)
           cell->v_thetamax[k] = cell->vmax[k];
         }
       }
-      /* CYLVAR: corner velocities not set (deferred). */
     }
 
     model_vgrad (cell->ndom, cell->x, cell->v_grad);

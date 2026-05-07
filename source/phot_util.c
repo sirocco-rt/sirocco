@@ -212,8 +212,7 @@ comp_phot (PhotPtr p1, PhotPtr p2)
  * the disk plane, but for a photon travelling out of the wind we are
  * very interested in this possibility.
  *
- * This version is intended to allow cylvar coordinates, in old versions (56d)
- * prior to cylvar coordiantes, this routine was called ds_to_windcone
+ * This routine was formerly called ds_to_windcone.
  **********************************************************/
 
 double

@@ -863,10 +863,6 @@ calls to two_level atom
  * take this photon in differing directions, and if one moves it here they may
  * encounter this resonance again.
  *
- * The z-component sign flip of the cylindrical momentum transfer (for lower-
- * hemisphere photons) is applied only for CYLVAR, which still uses bilateral
- * symmetry.  CYLIND and RTHETA have per-hemisphere cells with correctly-signed
- * coordinates and need no flip.
  *
  **********************************************************/
 
@@ -1228,8 +1224,6 @@ if fixed.
 
     project_from_xyz_cyl (p_orig.x, dp, dp_cyl);
 
-    if (zdom[ndom].coord_type == CYLVAR && p_orig.x[2] < 0)
-      dp_cyl[2] *= (-1);
     for (i = 0; i < 3; i++)
     {
       xplasma->derived.dmo_dt[i] += dp_cyl[i];

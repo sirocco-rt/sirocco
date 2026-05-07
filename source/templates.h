@@ -112,17 +112,6 @@ double wdrad(double m);
 double diskrad(double m1, double m2, double period);
 double roche2(double q, double a);
 double logg(double mass, double rwd);
-/* cylind_var.c */
-double cylvar_ds_in_cell(int ndom, PhotPtr p);
-int cylvar_make_grid(int ndom, WindPtr w);
-int cylvar_wind_complete(int ndom, WindPtr w);
-int cylvar_cell_volume(WindPtr w);
-int cylvar_where_in_grid(int ndom, double x[], int ichoice, double *fx, double *fz);
-int cylvar_where_in_grid_simple(int ndom, double *x);
-int cylvar_get_random_location(int n, double x[]);
-int cylvar_extend_density(int ndom, WindPtr w);
-int cylvar_coord_fraction(int ndom, int ichoice, double x[], int ii[], double frac[], int *nelem);
-void cylvar_allocate_domain(int ndom);
 /* cylindrical.c */
 double cylind_ds_in_cell(int ndom, PhotPtr p);
 int cylind_make_grid(int ndom, WindPtr w);

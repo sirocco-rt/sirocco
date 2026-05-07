@@ -6,7 +6,6 @@ values:
   spherical: Spherical
   cylindrical: Cylindrical
   polar: Spherical polar
-  cyl_var: Cylindrical varying z
 parent:
   Wind.number_of_components: Greater than 0. Once per wind.
 file: setup_domains.c

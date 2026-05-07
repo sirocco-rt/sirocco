@@ -84,11 +84,6 @@ wind_save (char filename[])
     n += fwrite (zdom[ndom].wind_midx, sizeof (double), zdom[ndom].ndim, fptr);
     n += fwrite (zdom[ndom].wind_midz, sizeof (double), zdom[ndom].mdim, fptr);
 
-    if (zdom[ndom].coord_type == CYLVAR)
-    {
-      n += fwrite (zdom[ndom].wind_z_var, sizeof (double), zdom[ndom].ndim * zdom[ndom].mdim, fptr);
-      n += fwrite (zdom[ndom].wind_midz_var, sizeof (double), zdom[ndom].ndim * zdom[ndom].mdim, fptr);
-    }
   }
 
   n += fwrite (wmain, sizeof (wind_dummy), NDIM2, fptr);
@@ -269,12 +264,6 @@ wind_read (char filename[])
     n += fread (zdom[ndom].wind_z, sizeof (double), zdom[ndom].mdim, fptr);
     n += fread (zdom[ndom].wind_midx, sizeof (double), zdom[ndom].ndim, fptr);
     n += fread (zdom[ndom].wind_midz, sizeof (double), zdom[ndom].mdim, fptr);
-    if (zdom[ndom].coord_type == CYLVAR)
-    {
-      cylvar_allocate_domain (ndom);
-      n += fread (zdom[ndom].wind_z_var, sizeof (double), zdom[ndom].ndim * zdom[ndom].mdim, fptr);
-      n += fread (zdom[ndom].wind_midz_var, sizeof (double), zdom[ndom].ndim * zdom[ndom].mdim, fptr);
-    }
   }
 
   calloc_wind (NDIM2);
@@ -451,10 +440,6 @@ wind_complete ()
     else if (zdom[ndom].coord_type == RTHETA)
     {
       rtheta_wind_complete (ndom, wmain);
-    }
-    else if (zdom[ndom].coord_type == CYLVAR)
-    {
-      cylvar_wind_complete (ndom, wmain);
     }
     else
     {

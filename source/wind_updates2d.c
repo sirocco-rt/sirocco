@@ -188,10 +188,6 @@ wind_update (WindPtr w)
     {
       spherical_extend_density (ndom, w);
     }
-    else if (zdom[ndom].coord_type == CYLVAR)
-    {
-      cylvar_extend_density (ndom, w);
-    }
     else
     {
       Error ("Wind_update2d: Unknown coordinate type %d for domain %d \n", zdom[ndom].coord_type, ndom);

@@ -71,10 +71,9 @@ hemisphere is the primary wind domain and needs only minimal buffering at
 the pole, while the south pole acts as a true outer boundary that requires
 the same two-cell buffer used in the cylindrical case.
 
-The ``cyl_var`` coordinate system still uses a single-hemisphere internal
-grid with bilateral symmetry: lower-hemisphere photons are mapped to
-their upper-hemisphere mirror cell before estimators are accumulated.
-This is a known limitation and may be addressed in a future release.
+.. note::
+   The ``cyl_var`` coordinate system (cylindrical with radially-varying z
+   boundaries) is not supported in this version of SIROCCO.
 
 Velocity interpolation
 ======================

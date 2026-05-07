@@ -14,7 +14,7 @@ question, e.g.
 .. code::
 
    Wind.type(SV,star,hydro,corona,kwd,homologous,shell,imported)             imported
-   Wind.coord_system(spherical,cylindrical,polar,cyl_var)          cylindrical
+   Wind.coord_system(spherical,cylindrical,polar)          cylindrical
    Wind.model2import                    cv.import.txt
 
 An example in cylindrical geometry, :code:`cv_import.pf`, is given with a

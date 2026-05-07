@@ -86,7 +86,7 @@ get_domain_params (int ndom)
     strcpy (answer, "cylindrical");
   }
 
-  zdom[ndom].coord_type = rdchoice ("Wind.coord_system(spherical,cylindrical,polar,cyl_var)", "0,1,2,3", answer);
+  zdom[ndom].coord_type = rdchoice ("Wind.coord_system(spherical,cylindrical,polar)", "0,1,2", answer);
 
   if (zdom[ndom].wind_type == IMPORT)   // Do not define dimensions for imported model
   {
@@ -200,11 +200,8 @@ allocate_domain_wind_coords (int ndom)
       Exit (EXIT_FAILURE);
     }
   }
-  else if (zdom[ndom].coord_type == CYLVAR)
-  {
-    cylvar_allocate_domain (ndom);
-  }
 }
+
 
 /**********************************************************/
 /**   
@@ -541,8 +538,6 @@ setup_geometry_ops (int ndom)
     zdom[ndom].ops.where_in_grid = rtheta_where_in_grid;
   else if (zdom[ndom].coord_type == SPHERICAL)
     zdom[ndom].ops.where_in_grid = spherical_where_in_grid;
-  else if (zdom[ndom].coord_type == CYLVAR)
-    zdom[ndom].ops.where_in_grid = cylvar_where_in_grid_simple;
   else
   {
     Error ("setup_geometry_ops: unknown coord_type %d for domain %d\n", zdom[ndom].coord_type, ndom);
@@ -555,15 +550,11 @@ setup_geometry_ops (int ndom)
     zdom[ndom].ops.ds_in_cell = rtheta_ds_in_cell;
   else if (zdom[ndom].coord_type == SPHERICAL)
     zdom[ndom].ops.ds_in_cell = spherical_ds_in_cell;
-  else if (zdom[ndom].coord_type == CYLVAR)
-    zdom[ndom].ops.ds_in_cell = cylvar_ds_in_cell;
 
   if (zdom[ndom].coord_type == SPHERICAL)
     zdom[ndom].ops.cell_volume = spherical_cell_volume;
   else if (zdom[ndom].coord_type == CYLIND)
     zdom[ndom].ops.cell_volume = cylind_cell_volume;
-  else if (zdom[ndom].coord_type == CYLVAR)
-    zdom[ndom].ops.cell_volume = cylvar_cell_volume;
   else if (zdom[ndom].coord_type == RTHETA)
     zdom[ndom].ops.cell_volume = (zdom[ndom].wind_type == HYDRO) ? rtheta_hydro_cell_volume : rtheta_cell_volume;
 
@@ -579,8 +570,6 @@ setup_geometry_ops (int ndom)
     zdom[ndom].ops.make_grid = cylind_make_grid;
   else if (zdom[ndom].coord_type == RTHETA)
     zdom[ndom].ops.make_grid = rtheta_make_grid;
-  else if (zdom[ndom].coord_type == CYLVAR)
-    zdom[ndom].ops.make_grid = cylvar_make_grid;
 
   if (zdom[ndom].coord_type == CYLIND)
     zdom[ndom].ops.get_random_location = cylind_get_random_location;
@@ -588,8 +577,6 @@ setup_geometry_ops (int ndom)
     zdom[ndom].ops.get_random_location = rtheta_get_random_location;
   else if (zdom[ndom].coord_type == SPHERICAL)
     zdom[ndom].ops.get_random_location = spherical_get_random_location;
-  else if (zdom[ndom].coord_type == CYLVAR)
-    zdom[ndom].ops.get_random_location = cylvar_get_random_location;
 
   return (0);
 }

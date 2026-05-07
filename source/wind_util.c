@@ -96,23 +96,6 @@ coord_fraction (int ndom, int ichoice, double x[], int ii[], double frac[], int 
   double *xx, *zz;
   int ix, iz;
   double dr, dz;
-  int n;
-
-
-  /* Jump to special routine if CYLVAR coords */
-
-  if (zdom[ndom].coord_type == CYLVAR)
-  {
-
-    n = cylvar_coord_fraction (ndom, ichoice, x, ii, frac, nelem);
-    if (n < 0 && ierr_coord_fraction < 1000)
-    {
-      Error ("coord_fraction: cylvar_coord fraction returning %d not in grid\n", n);
-      ierr_coord_fraction++;
-    }
-    return (n);
-
-  }
 
   /* Assign pointers to the xx and zz depending on whether
    * one wants to interpolate on vertex points (0) or
@@ -261,7 +244,6 @@ int ierr_where_in_2dcell = 0;
  * * x01	x11
  * * x00	x10
  *
- * This routine was written to account for cylind_var coordiantes
  *
  **********************************************************/
 

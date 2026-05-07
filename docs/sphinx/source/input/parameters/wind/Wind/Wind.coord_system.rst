@@ -15,8 +15,10 @@ Values
   polar
     Spherical polar
 
-  cyl_var
-    Cylindrical varying z
+
+.. note::
+   The ``cyl_var`` option (cylindrical with radially-varying z boundaries)
+   is not supported in this version of SIROCCO.
 
 
 File

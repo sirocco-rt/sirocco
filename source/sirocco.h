@@ -196,8 +196,7 @@ extern int NWAVE_NOW;         /**< Either NWAVE_IONIZ or NWAVE_EXTRACT depending
 enum coord_type_enum
 { SPHERICAL = 0,                //!< Spherical coordinates
   CYLIND = 1,                   //!< Standard cylindirical coordinates
-  RTHETA = 2,                   //!< Polar coordinates
-  CYLVAR = 3                    //!< Cylindrical coordinates but the z axis varies with rho
+  RTHETA = 2                    //!< Polar coordinates
 };
 
 
@@ -305,16 +304,6 @@ typedef struct domain
 
   ConePtr cones_rtheta;         /**< A ptr to the cones that define boundaries of cells in the theta direction
                                    when rtheta coords  are being used */
-/* Next two lines are for cyl_var coordinates.  They are used primarily for locating where a position is
- * in a grid with cyl_var coordinates. See cylvar_where in grid
- */
-
-  double **wind_z_var, **wind_midz_var;
-
-//  double wind_z_var[NDIM_MAX][NDIM_MAX];
-//  double wind_midz_var[NDIM_MAX][NDIM_MAX];
-
-
   /* Generic parameters for the wind */
   double wind_mdot, stellar_wind_mdot;  /**< Mass loss rate in disk and stellar wind */
   double rmin, rmax;            /**< Spherical extent of the wind */
@@ -870,10 +859,8 @@ typedef struct wind
                                    position of the (r_{i+1}, theta_{j+1}) corner.  For
                                    spherical (SPHERICAL) grids xmax[0] = xmax[2] =
                                    r_{i+1} * sin(PI/4).  xmax[1] = 0 for all 2D coordinate
-                                   systems.  Not meaningful for CYLVAR grids, where cells are
-                                   non-rectangular quadrilaterals defined by the positions of
-                                   the four surrounding wmain cells.  Populated by the
-                                   coord-type-specific wind_complete routines. @see x, xcen */
+                                   systems.  Populated by the coord-type-specific wind_complete
+                                   routines. @see x, xcen */
   double r, rcen;               /**< radial location of cell inner vertex and center (SPHERICAL and
                                    RTHETA coordinates). */
   double rmax;                  /**< radial location of cell outer boundary (SPHERICAL and RTHETA).
@@ -886,14 +873,13 @@ typedef struct wind
                                    Equal to wind_z[iz+1] for the cell at theta index iz.
                                    Populated by rtheta_wind_complete. @see theta, thetacen */
   double dtheta, dr;            /**<  widths of bins, used in hydro import mode */
-  struct cone wcone;            /**<  For CYLVAR: cone structure defining the bottom edge of the cell.
-                                   For RTHETA: cone structure defining the inner theta boundary
+  struct cone wcone;            /**<  For RTHETA: cone structure defining the inner theta boundary
                                    (theta_j), i.e. cones_rtheta[iz].  Populated by
-                                   rtheta_wind_complete for RTHETA cells. */
+                                   rtheta_wind_complete. */
   struct cone wcone_max;        /**<  Outer theta cone for RTHETA cells: defines the outer theta
                                    boundary (theta_{j+1}), i.e. cones_rtheta[iz+1].  Analogous
                                    to wcone which defines the inner edge.  Populated by
-                                   rtheta_wind_complete. Not used for CYLVAR or CYLIND. */
+                                   rtheta_wind_complete. Not used for CYLIND. */
   double v[3];                  /**< velocity at inner vertex (x) of cell in the observer frame.
                                    For 2d coordinate systems this is defined in the xz plane.
                                    @see v_rmax, v_thetamax, vmax */

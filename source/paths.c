@@ -776,7 +776,7 @@ wind_paths_output_vtk (WindPtr wind, int ndom)
   default:
     free (p_test);
     fclose (fptr);
-    Error ("wind_paths_output_vtk: Mesh format not yet supported (CYLVAR/RTHETA)");
+    Error ("wind_paths_output_vtk: Mesh format not yet supported (RTHETA)");
     return (0);
   }
 
