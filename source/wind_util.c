@@ -114,7 +114,7 @@ coord_fraction (int ndom, int ichoice, double x[], int ii[], double frac[], int 
 
   /* Now convert x to the appropriate coordinate system */
   r = z = 0.0;
-  if (zdom[ndom].coord_type == CYLIND)
+  if (zdom[ndom].coord_type == CYLIND || zdom[ndom].coord_type == CYLIND3D)
   {
     r = sqrt (x[0] * x[0] + x[1] * x[1]);
     /* Data-based hemisphere detection: if wind_z[0] >= 0 the grid only
@@ -169,16 +169,27 @@ coord_fraction (int ndom, int ichoice, double x[], int ii[], double frac[], int 
     fraction (r, xx, zdom[ndom].ndim, &ix, &dr, 0);
     fraction (z, zz, zdom[ndom].mdim, &iz, &dz, 0);
 
-    ii[0] = ix * zdom[ndom].mdim + iz;
+    if (zdom[ndom].coord_type == CYLIND3D)
+    {
+      /* For CYLIND3D cells are spaced mdim*pdim apart in rho and pdim apart in z.
+         Indices are into the k=0 phi slice; velocity callers rotate to actual phi. */
+      int pdim = zdom[ndom].pdim;
+      int mdim = zdom[ndom].mdim;
+      ii[0] = ix * mdim * pdim + iz * pdim;
+      ii[1] = (ix + 1) * mdim * pdim + iz * pdim;
+      ii[2] = ix * mdim * pdim + (iz + 1) * pdim;
+      ii[3] = (ix + 1) * mdim * pdim + (iz + 1) * pdim;
+    }
+    else
+    {
+      ii[0] = ix * zdom[ndom].mdim + iz;
+      ii[1] = (ix + 1) * zdom[ndom].mdim + iz;
+      ii[2] = ix * zdom[ndom].mdim + iz + 1;
+      ii[3] = (ix + 1) * zdom[ndom].mdim + iz + 1;
+    }
     frac[0] = (1. - dz) * (1. - dr);
-
-    ii[1] = (ix + 1) * zdom[ndom].mdim + iz;
     frac[1] = (1. - dz) * dr;
-
-    ii[2] = ix * zdom[ndom].mdim + iz + 1;
     frac[2] = (dz) * (1. - dr);
-
-    ii[3] = (ix + 1) * zdom[ndom].mdim + iz + 1;
     frac[3] = (dz) * (dr);
     *nelem = 4;
 
@@ -347,6 +358,13 @@ wind_n_to_ij (int ndom, int n, int *i, int *j)
   {
     *i = n - zdom[ndom].nstart;
     *j = 0;
+    return (0);
+  }
+  if (zdom[ndom].coord_type == CYLIND3D)
+  {
+    Error ("wind_n_to_ij: called for CYLIND3D domain %d; use wind_n_to_ijk instead\n", ndom);
+    *i = *j = 0;
+    return (1);
   }
   n_use = n - zdom[ndom].nstart;
   *i = n_use / zdom[ndom].mdim;
@@ -389,6 +407,12 @@ wind_ij_to_n (int ndom, int i, int j, int *n)
   {
     Error ("wind_ij_to_n: wind_ij_to_n being called for spherical coordinates %d %d\n", i, j);
     *n = i;
+    return (1);
+  }
+  if (zdom[ndom].coord_type == CYLIND3D)
+  {
+    Error ("wind_ij_to_n: called for CYLIND3D domain %d; use wind_ijk_to_n instead\n", ndom);
+    *n = zdom[ndom].nstart;
     return (1);
   }
 

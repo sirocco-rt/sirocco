@@ -674,6 +674,31 @@ wind_check (WindPtr www, int n)
         }
       }
     }
+    else if (zdom[ndom].coord_type == CYLIND3D)
+    {
+      /* CYLIND3D: same dfudge check as CYLIND, using (rho, z) dimensions */
+      dxmin = 1e99;
+      dzmin = 1e99;
+      for (i = 0; i < ndim; i++)
+      {
+        for (j = 0; j < mdim; j++)
+        {
+          int kk = 0, nn, outer_nn, outer_mm;
+          wind_ijk_to_n (ndom, i, j, kk, &nn);
+          if (wmain[nn].vol > 0.0)
+          {
+            wind_ijk_to_n (ndom, i + 1, j, kk, &outer_nn);
+            wind_ijk_to_n (ndom, i, j + 1, kk, &outer_mm);
+            dxmin = fabs (wmain[outer_nn].x[0] - wmain[nn].x[0]);
+            dzmin = fabs (wmain[outer_mm].x[2] - wmain[nn].x[2]);
+            if (dxmin < delta || dzmin < delta)
+            {
+              Error ("wind_check: DFUDGE may be large in cell %d %d (%.1e %.1e)\n", i, j, dxmin, dzmin);
+            }
+          }
+        }
+      }
+    }
     else
     {
       Error ("wind_check: Disaster - unknown wind type\n");

@@ -121,6 +121,17 @@ int cylind_where_in_grid(int ndom, double x[]);
 int cylind_get_random_location(int n, double x[]);
 int cylind_extend_density(int ndom, WindPtr w);
 int cylind_is_cell_in_wind(int n);
+/* cylindrical3d.c */
+int wind_ijk_to_n(int ndom, int i, int j, int k, int *n);
+void wind_n_to_ijk(int ndom, int n, int *i, int *j, int *k);
+int cylind3d_make_grid(int ndom, WindPtr w);
+int cylind3d_wind_complete(int ndom, WindPtr w);
+int cylind3d_where_in_grid(int ndom, double x[]);
+int cylind3d_is_cell_in_wind(int n);
+int cylind3d_cell_volume(WindPtr w);
+int cylind3d_get_random_location(int n, double x[]);
+int cylind3d_extend_density(int ndom, WindPtr w);
+double cylind3d_ds_in_cell(int ndom, PhotPtr p);
 /* define_wind.c */
 void define_wind(void);
 /* density.c */

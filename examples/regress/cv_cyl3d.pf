@@ -10,14 +10,12 @@ Binary.mass_sec(msol)                      0.6
 Binary.period(hr)                          5.57
 
 ### Parameters for the Disk (if there is one)
-Disk.type(none,flat,vertically.extended)  vertically.extended
+Disk.type(none,flat,vertically.extended,rmin>central.obj.rad)                 flat
 Disk.radiation(yes,no)                          yes
-Disk.rad_type_to_make_wind(bb,models)                   bb
+Disk.rad_type_to_make_wind(bb,models,mod_bb)                   bb
 Disk.temperature.profile(standard,readin)             standard
 Disk.mdot(msol/yr)                         1e-8
 Disk.radmax(cm)                            2.4e+10
-Disk.z0(fractional.height.at.diskrad)                 0.3
-Disk.z1(powerlaw.index)                          2
 
 ### Parameters for Boundary Layer or the compact object in an X-ray Binary or AGN
 Boundary_layer.radiation(yes,no)                   no
@@ -25,20 +23,21 @@ Boundary_layer.radiation(yes,no)                   no
 ### Parameters describing the various winds or coronae in the system
 Wind.number_of_components                  1
 Wind.type(SV,star,hydro,corona,kwd,homologous,shell,imported)                   sv
-Wind.coord_system(spherical,cylindrical,polar)          cylindrical
+Wind.coord_system(spherical,cylindrical,polar,cyl3d)                cyl3d
 Wind.dim.in.x_or_r.direction               30
 Wind.dim.in.z_or_theta.direction           30
+Wind.dim.in.phi.direction                         4
 
 ### Parameters associated with photon number, cycles,ionization and radiative transfer options
 Photons_per_cycle                          100000
 Ionization_cycles                          10
 Spectrum_cycles                            10
-Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,fixed,matrix_bb,matrix_pow,matrix_est)            matrix_bb
+Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,LTE_iterate,fixed,matrix_bb,matrix_pow,matrix_est,matrix_multishot)            matrix_bb
 Line_transfer(pure_abs,pure_scat,sing_scat,escape_prob,thermal_trapping,macro_atoms_escape_prob,macro_atoms_thermal_trapping)     thermal_trapping
 Wind.radiation(yes,no)                          yes
-Atomic_data                                data/standard80_reduced.dat
-Surface.reflection.or.absorption(reflect,absorb,thermalized.rerad)              reflect
+Surface.reflection.or.absorption(reflect,absorb,thermalized.rerad)               absorb
 Wind_heating.extra_processes(none,adiabatic,nonthermal,both)            adiabatic
+Atomic_data                                data/standard80_reduced.dat
 
 ### Parameters for Domain 0
 Wind.mdot(msol/yr)                         1e-9
@@ -59,11 +58,11 @@ Wind.filling_factor(1=smooth,<1=clumped)   1
 
 ### Parameters defining the spectra seen by observers
 
-Central_object.rad_type_in_final_spectrum(bb,models,uniform)                   bb
-Disk.rad_type_in_final_spectrum(bb,models,uniform)                   bb
+Central_object.rad_type_in_final_spectrum(bb,models,uniform,mono)                   bb
+Disk.rad_type_in_final_spectrum(bb,models,uniform,mono,mod_bb)                   bb
 
-### The minimum and maximum wavelengths in the final spectra
-Spectrum.nwave                    10000
+### The minimum and maximum wavelengths in the final spectra and the number of wavelength bins
+Spectrum.nwave                             10000
 Spectrum.wavemin(Angstroms)                800
 Spectrum.wavemax(Angstroms)                1850
 
@@ -82,4 +81,4 @@ Spectrum.type(flambda,fnu,basic)              flambda
 Reverb.type(none,photon,wind,matom)                 none
 
 ### Other parameters
-Photon_sampling.approach(T_star,cv,yso,AGN,tde_bb,min_max_freq,user_bands,cloudy_test,wide,logarithmic)                    cv
+Photon_sampling.approach(T_star,cv,yso,AGN,tde_bb,min_max_freq,user_bands,cloudy_test,wide,logarithmic)                   cv

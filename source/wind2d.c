@@ -220,6 +220,28 @@ vwind_xyz (int ndom, PhotPtr p, double v[])
           vv[i] = (1.0 - dr) * (1.0 - dz) * wmain[n].v[i]
             + dr * (1.0 - dz) * wmain[n].v_rmax[i] + (1.0 - dr) * dz * wmain[n].v_thetamax[i] + dr * dz * wmain[n].vmax[i];
       }
+      else if (coord_type == CYLIND3D)
+      {
+        /* Phase 1: bilinear in (rho, z) using phi=0 corners — same as CYLIND.
+           Phase 3 will rotate to cylindrical frame and add phi interpolation. */
+        double rho_here = sqrt (p->x[0] * p->x[0] + p->x[1] * p->x[1]);
+        double z_here = p->x[2];
+        denom = wmain[n].xmax[0] - wmain[n].x[0];
+        dr = (denom > 0.0) ? (rho_here - wmain[n].x[0]) / denom : 0.5;
+        denom = wmain[n].xmax[2] - wmain[n].x[2];
+        dz = (denom > 0.0) ? (z_here - wmain[n].x[2]) / denom : 0.5;
+        if (dr < 0.0)
+          dr = 0.0;
+        if (dr > 1.0)
+          dr = 1.0;
+        if (dz < 0.0)
+          dz = 0.0;
+        if (dz > 1.0)
+          dz = 1.0;
+        for (i = 0; i < 3; i++)
+          vv[i] = (1.0 - dr) * (1.0 - dz) * wmain[n].v[i]
+            + dr * (1.0 - dz) * wmain[n].v_rmax[i] + (1.0 - dr) * dz * wmain[n].v_thetamax[i] + dr * dz * wmain[n].vmax[i];
+      }
       else                      /* RTHETA */
       {
         /* 2D bilinear in (r, theta_deg): corners stored as v, v_rmax, v_thetamax, vmax.

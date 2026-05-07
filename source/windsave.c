@@ -83,7 +83,11 @@ wind_save (char filename[])
     n += fwrite (zdom[ndom].wind_z, sizeof (double), zdom[ndom].mdim, fptr);
     n += fwrite (zdom[ndom].wind_midx, sizeof (double), zdom[ndom].ndim, fptr);
     n += fwrite (zdom[ndom].wind_midz, sizeof (double), zdom[ndom].mdim, fptr);
-
+    if (zdom[ndom].coord_type == CYLIND3D)
+    {
+      n += fwrite (zdom[ndom].wind_phi, sizeof (double), zdom[ndom].pdim + 1, fptr);
+      n += fwrite (zdom[ndom].wind_midphi, sizeof (double), zdom[ndom].pdim, fptr);
+    }
   }
 
   n += fwrite (wmain, sizeof (wind_dummy), NDIM2, fptr);
@@ -264,6 +268,11 @@ wind_read (char filename[])
     n += fread (zdom[ndom].wind_z, sizeof (double), zdom[ndom].mdim, fptr);
     n += fread (zdom[ndom].wind_midx, sizeof (double), zdom[ndom].ndim, fptr);
     n += fread (zdom[ndom].wind_midz, sizeof (double), zdom[ndom].mdim, fptr);
+    if (zdom[ndom].coord_type == CYLIND3D)
+    {
+      n += fread (zdom[ndom].wind_phi, sizeof (double), zdom[ndom].pdim + 1, fptr);
+      n += fread (zdom[ndom].wind_midphi, sizeof (double), zdom[ndom].pdim, fptr);
+    }
   }
 
   calloc_wind (NDIM2);
@@ -440,6 +449,10 @@ wind_complete ()
     else if (zdom[ndom].coord_type == RTHETA)
     {
       rtheta_wind_complete (ndom, wmain);
+    }
+    else if (zdom[ndom].coord_type == CYLIND3D)
+    {
+      cylind3d_wind_complete (ndom, wmain);
     }
     else
     {

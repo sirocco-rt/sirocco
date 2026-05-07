@@ -95,7 +95,7 @@ calculate_mdot_wind (void)
     }
     else
     {
-      Error ("wind2d.c: Not currently able to calculate mdot wind for coord type %d in domain %d\n", zdom[ndom].coord_type, ndom);
+      Log ("wind2d.c: Not calculating mdot wind for coord type %d in domain %d\n", zdom[ndom].coord_type, ndom);
     }
   }
 }
@@ -476,7 +476,7 @@ complete_wind_grid_creation (void)
 
     /* Next we need to check that each cell which has volume has in the wind or
      * not. This can sometimes happen with odd wind parameters. */
-    if (zdom[ndom].coord_type != SPHERICAL && zdom[ndom].wind_type != IMPORT)
+    if (zdom[ndom].coord_type != SPHERICAL && zdom[ndom].coord_type != CYLIND3D && zdom[ndom].wind_type != IMPORT)
     {
       for (n = zdom[ndom].nstart; n < zdom[ndom].nstop; n++)
       {
@@ -494,6 +494,10 @@ complete_wind_grid_creation (void)
           Error ("wind2d: Cell %3d (%2d,%2d) in domain %d has 4 corners in wind, but is only partially in wind\n", n, i, j, ndom);
         }
       }
+    }
+    else if (zdom[ndom].coord_type == CYLIND3D)
+    {
+      Log ("wind2d: Not checking corners_in_wind for CYLIND3D coordinates in domain %d\n", ndom);
     }
     else if (zdom[ndom].coord_type == SPHERICAL)
     {
@@ -560,9 +564,9 @@ create_wind_grid (void)
   for (ndom = 0; ndom < geo.ndomain; ++ndom)
   {
     zdom[ndom].nstart = n;
-    n += zdom[ndom].ndim * zdom[ndom].mdim;
+    n += zdom[ndom].ndim2;
     zdom[ndom].nstop = n;
-    NDIM2 += zdom[ndom].ndim * zdom[ndom].mdim;
+    NDIM2 += zdom[ndom].ndim2;
   }
   geo.ndim2 = NDIM2;
 
@@ -686,6 +690,23 @@ create_wind_grid (void)
         model_velocity (cell->ndom, xc, cell->v_thetamax);
         /* (r_outer, theta_outer) corner = xmax */
         model_velocity (cell->ndom, cell->xmax, cell->vmax);
+      }
+      else if (coord_type == CYLIND3D)
+      {
+        /* Phase 1: corners in the xz plane at phi=0, same as CYLIND.
+           Phase 3 will add phi_max corners for non-axisymmetric velocity. */
+        xc[0] = cell->xmax[0];
+        xc[1] = 0.0;
+        xc[2] = cell->x[2];
+        model_velocity (cell->ndom, xc, cell->v_rmax);
+        xc[0] = cell->x[0];
+        xc[1] = 0.0;
+        xc[2] = cell->xmax[2];
+        model_velocity (cell->ndom, xc, cell->v_thetamax);
+        xc[0] = cell->xmax[0];
+        xc[1] = 0.0;
+        xc[2] = cell->xmax[2];
+        model_velocity (cell->ndom, xc, cell->vmax);
       }
       else if (coord_type == SPHERICAL)
       {

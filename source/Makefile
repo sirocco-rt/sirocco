@@ -196,7 +196,7 @@ foo: foo.o signal.o time.o
 sirocco_source = agn.c anisowind.c atomic_extern_init.c atomicdata.c atomicdata_init.c  \
 	atomicdata_sub.c bands.c bands_spec.c bb.c bilinear.c brem.c cdf.c charge_exchange.c communicate_macro.c  \
 	communicate_plasma.c communicate_spectra.c communicate_wind.c compton.c continuum.c cooling.c corona.c  \
-	cv.c cylindrical.c define_wind.c density.c diag.c dielectronic.c direct_ion.c  \
+	cv.c cylindrical.c cylindrical3d.c define_wind.c density.c diag.c dielectronic.c direct_ion.c  \
 	disk.c disk_init.c disk_photon_gen.c emission.c estimators_macro.c estimators_simple.c  \
 	extract.c frame.c  gradv.c gridwind.c homologous.c hydro_import.c import.c  \
 	import_calloc.c import_cylindrical.c import_rtheta.c import_spherical.c ionization.c  \

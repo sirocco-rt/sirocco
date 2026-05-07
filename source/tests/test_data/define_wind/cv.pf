@@ -21,7 +21,7 @@ Disk.radmax(cm)                            2.4e+10
 Boundary_layer.radiation(yes,no)                   no
 Wind.number_of_components                  1
 Wind.type(SV,star,hydro,corona,kwd,homologous,shell,imported)                   sv
-Wind.coord_system(spherical,cylindrical,polar,cyl_var)          cylindrical
+Wind.coord_system(spherical,cylindrical,polar,cyl3d)          cylindrical
 Wind.dim.in.x_or_r.direction               30
 Wind.dim.in.z_or_theta.direction           30
 Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,LTE_iterate,fixed,matrix_bb,matrix_pow,matrix_est,matrix_multishot)            matrix_bb

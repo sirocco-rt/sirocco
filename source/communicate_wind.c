@@ -88,7 +88,7 @@ broadcast_wind_grid (const int n_start, const int n_stop, const int n_cells_rank
    * + 1 nine-tensor (v_grad) + rmax + thetamax = 15 + 21 + 9 = 45
    * plus wcone and wcone_max as derived types */
   const int comm_buffer_size =
-    calculate_comm_buffer_size (1 + 5 * n_cells_max, n_cells_max * (15 + 7 * 3 + 1 * 9)) + bytes_wcone + bytes_wcone_max;
+    calculate_comm_buffer_size (1 + 5 * n_cells_max, n_cells_max * (15 + 3 + 7 * 3 + 1 * 9)) + bytes_wcone + bytes_wcone_max;
 
   char *comm_buffer = malloc (comm_buffer_size);
   if (comm_buffer == NULL)
@@ -136,6 +136,9 @@ broadcast_wind_grid (const int n_start, const int n_stop, const int n_cells_rank
         MPI_Pack (&cell->xgamma, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->xgamma_cen, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->dfudge, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (&cell->phi, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (&cell->phicen, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (&cell->phimax, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->inwind, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
       }
     }
@@ -179,6 +182,9 @@ broadcast_wind_grid (const int n_start, const int n_stop, const int n_cells_rank
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->xgamma, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->xgamma_cen, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->dfudge, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->phi, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->phicen, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->phimax, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->inwind, 1, MPI_INT, MPI_COMM_WORLD);
       }
     }

@@ -86,7 +86,7 @@ get_domain_params (int ndom)
     strcpy (answer, "cylindrical");
   }
 
-  zdom[ndom].coord_type = rdchoice ("Wind.coord_system(spherical,cylindrical,polar)", "0,1,2", answer);
+  zdom[ndom].coord_type = rdchoice ("Wind.coord_system(spherical,cylindrical,polar,cyl3d)", "0,1,2,3", answer);
 
   if (zdom[ndom].wind_type == IMPORT)   // Do not define dimensions for imported model
   {
@@ -120,8 +120,19 @@ get_domain_params (int ndom)
       /* For cylindrical and polar grids the user specifies the number of z/theta cells per
          hemisphere.  The internal grid covers both hemispheres, so we double mdim here.
          All downstream code uses the doubled value. */
-      if (zdom[ndom].coord_type == CYLIND || zdom[ndom].coord_type == RTHETA)
+      if (zdom[ndom].coord_type == CYLIND || zdom[ndom].coord_type == RTHETA || zdom[ndom].coord_type == CYLIND3D)
         zdom[ndom].mdim *= 2;
+
+      if (zdom[ndom].coord_type == CYLIND3D)
+      {
+        zdom[ndom].pdim = 4;    /* sensible default */
+        rdint ("Wind.dim.in.phi.direction", &zdom[ndom].pdim);
+        if (zdom[ndom].pdim < 1)
+        {
+          Error ("get_domain_params: pdim must be >= 1 for CYLIND3D domain %d\n", ndom);
+          Exit (EXIT_FAILURE);
+        }
+      }
     }
     else
     {
@@ -146,7 +157,10 @@ get_domain_params (int ndom)
     }
   }
 
-  zdom[ndom].ndim2 = zdom[ndom].ndim * zdom[ndom].mdim;
+  if (zdom[ndom].coord_type == CYLIND3D)
+    zdom[ndom].ndim2 = zdom[ndom].ndim * zdom[ndom].mdim * zdom[ndom].pdim;
+  else
+    zdom[ndom].ndim2 = zdom[ndom].ndim * zdom[ndom].mdim;
 
   return (0);
 }
@@ -162,7 +176,7 @@ get_domain_params (int ndom)
  *
  * Memory is allocated for the `wind_x`, `wind_z`, `wind_midx` and `wind_midz`
  * arrays. For a polar coordinate system an additional wind cone is allocated.
- * For cylindrical variable coordinate system `wind_z_var` and `wind_midz_var`
+ * For the 3D cylindrical coordinate system `wind_phi` and `wind_midphi`
  * are allocated.
  *
  * If allocating fails for anything, the program will exit.
@@ -197,6 +211,16 @@ allocate_domain_wind_coords (int ndom)
     if (zdom[ndom].cones_rtheta == NULL)
     {
       Error ("allocate_domain_wind_coords: Problem allocating memory for the r-theta cone in domain %d\n", ndom);
+      Exit (EXIT_FAILURE);
+    }
+  }
+  else if (zdom[ndom].coord_type == CYLIND3D)
+  {
+    zdom[ndom].wind_phi = calloc (zdom[ndom].pdim + 1, sizeof (double));
+    zdom[ndom].wind_midphi = calloc (zdom[ndom].pdim, sizeof (double));
+    if (zdom[ndom].wind_phi == NULL || zdom[ndom].wind_midphi == NULL)
+    {
+      Error ("allocate_domain_wind_coords: Problem allocating memory for phi-dim for domain %d\n", ndom);
       Exit (EXIT_FAILURE);
     }
   }
@@ -538,6 +562,8 @@ setup_geometry_ops (int ndom)
     zdom[ndom].ops.where_in_grid = rtheta_where_in_grid;
   else if (zdom[ndom].coord_type == SPHERICAL)
     zdom[ndom].ops.where_in_grid = spherical_where_in_grid;
+  else if (zdom[ndom].coord_type == CYLIND3D)
+    zdom[ndom].ops.where_in_grid = cylind3d_where_in_grid;
   else
   {
     Error ("setup_geometry_ops: unknown coord_type %d for domain %d\n", zdom[ndom].coord_type, ndom);
@@ -550,6 +576,8 @@ setup_geometry_ops (int ndom)
     zdom[ndom].ops.ds_in_cell = rtheta_ds_in_cell;
   else if (zdom[ndom].coord_type == SPHERICAL)
     zdom[ndom].ops.ds_in_cell = spherical_ds_in_cell;
+  else if (zdom[ndom].coord_type == CYLIND3D)
+    zdom[ndom].ops.ds_in_cell = cylind3d_ds_in_cell;
 
   if (zdom[ndom].coord_type == SPHERICAL)
     zdom[ndom].ops.cell_volume = spherical_cell_volume;
@@ -557,6 +585,8 @@ setup_geometry_ops (int ndom)
     zdom[ndom].ops.cell_volume = cylind_cell_volume;
   else if (zdom[ndom].coord_type == RTHETA)
     zdom[ndom].ops.cell_volume = (zdom[ndom].wind_type == HYDRO) ? rtheta_hydro_cell_volume : rtheta_cell_volume;
+  else if (zdom[ndom].coord_type == CYLIND3D)
+    zdom[ndom].ops.cell_volume = cylind3d_cell_volume;
 
   if (zdom[ndom].wind_type == IMPORT)
     zdom[ndom].ops.make_grid = import_make_grid;
@@ -570,6 +600,8 @@ setup_geometry_ops (int ndom)
     zdom[ndom].ops.make_grid = cylind_make_grid;
   else if (zdom[ndom].coord_type == RTHETA)
     zdom[ndom].ops.make_grid = rtheta_make_grid;
+  else if (zdom[ndom].coord_type == CYLIND3D)
+    zdom[ndom].ops.make_grid = cylind3d_make_grid;
 
   if (zdom[ndom].coord_type == CYLIND)
     zdom[ndom].ops.get_random_location = cylind_get_random_location;
@@ -577,6 +609,8 @@ setup_geometry_ops (int ndom)
     zdom[ndom].ops.get_random_location = rtheta_get_random_location;
   else if (zdom[ndom].coord_type == SPHERICAL)
     zdom[ndom].ops.get_random_location = spherical_get_random_location;
+  else if (zdom[ndom].coord_type == CYLIND3D)
+    zdom[ndom].ops.get_random_location = cylind3d_get_random_location;
 
   return (0);
 }

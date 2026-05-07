@@ -196,7 +196,8 @@ extern int NWAVE_NOW;         /**< Either NWAVE_IONIZ or NWAVE_EXTRACT depending
 enum coord_type_enum
 { SPHERICAL = 0,                //!< Spherical coordinates
   CYLIND = 1,                   //!< Standard cylindirical coordinates
-  RTHETA = 2                    //!< Polar coordinates
+  RTHETA = 2,                   //!< Polar coordinates
+  CYLIND3D = 3                  //!< Full 3D cylindrical (rho, phi, z)
 };
 
 
@@ -301,6 +302,10 @@ typedef struct domain
 
   double *wind_x, *wind_z;
   double *wind_midx, *wind_midz;
+
+  int pdim;                     /**< Number of azimuthal (phi) cells; CYLIND3D only */
+  double *wind_phi;             /**< Phi boundaries [0, 2pi], length pdim+1; CYLIND3D only */
+  double *wind_midphi;          /**< Phi cell centres, length pdim; CYLIND3D only */
 
   ConePtr cones_rtheta;         /**< A ptr to the cones that define boundaries of cells in the theta direction
                                    when rtheta coords  are being used */
@@ -872,6 +877,7 @@ typedef struct wind
   double thetamax;              /**< polar angle (degrees) of outer boundary of cell (RTHETA only).
                                    Equal to wind_z[iz+1] for the cell at theta index iz.
                                    Populated by rtheta_wind_complete. @see theta, thetacen */
+  double phi, phicen, phimax;   /**< azimuthal boundaries and centre (radians); CYLIND3D only */
   double dtheta, dr;            /**<  widths of bins, used in hydro import mode */
   struct cone wcone;            /**<  For RTHETA: cone structure defining the inner theta boundary
                                    (theta_j), i.e. cones_rtheta[iz].  Populated by
