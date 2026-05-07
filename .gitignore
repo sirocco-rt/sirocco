@@ -86,7 +86,9 @@ wiki/
 *.Po
 
 # Some atomic data files should not be tracked by this repository
+data
 data/
+xmod
 xmod/
 
 # avoid tracking symbolic links errenously put in xdata
@@ -102,13 +104,19 @@ source/templates.h.old
 *.diag
 *.spec
 *.log_spec
-*.spec_tot
+*.log_spec_wind
 *.log_spec_tot
+*.log_spec_tot_wind
+*.spec_tot
 *.rdpar
 *.sig
 *.out.pf
 logfile
 *.wind_save
+cdf_diag.txt
+diag_*/
+zdata
+zdata/
 
 # IDE files
 .idea/
