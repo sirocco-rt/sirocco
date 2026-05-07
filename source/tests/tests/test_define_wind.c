@@ -26,9 +26,9 @@
 char *SIROCCO_ENV;
 char TEST_CWD[LINELENGTH];
 char ATOMIC_DATA_TARGET[LINELENGTH];
-char ATOMIC_DATA_DEST[2 * LINELENGTH];
+char ATOMIC_DATA_DEST[LINELENGTH];
 char ATOMIC_DATA_TARGET_DEVELOPER[LINELENGTH];
-char ATOMIC_DATA_DEST_DEVELOPER[2 * LINELENGTH];
+char ATOMIC_DATA_DEST_DEVELOPER[LINELENGTH];
 
 #define TEST_DATA_LENGTH 2056
 
@@ -616,7 +616,7 @@ suite_init (void)
     return EXIT_FAILURE;
   }
 
-  snprintf (ATOMIC_DATA_DEST, 2 * LINELENGTH, "%s/data", TEST_CWD);
+  snprintf (ATOMIC_DATA_DEST, LINELENGTH, "%s/data", TEST_CWD);
   if (symlink (ATOMIC_DATA_TARGET, ATOMIC_DATA_DEST) != EXIT_SUCCESS)
   {
     /* If the symlink exists, we'll try not worry about it as if something is
@@ -636,7 +636,7 @@ suite_init (void)
     return EXIT_FAILURE;
   }
 
-  snprintf (ATOMIC_DATA_DEST_DEVELOPER, 2 * LINELENGTH, "%s/zdata", TEST_CWD);
+  snprintf (ATOMIC_DATA_DEST_DEVELOPER, LINELENGTH, "%s/zdata", TEST_CWD);
   if (symlink (ATOMIC_DATA_TARGET_DEVELOPER, ATOMIC_DATA_DEST_DEVELOPER) != EXIT_SUCCESS)
   {
     /* If the symlink exists, we'll try not worry about it as if something is
