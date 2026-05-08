@@ -19,7 +19,7 @@
    in the plasma structure to be packed (i.e. things that are not arrays or pointers and
    have a size of MPI_INT or MPI_DOUBLE)*/
 #define N_BASIC_DOUBLES 73
-#define N_BASIC_INTS 22
+#define N_BASIC_INTS 23
 
 /**********************************************************/
 /**
@@ -708,6 +708,7 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
         MPI_Pack (&plasmamain[n_plasma].derived.nscat_es, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].derived.nscat_bf, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].derived.nscat_ff, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
+        MPI_Pack (&plasmamain[n_plasma].derived.nscat_res, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].est.mean_ds, 1, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].est.n_ds, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].derived.nrad, 1, MPI_INT, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
@@ -896,6 +897,7 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].derived.nscat_es, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].derived.nscat_bf, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].derived.nscat_ff, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].derived.nscat_res, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].est.mean_ds, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].est.n_ds, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].derived.nrad, 1, MPI_INT, MPI_COMM_WORLD);
@@ -1090,7 +1092,7 @@ reduce_simple_estimators (void)
 
   /* The size of the helper array for integers. We transmit 7 numbers
      for each cell, plus one array of length NXBANDS */
-  plasma_int_helpers = (7 + NXBANDS) * NPLASMA;
+  plasma_int_helpers = (11 + NXBANDS) * NPLASMA;
 
 
   maxfreqhelper = calloc (sizeof (double), NPLASMA);
@@ -1323,6 +1325,10 @@ reduce_simple_estimators (void)
     {
       iredhelper[mpi_i + (7 + mpi_j) * NPLASMA] = plasmamain[mpi_i].est.nxtot[mpi_j];
     }
+    iredhelper[mpi_i + (7 + NXBANDS) * NPLASMA] = plasmamain[mpi_i].derived.nscat_es;
+    iredhelper[mpi_i + (8 + NXBANDS) * NPLASMA] = plasmamain[mpi_i].derived.nscat_bf;
+    iredhelper[mpi_i + (9 + NXBANDS) * NPLASMA] = plasmamain[mpi_i].derived.nscat_ff;
+    iredhelper[mpi_i + (10 + NXBANDS) * NPLASMA] = plasmamain[mpi_i].derived.nscat_res;
   }
 
   for (mpi_i = 0; mpi_i < NRINGS; mpi_i++)
@@ -1348,6 +1354,10 @@ reduce_simple_estimators (void)
     {
       plasmamain[mpi_i].est.nxtot[mpi_j] = iredhelper2[mpi_i + (7 + mpi_j) * NPLASMA];
     }
+    plasmamain[mpi_i].derived.nscat_es = iredhelper2[mpi_i + (7 + NXBANDS) * NPLASMA];
+    plasmamain[mpi_i].derived.nscat_bf = iredhelper2[mpi_i + (8 + NXBANDS) * NPLASMA];
+    plasmamain[mpi_i].derived.nscat_ff = iredhelper2[mpi_i + (9 + NXBANDS) * NPLASMA];
+    plasmamain[mpi_i].derived.nscat_res = iredhelper2[mpi_i + (10 + NXBANDS) * NPLASMA];
   }
 
   for (mpi_i = 0; mpi_i < NRINGS; mpi_i++)
