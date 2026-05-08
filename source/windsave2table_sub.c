@@ -387,8 +387,8 @@ create_master_table (int ndom, char rootname[])
     /* First assemble the header line */
 
     sprintf (start,
-             "%8s %9s %9s %8s %9s %9s %4s %4s %4s %8s %7s %6s %8s %9s %9s %9s ", "rho", "z", "phi", "rho_cen",
-             "z_cen", "phi_cen", "i", "j", "k", "nwind", "nplasma", "inwind", "converge", "v_x", "v_y", "v_z");
+             "%8s %9s %9s %8s %9s %9s %4s %4s %4s %8s %7s %6s %8s %9s %9s %9s ", "x", "z", "phi", "xcen",
+             "zcen", "phicen", "i", "j", "k", "nwind", "nplasma", "inwind", "converge", "v_x", "v_y", "v_z");
     strcpy (one_line, start);
     n = 0;
     while (n < ncols)
@@ -628,7 +628,7 @@ create_heat_table (int ndom, char rootname[])
 
     /* First assemble the header line */
 
-    sprintf (start, "%8s %8s %8s %4s %4s %4s %6s %8s %9s %9s %9s ", "rho_cen", "z_cen", "phi_cen", "i", "j", "k",
+    sprintf (start, "%8s %8s %8s %4s %4s %4s %6s %8s %9s %9s %9s ", "xcen", "zcen", "phicen", "i", "j", "k",
              "inwind", "converge", "v_x", "v_y", "v_z");
     strcpy (one_line, start);
     n = 0;
@@ -862,7 +862,7 @@ create_convergence_table (int ndom, char rootname[])
 
     /* First assemble the header line */
 
-    sprintf (start, "%8s %8s %8s %4s %4s %4s %6s %8s %9s %9s %9s ", "rho_cen", "z_cen", "phi_cen", "i", "j", "k",
+    sprintf (start, "%8s %8s %8s %4s %4s %4s %6s %8s %9s %9s %9s ", "xcen", "zcen", "phicen", "i", "j", "k",
              "inwind", "converge", "v_x", "v_y", "v_z");
     strcpy (one_line, start);
     n = 0;
@@ -1079,7 +1079,7 @@ create_velocity_gradient_table (int ndom, char rootname[])
 
     /* First assemble the header line */
 
-    sprintf (start, "%8s %8s %8s %4s %4s %4s %6s %8s %9s %9s %9s ", "rho_cen", "z_cen", "phi_cen", "i", "j", "k",
+    sprintf (start, "%8s %8s %8s %4s %4s %4s %6s %8s %9s %9s %9s ", "xcen", "zcen", "phicen", "i", "j", "k",
              "inwind", "converge", "v_x", "v_y", "v_z");
     strcpy (one_line, start);
     n = 0;
@@ -1281,7 +1281,7 @@ create_ion_table (int ndom, char rootname[], int iz, int ion_switch)
 
     /* First assemble the header line */
 
-    sprintf (start, "%8s %8s %8s %4s %4s %4s %6s ", "rho_cen", "z_cen", "phi_cen", "i", "j", "k", "inwind");
+    sprintf (start, "%8s %8s %8s %4s %4s %4s %6s ", "xcen", "zcen", "phicen", "i", "j", "k", "inwind");
     strcpy (one_line, start);
     n = 0;
     while (n < number_ions)
@@ -2187,7 +2187,7 @@ create_spec_table (int ndom, char rootname[])
 
     /* First assemble the header line */
 
-    sprintf (start, "%8s %8s %8s %4s %4s %4s %6s %8s %6s ", "rho_cen", "z_cen", "phi_cen", "i", "j", "k", "inwind", "converge", "nband");
+    sprintf (start, "%8s %8s %8s %4s %4s %4s %6s %8s %6s ", "xcen", "zcen", "phicen", "i", "j", "k", "inwind", "converge", "nband");
     strcpy (one_line, start);
     n = 0;
     while (n < ncols)

@@ -163,7 +163,7 @@ def get_data(filename='fiducial_agn_master.txt', var='t_r',grid='ij',inwind='',s
     if is_3d:
         kslice = k if k >= 0 else 0
         data = data[data['k'] == kslice]
-        xcol, ycol = 'rho_cen', 'z_cen'
+        xcol, ycol = 'xcen', 'zcen'
     else:
         xcol, ycol = 'x', 'z'
 
