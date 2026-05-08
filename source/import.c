@@ -79,13 +79,21 @@ import_wind2 (int ndom, char *filename)
   {
     import_rtheta (ndom, filename);
   }
+  else if (zdom[ndom].coord_type == CYLIND3D)
+  {
+    import_cylindrical3d (ndom, filename);
+  }
   else
   {
     Error ("%s : %i : Do not know how to import a model of coord_type %d\n", __FILE__, __LINE__, zdom[ndom].coord_type);
     Exit (0);
   }
 
-  Log ("The imported model for domain %i has dimensions %d x %d\n", ndom, imported_model[ndom].ndim, imported_model[ndom].mdim);
+  if (zdom[ndom].coord_type == CYLIND3D)
+    Log ("The imported model for domain %i has dimensions %d x %d x %d\n",
+         ndom, imported_model[ndom].ndim, imported_model[ndom].mdim, imported_model[ndom].pdim);
+  else
+    Log ("The imported model for domain %i has dimensions %d x %d\n", ndom, imported_model[ndom].ndim, imported_model[ndom].mdim);
 
   return (0);
 }
@@ -125,6 +133,10 @@ import_set_wind_boundaries (int ndom)
   else if (zdom[ndom].coord_type == RTHETA)
   {
     import_rtheta_setup_boundaries (ndom);
+  }
+  else if (zdom[ndom].coord_type == CYLIND3D)
+  {
+    import_cylindrical3d_setup_boundaries (ndom);
   }
   else
   {
@@ -170,6 +182,10 @@ import_make_grid (int ndom, WindPtr w)
   else if (zdom[ndom].coord_type == RTHETA)
   {
     rtheta_make_grid_import (w, ndom);
+  }
+  else if (zdom[ndom].coord_type == CYLIND3D)
+  {
+    cylindrical3d_make_grid_import (w, ndom);
   }
   else
   {
@@ -217,6 +233,10 @@ import_velocity (int ndom, double *x, double *v)
   else if (zdom[ndom].coord_type == RTHETA)
   {
     speed = velocity_rtheta (ndom, x, v);
+  }
+  else if (zdom[ndom].coord_type == CYLIND3D)
+  {
+    speed = velocity_cylindrical3d (ndom, x, v);
   }
   else
   {
@@ -268,6 +288,10 @@ import_rho (int ndom, double *x)
   {
     rho = rho_rtheta (ndom, x);
   }
+  else if (zdom[ndom].coord_type == CYLIND3D)
+  {
+    rho = rho_cylindrical3d (ndom, x);
+  }
   else
   {
     Error ("import_rho: unknown coord_type %d\n", zdom[ndom].coord_type);
@@ -316,6 +340,10 @@ import_temperature (int ndom, double *x, int return_t_e)
   else if (zdom[ndom].coord_type == RTHETA)
   {
     temperature = temperature_rtheta (ndom, x, return_t_e);
+  }
+  else if (zdom[ndom].coord_type == CYLIND3D)
+  {
+    temperature = temperature_cylindrical3d (ndom, x, return_t_e);
   }
   else
   {

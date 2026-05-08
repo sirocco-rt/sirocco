@@ -277,6 +277,13 @@ int cylindrical_make_grid_import(WindPtr w, int ndom);
 double velocity_cylindrical(int ndom, double *x, double *v);
 double rho_cylindrical(int ndom, double *x);
 double temperature_cylindrical(int ndom, double *x, int return_t_e);
+/* import_cylindrical3d.c */
+int import_cylindrical3d(int ndom, char *filename);
+int import_cylindrical3d_setup_boundaries(int ndom);
+int cylindrical3d_make_grid_import(WindPtr w, int ndom);
+double velocity_cylindrical3d(int ndom, double *x, double *v);
+double rho_cylindrical3d(int ndom, double *x);
+double temperature_cylindrical3d(int ndom, double *x, int return_t_e);
 /* import_rtheta.c */
 int import_rtheta(int ndom, char *filename);
 int import_rtheta_setup_boundaries(int ndom);

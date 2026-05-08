@@ -2017,6 +2017,11 @@ extern struct rdpar_choices zz_spec;
 #define READ_ELECTRON_TEMP_2D    (READ_NO_TEMP_2D + 1)
 #define READ_BOTH_TEMP_2D        (READ_NO_TEMP_2D + 2)
 
+/* 3D cylindrical import: i j k inwind x z phi v_x v_y v_z rho [t_e [t_r]] */
+#define READ_NO_TEMP_3D          11
+#define READ_ELECTRON_TEMP_3D    (READ_NO_TEMP_3D + 1)
+#define READ_BOTH_TEMP_3D        (READ_NO_TEMP_3D + 2)
+
 /**
  * The Import structure will contain all of the required information for
  * creating a wind grid using an imported model.
@@ -2026,16 +2031,19 @@ struct Import
 {
   int init_temperature;         /**<  initialise to t.wind.init if TRUE */
   int ncell;                    /**<  the total number of cells read in */
-  int ndim, mdim;               /**<  the number of coordinates in the n and m dimensions */
-  int *i, *j;                   /**<  the i (row) and j (column) elements */
+  int ndim, mdim, pdim;         /**<  grid dimensions; pdim is phi dimension for CYLIND3D */
+  int *i, *j, *k;               /**<  grid indices; k is phi index for CYLIND3D */
   int *inwind;                  /**<  flag for the cell being inwind or not inwind */
   double *x, *z, *r, *theta;    /**<  the x/r or z/theta coordinates of the grid in cgs units */
+  double *phi;                  /**<  phi corner coordinates (CYLIND3D only) */
   double *v_x, *v_y, *v_z;      /**<  the velocity in Cartesian coordinates in cgs units */
   double *v_r;                  /**<  the radial velocity in cgs units */
   double *mass_rho;             /**<  the mass density in cgs units */
   double *t_e, *t_r;            /**<  the electron and radiation temperature in Kelvin */
   double *wind_x, *wind_z;      /**<  the wind grid coordinates */
   double *wind_midx, *wind_midz;        /**<  the wind grid mid points */
+  double *wind_phi;             /**<  phi boundary grid (pdim+1 values; CYLIND3D only) */
+  double *wind_midphi;          /**<  phi cell centres (pdim values; CYLIND3D only) */
 };
 
 extern struct Import *imported_model;   // MAX_DOM is defined in sirocco.h and as such import.h has to be included after
