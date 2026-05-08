@@ -1521,12 +1521,20 @@ a:printf ("There are %i wind elements in this model\n", NDIM2);
     goto a;
   }
 
-  wind_n_to_ij (ndom, n, &i, &j);
   xplasma = &plasmamain[w[n].nplasma];
-
-  Log
-    ("Element %d (%d,%d)  inwind %d plasma cell %d ntot %d nioniz %d nrad %d\n",
-     n, i, j, w[n].inwind, xplasma->nplasma, xplasma->est.ntot, xplasma->est.nioniz, xplasma->derived.nrad);
+  if (zdom[ndom].coord_type == CYLIND3D)
+  {
+    int k;
+    wind_n_to_ijk (ndom, n, &i, &j, &k);
+    Log ("Element %d (%d,%d,%d)  inwind %d plasma cell %d ntot %d nioniz %d nrad %d\n",
+         n, i, j, k, w[n].inwind, xplasma->nplasma, xplasma->est.ntot, xplasma->est.nioniz, xplasma->derived.nrad);
+  }
+  else
+  {
+    wind_n_to_ij (ndom, n, &i, &j);
+    Log ("Element %d (%d,%d)  inwind %d plasma cell %d ntot %d nioniz %d nrad %d\n",
+         n, i, j, w[n].inwind, xplasma->nplasma, xplasma->est.ntot, xplasma->est.nioniz, xplasma->derived.nrad);
+  }
   Log ("xyz %8.2e %8.2e %8.2e vel %8.2e %8.2e %8.2e\n", w[n].x[0], w[n].x[1], w[n].x[2], w[n].v[0], w[n].v[1], w[n].v[2]);
   Log ("r theta %12.6e %12.6e \n", w[n].rcen, w[n].thetacen / RADIAN);
 
@@ -3221,7 +3229,15 @@ ionH1\tionH2\tionHe1\tionHe2\tionHe3\tionC3\tionC4\tionC5\tionN5\tionO6\tionSi4\
   np = 0;
   for (n = 0; n < NDIM2; n++)
   {
-    wind_n_to_ij (ndom, n, &ii, &jj);
+    if (zdom[ndom].coord_type == CYLIND3D)
+    {
+      int kk;
+      wind_n_to_ijk (ndom, n, &ii, &jj, &kk);
+    }
+    else
+    {
+      wind_n_to_ij (ndom, n, &ii, &jj);
+    }
 
     if (w[n].inwind >= 0)
     {
@@ -3713,7 +3729,15 @@ flux_summary (WindPtr w, char rootname[], int ochoice)
   ndom = 0;
   for (n = 0; n < NDIM2; n++)
   {
-    wind_n_to_ij (ndom, n, &ii, &jj);
+    if (zdom[ndom].coord_type == CYLIND3D)
+    {
+      int kk;
+      wind_n_to_ijk (ndom, n, &ii, &jj, &kk);
+    }
+    else
+    {
+      wind_n_to_ij (ndom, n, &ii, &jj);
+    }
 
     if (w[n].inwind >= 0)
     {

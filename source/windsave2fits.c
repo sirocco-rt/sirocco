@@ -244,49 +244,85 @@ write_spectra_model_table (fitsfile *fptr)
   int num_rows, num_cols;
   int nbands;
   int *ichoice, *iplasma, *iwind, *iband, *nxtot;
+  int *igrid_i, *igrid_j, *igrid_k;
   float *exp_w, *exp_temp, *pl_log_w, *pl_alpha;
+  float *xcen, *zcen, *phicen;
+  int is_3d;
 
   nbands = geo.nxfreq;
   num_rows = nbands * NPLASMA;
-  printf ("xtest %d %d\n", nbands, NPLASMA);
-  num_cols = 9;                 // for now
+
+  /* Detect whether any domain is CYLIND3D so we can add spatial columns */
+  is_3d = 0;
+  for (i = 0; i < geo.ndomain; i++)
+    if (zdom[i].coord_type == CYLIND3D)
+      is_3d = 1;
+
+  num_cols = is_3d ? 15 : 9;
   char *table_name = "spec_model";
 
-  ichoice = calloc (num_rows, sizeof (int *));
-  iplasma = calloc (num_rows, sizeof (int *));
-  iwind = calloc (num_rows, sizeof (int *));
-  iband = calloc (num_rows, sizeof (int *));
-  exp_w = calloc (num_rows, sizeof (float *));
-  exp_temp = calloc (num_rows, sizeof (float *));
-  pl_log_w = calloc (num_rows, sizeof (float *));
-  pl_alpha = calloc (num_rows, sizeof (float *));
-  nxtot = calloc (num_rows, sizeof (int *));
+  ichoice = calloc (num_rows, sizeof (int));
+  iplasma = calloc (num_rows, sizeof (int));
+  iwind = calloc (num_rows, sizeof (int));
+  iband = calloc (num_rows, sizeof (int));
+  igrid_i = calloc (num_rows, sizeof (int));
+  igrid_j = calloc (num_rows, sizeof (int));
+  igrid_k = calloc (num_rows, sizeof (int));
+  exp_w = calloc (num_rows, sizeof (float));
+  exp_temp = calloc (num_rows, sizeof (float));
+  pl_log_w = calloc (num_rows, sizeof (float));
+  pl_alpha = calloc (num_rows, sizeof (float));
+  nxtot = calloc (num_rows, sizeof (int));
+  xcen = calloc (num_rows, sizeof (float));
+  zcen = calloc (num_rows, sizeof (float));
+  phicen = calloc (num_rows, sizeof (float));
 
   k = 0;
   for (i = 0; i < NPLASMA; i++)
   {
+    int nw = plasmamain[i].nwind;
+    int ndom = wmain[nw].ndom;
+    int gi = 0, gj = 0, gk = 0;
+
+    if (zdom[ndom].coord_type == CYLIND3D)
+      wind_n_to_ijk (ndom, nw, &gi, &gj, &gk);
+    else if (zdom[ndom].coord_type != SPHERICAL)
+      wind_n_to_ij (ndom, nw, &gi, &gj);
+
     for (j = 0; j < nbands; j++)
     {
       iplasma[k] = i;
-      iwind[k] = plasmamain[i].nwind;
+      iwind[k] = nw;
       iband[k] = j;
+      igrid_i[k] = gi;
+      igrid_j[k] = gj;
+      igrid_k[k] = gk;
+      xcen[k] = (float) wmain[nw].xcen[0];
+      zcen[k] = (float) wmain[nw].xcen[2];
+      phicen[k] = (float) (zdom[ndom].coord_type == CYLIND3D ? zdom[ndom].wind_midphi[gk] : 0.0);
       ichoice[k] = plasmamain[i].state.spec_mod_type[j];
       exp_w[k] = plasmamain[i].state.exp_w[j];
       exp_temp[k] = plasmamain[i].state.exp_temp[j];
       pl_log_w[k] = plasmamain[i].state.pl_log_w[j];
       pl_alpha[k] = plasmamain[i].state.pl_alpha[j];
       nxtot[k] = plasmamain[i].est.nxtot[j];
-      printf ("nxtot %d\n", plasmamain[i].est.nxtot[j]);
       k++;
     }
   }
 
 
   int status = 0;
-  // Define the names, formats, and units for each column
-  char *ttype[] = { "nplasma", "nwind", "band", "spec_mod_type", "exp_w", "exp_temp", "pl_log_w", "pl_alpha", "nxtot" };        // Column names
-  char *tform[] = { "J", "J", "J", "J", "E", "E", "E", "E", "J" };      // Formats: 'J' for integer, 'E' for float
-  char *tunit[] = { "", "", "", "", "", "", "", "", "" };       // Units
+  char *ttype_2d[] = { "nplasma", "nwind", "band", "spec_mod_type", "exp_w", "exp_temp", "pl_log_w", "pl_alpha", "nxtot" };
+  char *tform_2d[] = { "J", "J", "J", "J", "E", "E", "E", "E", "J" };
+  char *tunit_2d[] = { "", "", "", "", "", "", "", "", "" };
+  char *ttype_3d[] = { "nplasma", "nwind", "band", "i", "j", "k", "xcen", "zcen", "phicen",
+    "spec_mod_type", "exp_w", "exp_temp", "pl_log_w", "pl_alpha", "nxtot"
+  };
+  char *tform_3d[] = { "J", "J", "J", "J", "J", "J", "E", "E", "E", "J", "E", "E", "E", "E", "J" };
+  char *tunit_3d[] = { "", "", "", "", "", "", "cm", "cm", "rad", "", "", "", "", "", "" };
+  char **ttype = is_3d ? ttype_3d : ttype_2d;
+  char **tform = is_3d ? tform_3d : tform_2d;
+  char **tunit = is_3d ? tunit_3d : tunit_2d;
 
   // Create a new binary table extension
   if (fits_create_tbl (fptr, BINARY_TBL, num_rows, num_cols, ttype, tform, tunit, NULL, &status))
@@ -302,82 +338,105 @@ write_spectra_model_table (fitsfile *fptr)
     return status;
   }
 
-  printf ("num_rows: %d\n", num_rows);
-  for (i = 0; i < num_rows; i++)
-  {
-    printf ("%d %d %d\n", i, iplasma[i], ichoice[i]);
-  }
+  /* col_off shifts column numbers for the 6 extra 3D spatial columns */
+  int col_off = is_3d ? 6 : 0;
 
-  // Write the integer data to the first column
   if (fits_write_col (fptr, TINT, 1, 1, 1, num_rows, iplasma, &status))
   {
     fits_report_error (stderr, status);
     return status;
   }
-
-
-  // Write the integer data to the first column
   if (fits_write_col (fptr, TINT, 2, 1, 1, num_rows, iwind, &status))
   {
     fits_report_error (stderr, status);
     return status;
   }
-
-
-  // Write the float data to the second column
   if (fits_write_col (fptr, TINT, 3, 1, 1, num_rows, iband, &status))
   {
     fits_report_error (stderr, status);
     return status;
   }
 
-  // Write the float data to the third  column
-  if (fits_write_col (fptr, TINT, 4, 1, 1, num_rows, ichoice, &status))
+  if (is_3d)
+  {
+    if (fits_write_col (fptr, TINT, 4, 1, 1, num_rows, igrid_i, &status))
+    {
+      fits_report_error (stderr, status);
+      return status;
+    }
+    if (fits_write_col (fptr, TINT, 5, 1, 1, num_rows, igrid_j, &status))
+    {
+      fits_report_error (stderr, status);
+      return status;
+    }
+    if (fits_write_col (fptr, TINT, 6, 1, 1, num_rows, igrid_k, &status))
+    {
+      fits_report_error (stderr, status);
+      return status;
+    }
+    if (fits_write_col (fptr, TFLOAT, 7, 1, 1, num_rows, xcen, &status))
+    {
+      fits_report_error (stderr, status);
+      return status;
+    }
+    if (fits_write_col (fptr, TFLOAT, 8, 1, 1, num_rows, zcen, &status))
+    {
+      fits_report_error (stderr, status);
+      return status;
+    }
+    if (fits_write_col (fptr, TFLOAT, 9, 1, 1, num_rows, phicen, &status))
+    {
+      fits_report_error (stderr, status);
+      return status;
+    }
+  }
+
+  if (fits_write_col (fptr, TINT, 4 + col_off, 1, 1, num_rows, ichoice, &status))
+  {
+    fits_report_error (stderr, status);
+    return status;
+  }
+  if (fits_write_col (fptr, TFLOAT, 5 + col_off, 1, 1, num_rows, exp_w, &status))
+  {
+    fits_report_error (stderr, status);
+    return status;
+  }
+  if (fits_write_col (fptr, TFLOAT, 6 + col_off, 1, 1, num_rows, exp_temp, &status))
+  {
+    fits_report_error (stderr, status);
+    return status;
+  }
+  if (fits_write_col (fptr, TFLOAT, 7 + col_off, 1, 1, num_rows, pl_log_w, &status))
+  {
+    fits_report_error (stderr, status);
+    return status;
+  }
+  if (fits_write_col (fptr, TFLOAT, 8 + col_off, 1, 1, num_rows, pl_alpha, &status))
+  {
+    fits_report_error (stderr, status);
+    return status;
+  }
+  if (fits_write_col (fptr, TINT, 9 + col_off, 1, 1, num_rows, nxtot, &status))
   {
     fits_report_error (stderr, status);
     return status;
   }
 
-
-  // Write the float data to the fourth column
-  if (fits_write_col (fptr, TFLOAT, 5, 1, 1, num_rows, exp_w, &status))
-  {
-    fits_report_error (stderr, status);
-    return status;
-  }
-
-
-
-  // Write the float data to the fifth columnmn
-  if (fits_write_col (fptr, TFLOAT, 6, 1, 1, num_rows, exp_temp, &status))
-  {
-    fits_report_error (stderr, status);
-    return status;
-  }
-
-
-  // Write the float data to the sixth  column
-  if (fits_write_col (fptr, TFLOAT, 7, 1, 1, num_rows, pl_log_w, &status))
-  {
-    fits_report_error (stderr, status);
-    return status;
-  }
-
-
-  // Write the float data to the seventh column
-  if (fits_write_col (fptr, TFLOAT, 8, 1, 1, num_rows, pl_alpha, &status))
-  {
-    fits_report_error (stderr, status);
-    return status;
-  }
-
-  // Write the integer data to the eightth column
-  if (fits_write_col (fptr, TINT, 9, 1, 1, num_rows, nxtot, &status))
-  {
-    fits_report_error (stderr, status);
-    return status;
-  }
-
+  free (ichoice);
+  free (iplasma);
+  free (iwind);
+  free (iband);
+  free (igrid_i);
+  free (igrid_j);
+  free (igrid_k);
+  free (exp_w);
+  free (exp_temp);
+  free (pl_log_w);
+  free (pl_alpha);
+  free (nxtot);
+  free (xcen);
+  free (zcen);
+  free (phicen);
 
   return 0;
 }

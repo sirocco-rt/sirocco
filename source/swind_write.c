@@ -138,6 +138,19 @@ are linear, and x otherwise.  This is not particularly transparent ?? ksl */
         fprintf (fptr, "%8.2e %8.2e %3d %3d \n", wmain[nstart + i].r, aaa[nstart + i], wmain[nstart + i].inwind, i);
       }
     }
+    else if (zdom[ndom].coord_type == CYLIND3D)
+    {
+      int kk, pdim;
+      pdim = zdom[ndom].pdim;
+      fprintf (fptr, "x z phi var inwind i j k\n");
+      for (i = 0; i < ndim * mdim * pdim; i++)
+      {
+        wind_n_to_ijk (ndom, nstart + i, &ii, &jj, &kk);
+        fprintf (fptr, "%8.4e %8.4e %8.4e %8.5e %3d %3d %3d %3d\n",
+                 wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], zdom[ndom].wind_midphi[kk],
+                 aaa[nstart + i], wmain[nstart + i].inwind, ii, jj, kk);
+      }
+    }
     else
     {
 
@@ -149,7 +162,6 @@ are linear, and x otherwise.  This is not particularly transparent ?? ksl */
         wind_n_to_ij (ndom, nstart + i, &ii, &jj);
         fprintf (fptr, "%8.4e %8.4e %8.5e %3d %3d %3d\n",
                  wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], aaa[nstart + i], wmain[nstart + i].inwind, ii, jj);
-
       }
     }
 
@@ -263,6 +275,26 @@ display (char name[])
 
   Log ("Check me now %d %d\n", swind_min, swind_max);
 
+  if (zdom[ndom].coord_type == CYLIND3D)
+  {
+    int pdim = zdom[ndom].pdim;
+    Log ("\n %s (phi=0 slice)\n", name);
+    Log ("z \\rho");
+    for (i = swind_min; i < swind_max; i += swind_delta)
+      Log ("%8.2e ", wmain[nstart + i * mdim * pdim].xcen[0]);
+    Log ("\n");
+    for (j = 0; j < mdim; j++)
+    {
+      Log ("%8.2e ", wmain[nstart + j * pdim].xcen[2]);
+      for (i = swind_min; i < swind_max; i += swind_delta)
+      {
+        n = nstart + (i * mdim + j) * pdim;
+        Log ("%8.2g ", aaa[n]);
+      }
+      Log ("\n");
+    }
+    return (0);
+  }
 
   Log ("\n %s \n", name);
   Log ("z/theta \\x/r");
