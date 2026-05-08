@@ -135,17 +135,20 @@ def compare(f1='sv_master.txt',f2='sv_master.txt',var='t_r',grid='ij',inwind='',
     return
     
 
-def get_data(filename='fiducial_agn_master.txt', var='t_r',grid='ij',inwind='',scale='guess',zmin=-1e50,zmax=1e50):
+def get_data(filename='fiducial_agn_master.txt', var='t_r',grid='ij',inwind='',scale='guess',zmin=-1e50,zmax=1e50,k=-1):
     '''
-    This routine reads and scales the data from a single variable that is read from an ascii table 
+    This routine reads and scales the data from a single variable that is read from an ascii table
     representation of one or more of the parameters in a windsave file
 
-    The grid obptions:
+    The grid options:
 
-    ij
-    log
-    lin
+    ij  - plot in grid index coordinates (i vs j)
+    log - plot in physical coordinates with rho on a log scale
+    lin - plot in physical coordinates, linear axes
 
+    For CYLIND3D tables (which have an i, j, k index), the k parameter
+    selects which phi slice to plot (default 0).  The physical coordinate
+    columns rho_cen and z_cen are used instead of x and z.
     '''
 
     try:
@@ -154,13 +157,17 @@ def get_data(filename='fiducial_agn_master.txt', var='t_r',grid='ij',inwind='',s
         print('Error: file %s does not appear to exist' % filename)
         return
 
-    # data.info()
+    # Detect coordinate system from column names
+    is_3d = 'k' in data.colnames
 
-    # print('options: xyscale %s varscale %s min %g max %g' % (grid,scale,zmin,zmax))
-
+    if is_3d:
+        kslice = k if k >= 0 else 0
+        data = data[data['k'] == kslice]
+        xcol, ycol = 'rho_cen', 'z_cen'
+    else:
+        xcol, ycol = 'x', 'z'
 
     title=var
-
 
     ii=data['i']
     jj=data['j']
@@ -172,29 +179,22 @@ def get_data(filename='fiducial_agn_master.txt', var='t_r',grid='ij',inwind='',s
         xlabel='i'
         ylabel='j'
     elif grid=='log':
-        x=numpy.array(data['x']) 
-        y=numpy.array(data['z'])
-        # find the minimum value in x and y that is greater than 0
-        xmin=1e50
-        ymin=1e50
-        i=0
-        while i<len(x):
-            if x[i]>1 and x[i]<xmin:
-                xmin= x[i]
-            if y[i]>1 and y[i]<ymin:
-                ymin= y[i]
-            i+=1
-        xlogmin=numpy.log10(xmin/10)
-        ylogmin=numpy.log10(xmin/10)
-        x=numpy.select([x>1],[numpy.log10(x)],default=xlogmin)
-        y=numpy.select([y>1],[numpy.log10(y)],default=ylogmin)
-        xlabel='log(x)'
-        ylabel='log(z)'
+        x=numpy.array(data[xcol])
+        y=numpy.array(data[ycol])
+        # Log-scale the rho/x axis (always positive).
+        xpos = x[x > 1]
+        xmin = numpy.min(xpos) if len(xpos) else 1.0
+        xlogmin = numpy.log10(xmin / 10)
+        x = numpy.select([x > 1], [numpy.log10(x)], default=xlogmin)
+        # Keep z in physical units; just_plot will apply a symlog y-axis so
+        # that the region near the disk plane is linear and the wind is log.
+        xlabel = 'log(rho)' if is_3d else 'log(x)'
+        ylabel = 'z'
     else:
-        x=numpy.array(data['x'])
-        y=numpy.array(data['z'])
-        xlabel='x'
-        ylabel='z'
+        x=numpy.array(data[xcol])
+        y=numpy.array(data[ycol])
+        xlabel = 'rho' if is_3d else 'x'
+        ylabel = 'z'
 
     xvar=numpy.array(data[var])
     xwind=numpy.array(data['inwind'])
@@ -273,6 +273,16 @@ def just_plot(x,y,xvar,root,title,xlabel,ylabel,fig_no=1,vmin=0,vmax=0):
     cmap=copy.copy(pylab.cm.jet)
     cmap.set_bad(color='white')
 
+    # If y spans both negative and positive values (hemisphere-doubled grid in
+    # physical z coordinates), use a symlog y-axis so the region near the disk
+    # plane is shown linearly and the wind structure is shown on a log scale.
+    # linthresh is set to the smallest nonzero positive z in the grid.
+    yflat = y[numpy.isfinite(y)].flatten()
+    if numpy.any(yflat < 0) and numpy.any(yflat > 0):
+        ypos = yflat[yflat > 0]
+        linthresh = float(numpy.min(ypos))
+        ax.set_yscale('symlog', linthresh=linthresh)
+
     ax.tick_params(labelsize=14)
     if vmin==0 and vmax==0:
         im=ax.pcolormesh(x,y,xvar,cmap=cmap,shading='auto')
@@ -299,24 +309,21 @@ def just_plot(x,y,xvar,root,title,xlabel,ylabel,fig_no=1,vmin=0,vmax=0):
 
 
 def doit(filename='fiducial_agn.master.txt', var='t_r',grid='ij',inwind='',scale='guess',zmin=-1e50,zmax=1e50,
-        plot_dir='',root=''):
+        plot_dir='',root='',k=-1):
     '''
-    Plot a single variable from an astropy table (normally created with windsave2table, with various
-    options
+    Plot a single variable from an astropy table (normally created with windsave2table).
 
-    where var is the variable to plot where grid can be ij, log, or anything else.  If ij then the plot will 
-    be in grid coordinates, if log the plot will be in on a log scale in physical coordiantes.  If anything else, 
-    the plot will be on a linear scale in physical coordiantes where scale indicates how the variable should be 
-    plotted.  guess tells the routine to make a sensible choice linear implies the scale should be linear and log 
-    implies a log scale should be used where zmin and zmax overide the max and mimimum in the array (assuming these 
-    limits are with the range of the variable)
+    grid can be 'ij' (index coordinates), 'log' (physical, rho log-scaled), or 'lin' (physical, linear).
+    scale controls the variable colour scale: 'guess', 'log', or 'lin'.
+    zmin/zmax override the colour-scale limits.
+    k selects a phi slice for CYLIND3D tables (default 0); ignored for 2D tables.
     '''
 
     if root=='':
         root=filename.split('.')
         root=root[0]
 
-    x,y,xvar,title,xlabel,ylabel=get_data(filename,var,grid,inwind,scale,zmin,zmax)
+    x,y,xvar,title,xlabel,ylabel=get_data(filename,var,grid,inwind,scale,zmin,zmax,k=k)
     if plot_dir!='':
         root='%s/%s' % (plot_dir,root)
     # print(len(x),len(y),len(xvar))
