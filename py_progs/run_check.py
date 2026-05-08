@@ -444,14 +444,19 @@ def make_html(root,converge_plot,te_plot,tr_plot,ne_plot,spec_tot_plot,spec_plot
 
 def how_many_dimensions(filename):
     '''
-    Check whether a windsave file is one or two dimenaions
+    Check whether a windsave file is one, two, or three dimensions
     '''
 
     x=ascii.read(filename)
+    has_j=False
     for one in x.colnames:
+        if one=='k':
+            return 3
         if one=='j':
-            return 2
-    
+            has_j=True
+    if has_j:
+        return 2
+
     return 1
 
 
@@ -501,7 +506,10 @@ def doit(root='ixvel',outputfile='out.txt'):
     
     xdim=how_many_dimensions(master_file)
 
-    if xdim==2:
+    if xdim==3:
+        print('3D cylindrical grid detected; skipping 2D wind plots')
+        converge_plot=te_plot=tr_plot=ne_plot='none'
+    elif xdim==2:
         converge_plot=plot_wind.doit(master_file,'converge',plot_dir='./diag_%s' % root)
         te_plot=plot_wind.doit(master_file,'t_e',plot_dir='./diag_%s' % root)
         tr_plot=plot_wind.doit(master_file,'t_r',plot_dir='./diag_%s' % root)

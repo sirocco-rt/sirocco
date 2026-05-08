@@ -366,8 +366,7 @@ cylind3d_where_in_grid (int ndom, double x[])
     phi += 2.0 * PI;
 
   /* Bounds check */
-  if (rho > one_dom->wind_x[one_dom->ndim - 1]
-      || z > one_dom->wind_z[one_dom->mdim - 1] || z < one_dom->wind_z[0])
+  if (rho > one_dom->wind_x[one_dom->ndim - 1] || z > one_dom->wind_z[one_dom->mdim - 1] || z < one_dom->wind_z[0])
     return (-2);
 
   if (rho < one_dom->wind_x[0])
@@ -426,14 +425,22 @@ cylind3d_is_cell_in_wind (int n)
   int n_corners = 0;
   double xcorner[3];
   xcorner[1] = 0.0;
-  xcorner[0] = rmin; xcorner[2] = zmin;
-  if (where_in_wind (xcorner, &ndomain) == W_ALL_INWIND && ndomain == ndom) n_corners++;
-  xcorner[0] = rmax; xcorner[2] = zmin;
-  if (where_in_wind (xcorner, &ndomain) == W_ALL_INWIND && ndomain == ndom) n_corners++;
-  xcorner[0] = rmin; xcorner[2] = zmax;
-  if (where_in_wind (xcorner, &ndomain) == W_ALL_INWIND && ndomain == ndom) n_corners++;
-  xcorner[0] = rmax; xcorner[2] = zmax;
-  if (where_in_wind (xcorner, &ndomain) == W_ALL_INWIND && ndomain == ndom) n_corners++;
+  xcorner[0] = rmin;
+  xcorner[2] = zmin;
+  if (where_in_wind (xcorner, &ndomain) == W_ALL_INWIND && ndomain == ndom)
+    n_corners++;
+  xcorner[0] = rmax;
+  xcorner[2] = zmin;
+  if (where_in_wind (xcorner, &ndomain) == W_ALL_INWIND && ndomain == ndom)
+    n_corners++;
+  xcorner[0] = rmin;
+  xcorner[2] = zmax;
+  if (where_in_wind (xcorner, &ndomain) == W_ALL_INWIND && ndomain == ndom)
+    n_corners++;
+  xcorner[0] = rmax;
+  xcorner[2] = zmax;
+  if (where_in_wind (xcorner, &ndomain) == W_ALL_INWIND && ndomain == ndom)
+    n_corners++;
 
   if (n_corners == 4)
     return (W_ALL_INWIND);
@@ -683,17 +690,113 @@ cylind3d_extend_density (int ndom, WindPtr w)
 
 /**********************************************************/
 /**
- * @brief  Stub: distance to far boundary of a 3D cylindrical cell.
+ * @brief  Distance to the far boundary of a CYLIND3D cell.
  *
- * Phase 2 will implement the full phi-sector half-plane boundaries
- * in addition to the rho and z quadratics from cylind_ds_in_cell.
+ * @param [in] ndom   Domain number
+ * @param [in] p      Photon pointer (position p->x, direction p->lmn)
+ * @return  Distance smax to the nearest cell boundary, or negative
+ *          if the photon is not in the grid.
+ *
+ * @details
+ * Checks five boundaries: inner rho cylinder, outer rho cylinder,
+ * lower z plane, upper z plane, and (for pdim > 1) the two phi
+ * half-planes bounding the azimuthal sector.
+ *
+ * For pdim == 1 the cell covers the full 2π azimuth and there are
+ * no phi boundaries, so the function reduces to cylind_ds_in_cell.
+ *
+ * A phi half-plane at angle phi0 is the set of points satisfying
+ *   y·cos(phi0) − x·sin(phi0) = 0   with   x·cos(phi0) + y·sin(phi0) > 0.
+ * The intersection time with the ray (x0+lx·t, y0+ly·t) is
+ *   t = (y0·cos(phi0) − x0·sin(phi0)) / (lx·sin(phi0) − ly·cos(phi0))
+ * and the intersection is valid only when the rho at that point is > 0.
  *
  **********************************************************/
+
+static double
+ds_phi_boundary (double phi0, PhotPtr p)
+{
+  double sphi = sin (phi0), cphi = cos (phi0);
+  double denom = p->lmn[0] * sphi - p->lmn[1] * cphi;
+
+  if (denom == 0.0)
+    return (VERY_BIG);
+
+  double t = (p->x[1] * cphi - p->x[0] * sphi) / denom;
+
+  if (t <= 0.0)
+    return (VERY_BIG);
+
+  /* Intersection must be on the rho > 0 half (not through the axis) */
+  double rho_at_t = (p->x[0] + p->lmn[0] * t) * cphi + (p->x[1] + p->lmn[1] * t) * sphi;
+  if (rho_at_t <= 0.0)
+    return (VERY_BIG);
+
+  return (t);
+}
+
 
 double
 cylind3d_ds_in_cell (int ndom, PhotPtr p)
 {
-  Error ("cylind3d_ds_in_cell: not yet implemented (Phase 2)\n");
-  Exit (0);
-  return (-1.0);
+  int n, iroot;
+  double a, b, c, root[2];
+  double z1, z2, q, t;
+  double smax;
+  double rho_min, rho_max;
+
+  if ((p->grid = n = where_in_grid (ndom, p->x)) < 0)
+    return (n);
+
+  smax = VERY_BIG;
+
+  rho_min = wmain[n].x[0];
+  rho_max = wmain[n].xmax[0];
+
+  /* Rho cylinder boundaries — same quadratic as cylind_ds_in_cell */
+  a = p->lmn[0] * p->lmn[0] + p->lmn[1] * p->lmn[1];
+  b = 2. * (p->lmn[0] * p->x[0] + p->lmn[1] * p->x[1]);
+  c = p->x[0] * p->x[0] + p->x[1] * p->x[1];
+
+  iroot = quadratic (a, b, c - rho_min * rho_min, root);
+  if (iroot >= 0 && root[iroot] < smax)
+    smax = root[iroot];
+
+  iroot = quadratic (a, b, c - rho_max * rho_max, root);
+  if (iroot >= 0 && root[iroot] < smax)
+    smax = root[iroot];
+
+  /* Z plane boundaries */
+  z1 = wmain[n].x[2];
+  z2 = wmain[n].xmax[2];
+
+  if (p->lmn[2] != 0.0)
+  {
+    q = (z1 - p->x[2]) / p->lmn[2];
+    if (q > 0 && q < smax)
+      smax = q;
+    q = (z2 - p->x[2]) / p->lmn[2];
+    if (q > 0 && q < smax)
+      smax = q;
+  }
+
+  /* Phi half-plane boundaries (skipped when pdim == 1: full azimuth, no phi walls) */
+  if (zdom[ndom].pdim > 1)
+  {
+    t = ds_phi_boundary (wmain[n].phi, p);
+    if (t < smax)
+      smax = t;
+
+    t = ds_phi_boundary (wmain[n].phimax, p);
+    if (t < smax)
+      smax = t;
+  }
+
+  if (smax <= 0.0)
+  {
+    Error ("cylind3d_ds_in_cell: smax %g <= 0 for cell %d\n", smax, n);
+    smax = wmain[n].dfudge;
+  }
+
+  return (smax);
 }
