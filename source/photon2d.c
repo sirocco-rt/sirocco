@@ -472,22 +472,24 @@ translate_in_wind (WindPtr w, PhotPtr p, double tau_scat, double *tau, int *nres
   {
     ds_current = calculate_ds (w, p, tau_scat, tau, nres, smax, &istat);
 
-    if (p->nres == NRES_ES)
+    if (istat == P_SCAT)
     {
-      xplasma->derived.nscat_es++;
-    }
-    if (p->nres > NLINES)
-    {
-      xplasma->derived.nscat_bf++;
-    }
-
-    else if (p->nres > 0)
-    {
-      xplasma->derived.nscat_res++;
-    }
-    else if (p->nres == NRES_FF)
-    {
-      xplasma->derived.nscat_ff++;
+      if (*nres == NRES_ES)
+      {
+        xplasma->derived.nscat_es++;
+      }
+      else if (*nres > NLINES)
+      {
+        xplasma->derived.nscat_bf++;
+      }
+      else if (*nres > 0)
+      {
+        xplasma->derived.nscat_res++;
+      }
+      else if (*nres == NRES_FF)
+      {
+        xplasma->derived.nscat_ff++;
+      }
     }
 
 
