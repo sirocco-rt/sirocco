@@ -303,6 +303,10 @@ check_time (char *root)
     xsignal (root, "\nCOMMENT max_time %.1f seconds exceeded\n", max_time);
 
 #ifdef MPI_ON
+    MPI_Barrier (MPI_COMM_WORLD);
+    MPI_Comm_free (&node_comm);
+    if (leader_comm != MPI_COMM_NULL)
+      MPI_Comm_free (&leader_comm);
     MPI_Finalize ();
 #endif
 
