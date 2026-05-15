@@ -40,9 +40,8 @@ free_plasma_block (void **ptr, int is_shared)
 #ifdef MPI_ON
   if (is_shared && np_mpi_global > 1)
   {
-    /* Shared memory is freed via MPI_Win_free, which is handled
-     * by the cleanup in calloc_dyn_plasma/calloc_estimators when
-     * re-allocating, or by MPI_Finalize at exit. */
+    /* MPI_Win_free for shared blocks is called explicitly in free_plasma_grid /
+     * free_macro_grid before reaching here; just NULL the data pointer. */
     *ptr = NULL;
     return;
   }
@@ -152,6 +151,26 @@ free_plasma_grid (void)
   /* state blocks (shared in MPI mode) */
   if (plasma_block_ptrs.density_block != NULL)
   {
+#ifdef MPI_ON
+    if (is_shared && np_mpi_global > 1)
+    {
+      MPI_Win_free (&plasma_block_ptrs.win_density);
+      MPI_Win_free (&plasma_block_ptrs.win_partition);
+      MPI_Win_free (&plasma_block_ptrs.win_levden);
+      MPI_Win_free (&plasma_block_ptrs.win_recomb_simple);
+      MPI_Win_free (&plasma_block_ptrs.win_recomb_simple_upweight);
+      MPI_Win_free (&plasma_block_ptrs.win_kbf_use);
+      MPI_Win_free (&plasma_block_ptrs.win_recomb);
+      MPI_Win_free (&plasma_block_ptrs.win_cool_rr_ion);
+      MPI_Win_free (&plasma_block_ptrs.win_lum_rr_ion);
+      MPI_Win_free (&plasma_block_ptrs.win_cool_dr_ion);
+      MPI_Win_free (&plasma_block_ptrs.win_inner_recomb);
+      MPI_Win_free (&plasma_block_ptrs.win_state_xbands_d);
+      MPI_Win_free (&plasma_block_ptrs.win_state_spec_mod_type);
+      MPI_Win_free (&plasma_block_ptrs.win_derived_persist_force);
+      MPI_Win_free (&plasma_block_ptrs.win_derived_persist_angle);
+    }
+#endif
     free_plasma_block ((void **) &plasma_block_ptrs.density_block, is_shared);
     free_plasma_block ((void **) &plasma_block_ptrs.partition_block, is_shared);
     free_plasma_block ((void **) &plasma_block_ptrs.levden_block, is_shared);
@@ -207,6 +226,17 @@ free_macro_grid (void)
 
   if (macro_block_ptrs.jbar_block != NULL)
   {
+#ifdef MPI_ON
+    if (is_shared && np_mpi_global > 1)
+    {
+      MPI_Win_free (&macro_block_ptrs.win_jbar_old);
+      MPI_Win_free (&macro_block_ptrs.win_gamma_old);
+      MPI_Win_free (&macro_block_ptrs.win_gamma_e_old);
+      MPI_Win_free (&macro_block_ptrs.win_alpha_st_old);
+      MPI_Win_free (&macro_block_ptrs.win_alpha_st_e_old);
+      MPI_Win_free (&macro_block_ptrs.win_matom_emiss);
+    }
+#endif
     /* state blocks (shared in MPI mode) */
     free_plasma_block ((void **) &macro_block_ptrs.jbar_old_block, is_shared);
     free_plasma_block ((void **) &macro_block_ptrs.gamma_old_block, is_shared);
@@ -234,6 +264,10 @@ free_macro_grid (void)
   /* matom_matrix flat data block (shared in MPI mode) */
   if (macro_block_ptrs.matom_matrix_block != NULL)
   {
+#ifdef MPI_ON
+    if (is_shared && np_mpi_global > 1)
+      MPI_Win_free (&macro_block_ptrs.win_matom_matrix);
+#endif
     free_plasma_block ((void **) &macro_block_ptrs.matom_matrix_block, is_shared);
     free (macro_block_ptrs.matom_matrix_rowptrs);
     macro_block_ptrs.matom_matrix_rowptrs = NULL;

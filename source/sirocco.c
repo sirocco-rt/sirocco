@@ -710,6 +710,9 @@ main (int argc, char *argv[])
     error_summary ("wind definition only (--grid-only).");
 #ifdef MPI_ON
     MPI_Barrier (MPI_COMM_WORLD);
+    MPI_Comm_free (&node_comm);
+    if (leader_comm != MPI_COMM_NULL)
+      MPI_Comm_free (&leader_comm);
     MPI_Finalize ();
 #endif
     return EXIT_SUCCESS;
@@ -829,13 +832,20 @@ main (int argc, char *argv[])
   Log ("Information about luminosities and apparent fluxes due to various portions of the system:\n");
   phot_status ();
 
-  /* clean_on_exit calls free_wind_grid which calls MPI_Win_free — must happen before MPI_Finalize */
+  /* clean_on_exit calls free_wind_grid and free_plasma_grid which call MPI_Win_free.
+   * The barrier ensures all ranks finish cleanup before any rank calls MPI_Finalize. */
+#ifdef MPI_ON
+  MPI_Barrier (MPI_COMM_WORLD);
+#endif
   clean_on_exit ();
 
   print_memory_usage ("After program is complete");
   Log_close ();
 
 #ifdef MPI_ON
+  MPI_Comm_free (&node_comm);
+  if (leader_comm != MPI_COMM_NULL)
+    MPI_Comm_free (&leader_comm);
   MPI_Finalize ();
 #endif
 
