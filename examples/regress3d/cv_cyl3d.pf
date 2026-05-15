@@ -29,9 +29,9 @@ Wind.dim.in.z_or_theta.direction           30
 Wind.dim.in.phi.direction                         4
 
 ### Parameters associated with photon number, cycles,ionization and radiative transfer options
-Photons_per_cycle                          100000
-Ionization_cycles                          10
-Spectrum_cycles                            10
+Photons_per_cycle                          2000000
+Ionization_cycles                          3 
+Spectrum_cycles                            2 
 Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,LTE_iterate,fixed,matrix_bb,matrix_pow,matrix_est,matrix_multishot)            matrix_bb
 Line_transfer(pure_abs,pure_scat,sing_scat,escape_prob,thermal_trapping,macro_atoms_escape_prob,macro_atoms_thermal_trapping)     thermal_trapping
 Wind.radiation(yes,no)                          yes
@@ -68,9 +68,9 @@ Spectrum.wavemax(Angstroms)                1850
 
 ### The observers and their location relative to the system
 Spectrum.no_observers                      3
-Spectrum.angle(0=pole)                     10
-Spectrum.angle(0=pole)                     45
-Spectrum.angle(0=pole)                     80
+Spectrum.angle(0=pole)                     20
+Spectrum.angle(0=pole)                     75
+Spectrum.angle(0=pole)                     85
 Spectrum.orbit_phase(0=inferior_conjunction)   0.5
 Spectrum.orbit_phase(0=inferior_conjunction)   0.5
 Spectrum.orbit_phase(0=inferior_conjunction)   0.5
