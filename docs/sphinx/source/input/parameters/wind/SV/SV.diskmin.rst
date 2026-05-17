@@ -9,7 +9,7 @@ Type
   Double
 
 Unit
-  cm
+  This entry has units that are multiples of the central object radius
 
 Values
   Greater than or equal to :ref:`Central_object.radius`

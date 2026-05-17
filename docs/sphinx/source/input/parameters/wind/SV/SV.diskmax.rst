@@ -9,7 +9,7 @@ Type
   Double
 
 Unit
-  cm
+  This entry is in units of the radious of the central object.
 
 Values
   Greater than or equal to :ref:`sv.diskmin` (inner radius disk wind)
