@@ -454,6 +454,10 @@ wind_complete ()
     {
       cylind3d_wind_complete (ndom, wmain);
     }
+    else if (zdom[ndom].coord_type == SPH3D)
+    {
+      sph3d_wind_complete (ndom, wmain);
+    }
     else
     {
       Error ("wind_complete: Don't know how to complete coord_type %d\n", zdom[ndom].coord_type);

@@ -545,6 +545,15 @@ int rtheta_where_in_grid(int ndom, double x[]);
 int rtheta_get_random_location(int n, double x[]);
 int rtheta_extend_density(int ndom, WindPtr w);
 int rtheta_is_cell_in_wind(int n);
+/* sph3d.c */
+int sph3d_make_grid(int ndom, WindPtr w);
+int sph3d_wind_complete(int ndom, WindPtr w);
+int sph3d_where_in_grid(int ndom, double x[]);
+int sph3d_is_cell_in_wind(int n);
+int sph3d_cell_volume(WindPtr w);
+int sph3d_get_random_location(int n, double x[]);
+int sph3d_extend_density(int ndom, WindPtr w);
+double sph3d_ds_in_cell(int ndom, PhotPtr p);
 /* run.c */
 int calculate_ionization(int restart_stat);
 int make_spectra(int restart_stat);

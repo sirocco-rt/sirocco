@@ -76,7 +76,7 @@ free_domains (void)
     {
       free (zdom[i].cones_rtheta);
     }
-    else if (zdom[i].coord_type == CYLIND3D)
+    else if (zdom[i].coord_type == CYLIND3D || zdom[i].coord_type == SPH3D)
     {
       free (zdom[i].wind_phi);
       free (zdom[i].wind_midphi);

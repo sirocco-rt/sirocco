@@ -204,7 +204,7 @@ sirocco_source = agn.c anisowind.c atomic_extern_init.c atomicdata.c atomicdata_
 	matom.c matom_diag.c matrix_cpu.c matrix_ion.c models_extern_init.c para_update.c  \
 	parse.c partition.c paths.c phot_util.c photon2d.c photon_gen.c photon_gen_matom.c  \
 	pi_rates.c sirocco_extern_init.c radiation.c random.c rdpar.c rdpar_init.c recipes.c  \
-	recomb.c resonate.c reverb.c roche.c rtheta.c run.c saha.c setup.c setup_disk.c setup_domains.c  \
+	recomb.c resonate.c reverb.c roche.c rtheta.c run.c saha.c setup.c setup_disk.c setup_domains.c sph3d.c \
 	setup_files.c setup_line_transfer.c setup_reverb.c setup_star_bh.c shell_wind.c signal.c  \
 	spectra.c spectral_estimators.c spherical.c stellar_wind.c sv.c synonyms.c time.c  \
 	trans_phot.c vvector.c walls.c wind.c wind2d.c wind_sum.c wind_updates2d.c wind_util.c  \

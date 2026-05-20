@@ -476,7 +476,8 @@ complete_wind_grid_creation (void)
 
     /* Next we need to check that each cell which has volume has in the wind or
      * not. This can sometimes happen with odd wind parameters. */
-    if (zdom[ndom].coord_type != SPHERICAL && zdom[ndom].coord_type != CYLIND3D && zdom[ndom].wind_type != IMPORT)
+    if (zdom[ndom].coord_type != SPHERICAL && zdom[ndom].coord_type != CYLIND3D && zdom[ndom].coord_type != SPH3D
+        && zdom[ndom].wind_type != IMPORT)
     {
       for (n = zdom[ndom].nstart; n < zdom[ndom].nstop; n++)
       {
@@ -498,6 +499,10 @@ complete_wind_grid_creation (void)
     else if (zdom[ndom].coord_type == CYLIND3D)
     {
       Log ("wind2d: Not checking corners_in_wind for CYLIND3D coordinates in domain %d\n", ndom);
+    }
+    else if (zdom[ndom].coord_type == SPH3D)
+    {
+      Log ("wind2d: Not checking corners_in_wind for SPH3D coordinates in domain %d\n", ndom);
     }
     else if (zdom[ndom].coord_type == SPHERICAL)
     {
@@ -707,6 +712,45 @@ create_wind_grid (void)
         xc[1] = 0.0;
         xc[2] = cell->xmax[2];
         model_velocity (cell->ndom, xc, cell->vmax);
+      }
+      else if (coord_type == SPH3D)
+      {
+        double scale;
+        /* phi_min face: identical to RTHETA (model is azimuthally symmetric) */
+        if (cell->r > 0.0)
+        {
+          scale = cell->rmax / cell->r;
+          xc[0] = scale * cell->x[0];
+          xc[1] = 0.0;
+          xc[2] = scale * cell->x[2];
+        }
+        else
+        {
+          xc[0] = xc[1] = xc[2] = 0.0;
+        }
+        model_velocity (cell->ndom, xc, cell->v_rmax);
+        if (cell->rmax > 0.0)
+        {
+          scale = cell->r / cell->rmax;
+          xc[0] = scale * cell->xmax[0];
+          xc[1] = 0.0;
+          xc[2] = scale * cell->xmax[2];
+        }
+        else
+        {
+          xc[0] = xc[1] = xc[2] = 0.0;
+        }
+        model_velocity (cell->ndom, xc, cell->v_thetamax);
+        model_velocity (cell->ndom, cell->xmax, cell->vmax);
+        /* phi_max face: same values as phi_min face (model is axisymmetric).
+           The importer will overwrite these for non-symmetric imported winds. */
+        for (int kk = 0; kk < 3; kk++)
+        {
+          cell->v_phimax[kk] = cell->v[kk];
+          cell->v_rmax_phimax[kk] = cell->v_rmax[kk];
+          cell->v_thetamax_phimax[kk] = cell->v_thetamax[kk];
+          cell->vmax_phimax[kk] = cell->vmax[kk];
+        }
       }
       else if (coord_type == SPHERICAL)
       {
