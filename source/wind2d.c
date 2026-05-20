@@ -242,11 +242,13 @@ vwind_xyz (int ndom, PhotPtr p, double v[])
           vv[i] = (1.0 - dr) * (1.0 - dz) * wmain[n].v[i]
             + dr * (1.0 - dz) * wmain[n].v_rmax[i] + (1.0 - dr) * dz * wmain[n].v_thetamax[i] + dr * dz * wmain[n].vmax[i];
       }
-      else                      /* RTHETA */
+      else if (coord_type == RTHETA || coord_type == SPH3D)
       {
         /* 2D bilinear in (r, theta_deg): corners stored as v, v_rmax, v_thetamax, vmax.
            theta_here uses signed x[2]/r giving 0-180 deg; lower-hemisphere cells have
-           wmain[n].theta > 90 deg so dz is correctly in [0,1]. */
+           wmain[n].theta > 90 deg so dz is correctly in [0,1].
+           For SPH3D, phi_max corners are not used here (axisymmetric models); Phase 3
+           will add trilinear phi interpolation for non-axisymmetric imported models. */
         r = length (p->x);
         double theta_here = (r > 0.0) ? acos (p->x[2] / r) * RADIAN : 0.0;
         denom = wmain[n].rmax - wmain[n].r;
