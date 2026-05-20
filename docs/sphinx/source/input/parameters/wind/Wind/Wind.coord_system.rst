@@ -7,13 +7,21 @@ Type
 
 Values
   spherical
-    Spherical
+    1-D spherical (r only)
 
   cylindrical
-    Cylindrical
+    2-D cylindrical (rho, z)
 
   polar
-    Spherical polar
+    2-D spherical polar (r, theta)
+
+  cyl3d
+    3-D cylindrical (rho, z, phi); requires
+    :doc:`Wind.dim.in.phi.direction <Wind.dim.in.phi.direction>`
+
+  sph3d
+    3-D spherical polar (r, theta, phi); requires
+    :doc:`Wind.dim.in.phi.direction <Wind.dim.in.phi.direction>`
 
 
 .. note::

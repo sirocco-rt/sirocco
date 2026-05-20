@@ -3,9 +3,11 @@ description: |
   The coordinate system used for a describing a component of the wind.
 type: Enumerator
 values:
-  spherical: Spherical
-  cylindrical: Cylindrical
-  polar: Spherical polar
+  spherical: 1-D spherical (r only)
+  cylindrical: 2-D cylindrical (rho, z)
+  polar: 2-D spherical polar (r, theta)
+  cyl3d: 3-D cylindrical (rho, z, phi)
+  sph3d: 3-D spherical polar (r, theta, phi)
 parent:
   Wind.number_of_components: Greater than 0. Once per wind.
 file: setup_domains.c
