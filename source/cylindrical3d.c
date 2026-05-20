@@ -713,7 +713,7 @@ cylind3d_extend_density (int ndom, WindPtr w)
  *
  **********************************************************/
 
-static double
+double
 ds_phi_boundary (double phi0, PhotPtr p)
 {
   double sphi = sin (phi0), cphi = cos (phi0);

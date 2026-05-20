@@ -132,6 +132,7 @@ int cylind3d_cell_volume(WindPtr w);
 int cylind3d_get_random_location(int n, double x[]);
 int cylind3d_extend_density(int ndom, WindPtr w);
 double cylind3d_ds_in_cell(int ndom, PhotPtr p);
+double ds_phi_boundary(double phi0, PhotPtr p);
 /* define_wind.c */
 void define_wind(void);
 /* density.c */

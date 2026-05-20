@@ -617,21 +617,64 @@ sph3d_extend_density (int ndom, WindPtr w)
 
 /**********************************************************/
 /**
- * @brief  Distance to the far boundary of a SPH3D cell (Phase 2 stub).
+ * @brief  Distance to the far boundary of a SPH3D cell.
  *
  * @param [in] ndom   Domain number
  * @param [in] p      Photon pointer
- * @return  Distance to nearest r or theta boundary; phi boundaries ignored.
+ * @return  Distance to nearest cell boundary (r, theta, or phi).
  *
  * @details
- * Delegates to rtheta_ds_in_cell, which checks r (sphere) and theta
- * (cone) boundaries only.  The photon can therefore pass through phi
- * boundaries freely.  Replace with the full implementation in Phase 2.
+ * Checks six boundaries:
+ *   - inner/outer sphere at wmain[n].r and wmain[n].rmax
+ *   - inner/outer theta cone at wmain[n].wcone and wmain[n].wcone_max
+ *   - inner/outer phi half-plane at wmain[n].phi and wmain[n].phimax
+ *     (skipped when pdim==1: full-azimuth axisymmetric model)
  *
  **********************************************************/
 
 double
 sph3d_ds_in_cell (int ndom, PhotPtr p)
 {
-  return rtheta_ds_in_cell (ndom, p);
+  int n;
+  double s, smax;
+
+  if ((p->grid = n = where_in_grid (ndom, p->x)) < 0)
+  {
+    Error ("sph3d_ds_in_cell: Photon not in grid when routine entered\n");
+    return (n);
+  }
+
+  /* Radial sphere boundaries */
+  smax = ds_to_sphere (wmain[n].r, p);
+  s = ds_to_sphere (wmain[n].rmax, p);
+  if (s < smax)
+    smax = s;
+
+  /* Theta cone boundaries */
+  s = ds_to_cone (&wmain[n].wcone, p);
+  if (s < smax)
+    smax = s;
+  s = ds_to_cone (&wmain[n].wcone_max, p);
+  if (s < smax)
+    smax = s;
+
+  /* Phi half-plane boundaries (skipped when pdim==1: full azimuth) */
+  if (zdom[ndom].pdim > 1)
+  {
+    s = ds_phi_boundary (wmain[n].phi, p);
+    if (s < smax)
+      smax = s;
+    s = ds_phi_boundary (wmain[n].phimax, p);
+    if (s < smax)
+      smax = s;
+  }
+
+  if (smax <= 0)
+  {
+    int i, j, k;
+    wind_n_to_ijk (ndom, p->grid, &i, &j, &k);
+    Error ("sph3d_ds_in_cell: smax %g <= 0 wind cell %i (%d,%d,%d) inwind %d\n", smax, p->grid, i, j, k, wmain[p->grid].inwind);
+  }
+
+  return (smax);
 }
