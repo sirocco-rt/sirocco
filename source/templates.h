@@ -285,6 +285,13 @@ int cylindrical3d_make_grid_import(WindPtr w, int ndom);
 double velocity_cylindrical3d(int ndom, double *x, double *v);
 double rho_cylindrical3d(int ndom, double *x);
 double temperature_cylindrical3d(int ndom, double *x, int return_t_e);
+/* import_sph3d.c */
+int import_sph3d(int ndom, char *filename);
+int import_sph3d_setup_boundaries(int ndom);
+int sph3d_make_grid_import(WindPtr w, int ndom);
+double velocity_sph3d(int ndom, double *x, double *v);
+double rho_sph3d(int ndom, double *x);
+double temperature_sph3d(int ndom, double *x, int return_t_e);
 /* import_rtheta.c */
 int import_rtheta(int ndom, char *filename);
 int import_rtheta_setup_boundaries(int ndom);

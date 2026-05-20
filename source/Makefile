@@ -199,7 +199,7 @@ sirocco_source = agn.c anisowind.c atomic_extern_init.c atomicdata.c atomicdata_
 	cv.c cylindrical.c cylindrical3d.c define_wind.c density.c diag.c dielectronic.c direct_ion.c  \
 	disk.c disk_init.c disk_photon_gen.c emission.c estimators_macro.c estimators_simple.c  \
 	extract.c frame.c  gradv.c gridwind.c homologous.c hydro_import.c import.c  \
-	import_calloc.c import_cylindrical.c import_cylindrical3d.c import_rtheta.c import_spherical.c ionization.c  \
+	import_calloc.c import_cylindrical.c import_cylindrical3d.c import_rtheta.c import_spherical.c import_sph3d.c ionization.c  \
 	janitor.c knigge.c levels.c lines.c macro_accelerate.c macro_gen_f.c macro_gov.c  \
 	matom.c matom_diag.c matrix_cpu.c matrix_ion.c models_extern_init.c para_update.c  \
 	parse.c partition.c paths.c phot_util.c photon2d.c photon_gen.c photon_gen_matom.c  \
