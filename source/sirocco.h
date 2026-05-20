@@ -197,7 +197,8 @@ enum coord_type_enum
 { SPHERICAL = 0,                //!< Spherical coordinates
   CYLIND = 1,                   //!< Standard cylindirical coordinates
   RTHETA = 2,                   //!< Polar coordinates
-  CYLIND3D = 3                  //!< Full 3D cylindrical (rho, phi, z)
+  CYLIND3D = 3,                 //!< Full 3D cylindrical (rho, phi, z)
+  SPH3D = 4                     //!< Full 3D spherical polar (r, theta, phi)
 };
 
 
@@ -303,9 +304,9 @@ typedef struct domain
   double *wind_x, *wind_z;
   double *wind_midx, *wind_midz;
 
-  int pdim;                     /**< Number of azimuthal (phi) cells; CYLIND3D only */
-  double *wind_phi;             /**< Phi boundaries [0, 2pi], length pdim+1; CYLIND3D only */
-  double *wind_midphi;          /**< Phi cell centres, length pdim; CYLIND3D only */
+  int pdim;                     /**< Number of azimuthal (phi) cells; CYLIND3D and SPH3D */
+  double *wind_phi;             /**< Phi boundaries [0, 2pi], length pdim+1; CYLIND3D and SPH3D */
+  double *wind_midphi;          /**< Phi cell centres, length pdim; CYLIND3D and SPH3D */
 
   ConePtr cones_rtheta;         /**< A ptr to the cones that define boundaries of cells in the theta direction
                                    when rtheta coords  are being used */
@@ -877,7 +878,7 @@ typedef struct wind
   double thetamax;              /**< polar angle (degrees) of outer boundary of cell (RTHETA only).
                                    Equal to wind_z[iz+1] for the cell at theta index iz.
                                    Populated by rtheta_wind_complete. @see theta, thetacen */
-  double phi, phicen, phimax;   /**< azimuthal boundaries and centre (radians); CYLIND3D only */
+  double phi, phicen, phimax;   /**< azimuthal boundaries and centre (radians); CYLIND3D and SPH3D */
   double dtheta, dr;            /**<  widths of bins, used in hydro import mode */
   struct cone wcone;            /**<  For RTHETA: cone structure defining the inner theta boundary
                                    (theta_j), i.e. cones_rtheta[iz].  Populated by
@@ -901,6 +902,10 @@ typedef struct wind
                                    opposite to v at x.  For CYLIND: (rho_max, z_max); for RTHETA:
                                    (r_max, theta_max); for SPHERICAL: r_max.  Populated by
                                    define_wind. @see v, v_rmax, v_thetamax */
+  double v_phimax[3];           /**< SPH3D: velocity at (r_min, theta_min, phi_max) corner */
+  double v_rmax_phimax[3];      /**< SPH3D: velocity at (r_max, theta_min, phi_max) corner */
+  double v_thetamax_phimax[3];  /**< SPH3D: velocity at (r_min, theta_max, phi_max) corner */
+  double vmax_phimax[3];        /**< SPH3D: velocity at (r_max, theta_max, phi_max) corner */
   double v_grad[3][3];          /**< velocity gradient tensor  at the inner vertex of the cell in the co-moving frame */
   double div_v;                 /**< Divergence of v at center of cell in the co-moving frame */
   double dvds_ave;              /**<  Average value of dvds */
