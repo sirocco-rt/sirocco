@@ -452,6 +452,14 @@ translate_in_wind (WindPtr w, PhotPtr p, double tau_scat, double *tau, int *nres
 
   smax = smax_in_cell (p);
 
+  /* smax_in_cell moves the photon and returns for W_NOT_INWIND cells; returning here
+   * avoids calling calculate_ds with the sentinel plasma cell (nplasma=NPLASMA, nwind=-1) */
+  if (one->inwind == W_NOT_INWIND)
+  {
+    p->istat = P_INWIND;
+    return (P_INWIND);
+  }
+
   /* We now determine whether scattering prevents the photon from reaching the far edge of
      the cell.  calculate_ds calculates whether there are scatterings and makes use of the
      current position of the photon and the position of the photon at the far edge of the
