@@ -627,6 +627,17 @@ create_wind_grid (void)
   n_cells_rank = NDIM2;
 #endif
 
+  /* Allocate phi-max velocity corners for SPH3D domains (private per rank;
+   * a broadcast will be needed here when trilinear interpolation is implemented). */
+  {
+    int idom;
+    for (idom = 0; idom < geo.ndomain; idom++)
+      if (zdom[idom].coord_type == SPH3D)
+        break;
+    if (idom < geo.ndomain && sph3d_phi_corners == NULL)
+      sph3d_phi_corners = (Sph3dPhiCorners *) calloc (NDIM2, sizeof (Sph3dPhiCorners));
+  }
+
   /* The next stages are done in parallel, as calculating volumes and some
    * velocity gradients is expensive. Within this loop we:
    *  - create the coordinate grid
@@ -746,10 +757,10 @@ create_wind_grid (void)
            The importer will overwrite these for non-symmetric imported winds. */
         for (int kk = 0; kk < 3; kk++)
         {
-          cell->v_phimax[kk] = cell->v[kk];
-          cell->v_rmax_phimax[kk] = cell->v_rmax[kk];
-          cell->v_thetamax_phimax[kk] = cell->v_thetamax[kk];
-          cell->vmax_phimax[kk] = cell->vmax[kk];
+          sph3d_phi_corners[n].v_phimax[kk] = cell->v[kk];
+          sph3d_phi_corners[n].v_rmax_phimax[kk] = cell->v_rmax[kk];
+          sph3d_phi_corners[n].v_thetamax_phimax[kk] = cell->v_thetamax[kk];
+          sph3d_phi_corners[n].vmax_phimax[kk] = cell->vmax[kk];
         }
       }
       else if (coord_type == SPHERICAL)

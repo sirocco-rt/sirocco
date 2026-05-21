@@ -902,10 +902,6 @@ typedef struct wind
                                    opposite to v at x.  For CYLIND: (rho_max, z_max); for RTHETA:
                                    (r_max, theta_max); for SPHERICAL: r_max.  Populated by
                                    define_wind. @see v, v_rmax, v_thetamax */
-  double v_phimax[3];           /**< SPH3D: velocity at (r_min, theta_min, phi_max) corner */
-  double v_rmax_phimax[3];      /**< SPH3D: velocity at (r_max, theta_min, phi_max) corner */
-  double v_thetamax_phimax[3];  /**< SPH3D: velocity at (r_min, theta_max, phi_max) corner */
-  double vmax_phimax[3];        /**< SPH3D: velocity at (r_max, theta_max, phi_max) corner */
   double v_grad[3][3];          /**< velocity gradient tensor  at the inner vertex of the cell in the co-moving frame */
   double div_v;                 /**< Divergence of v at center of cell in the co-moving frame */
   double dvds_ave;              /**<  Average value of dvds */
@@ -931,6 +927,20 @@ extern WindPtr wmain;
 #ifdef MPI_ON
 extern MPI_Win wmain_win;             /**< MPI shared memory window for wmain */
 #endif
+
+/** Phi-max face velocity corners for SPH3D cells, indexed by wmain cell index.
+ *  Allocated (via calloc) only when a SPH3D domain is present; NULL otherwise.
+ *  Stores the four trilinear corners on the phi_max face needed for future
+ *  3D velocity interpolation in vwind_xyz. */
+typedef struct sph3d_phi_corners
+{
+  double v_phimax[3];           /**< velocity at (r_min, theta_min, phi_max) */
+  double v_rmax_phimax[3];      /**< velocity at (r_max, theta_min, phi_max) */
+  double v_thetamax_phimax[3];  /**< velocity at (r_min, theta_max, phi_max) */
+  double vmax_phimax[3];        /**< velocity at (r_max, theta_max, phi_max) */
+} Sph3dPhiCorners;
+
+extern Sph3dPhiCorners *sph3d_phi_corners;
 
 /**
  * Per-cell reverb path data, stored separately from wind_dummy so that

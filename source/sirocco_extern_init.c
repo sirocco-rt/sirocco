@@ -82,6 +82,7 @@ WindPtr wmain;
 MPI_Win wmain_win;
 #endif
 wind_paths_store *wind_paths_main;
+Sph3dPhiCorners *sph3d_phi_corners = NULL;
 
 PlasmaPtr plasmamain;
 
