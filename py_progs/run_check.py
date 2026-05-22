@@ -223,8 +223,8 @@ def plot_converged(root,converged,converging,t_r,t_e,hc):
     '''
 
 
+    pylab.close(1)
     pylab.figure(1,(6,6))
-    pylab.clf()
     pylab.plot(t_r,'--',label='t_r')
     pylab.plot(t_e,'--',label='t_e')
     pylab.plot(hc,'--',label='heating:cooling')
@@ -507,8 +507,11 @@ def doit(root='ixvel',outputfile='out.txt'):
     xdim=how_many_dimensions(master_file)
 
     if xdim==3:
-        print('3D cylindrical grid detected; skipping 2D wind plots')
-        converge_plot=te_plot=tr_plot=ne_plot='none'
+        print('3D grid detected; plotting k=0 (first phi slice) wind plots')
+        converge_plot=plot_wind.doit(master_file,'converge',plot_dir='./diag_%s' % root,k=0)
+        te_plot=plot_wind.doit(master_file,'t_e',plot_dir='./diag_%s' % root,k=0)
+        tr_plot=plot_wind.doit(master_file,'t_r',plot_dir='./diag_%s' % root,k=0)
+        ne_plot=plot_wind.doit(master_file,'ne',plot_dir='./diag_%s' % root,k=0)
     elif xdim==2:
         converge_plot=plot_wind.doit(master_file,'converge',plot_dir='./diag_%s' % root)
         te_plot=plot_wind.doit(master_file,'t_e',plot_dir='./diag_%s' % root)
