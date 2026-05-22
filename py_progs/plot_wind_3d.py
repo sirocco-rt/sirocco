@@ -116,22 +116,11 @@ def get_data(filename, var, scale='log', inwind=''):
 
 
 # ---------------------------------------------------------------------------
-# Main plotting function
+# Figure builder (one variable)
 # ---------------------------------------------------------------------------
 
-def doit(filename, var='t_e', scale='log', outfile=None, inwind='', j_slice=None):
-    """
-    Create an interactive HTML visualisation for a 3D wind variable.
-
-    Parameters
-    ----------
-    filename : str   Path to a master.txt file with i, j, k columns.
-    var      : str   Variable to plot (default 't_e').
-    scale    : str   'log' (default) or 'lin'.
-    outfile  : str   Output HTML path.  Default: <root>_<var>_3d.html.
-    inwind   : str   '' = in-wind cells only (default); 'all' = show all.
-    j_slice  : int   j index for the rho-phi panel (default: |z| minimum).
-    """
+def _build_figure(filename, var, scale='log', inwind='', j_slice=None):
+    """Build and return a Plotly figure for a single variable."""
     d = get_data(filename, var, scale=scale, inwind=inwind)
     if d is None:
         return None
@@ -145,7 +134,6 @@ def doit(filename, var='t_e', scale='log', outfile=None, inwind='', j_slice=None
     theta_label = d['theta_label']
     title       = d['title']
 
-    # Shared colour limits
     finite = xvar_3d[np.isfinite(xvar_3d)]
     if len(finite) == 0:
         print('Warning: no finite in-wind values for %s; try -all' % var)
@@ -154,16 +142,12 @@ def doit(filename, var='t_e', scale='log', outfile=None, inwind='', j_slice=None
         zmin = float(np.nanmin(finite))
         zmax = float(np.nanmax(finite))
 
-    # j index for the transverse-phi panel (use coord-appropriate default)
     if j_slice is None:
         j_slice = d['j_eq']
     theta_val = theta_cen[j_slice]
 
-    # ------------------------------------------------------------------
-    # Build figure with two side-by-side subplots
-    # ------------------------------------------------------------------
-    phi_deg  = np.degrees(phi_cen)
-    j_label  = '%s = %.2g  (j=%d)' % (theta_label.split()[0], theta_val, j_slice)
+    phi_deg = np.degrees(phi_cen)
+    j_label = '%s = %.2g  (j=%d)' % (theta_label.split()[0], theta_val, j_slice)
 
     fig = make_subplots(
         rows=1, cols=2,
@@ -174,9 +158,8 @@ def doit(filename, var='t_e', scale='log', outfile=None, inwind='', j_slice=None
         horizontal_spacing=0.18,
     )
 
-    # --- Left panel: one Heatmap trace per phi slice --------------------
     for k in range(pdim):
-        slice_k = xvar_3d[:, :, k].T    # (mdim, ndim): rows=theta/z, cols=rad
+        slice_k = xvar_3d[:, :, k].T
         fig.add_trace(
             go.Heatmap(
                 z=slice_k,
@@ -195,8 +178,7 @@ def doit(filename, var='t_e', scale='log', outfile=None, inwind='', j_slice=None
             row=1, col=1,
         )
 
-    # --- Right panel: rad-phi slice at chosen j (always visible) -------
-    eq_slice = xvar_3d[:, j_slice, :].T    # (pdim, ndim): rows=phi, cols=rad
+    eq_slice = xvar_3d[:, j_slice, :].T
     fig.add_trace(
         go.Heatmap(
             z=eq_slice,
@@ -214,7 +196,6 @@ def doit(filename, var='t_e', scale='log', outfile=None, inwind='', j_slice=None
         row=1, col=2,
     )
 
-    # --- Phi slider (controls left panel only) --------------------------
     n_left = pdim
     steps = []
     for k in range(pdim):
@@ -225,36 +206,82 @@ def doit(filename, var='t_e', scale='log', outfile=None, inwind='', j_slice=None
             label='%.0f°' % phi_deg[k],
         ))
 
-    sliders = [dict(
-        active=0,
-        steps=steps,
-        currentvalue=dict(prefix='ϕ = ', font=dict(size=14)),
-        pad=dict(t=55),
-        x=0.0, len=0.42,
-    )]
-
-    # --- Axes and layout ------------------------------------------------
-    fig.update_xaxes(title_text=rad_label,   type='log', row=1, col=1)
-    fig.update_yaxes(title_text=theta_label,             row=1, col=1)
-    fig.update_xaxes(title_text=rad_label,   type='log', row=1, col=2)
-    fig.update_yaxes(title_text='ϕ (degrees)',           row=1, col=2)
+    fig.update_xaxes(title_text=rad_label,    type='log', row=1, col=1)
+    fig.update_yaxes(title_text=theta_label,              row=1, col=1)
+    fig.update_xaxes(title_text=rad_label,    type='log', row=1, col=2)
+    fig.update_yaxes(title_text='ϕ (degrees)',            row=1, col=2)
 
     fig.update_layout(
         title_text='%s  —  %s' % (os.path.basename(filename), title),
-        sliders=sliders,
+        sliders=[dict(
+            active=0,
+            steps=steps,
+            currentvalue=dict(prefix='ϕ = ', font=dict(size=14)),
+            pad=dict(t=55),
+            x=0.0, len=0.42,
+        )],
         height=560,
         width=1150,
         margin=dict(t=100, b=80),
     )
 
-    # --- Save -----------------------------------------------------------
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Main plotting function
+# ---------------------------------------------------------------------------
+
+def doit(filename, var='t_e', scale='log', outfile=None, inwind='', j_slice=None):
+    """
+    Create an interactive HTML visualisation for one or more 3D wind variables.
+
+    Parameters
+    ----------
+    filename : str        Path to a master.txt file with i, j, k columns.
+    var      : str|list   Variable(s) to plot (default 't_e').
+                          Pass a list to put multiple variables in one file.
+    scale    : str        'log' (default) or 'lin'.
+    outfile  : str        Output HTML path.  Default: <root>_<var>_3d.html
+                          (single var) or <root>_3d.html (multiple vars).
+    inwind   : str        '' = in-wind cells only (default); 'all' = show all.
+    j_slice  : int        j index for the rad-phi panel (default: coord-based).
+    """
+    vars_list = [var] if isinstance(var, str) else list(var)
+
+    # Derive default output filename
     if outfile is None:
         root = os.path.basename(filename)
         for ext in ('.master.txt', '.txt'):
             root = root.replace(ext, '')
-        outfile = '%s_%s_3d.html' % (root, var)
+        if len(vars_list) == 1:
+            outfile = '%s_%s_3d.html' % (root, vars_list[0])
+        else:
+            outfile = '%s_3d.html' % root
 
-    fig.write_html(outfile)
+    # Build one figure per variable
+    figs = []
+    for v in vars_list:
+        fig = _build_figure(filename, v, scale=scale, inwind=inwind, j_slice=j_slice)
+        if fig is not None:
+            figs.append(fig)
+
+    if not figs:
+        return None
+
+    if len(figs) == 1:
+        figs[0].write_html(outfile)
+    else:
+        # Combine: bundle Plotly.js once in the first div, skip in the rest
+        divs = []
+        for i, fig in enumerate(figs):
+            divs.append(fig.to_html(full_html=False,
+                                    include_plotlyjs=(i == 0)))
+        with open(outfile, 'w') as f:
+            f.write('<html><body>\n')
+            f.write('\n<hr style="margin:30px 0">\n'.join(divs))
+            f.write('\n</body></html>\n')
+
     print('Written: %s' % outfile)
     return outfile
 
@@ -265,7 +292,7 @@ def doit(filename, var='t_e', scale='log', outfile=None, inwind='', j_slice=None
 
 def steer(argv):
     filename = ''
-    var = 't_e'
+    vars_list = []
     scale = 'log'
     outfile = None
     inwind = ''
@@ -290,17 +317,15 @@ def steer(argv):
             outfile = argv[i]
         elif filename == '':
             filename = argv[i]
-        elif var == 't_e':
-            var = argv[i]
         else:
-            print('Unrecognised argument: %s' % argv[i])
-            return
+            vars_list.append(argv[i])
         i += 1
 
     if filename == '':
-        print('Usage: plot_wind_3d.py filename [variable] [-log|-lin] [-all] [-j N] [-o file.html]')
+        print('Usage: plot_wind_3d.py filename [var ...] [-log|-lin] [-all] [-j N] [-o file.html]')
         return
 
+    var = vars_list if len(vars_list) > 1 else (vars_list[0] if vars_list else 't_e')
     doit(filename, var=var, scale=scale, outfile=outfile, inwind=inwind, j_slice=j_slice)
 
 
