@@ -3,9 +3,9 @@
 """
 run_check3d.py -- Comprehensive run diagnostics using interactive Plotly plots.
 
-Handles 1D, 2D, and 3D wind models.  All plots are embedded directly in the
-HTML summary page.  The 3D wind plot (large) is kept in a separate file and
-shown via an iframe.
+Intended as a future replacement for run_check.py.  Handles 1D, 2D, and 3D
+wind models.  All plots are embedded directly as interactive Plotly figures
+in the HTML summary; no static matplotlib images are produced.
 
 Requires Plotly (pip install plotly).
 
@@ -35,6 +35,56 @@ except ImportError:
     print('Error: Plotly not found — run_check3d.py requires Plotly.')
     print('       Install with:  pip install plotly')
     sys.exit(1)
+
+
+# ---------------------------------------------------------------------------
+# Text strings — identical to run_check.py
+# ---------------------------------------------------------------------------
+
+convergence_message = '''
+The plot shows the fraction of cells which satisfy various convergence criteria, comparing the radiation
+temperature, t_r, the electron temperature, t_e between cycles, or the balance between heating and cooling
+in a given cycle.  If the fractional variation in, for example, the electron temperature has changed by
+less than 5%, then the electron temperature criterion has been passed.  If a cell passes all three tests,
+it is said to have "converged".  The plot also indicates the number of cells for which the electron
+temperature is evolving to a higher or lower value, rather than oscillating up and down in electron
+temperature.  Such cells are said to be "converging".
+'''
+
+convergence2 = '''
+The plot below indicates which cells have converged.  The values given for each cell indicate the number
+of convergence tests which have failed, so a value of 0 indicates that a cell is "converged".
+'''
+
+error_description = '''
+Python accumulates a fairly large number of errors and warnings.  Most are benign, especially if they
+only occur a few times, but one should beware if an error message occurs many times, or if messages
+that look unusual start to appear.  A summary of the errors for this run of the program is shown below.
+More information about where the errors occurred can be found in the diag files directory.  This summary
+presents the total number of times an error message of a particular type was generated; many times the
+same error message will occur in each of the threads.
+'''
+
+tot_plot_description = '''
+This plot is based on the .spec_tot file.  It shows the photons that were created and emitted in the
+last ionization cycle.  The photons created by a central object or disk (the external sources) are
+plotted separately from the wind (the internal source).  For a simple atom model, the wind photons are
+generated based on physical conditions in the wind at the beginning of the cycle.  For a macro-atom
+model, the wind photons are generated as photons pass through the wind and interact with macro-atoms.
+The observed flux from photons that escape to infinity and a subset of this, the emitted flux of photons
+arising in the wind are also shown.  Finally, the flux of the photons that hit the disk or star is also
+shown (as they would be seen at a distance of 100 pc).
+'''
+
+spec_plot_description = '''
+This plot is from the .spec file, and shows the expected spectra (at 100 pc) as a function of the
+various inclination angles requested.  Note that the y-axis scale varies for different inclination angles.
+'''
+
+ne_plot_description = '''
+This plot shows the electron density (ne) throughout the wind.  The electron density traces the density
+structure of the outflow and is directly related to the optical depth of the wind.
+'''
 
 
 # ---------------------------------------------------------------------------
@@ -107,8 +157,8 @@ def check_completion(root):
     complete_string = lines[-1]
     msgs = []
     if restart:
-        msgs.append('%s was restarted; earlier run(s) took %.1f s.' % (root, tot))
-        msgs.append('Times below are since the last restart.')
+        msgs.append('%s was restarted. The earlier run(s) took %.1f s.' % (root, tot))
+        msgs.append('Here we report times and progress since the (last) restart.')
 
     ion_time = 0
     if 'COMPLETE' in complete_string:
@@ -116,20 +166,21 @@ def check_completion(root):
         msgs.append('%s ran to completion in %s s.' % (root, word[5]))
         try:
             word = ion_string.split()
-            msgs.append('%s ionization cycles in %s s.' % (word[8], word[5]))
+            msgs.append('%s ionization cycles were completed in %s s.' % (word[8], word[5]))
             ion_time = eval(word[5])
         except Exception:
-            msgs.append('No ionization cycles.')
+            msgs.append('There were no ionization cycles for this run.')
         try:
             word = spec_string.split()
-            msgs.append('%s spectrum cycles in %s s.' % (word[8], eval(word[5]) - ion_time))
+            msgs.append('%s spectrum cycles were completed in %s s.' %
+                        (word[8], eval(word[5]) - ion_time))
         except Exception:
-            msgs.append('No spectrum cycles.')
+            msgs.append('There were no spectrum cycles for this run.')
     else:
-        msgs.append('WARNING: %s HAS NOT COMPLETED.' % root)
+        msgs.append('WARNING: RUN %s HAS NOT COMPLETED SUCCESSFULLY.' % root)
         word = complete_string.split()
         try:
-            msgs.append('Stopped after ~%s s in %s of %s %s cycles.' %
+            msgs.append('If not running, it stopped after about %s s in %s of %s %s cycles.' %
                         (word[5], word[8], word[10], word[11]))
         except IndexError:
             msgs.append('Could not read cycle information.')
@@ -203,20 +254,24 @@ def how_many_dimensions(filename):
 
 
 # ---------------------------------------------------------------------------
-# Interactive Plotly plot builders — each returns an HTML div string or None
+# Interactive Plotly builders — each returns an HTML div string or None
 # ---------------------------------------------------------------------------
 
 def _smooth(x, n=21):
-    """Boxcar smooth."""
     if n <= 1 or len(x) <= n:
         return x
     kernel = np.ones(n) / n
     return np.convolve(x, kernel, mode='same')
 
 
+def _first_true(include_plotlyjs):
+    """Return the include_plotlyjs value for the first div that isn't None."""
+    return include_plotlyjs
+
+
 def make_convergence_div(root, converged, converging, t_r, t_e, hc,
                          include_plotlyjs=True):
-    """Interactive convergence-by-cycle plot."""
+    """Convergence fractions vs ionization cycle."""
     ncycle = list(range(len(converged)))
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=ncycle, y=list(t_r), mode='lines', name='t_r',
@@ -231,11 +286,140 @@ def make_convergence_div(root, converged, converging, t_r, t_e, hc,
                              name='Converging', line=dict(width=2)))
     fig.update_layout(
         title='%s — convergence by cycle' % root,
-        xaxis_title='Ionization cycle',
-        yaxis_title='Fraction of cells in wind',
+        xaxis_title='Ionization Cycle',
+        yaxis_title='Fraction of Cells in Wind',
         height=420, width=750,
         legend=dict(x=0.01, y=0.99),
     )
+    return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
+
+
+def make_wind_3d_div(master_file, var, scale='log', inwind='',
+                     include_plotlyjs=False):
+    """
+    Inline interactive 3D wind plot for a single variable using plot_wind_3d.
+    Returns an HTML div string or None.
+    """
+    fig = plot_wind_3d._build_figure(master_file, var, scale=scale, inwind=inwind)
+    if fig is None:
+        return None
+    return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
+
+
+def _wind_heatmap_2d(data, xcol, ycol, var, scale, inwind_arr, ndim, mdim,
+                     xlabel, ylabel):
+    """Return (x_plot, y_plot, zlog, title) arrays for a single 2D wind variable."""
+    x_raw = np.array(data[xcol]).reshape(ndim, mdim)
+    y_raw = np.array(data[ycol]).reshape(ndim, mdim)
+    inwind = inwind_arr.reshape(ndim, mdim)
+
+    xpos = x_raw[x_raw > 1]
+    xlogmin = np.log10(np.min(xpos) / 10) if len(xpos) else 0.0
+    x_plot = np.where(x_raw > 1, np.log10(x_raw), xlogmin)
+
+    z = np.array(data[var], dtype=float).reshape(ndim, mdim)
+    if inwind != 'all':
+        mask = inwind_arr.reshape(ndim, mdim) < 0
+        z[mask] = np.nan
+
+    if scale == 'log':
+        with np.errstate(divide='ignore', invalid='ignore'):
+            z = np.where(z > 0, np.log10(z), np.nan)
+        title = 'log(%s)' % var
+    else:
+        title = var
+
+    return x_plot[:, 0], y_raw[0, :], z.T, title, xlabel, ylabel
+
+
+def make_wind_2d_div(root, master_file, vars=('t_e',), scale='log', inwind='',
+                     include_plotlyjs=False):
+    """Plotly heatmap subplots for a 2D wind model; one panel per variable."""
+    try:
+        data = ascii.read(master_file)
+    except IOError:
+        print('Warning: cannot read %s' % master_file)
+        return None
+
+    is_sph = 'rcen' in data.colnames
+    xcol = 'rcen' if is_sph else ('xcen' if 'xcen' in data.colnames else 'x')
+    ycol = 'thetacen' if is_sph else ('zcen' if 'zcen' in data.colnames else 'z')
+    xlabel = 'log(r)' if is_sph else 'log(ρ)'
+    ylabel = 'θ (°)' if is_sph else 'z'
+
+    ii = np.array(data['i'])
+    jj = np.array(data['j'])
+    ndim = int(np.max(ii)) + 1
+    mdim = int(np.max(jj)) + 1
+    inwind_arr = np.array(data['inwind'])
+
+    vars = [v for v in vars if v in data.colnames]
+    if not vars:
+        return None
+
+    ncols = min(2, len(vars))
+    nrows = (len(vars) + 1) // 2
+    fig = make_subplots(rows=nrows, cols=ncols,
+                        subplot_titles=list(vars),
+                        horizontal_spacing=0.12,
+                        vertical_spacing=0.15)
+
+    for idx, var in enumerate(vars):
+        row = idx // ncols + 1
+        col = idx % ncols + 1
+        var_scale = 'lin' if var == 'converge' else scale
+        x, y, z, title, xl, yl = _wind_heatmap_2d(
+            data, xcol, ycol, var, var_scale,
+            inwind_arr if var != 'converge' else np.zeros_like(inwind_arr),
+            ndim, mdim, xlabel, ylabel)
+        fig.add_trace(
+            go.Heatmap(z=z, x=x, y=y, colorscale='Viridis', showscale=True,
+                       name=title,
+                       hovertemplate=xl + '=%{x:.2g}<br>'
+                                     + yl + '=%{y:.2g}<br>'
+                                     + title + '=%{z:.3f}<extra></extra>'),
+            row=row, col=col,
+        )
+        fig.update_xaxes(title_text=xl, row=row, col=col)
+        fig.update_yaxes(title_text=yl, row=row, col=col)
+
+    fig.update_layout(title='%s — %s' % (root, ', '.join(vars)),
+                      height=420 * nrows, width=950)
+    return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
+
+
+def make_wind_1d_div(root, master_file, vars=('t_e',), scale='log', inwind='',
+                     include_plotlyjs=False):
+    """Plotly line plots for a 1D wind model."""
+    try:
+        data = ascii.read(master_file)
+    except IOError:
+        print('Warning: cannot read %s' % master_file)
+        return None
+
+    rcol = 'rcen' if 'rcen' in data.colnames else ('xcen' if 'xcen' in data.colnames else 'x')
+    inwind_arr = np.array(data['inwind'])
+    r = np.array(data[rcol], dtype=float)
+    mask = inwind_arr >= 0
+
+    fig = go.Figure()
+    for var in vars:
+        if var not in data.colnames:
+            continue
+        y = np.array(data[var], dtype=float)
+        y[~mask] = np.nan
+        if scale == 'log' and var != 'converge':
+            with np.errstate(divide='ignore', invalid='ignore'):
+                y = np.where(y > 0, np.log10(y), np.nan)
+            label = 'log(%s)' % var
+        else:
+            label = var
+        fig.add_trace(go.Scatter(x=r[mask], y=y[mask], mode='lines', name=label))
+
+    fig.update_xaxes(type='log', title='r (cm)')
+    fig.update_yaxes(title='log(value)')
+    fig.update_layout(title='%s — %s' % (root, ', '.join(vars)),
+                      height=450, width=750, legend=dict(x=0.01, y=0.99))
     return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
 
 
@@ -277,7 +461,7 @@ def make_spec_tot_div(root, include_plotlyjs=False):
 
     fig.update_xaxes(type='log', title='Frequency (Hz)')
     fig.update_yaxes(type='log', title='νL<sub>ν</sub>')
-    fig.update_layout(title='%s — spectral energy distribution' % root,
+    fig.update_layout(title='%s — total spectra' % root,
                       height=500, width=950, legend=dict(x=0.01, y=0.99))
     return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
 
@@ -311,158 +495,84 @@ def make_spec_div(root, include_plotlyjs=False):
     return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
 
 
-def make_wind_2d_div(root, master_file,
-                     vars=('t_e', 't_r', 'ne', 'rho'),
-                     include_plotlyjs=False):
-    """
-    Interactive heatmap subplots for a 2D (CYLIND or RTHETA) wind model.
-    Uses physical coordinates (log rho vs z) with the same masking as plot_wind.
-    """
-    try:
-        data = ascii.read(master_file)
-    except IOError:
-        print('Warning: cannot read %s' % master_file)
-        return None
-
-    is_sph = 'rcen' in data.colnames
-    xcol = 'rcen' if is_sph else 'xcen'
-    ycol = 'thetacen' if is_sph else 'zcen'
-    # Fall back to x/z for plain 2D tables
-    if xcol not in data.colnames:
-        xcol, ycol = 'x', 'z'
-
-    ii = np.array(data['i'])
-    jj = np.array(data['j'])
-    ndim = int(np.max(ii)) + 1
-    mdim = int(np.max(jj)) + 1
-    inwind = np.array(data['inwind']).reshape(ndim, mdim)
-
-    x_raw = np.array(data[xcol]).reshape(ndim, mdim)
-    y_raw = np.array(data[ycol]).reshape(ndim, mdim)
-
-    # Log-scale the radial axis
-    xpos = x_raw[x_raw > 1]
-    xlogmin = np.log10(np.min(xpos) / 10) if len(xpos) else 0.0
-    x_plot = np.where(x_raw > 1, np.log10(x_raw), xlogmin)
-
-    nvars = len(vars)
-    ncols = min(2, nvars)
-    nrows = (nvars + 1) // 2
-    fig = make_subplots(rows=nrows, cols=ncols,
-                        subplot_titles=list(vars),
-                        horizontal_spacing=0.12,
-                        vertical_spacing=0.15)
-
-    for idx, var in enumerate(vars):
-        row = idx // ncols + 1
-        col = idx % ncols + 1
-        if var not in data.colnames:
-            continue
-        z = np.array(data[var], dtype=float).reshape(ndim, mdim)
-        mask = inwind < 0
-        z[mask] = np.nan
-        with np.errstate(divide='ignore', invalid='ignore'):
-            zlog = np.where(z > 0, np.log10(z), np.nan)
-        fig.add_trace(
-            go.Heatmap(z=zlog.T, x=x_plot[:, 0], y=y_raw[0, :],
-                       colorscale='Viridis', showscale=True,
-                       name='log(%s)' % var,
-                       hovertemplate='log(ρ)=%{x:.2g}<br>z=%{y:.2g}<br>'
-                                     + 'log(%s)' % var + '=%{z:.3f}<extra></extra>'),
-            row=row, col=col,
-        )
-        fig.update_xaxes(title_text='log(ρ)' if not is_sph else 'log(r)',
-                         row=row, col=col)
-        fig.update_yaxes(title_text='z' if not is_sph else 'θ (°)',
-                         row=row, col=col)
-
-    fig.update_layout(
-        title='%s — wind structure' % root,
-        height=420 * nrows, width=950,
-    )
-    return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
-
-
-def make_wind_1d_div(root, master_file,
-                     vars=('t_e', 't_r', 'ne', 'rho'),
-                     include_plotlyjs=False):
-    """
-    Interactive line plots for a 1D (spherical/shell) wind model.
-    """
-    try:
-        data = ascii.read(master_file)
-    except IOError:
-        print('Warning: cannot read %s' % master_file)
-        return None
-
-    rcol = 'rcen' if 'rcen' in data.colnames else 'xcen'
-    if rcol not in data.colnames:
-        rcol = 'x'
-
-    inwind = np.array(data['inwind'])
-    r = np.array(data[rcol], dtype=float)
-    mask = inwind >= 0
-
-    fig = go.Figure()
-    for var in vars:
-        if var not in data.colnames:
-            continue
-        y = np.array(data[var], dtype=float)
-        y[~mask] = np.nan
-        with np.errstate(divide='ignore', invalid='ignore'):
-            ylog = np.where(y > 0, np.log10(y), np.nan)
-        fig.add_trace(go.Scatter(x=r[mask], y=ylog[mask], mode='lines',
-                                 name='log(%s)' % var))
-
-    fig.update_xaxes(type='log', title='r (cm)')
-    fig.update_yaxes(title='log(value)')
-    fig.update_layout(title='%s — wind structure' % root,
-                      height=450, width=750, legend=dict(x=0.01, y=0.99))
-    return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
-
-
-def make_wind_3d_file(root, master_file, outdir):
-    """Write the 3D wind interactive HTML; returns the file path or None."""
-    outfile = os.path.join(outdir, '%s_wind_interactive.html' % root)
-    return plot_wind_3d.doit(master_file, var=['t_e', 't_r', 'ne', 'rho'],
-                              scale='log', outfile=outfile)
-
-
 # ---------------------------------------------------------------------------
-# HTML summary
+# HTML builder
 # ---------------------------------------------------------------------------
 
-def make_html(root, complete_message, errors, divs, wind_3d_path=None):
-    """
-    Write the HTML summary.
+def make_html(root, complete_message, errors,
+              conv_by_cycle_div, converge_map_div,
+              te_div, tr_div, ne_div,
+              spec_tot_div, spec_div):
+    """Write the HTML summary, matching run_check.py structure and text."""
 
-    divs : ordered list of (heading, html_div_string) pairs; None entries skipped.
-    wind_3d_path : relative path to 3D wind iframe file, or None.
-    """
-    string = xhtml.begin('%s: Run summary' % root)
-    string += xhtml.paragraph('Summary for %s' % root)
+    string = xhtml.begin('%s: How well did the run go?' % root)
+    string += xhtml.paragraph('Provide an overview of whether the run of %s has succeeded.' % root)
+    string += xhtml.add_list(complete_message)
     string += xhtml.hline()
 
-    string += xhtml.h2('Run status')
-    for msg in complete_message:
-        string += xhtml.paragraph(msg)
+    # --- Did the run converge? ---
+    string += xhtml.h2('Did the run converge?')
+    if conv_by_cycle_div:
+        string += conv_by_cycle_div + '\n'
+    else:
+        string += xhtml.paragraph('There is no convergence plot. OK if no ionization cycles.')
+    string += xhtml.paragraph(convergence_message)
+    string += xhtml.paragraph(convergence2)
+    if converge_map_div:
+        string += converge_map_div + '\n'
+    string += xhtml.hline()
 
-    for heading, div in divs:
-        if div is None:
-            continue
-        string += xhtml.h2(heading)
-        string += div + '\n'
+    # --- Temperatures ---
+    string += xhtml.h2('What do the temperatures look like?')
+    if te_div:
+        string += te_div + '\n'
+    if tr_div:
+        string += tr_div + '\n'
+    string += xhtml.hline()
 
-    if wind_3d_path:
-        string += xhtml.h2('3D wind structure (interactive)')
+    # --- Electron density ---
+    string += xhtml.h2('What does the electron density look like?')
+    if ne_div:
+        string += ne_div + '\n'
+    string += xhtml.paragraph(ne_plot_description)
+    string += xhtml.hline()
+
+    # --- Total spectra ---
+    string += xhtml.h2('What do the total spectra look like (somewhat smoothed)?')
+    if spec_tot_div:
+        string += spec_tot_div + '\n'
+        string += xhtml.paragraph(tot_plot_description)
+    else:
+        string += xhtml.paragraph('There is no total spectrum plot. OK if no ionization cycles.')
+    string += xhtml.hline()
+
+    # --- Angle spectra ---
+    string += xhtml.h2('What do the final spectra look like (somewhat smoothed)?')
+    if spec_div:
+        string += spec_div + '\n'
+        string += xhtml.paragraph(spec_plot_description)
+    else:
         string += xhtml.paragraph(
-            'Use the sliders to explore phi and z/theta slices.')
-        string += ('<iframe src="%s" width="100%%" height="720px" '
-                   'frameborder="0" style="border:1px solid #ccc;"></iframe>\n'
-                   % wind_3d_path)
+            'There is no plot of a detailed spectrum, probably because '
+            'detailed spectra were not created.')
+    string += xhtml.hline()
 
-    string += xhtml.h2('Error summary')
+    # --- Errors ---
+    string += xhtml.h2('Errors and Warnings')
+    string += xhtml.paragraph(error_description)
     string += xhtml.preformat(errors)
+    string += xhtml.hline()
+
+    # --- Parameter file ---
+    string += xhtml.h2('The parameter file used:')
+    try:
+        with open(root + '.pf') as f:
+            lines = f.readlines()
+        string += xhtml.add_list(lines)
+    except IOError:
+        string += xhtml.paragraph('Parameter file %s.pf not found.' % root)
+    string += xhtml.hline()
+
     string += xhtml.end()
 
     htmlfile = root + '.html'
@@ -501,55 +611,50 @@ def doit(root='test'):
     xdim = how_many_dimensions(master_file)
     print('Grid dimensionality: %dD' % xdim)
 
-    # ----------------------------------------------------------------
-    # Convergence (first div — embeds Plotly.js for whole page)
-    # ----------------------------------------------------------------
+    # --- convergence by cycle (embeds Plotly.js once for the whole page) ---
     converged, converging, t_r, t_e, hc = read_diag(root)
     if len(converged) > 1:
-        conv_div = make_convergence_div(root, converged, converging, t_r, t_e, hc,
-                                        include_plotlyjs=True)
+        conv_by_cycle_div = make_convergence_div(
+            root, converged, converging, t_r, t_e, hc, include_plotlyjs=True)
     else:
-        print('Not enough cycles to plot convergence history')
-        conv_div = None
+        print('Not enough cycles to plot convergence history.')
+        conv_by_cycle_div = None
 
-    # ----------------------------------------------------------------
-    # Spectral plots (reuse already-loaded Plotly.js)
-    # ----------------------------------------------------------------
-    spec_tot_div = make_spec_tot_div(root, include_plotlyjs=(conv_div is None))
-    spec_div = make_spec_div(root,
-                             include_plotlyjs=(conv_div is None and
-                                              spec_tot_div is None))
+    # All subsequent divs reuse the already-loaded Plotly.js
+    kw = dict(include_plotlyjs=False)
 
-    # ----------------------------------------------------------------
-    # Wind structure plots
-    # ----------------------------------------------------------------
-    wind_3d_path = None
-    wind_div = None
-
+    # --- wind structure plots ---
+    print('Generating wind plots ...')
     if xdim == 3:
-        interactive_dir = './diag_%s/interactive' % root
-        os.makedirs(interactive_dir, exist_ok=True)
-        wind_path = make_wind_3d_file(root, master_file, interactive_dir)
-        if wind_path:
-            wind_3d_path = os.path.relpath(wind_path)
+        converge_map_div = make_wind_3d_div(master_file, 'converge',
+                                            scale='lin', inwind='all', **kw)
+        te_div = make_wind_3d_div(master_file, 't_e', **kw)
+        tr_div = make_wind_3d_div(master_file, 't_r', **kw)
+        ne_div = make_wind_3d_div(master_file, 'ne',  **kw)
     elif xdim == 2:
-        wind_div = make_wind_2d_div(root, master_file, include_plotlyjs=False)
+        converge_map_div = make_wind_2d_div(root, master_file, vars=('converge',),
+                                            scale='lin', inwind='all', **kw)
+        te_div = make_wind_2d_div(root, master_file, vars=('t_e',), **kw)
+        tr_div = make_wind_2d_div(root, master_file, vars=('t_r',), **kw)
+        ne_div = make_wind_2d_div(root, master_file, vars=('ne',),  **kw)
     else:
-        wind_div = make_wind_1d_div(root, master_file, include_plotlyjs=False)
+        converge_map_div = make_wind_1d_div(root, master_file, vars=('converge',),
+                                            scale='lin', inwind='all', **kw)
+        te_div = make_wind_1d_div(root, master_file, vars=('t_e',), **kw)
+        tr_div = make_wind_1d_div(root, master_file, vars=('t_r',), **kw)
+        ne_div = make_wind_1d_div(root, master_file, vars=('ne',),  **kw)
 
-    # ----------------------------------------------------------------
-    # HTML summary
-    # ----------------------------------------------------------------
+    # --- spectral plots ---
+    print('Generating spectral plots ...')
+    spec_tot_div = make_spec_tot_div(root, **kw)
+    spec_div     = make_spec_div(root,     **kw)
+
+    # --- write HTML ---
     errors = py_error(root)
-
-    divs = [
-        ('Convergence by cycle',              conv_div),
-        ('Spectral energy distribution',      spec_tot_div),
-        ('Angle spectra',                     spec_div),
-        ('Wind structure',                    wind_div),
-    ]
-
-    make_html(root, complete_message, errors, divs, wind_3d_path=wind_3d_path)
+    make_html(root, complete_message, errors,
+              conv_by_cycle_div, converge_map_div,
+              te_div, tr_div, ne_div,
+              spec_tot_div, spec_div)
 
 
 # ---------------------------------------------------------------------------
