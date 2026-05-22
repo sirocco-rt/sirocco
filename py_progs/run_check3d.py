@@ -249,10 +249,11 @@ def _smooth(x, n=21):
     return np.convolve(x, kernel, mode='same')
 
 
-def make_interactive_spec_tot(root, outdir):
+def make_interactive_spec_tot(root, include_plotlyjs=True):
     """
-    Create a Plotly nuLnu vs frequency plot from <root>.log_spec_tot.
-    Returns the output path on success, or None.
+    Build a Plotly nuLnu vs frequency figure from <root>.log_spec_tot.
+    Returns an HTML div string on success, or None.
+    include_plotlyjs controls whether the Plotly.js bundle is embedded.
     """
     filename = root + '.log_spec_tot'
     try:
@@ -285,7 +286,6 @@ def make_interactive_spec_tot(root, outdir):
     except Exception:
         pass
 
-    # Mark key spectral lines
     for freq_val, label in [(3.29e15, 'Ly limit'), (2.47e15, 'Lyα'),
                              (1.31e16, 'HeII'), (6.91e14, 'Hβ')]:
         fig.add_vline(x=freq_val, line_width=1, line_dash='dot', line_color='grey',
@@ -296,16 +296,14 @@ def make_interactive_spec_tot(root, outdir):
     fig.update_layout(title='%s — spec_tot' % root, height=500, width=950,
                       legend=dict(x=0.01, y=0.99))
 
-    outfile = os.path.join(outdir, '%s_spec_tot_interactive.html' % root)
-    fig.write_html(outfile, include_plotlyjs=True)
-    return outfile
+    return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
 
 
-def make_interactive_spec(root, outdir):
+def make_interactive_spec(root, include_plotlyjs=False):
     """
-    Create a Plotly flux vs wavelength plot from <root>.spec.
-    All inclination angles are shown as separate traces, togglable via the legend.
-    Returns the output path on success, or None.
+    Build a Plotly flux vs wavelength figure from <root>.spec.
+    All inclination angles are togglable via the legend.
+    Returns an HTML div string on success, or None.
     """
     filename = root + '.spec'
     try:
@@ -316,7 +314,6 @@ def make_interactive_spec(root, outdir):
 
     wave = np.array(data['Lambda'], dtype=float)
 
-    # Find angle columns (start with 'A')
     angle_cols = [c for c in data.colnames if c.startswith('A')]
     if not angle_cols:
         return None
@@ -335,14 +332,12 @@ def make_interactive_spec(root, outdir):
         legend=dict(x=0.01, y=0.99),
     )
 
-    outfile = os.path.join(outdir, '%s_spec_interactive.html' % root)
-    fig.write_html(outfile, include_plotlyjs=True)
-    return outfile
+    return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
 
 
 def make_interactive_wind(root, master_file, outdir):
     """
-    Create a Plotly 3D wind plot via plot_wind_3d for a 3D model.
+    Write a Plotly 3D wind HTML file via plot_wind_3d (kept separate due to size).
     Returns the output path on success, or None.
     """
     outfile = os.path.join(outdir, '%s_wind_interactive.html' % root)
@@ -378,19 +373,14 @@ _spec_description = '''
 Angle-resolved spectra from the .spec file (flux vs wavelength).
 '''
 
-_interactive_description = '''
-Interactive plots allow zooming, hovering for exact values, and (for 3D
-wind models) sliders to explore different phi and z/theta slices.
-'''
-
 
 def make_html(root, converge_plot, te_plot, tr_plot, ne_plot,
               spec_tot_plot, spec_plot, nspectra,
               complete_message, errors,
-              interactive_spec_tot=None,
-              interactive_spec=None,
-              interactive_wind=None):
-    """Write the HTML summary page."""
+              interactive_spec_tot_div=None,
+              interactive_spec_div=None,
+              interactive_wind_path=None):
+    """Write the HTML summary page, embedding interactive plots inline."""
 
     string = xhtml.begin('%s: Run summary' % root)
     string += xhtml.paragraph('Summary for %s' % root)
@@ -407,7 +397,7 @@ def make_html(root, converge_plot, te_plot, tr_plot, ne_plot,
         string += xhtml.paragraph(_convergence_description)
         string += xhtml.image('file:./diag_%s/convergence.png' % root)
 
-    # Wind structure plots
+    # Wind structure plots (static)
     string += xhtml.h2('Wind structure (static)')
     for plot, label in [(converge_plot, 'Convergence map'),
                         (te_plot,       'Electron temperature'),
@@ -418,33 +408,39 @@ def make_html(root, converge_plot, te_plot, tr_plot, ne_plot,
             string += xhtml.image('file:%s' % plot)
     string += xhtml.paragraph(_ne_description)
 
-    # Spectral plots (static)
-    string += xhtml.h2('Spectra (static)')
-    if spec_tot_plot and os.path.isfile(spec_tot_plot):
+    # Interactive SED — embedded inline
+    if interactive_spec_tot_div:
+        string += xhtml.h2('Spectral energy distribution (interactive)')
         string += xhtml.paragraph(_spec_tot_description)
-        string += xhtml.image('file:%s' % spec_tot_plot, width=800)
-    if spec_plot and spec_plot != 'None' and spec_plot != 'none':
-        if os.path.isfile(str(spec_plot)):
-            string += xhtml.paragraph(_spec_description)
-            string += xhtml.image('file:%s' % spec_plot, width=800)
+        string += interactive_spec_tot_div + '\n'
+    else:
+        if spec_tot_plot and os.path.isfile(spec_tot_plot):
+            string += xhtml.h2('Spectral energy distribution (static)')
+            string += xhtml.paragraph(_spec_tot_description)
+            string += xhtml.image('file:%s' % spec_tot_plot, width=800)
 
-    # Interactive plots section
-    have_interactive = any([interactive_spec_tot, interactive_spec, interactive_wind])
-    if have_interactive:
-        string += xhtml.h2('Interactive plots')
-        string += xhtml.paragraph(_interactive_description)
-        links = []
-        if interactive_spec_tot:
-            links.append(xhtml.link('Spectral energy distribution (interactive)',
-                                    href=interactive_spec_tot))
-        if interactive_spec:
-            links.append(xhtml.link('Angle spectra (interactive)',
-                                    href=interactive_spec))
-        if interactive_wind:
-            links.append(xhtml.link('3D wind structure (interactive)',
-                                    href=interactive_wind))
-        string += xhtml.add_list(links)
-    elif not PLOTLY_AVAILABLE:
+    # Interactive angle spectra — embedded inline
+    if interactive_spec_div:
+        string += xhtml.h2('Angle spectra (interactive)')
+        string += xhtml.paragraph(_spec_description)
+        string += interactive_spec_div + '\n'
+    else:
+        if spec_plot and spec_plot != 'None' and spec_plot != 'none':
+            if os.path.isfile(str(spec_plot)):
+                string += xhtml.h2('Angle spectra (static)')
+                string += xhtml.paragraph(_spec_description)
+                string += xhtml.image('file:%s' % spec_plot, width=800)
+
+    # Interactive 3D wind — embedded via iframe (kept separate due to file size)
+    if interactive_wind_path:
+        string += xhtml.h2('3D wind structure (interactive)')
+        string += xhtml.paragraph(
+            'Use the sliders to explore different phi and z/theta slices.')
+        string += ('<iframe src="%s" width="100%%" height="720px" '
+                   'frameborder="0" style="border:1px solid #ccc;"></iframe>\n'
+                   % interactive_wind_path)
+
+    if not PLOTLY_AVAILABLE:
         string += xhtml.h2('Interactive plots')
         string += xhtml.paragraph(
             'Plotly is not installed; interactive plots were not generated. '
@@ -493,10 +489,7 @@ def doit(root='test'):
     xdim = how_many_dimensions(master_file)
     print('Grid dimensionality: %dD' % xdim)
 
-    # Ensure the interactive output directory exists
     interactive_dir = './diag_%s/interactive' % root
-    if PLOTLY_AVAILABLE:
-        os.makedirs(interactive_dir, exist_ok=True)
 
     # ----------------------------------------------------------------
     # Static wind plots (matplotlib)
@@ -543,25 +536,22 @@ def doit(root='test'):
     # ----------------------------------------------------------------
     # Interactive Plotly plots
     # ----------------------------------------------------------------
-    interactive_spec_tot = None
-    interactive_spec     = None
-    interactive_wind     = None
+    interactive_spec_tot_div = None
+    interactive_spec_div     = None
+    interactive_wind_path    = None
 
     if PLOTLY_AVAILABLE:
         print('Generating interactive Plotly plots ...')
-        interactive_spec_tot = make_interactive_spec_tot(root, interactive_dir)
-        interactive_spec     = make_interactive_spec(root, interactive_dir)
+        # Embed Plotly.js in the first div produced; reuse it for the rest.
+        interactive_spec_tot_div = make_interactive_spec_tot(
+            root, include_plotlyjs=True)
+        interactive_spec_div = make_interactive_spec(
+            root, include_plotlyjs=(interactive_spec_tot_div is None))
         if xdim == 3:
-            interactive_wind = make_interactive_wind(root, master_file, interactive_dir)
-
-        # Convert absolute paths to relative paths for HTML links
-        def _rel(path):
-            if path and os.path.isabs(path):
-                return os.path.relpath(path)
-            return path
-        interactive_spec_tot = _rel(interactive_spec_tot)
-        interactive_spec     = _rel(interactive_spec)
-        interactive_wind     = _rel(interactive_wind)
+            os.makedirs(interactive_dir, exist_ok=True)
+            wind_path = make_interactive_wind(root, master_file, interactive_dir)
+            if wind_path:
+                interactive_wind_path = os.path.relpath(wind_path)
     else:
         print('Skipping interactive plots (Plotly not available)')
 
@@ -576,9 +566,9 @@ def doit(root='test'):
     make_html(root, converge_plot, te_plot, tr_plot, ne_plot,
               spec_tot_plot, spec_plot, nspectra,
               complete_message, errors,
-              interactive_spec_tot=interactive_spec_tot,
-              interactive_spec=interactive_spec,
-              interactive_wind=interactive_wind)
+              interactive_spec_tot_div=interactive_spec_tot_div,
+              interactive_spec_div=interactive_spec_div,
+              interactive_wind_path=interactive_wind_path)
 
 
 # ---------------------------------------------------------------------------
