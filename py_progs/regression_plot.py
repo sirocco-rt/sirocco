@@ -592,14 +592,22 @@ def do_all(run1='py82i_181127',run2='py82i_181126',outdir=''):
     fig_num=1
 
     files=glob('%s/*.out.pf' % run1)
-    # print(files)
+    if len(files)==0:
+        files=glob('%s/*.spec' % run1)
+        ext='.spec'
+    else:
+        ext='.out.pf'
 
     for one in files:
         word=one.split('/')
-        model=word[1].replace('.out.pf','')
-        doit_two(run1,run2,model,outdir)
+        model=word[1].replace(ext,'')
+        try:
+            doit_two(run1,run2,model,outdir)
+        except Exception as e:
+            print('Failed to plot %s' % model)
+            print(f"Failed with  error: {e}")
+            
 
-    # print(fig_num)
 
 
 
