@@ -701,8 +701,6 @@ int get_random_location(int n, double x[]);
 int zero_scatters(void);
 int check_corners_inwind(int n);
 int check_grid(void);
-/* wind_sum.c */
-int xtemp_rad(WindPtr w);
 /* wind_updates2d.c */
 int wind_update(WindPtr w);
 int report_bf_simple_ionpool(void);

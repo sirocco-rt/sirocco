@@ -386,8 +386,6 @@ wind_update (WindPtr w)
 
   check_convergence ();
 
-  /* Summarize the radiative temperatures (ksl 04 mar) */
-  xtemp_rad (w);
 
 /* This next block is to allow the output of data relating to the abundances of ions when sirocco is being tested
  * with thin shell mode.
