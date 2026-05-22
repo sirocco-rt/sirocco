@@ -6,28 +6,30 @@ plot_wind_3d.py -- Interactive 3D wind visualisation using Plotly.
 For CYLIND3D / SPH3D master tables (those with i, j, k grid-index columns)
 this script produces a self-contained HTML file containing two panels:
 
-  Left  : rho-z heatmap for each phi slice, browsable via a slider.
-  Right : rho-phi heatmap at a chosen z slice (default: smallest |z|).
+  Left  : rad-theta (or i-j) heatmap for each phi slice, browsable via a slider.
+  Right : rad-phi (or i-k) heatmap at a chosen theta/z slice.
 
-Both panels share the same colour scale and use physical coordinates.
-The rho axis is logarithmic.
+Both panels share the same colour scale.
 
 Command-line usage
 ------------------
-    plot_wind_3d.py  filename  [variable]  [options]
+    plot_wind_3d.py  filename  [var ...]  [options]
 
-    variable   column to plot (default: t_e)
+    var        one or more column names to plot (default: t_e)
+               multiple variables go into separate sections of one HTML file
 
     -log       log10 colour scale (default)
     -lin       linear colour scale
+    -ij        use grid indices i, j, k as axes instead of physical coordinates
     -all       show all cells, not just in-wind ones
-    -j N       z-slice index for right panel (default: smallest |z|)
+    -j N       theta/z-slice index for right panel (default: coord-based)
     -o file    output HTML path (default: <root>_<var>_3d.html)
 
 Python usage
 ------------
     import plot_wind_3d
     plot_wind_3d.doit('agn_cyl3d.master.txt', 't_e')
+    plot_wind_3d.doit('agn_cyl3d.master.txt', ['t_e', 'ne'], grid='ij')
     plot_wind_3d.doit('agn_cyl3d.master.txt', 'ne', scale='lin', j_slice=25)
 """
 
@@ -119,8 +121,12 @@ def get_data(filename, var, scale='log', inwind=''):
 # Figure builder (one variable)
 # ---------------------------------------------------------------------------
 
-def _build_figure(filename, var, scale='log', inwind='', j_slice=None):
-    """Build and return a Plotly figure for a single variable."""
+def _build_figure(filename, var, scale='log', inwind='', j_slice=None, grid='physical'):
+    """Build and return a Plotly figure for a single variable.
+
+    grid='physical'  axes show physical coordinates (default)
+    grid='ij'        axes show grid indices i, j, k
+    """
     d = get_data(filename, var, scale=scale, inwind=inwind)
     if d is None:
         return None
@@ -144,53 +150,80 @@ def _build_figure(filename, var, scale='log', inwind='', j_slice=None):
 
     if j_slice is None:
         j_slice = d['j_eq']
-    theta_val = theta_cen[j_slice]
 
-    phi_deg = np.degrees(phi_cen)
-    j_label = '%s = %.2g  (j=%d)' % (theta_label.split()[0], theta_val, j_slice)
+    # Choose axis coordinates and labels based on grid mode
+    use_ij = (grid == 'ij')
+    if use_ij:
+        x_left  = np.arange(ndim)
+        y_left  = np.arange(mdim)
+        x_right = np.arange(ndim)
+        y_right = np.arange(pdim)
+        xlabel_left  = 'i'
+        ylabel_left  = 'j'
+        xlabel_right = 'i'
+        ylabel_right = 'k'
+        slider_labels = ['k=%d' % k for k in range(pdim)]
+        slider_prefix = 'k = '
+        j_label = 'j=%d' % j_slice
+        left_title  = 'i-j plane  (slider controls k)'
+        right_title = 'i-k plane  (' + j_label + ')'
+        log_x = False
+    else:
+        x_left  = rad_cen
+        y_left  = theta_cen
+        x_right = rad_cen
+        y_right = np.degrees(phi_cen)
+        xlabel_left  = rad_label
+        ylabel_left  = theta_label
+        xlabel_right = rad_label
+        ylabel_right = 'ϕ (degrees)'
+        theta_val = theta_cen[j_slice]
+        slider_labels = ['%.0f°' % np.degrees(p) for p in phi_cen]
+        slider_prefix = 'ϕ = '
+        j_label = '%s = %.2g  (j=%d)' % (theta_label.split()[0], theta_val, j_slice)
+        left_title  = 'rad-%s plane  (use slider to change ϕ)' % theta_label.split()[0]
+        right_title = 'rad-ϕ plane  (' + j_label + ')'
+        log_x = True
 
     fig = make_subplots(
         rows=1, cols=2,
-        subplot_titles=[
-            'rad-%s plane  (use slider to change ϕ)' % theta_label.split()[0],
-            'rad-ϕ plane  (' + j_label + ')',
-        ],
+        subplot_titles=[left_title, right_title],
         horizontal_spacing=0.18,
     )
 
     for k in range(pdim):
-        slice_k = xvar_3d[:, :, k].T
+        slice_k = xvar_3d[:, :, k].T    # (mdim, ndim)
         fig.add_trace(
             go.Heatmap(
                 z=slice_k,
-                x=rad_cen,
-                y=theta_cen,
+                x=x_left,
+                y=y_left,
                 colorscale='Viridis',
                 zmin=zmin, zmax=zmax,
                 showscale=True,
                 colorbar=dict(x=0.40, thickness=15, title=dict(text=title, side='right')),
                 visible=(k == 0),
-                name='ϕ=%.0f°' % phi_deg[k],
-                hovertemplate=(rad_label.split()[0] + '=%{x:.2e}<br>'
-                               + theta_label.split()[0] + '=%{y:.2g}<br>'
+                name=slider_labels[k],
+                hovertemplate=(xlabel_left + '=%{x:.2g}<br>'
+                               + ylabel_left + '=%{y:.2g}<br>'
                                + title + '=%{z:.3f}<extra></extra>'),
             ),
             row=1, col=1,
         )
 
-    eq_slice = xvar_3d[:, j_slice, :].T
+    eq_slice = xvar_3d[:, j_slice, :].T    # (pdim, ndim)
     fig.add_trace(
         go.Heatmap(
             z=eq_slice,
-            x=rad_cen,
-            y=phi_deg,
+            x=x_right,
+            y=y_right,
             colorscale='Viridis',
             zmin=zmin, zmax=zmax,
             showscale=True,
             colorbar=dict(x=1.01, thickness=15, title=dict(text=title, side='right')),
-            name='rad-phi',
-            hovertemplate=(rad_label.split()[0] + '=%{x:.2e}<br>'
-                           + 'ϕ=%{y:.0f}°<br>'
+            name='right-panel',
+            hovertemplate=(xlabel_right + '=%{x:.2g}<br>'
+                           + ylabel_right + '=%{y:.2g}<br>'
                            + title + '=%{z:.3f}<extra></extra>'),
         ),
         row=1, col=2,
@@ -203,20 +236,20 @@ def _build_figure(filename, var, scale='log', inwind='', j_slice=None):
         steps.append(dict(
             method='update',
             args=[{'visible': visible}],
-            label='%.0f°' % phi_deg[k],
+            label=slider_labels[k],
         ))
 
-    fig.update_xaxes(title_text=rad_label,    type='log', row=1, col=1)
-    fig.update_yaxes(title_text=theta_label,              row=1, col=1)
-    fig.update_xaxes(title_text=rad_label,    type='log', row=1, col=2)
-    fig.update_yaxes(title_text='ϕ (degrees)',            row=1, col=2)
+    fig.update_xaxes(title_text=xlabel_left,  type='log' if log_x else 'linear', row=1, col=1)
+    fig.update_yaxes(title_text=ylabel_left,                                      row=1, col=1)
+    fig.update_xaxes(title_text=xlabel_right, type='log' if log_x else 'linear', row=1, col=2)
+    fig.update_yaxes(title_text=ylabel_right,                                     row=1, col=2)
 
     fig.update_layout(
         title_text='%s  —  %s' % (os.path.basename(filename), title),
         sliders=[dict(
             active=0,
             steps=steps,
-            currentvalue=dict(prefix='ϕ = ', font=dict(size=14)),
+            currentvalue=dict(prefix=slider_prefix, font=dict(size=14)),
             pad=dict(t=55),
             x=0.0, len=0.42,
         )],
@@ -232,7 +265,7 @@ def _build_figure(filename, var, scale='log', inwind='', j_slice=None):
 # Main plotting function
 # ---------------------------------------------------------------------------
 
-def doit(filename, var='t_e', scale='log', outfile=None, inwind='', j_slice=None):
+def doit(filename, var='t_e', scale='log', outfile=None, inwind='', j_slice=None, grid='physical'):
     """
     Create an interactive HTML visualisation for one or more 3D wind variables.
 
@@ -245,7 +278,8 @@ def doit(filename, var='t_e', scale='log', outfile=None, inwind='', j_slice=None
     outfile  : str        Output HTML path.  Default: <root>_<var>_3d.html
                           (single var) or <root>_3d.html (multiple vars).
     inwind   : str        '' = in-wind cells only (default); 'all' = show all.
-    j_slice  : int        j index for the rad-phi panel (default: coord-based).
+    j_slice  : int        j index for the transverse panel (default: coord-based).
+    grid     : str        'physical' (default) or 'ij' for grid-index axes.
     """
     vars_list = [var] if isinstance(var, str) else list(var)
 
@@ -262,7 +296,7 @@ def doit(filename, var='t_e', scale='log', outfile=None, inwind='', j_slice=None
     # Build one figure per variable
     figs = []
     for v in vars_list:
-        fig = _build_figure(filename, v, scale=scale, inwind=inwind, j_slice=j_slice)
+        fig = _build_figure(filename, v, scale=scale, inwind=inwind, j_slice=j_slice, grid=grid)
         if fig is not None:
             figs.append(fig)
 
@@ -297,6 +331,7 @@ def steer(argv):
     outfile = None
     inwind = ''
     j_slice = None
+    grid = 'physical'
 
     i = 1
     while i < len(argv):
@@ -307,6 +342,8 @@ def steer(argv):
             scale = 'log'
         elif argv[i] == '-lin':
             scale = 'lin'
+        elif argv[i] == '-ij':
+            grid = 'ij'
         elif argv[i] == '-all':
             inwind = 'all'
         elif argv[i] == '-j':
@@ -322,11 +359,11 @@ def steer(argv):
         i += 1
 
     if filename == '':
-        print('Usage: plot_wind_3d.py filename [var ...] [-log|-lin] [-all] [-j N] [-o file.html]')
+        print('Usage: plot_wind_3d.py filename [var ...] [-log|-lin] [-ij] [-all] [-j N] [-o file.html]')
         return
 
     var = vars_list if len(vars_list) > 1 else (vars_list[0] if vars_list else 't_e')
-    doit(filename, var=var, scale=scale, outfile=outfile, inwind=inwind, j_slice=j_slice)
+    doit(filename, var=var, scale=scale, outfile=outfile, inwind=inwind, j_slice=j_slice, grid=grid)
 
 
 if __name__ == '__main__':
