@@ -941,6 +941,8 @@ print_linux_detailed_memory ()
 {
   FILE *file = fopen ("/proc/self/status", "r");
   char line[256];
+  long kb;
+  int threads;
 
   if (!file)
   {
@@ -952,39 +954,22 @@ print_linux_detailed_memory ()
 
   while (fgets (line, sizeof (line), file))
   {
-    // Current memory usage
-    if (strncmp (line, "VmRSS:", 6) == 0)
-    {
-      Log ("SYS-Current Physical Memory (RSS): %s", line + 6);
-    }
-    if (strncmp (line, "VmSize:", 7) == 0)
-    {
-      Log ("SYS-Current Virtual Memory Size: %s", line + 7);
-    }
-    if (strncmp (line, "VmPeak:", 7) == 0)
-    {
-      Log ("SYS-Peak Virtual Memory Size: %s", line + 7);
-    }
-    if (strncmp (line, "VmHWM:", 6) == 0)
-    {
-      Log ("SYS-Peak Physical Memory (RSS): %s", line + 6);
-    }
-    if (strncmp (line, "VmData:", 7) == 0)
-    {
-      Log ("SYS-Data Segment Size: %s", line + 7);
-    }
-    if (strncmp (line, "VmStk:", 6) == 0)
-    {
-      Log ("SYS-Stack Size: %s", line + 6);
-    }
-    if (strncmp (line, "VmExe:", 6) == 0)
-    {
-      Log ("SYS-Executable Size: %s", line + 6);
-    }
-    if (strncmp (line, "Threads:", 8) == 0)
-    {
-      Log ("SYS-Number of Threads: %s", line + 8);
-    }
+    if (strncmp (line, "VmPeak:", 7) == 0 && sscanf (line + 7, "%ld", &kb) == 1)
+      Log ("SYS-Peak Virtual Memory Size:      %.2f MB\n", kb / 1024.0);
+    else if (strncmp (line, "VmSize:", 7) == 0 && sscanf (line + 7, "%ld", &kb) == 1)
+      Log ("SYS-Current Virtual Memory Size:   %.2f MB\n", kb / 1024.0);
+    else if (strncmp (line, "VmHWM:", 6) == 0 && sscanf (line + 6, "%ld", &kb) == 1)
+      Log ("SYS-Peak Physical Memory (RSS):    %.2f MB\n", kb / 1024.0);
+    else if (strncmp (line, "VmRSS:", 6) == 0 && sscanf (line + 6, "%ld", &kb) == 1)
+      Log ("SYS-Current Physical Memory (RSS): %.2f MB\n", kb / 1024.0);
+    else if (strncmp (line, "VmData:", 7) == 0 && sscanf (line + 7, "%ld", &kb) == 1)
+      Log ("SYS-Data Segment Size:             %.2f MB\n", kb / 1024.0);
+    else if (strncmp (line, "VmStk:", 6) == 0 && sscanf (line + 6, "%ld", &kb) == 1)
+      Log ("SYS-Stack Size:                    %.2f MB\n", kb / 1024.0);
+    else if (strncmp (line, "VmExe:", 6) == 0 && sscanf (line + 6, "%ld", &kb) == 1)
+      Log ("SYS-Executable Size:               %.2f MB\n", kb / 1024.0);
+    else if (strncmp (line, "Threads:", 8) == 0 && sscanf (line + 8, "%d", &threads) == 1)
+      Log ("SYS-Number of Threads:             %d\n", threads);
   }
 
   fclose (file);
