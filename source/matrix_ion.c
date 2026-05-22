@@ -366,12 +366,12 @@ matrix_ion_populations (xplasma, mode)
       Error ("matrix_ion_populations: failed to converge for cell %i t %e nh %e xnew %e\n", xplasma->nplasma, t_e, nh, xnew);
 
 
-      for (nn = 0; nn < geo.nxfreq; nn++)
+      for (nn = 0; nn < xplasma->nbands; nn++)
       {
         Log
           ("numin= %e (%e) numax= %e (%e) Model= %2d PL_log_w= %e PL_alpha= %e Exp_w= %e EXP_temp= %e\n",
-           xplasma->fmin_mod[nn], geo.xfreq[nn], xplasma->fmax_mod[nn],
-           geo.xfreq[nn + 1], xplasma->spec_mod_type[nn],
+           xplasma->fmin_mod[nn], xplasma->f1[nn], xplasma->fmax_mod[nn],
+           xplasma->f2[nn], xplasma->spec_mod_type[nn],
            xplasma->pl_log_w[nn], xplasma->pl_alpha[nn], xplasma->exp_w[nn], xplasma->exp_temp[nn]);
       }
 

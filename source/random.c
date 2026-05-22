@@ -8,7 +8,7 @@
  * randomly oriented vectors
  *
  * These routines should be kept SEPARATE from routines that 
- * require the Python specific
+ * require the Sirocco specific
  * structures in sirocco.h so that it is possible to test 
  * them more easily.
  *
@@ -459,7 +459,7 @@ init_rng_directory (root, rank)
     }
   }
 
-  sprintf (file_name, "%.50s%.50s_%d.rng_save", dir_name, root, rank);
+  sprintf (file_name, "%.100s%.100s_%d.rng_save", dir_name, root, rank);
   strcpy (rngsave_file, file_name);
 }
 

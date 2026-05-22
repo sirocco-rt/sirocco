@@ -5,14 +5,14 @@
  * @date   May, 2018
  *
  * @brief  These are collection of math utility routines
- * used in Python
+ * used in Sirocco
  *
  *
  * The routines have been modified to make them ansi compatable
  * Some of these routines were originally Numerical Recipes 
  * Routines, but these have been replaced with gsl
  *
- * These routines should be kept SEPARATE from routines that require the Python specific
+ * These routines should be kept SEPARATE from routines that require the Sirocco specific
  * structures in sirocco.h
  *
  ***********************************************************/
@@ -351,7 +351,7 @@ find_function_minimum (a, m, b, func, tol, xmin)
  * fraction is a utility written to speed up the search for the bracketing
  * topbase photionization x-sections, but in principle it should work in
  * other situations within sirocco (which at one time at least contributed
- * significantly to the runtime for Python).
+ * significantly to the runtime for Sirocco).
  *
  * Today, fraction is called directly in the routines that are used to set up coordinate
  * systems, and indirectly through linterp (below) which should be inspected

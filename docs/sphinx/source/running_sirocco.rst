@@ -1,5 +1,5 @@
 Running SIROCCO
-##############
+######################
 
 The normal way to run SIROCCO is simply to enter
 
@@ -121,8 +121,13 @@ which may be useful in certain special cases.  These include:
   Instead of running sirocco, call the routine xtest so that one can diagnose issues associted with the 
   setup.  This is only useful to developers.
 
+-early_stopping
+  Enables convergence-based early stopping of ionization cycles. The user is then queried
+  for parameters (prefixed with ``@estop.``) that control when cycles can terminate early.
+  These options are described further in :ref:`early_stopping`.
+
 Running Different Versions of SIROCCO
-=================================
+=========================================
 
 Once you have SIROCCO up and running, you can also install and run different versions of SIROCCO. This is particularly useful if you want to run and compare an older model from a previous paper or how the outputs have evolved.
 

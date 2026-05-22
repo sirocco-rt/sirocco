@@ -4,7 +4,7 @@
  * @author ksl
  * @date   March, 2018
  *
- * @brief  Read in all of the atomic data for use with Python
+ * @brief  Read in all of the atomic data for use with Sirocco
  * and other similar programs
  *
  ***********************************************************/
@@ -82,7 +82,7 @@
  * ### Notes ###
  *
  * get_atomic data is intended to be stand-alone, that is one should be able to use it for routines
- * other than Python, e.g for another routine intended to calculate the ionization state of
+ * other than Sirocco, e.g for another routine intended to calculate the ionization state of
  * a plasma in collisional equilibrium.
  *
  * To this end, the routines populate stuctures in atomic.h, which are not part of sirocco.h, and 
@@ -845,7 +845,7 @@ described as macro-levels. */
 /**
  * @section  Photoionization
  *
- * Until at least Oct 2001, Python used photoionization crossections from Verner, Ferland, Korista, and Yakolev (VFKY)
+ * Until at least Oct 2001, Sirocco used photoionization crossections from Verner, Ferland, Korista, and Yakolev (VFKY)
  * The routine sigma_phot(xptr, freq) calculates the crossection based on this.
  *
  *
@@ -864,7 +864,7 @@ described as macro-levels. */
  *   4.420684E+00 1.206E+00
  * @endverbatim
  *
- * They are converted to something that is more compatible with Python 
+ * They are converted to something that is more compatible with Sirocco 
  * by py_top_phot
  *
  * The new topbase style records look like this.

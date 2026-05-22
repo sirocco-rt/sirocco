@@ -66,8 +66,15 @@ wind_save (filename)
     Exit (0);
   }
 
-  sprintf (header, "Version %s\n", VERSION);
+  memset (header, ' ', sizeof (header));
+  header[sizeof (header) - 1] = '\0';   // ensure termination
+  snprintf (header, sizeof (header), "Version %s\n", VERSION);
   n = fwrite (header, sizeof (header), 1, fptr);
+
+
+//OLD  sprintf (header, "Version %s\n", VERSION);
+//OLD  n = fwrite (header, sizeof (header), 1, fptr);
+
   n += fwrite (&geo, sizeof (geo), 1, fptr);
 
   n += fwrite (zdom, sizeof (domain_dummy), geo.ndomain, fptr);
@@ -459,7 +466,7 @@ spec_save (filename)
  *
  * ### Notes ###
  *
- * The first line of the file contains the Python version
+ * The first line of the file contains the Sirocco version
  * and the number of spectra to be read in
  * 
  * The program exits if the file does not exist

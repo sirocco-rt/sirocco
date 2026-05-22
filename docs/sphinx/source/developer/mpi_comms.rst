@@ -58,7 +58,7 @@ elements in an array of that same type. Consider the example below,
     int *my_int_arr = malloc(10 * sizeof(int));
     int num_ints = 11;
 
-In this case there are 11 :code:`int`s which will want to be communicated. In practise, calculating the communication
+In this case there are 11 integer variables which will want to be communicated. In practise, calculating the communication
 buffer is usually done as in the code example below:
 
 .. code:: c

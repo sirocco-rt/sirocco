@@ -717,7 +717,7 @@ a21 (line_ptr)
  * u0 is the ratio of Boltzmans constant times the electron temperature in the cell
  * divided by Plancks constant times the frequency of the line under analysis.
  *
- * Burgess and Tully have 4 separate types, but in order to allow levels in Chianti to be combined in Python
+ * Burgess and Tully have 4 separate types, but in order to allow levels in Chianti to be combined in Sirocco
  * to Type 5 has collision strengths that are simply interpolatedas the ratio of Kt_e/hnu.
  *
  **********************************************************/

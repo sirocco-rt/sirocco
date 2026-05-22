@@ -126,7 +126,7 @@ cylind_ds_in_cell (ndom, p)
  * @brief      defines the cells in a cylindrical grid
  *
  * @param [in] int  ndom   The domain number of interest
- * @param [in] WindPtr  w   The structure which defines the wind in Python
+ * @param [in] WindPtr  w   The structure which defines the wind in Sirocco
  * @return   Always returns 0
  *
  * @details

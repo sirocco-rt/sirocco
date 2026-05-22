@@ -143,7 +143,7 @@ def xwindsave2table(root):
             xver=words[3]
             command='windsave2table%s %s' % (xver,root)
         else:
-            return FALSE
+            return False
 
 
     print('We will try this command instead :', command)
@@ -349,8 +349,13 @@ spec_plot_description='''
 This plot is from the .spec file, and shows the expected spectra (at 100 pc) as a function of the various inclination angles requested. Note
 that the y-axis scale varies for different inclination angles.
 '''
+
+ne_plot_description='''
+This plot shows the electron density (ne) throughout the wind. The electron density traces the density structure of the outflow and is 
+directly related to the optical depth of the wind.
+'''
     
-def make_html(root,converge_plot,te_plot,tr_plot,spec_tot_plot,spec_plot,nspectra=3,complete_message=['test'],errors=['test','test2']):
+def make_html(root,converge_plot,te_plot,tr_plot,ne_plot,spec_tot_plot,spec_plot,nspectra=3,complete_message=['test'],errors=['test','test2']):
     '''
     Make an html file that collates all the results
     '''
@@ -381,6 +386,11 @@ def make_html(root,converge_plot,te_plot,tr_plot,spec_tot_plot,spec_plot,nspectr
     string+=xhtml.image('file:%s' % (tr_plot))
     # string+=xhtml.image('file:./diag_%s/%s_t_e.png' % (root,root))
     # string+=xhtml.image('file:./diag_%s/%s_t_r.png' % (root,root))
+    string+=xhtml.hline()
+
+    string+=xhtml.h2('What does the electron density look like?')
+    string+=xhtml.image('file:%s' % (ne_plot))
+    string+=xhtml.paragraph(ne_plot_description)
     string+=xhtml.hline()
     string+=xhtml.h2('What do the total spectra look like (somewhat smoothed)?')
 
@@ -472,16 +482,32 @@ def doit(root='ixvel',outputfile='out.txt'):
     for one in complete_message:
         print(one)
 
-    xdim=how_many_dimensions('%s.master.txt' % root)
+    master_file='%s.master.txt' % root
+
+    if os.path.exists(master_file)==False:
+        master_file=master_file.replace('master','0.master')
+
+        try:
+            os.path.exists(master_file)
+            print('Warning: this run had multiple domains, reporting results for domain 0')
+        except:
+            print('Error: could not find master_file.txt')
+            return 
+
+
+    
+    xdim=how_many_dimensions(master_file)
 
     if xdim==2:
-        converge_plot=plot_wind.doit('%s.master.txt' % root,'converge',plot_dir='./diag_%s' % root)
-        te_plot=plot_wind.doit('%s.master.txt' % root,'t_e',plot_dir='./diag_%s' % root)
-        tr_plot=plot_wind.doit('%s.master.txt' % root,'t_r',plot_dir='./diag_%s' % root)
+        converge_plot=plot_wind.doit(master_file,'converge',plot_dir='./diag_%s' % root)
+        te_plot=plot_wind.doit(master_file,'t_e',plot_dir='./diag_%s' % root)
+        tr_plot=plot_wind.doit(master_file,'t_r',plot_dir='./diag_%s' % root)
+        ne_plot=plot_wind.doit(master_file,'ne',plot_dir='./diag_%s' % root)
     else:
-        converge_plot=plot_wind_1d.doit('%s.master.txt' % root,'converge',plot_dir='./diag_%s' % root)
-        te_plot=plot_wind_1d.doit('%s.master.txt' % root,'t_e',plot_dir='./diag_%s' % root)
-        tr_plot=plot_wind_1d.doit('%s.master.txt' % root,'t_r',plot_dir='./diag_%s' % root)
+        converge_plot=plot_wind_1d.doit(master_file,'converge',plot_dir='./diag_%s' % root)
+        te_plot=plot_wind_1d.doit(master_file,'t_e',plot_dir='./diag_%s' % root)
+        tr_plot=plot_wind_1d.doit(master_file,'t_r',plot_dir='./diag_%s' % root)
+        ne_plot=plot_wind_1d.doit(master_file,'ne',plot_dir='./diag_%s' % root)
 
 
     converged,converging,t_r,t_e,hc=read_diag(root)
@@ -506,7 +532,7 @@ def doit(root='ixvel',outputfile='out.txt'):
     errors=py_error(root)
      
 
-    make_html(root,converge_plot,te_plot,tr_plot,spec_tot_plot,spec_plot,nspectra,complete_message,errors)
+    make_html(root,converge_plot,te_plot,tr_plot,ne_plot,spec_tot_plot,spec_plot,nspectra,complete_message,errors)
 
 
     return

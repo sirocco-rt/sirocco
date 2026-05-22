@@ -5,7 +5,7 @@
  * @date   July, 2020  
  *
  * @brief  Initialize the various structures that contain atomic
- * data in Python 
+ * data in Sirocco 
  * and other similar programs
  *
  ***********************************************************/
@@ -146,6 +146,42 @@ init_atomic_data ()
        sizeof (auger_dummy), NAUGER_MACRO, 1.e-6 * NAUGER_MACRO * sizeof (auger_dummy));
   }
 
+
+  if (phot_top != NULL)
+  {
+    free (phot_top);
+  }
+  phot_top = (Topbase_phot *) calloc (sizeof (Topbase_phot), NLEVELS);
+
+  if (phot_top == NULL)
+  {
+    Error ("There is a problem in allocating memory for the phot_top structure\n");
+    exit (0);
+  }
+  else
+  {
+    Log_silent
+      ("Allocated %10d bytes for each of %6d elements of   phot_top totaling %10.1f Mb \n",
+       sizeof (Topbase_phot), NLEVELS, 1.e-6 * NLEVELS * sizeof (Topbase_phot));
+  }
+
+  if (inner_cross != NULL)
+  {
+    free (inner_cross);
+  }
+  inner_cross = (Topbase_phot *) calloc (sizeof (Topbase_phot), N_INNER * NIONS);
+
+  if (inner_cross == NULL)
+  {
+    Error ("There is a problem in allocating memory for the inner_cross structure\n");
+    exit (0);
+  }
+  else
+  {
+    Log_silent
+      ("Allocated %10d bytes for each of %6d elements of inner_cross totaling %10.1f Mb \n",
+       sizeof (Topbase_phot), N_INNER * NIONS, 1.e-6 * N_INNER * NIONS * sizeof (Topbase_phot));
+  }
 
   /* Initialize variables */
 

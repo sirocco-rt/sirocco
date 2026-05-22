@@ -4,7 +4,7 @@
  * @date   March, 2018
  *
  * @brief  A series of routines mostly associated with opening
- * files needed by Python
+ * files needed by Sirocco
  *
  ***********************************************************/
 
@@ -91,7 +91,7 @@ init_log_and_windsave (restart_stat)
 /**********************************************************/
 /** 
  * @brief      Use the root name of the .pf file to create
- * names for the various output files written by Python
+ * names for the various output files written by Sirocco
  *
  * @return     Always returns 0
  *
@@ -99,7 +99,7 @@ init_log_and_windsave (restart_stat)
  * 
  * This names of the files sirocco uses are stored in he filenames
  * structure.  This routine uses the root of the .pf file to
- * create names for all of the files that Python will write and
+ * create names for all of the files that Sirocco will write and
  * stores them in the files structure
  *
  * The routine also opens the parameter file if it exists

@@ -77,7 +77,7 @@
  *  	parameter to a line in the structure from which it gets the parameter value.
  *  	The keywords can be in any order but once a line has been used, it is not
  *  	reused.  There can be multiple lines with the same keyword, as for example
- *  	is the case in Python when one wants to extract spectra from multiple angles
+ *  	is the case in Sirocco when one wants to extract spectra from multiple angles
  *  	
  *  	In noninteractive mode, if the second string in the file is "$" (or 
  *  	there is no second string, it will
@@ -402,6 +402,50 @@ rdpar_init ()
 }
 
 
+// Ensure string is properly terminated within LINELEN
+
+/**********************************************************/
+/** 
+ * @brief      check is a string is properly terminateds are processed.
+ *
+ * @param [in] char  *s           the string to check              
+
+ * @return     the string after checking whether it ends with \0 as expected
+ *
+ *
+ * ###Notes###
+ *
+ * This routine checks is a string is properly terminated within LINELEN, if not 
+ * it adds \0 to the string and issues an error.
+ *
+ * This routine was created to fix an issue with string2int.  The problem
+ * should be fixed there so this error should not occur.  ksl has left the
+ * routine mainly so that the problem re-occurs, one knows how to detect
+ * it.  The problem was revealed in 2025, uwing valgrind.
+ *
+ **********************************************************/
+
+char *
+check_and_fix_string (char *s)
+{
+  if (s == NULL)
+    return NULL;
+
+  for (size_t i = 0; i < LINELEN; i++)
+  {
+    if (s[i] == '\0')
+    {
+      return s;                 // already valid
+    }
+  }
+
+  // If we reach here, no '\0' within LINELEN
+  Error ("Error: no string terminator within %d characters, adding termination.\n", LINELEN);
+  s[LINELEN - 1] = '\0';        // force termination at the end
+  Log ("Corrected String: %s\n", s);
+
+  return s;
+}
 
 /**********************************************************/
 /** 
@@ -1161,7 +1205,11 @@ string2int (word, string_choices, string_values, string_answer)
   char choices[LINELEN];
   char values[LINELEN];
   int ivalue, matched, ibest;
+  int len_choices, len_values;  /* Store the lengths */
 
+  /* Store lengths before modifying */
+  len_choices = strlen (string_choices);
+  len_values = strlen (string_values);
 
 
   /*Blank out the arrays we will be using here */
@@ -1210,7 +1258,14 @@ string2int (word, string_choices, string_values, string_answer)
   }
 
 
+  /* Add proper termination to both strings */
+  choices[len_choices] = '\0';  /* Null-terminate choices */
+  values[len_values] = '\0';    /* Null-terminate values */
 
+
+  /* Next two lines should no longer be necessary, as stings are now properly terminated */
+  check_and_fix_string (choices);
+  check_and_fix_string (values);
 
   nchoices = sscanf (choices, "%s %s %s %s %s %s %s %s %s %s", xs[0], xs[1], xs[2], xs[3], xs[4], xs[5], xs[6], xs[7], xs[8], xs[9]);
   nchoices =
@@ -1402,7 +1457,7 @@ rdchoice (question, answers, answer)
  * @return  0  
  *
  * Bascially the point of this is just to get a base or root name
- * for various files produced by Python.
+ * for various files produced by Sirocco.
  *
  * ###Notes###
  *
@@ -1491,7 +1546,7 @@ rdpar_set_mpi_rank (rank)
  *
  * ###Notes###
  *
- * In writing to log files, Python allows one to control the
+ * In writing to log files, Sirocco allows one to control the
  * amount of information which is wrtten out by defining a verbosity
  * level.  The rdpar routines (because they are intended to be
  * useful in other applications), have their own verbosity 

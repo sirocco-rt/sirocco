@@ -4,7 +4,7 @@
 
 Synopsis:  
 
-A simple program to plot and smooth models made with Python.
+A simple program to plot and smooth models made with Sirocco.
 
 
 Command line usage (if any):
@@ -13,10 +13,10 @@ Command line usage (if any):
 
 Description:  
 
-    This is a routine to plot the detailed spectra produced with Python.  The rootine reads
+    This is a routine to plot the detailed spectra produced with Sirocco.  The rootine reads
     the .spec file and produces a smoothed plot for all of the angles that have been extracted.
 
-    Normally, the routine would be invoked from the command line with the rootnmae of the Python run.
+    Normally, the routine would be invoked from the command line with the rootnmae of the Sirocco run.
 
     A plot rootname.png is produced. With none of the command line options the spectrum will comver the full
     spectral range of the detailed spectra, and will be box-car smmothed by 11 pixels.

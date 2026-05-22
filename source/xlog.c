@@ -10,12 +10,12 @@
  *
  * Instead of using printf and fprintf statements throughout varius subroutines, the set of routines
  * here are intended to provide a standard interface to various diagnostic files, and to manage the interaction of 
- * logging with the various mpi threads that can exist when running Python in multiprocessor mode.  The routines
+ * logging with the various mpi threads that can exist when running Sirocco in multiprocessor mode.  The routines
  * also contain a verbosity mechanism to allow one to control how much information is written to the screen, and a 
  * mechanism to keep track of the number of times a particular error message has been generated.  The overall goal 
- * is to keep the log files produced by Python a manageable size.
+ * is to keep the log files produced by Sirocco a manageable size.
  *
- * Messages in Python runs are sent to the screen and to diagnostic files.  During multiprocessing runs, a diagnostic 
+ * Messages in Sirocco runs are sent to the screen and to diagnostic files.  During multiprocessing runs, a diagnostic 
  * file is opened for each thread.  With some exceptions, messages to the screen arise from thread 0.  
  * 		
  *  The routines that control what files are open and closed for logging are as follows.
@@ -39,7 +39,7 @@
  *  - Log_print_max(print_max)			Set the number of times a single error will be 
  * 	    output to the screen and the log file
  *
- *  The amount printed out is controlled by a command line switch -v (in Python).   The default value causes Shout, Log, 
+ *  The amount printed out is controlled by a command line switch -v (in Sirocco).   The default value causes Shout, Log, 
  *  and Error to be printed and logged, but not Log_silent Error_silent.  The default value is 5. If the value is raised 
  *  more data will be printed or logged.  
  *
@@ -91,6 +91,8 @@
 #include <math.h>
 
 #include "log.h"
+#include <sys/resource.h>
+#include <unistd.h>
 
 #define LINELENGTH 256
 #define NERROR_MAX 500          // Number of different errors that are recorded
@@ -642,7 +644,7 @@ error_count (char *format)
  *
  * ###Notes###
  *
- * This is printed out at the end of all Python runs.  When running in multiprocessor mode, 
+ * This is printed out at the end of all Sirocco runs.  When running in multiprocessor mode, 
  * the number of 
  * errors referes only to the errors that have occurred in that particular theread.
  *
@@ -822,7 +824,7 @@ Log_parallel (char *format, ...)
  * @param [in]   ...   The various values which fill out the format statement
  * @return     The number of characters sucessfully written
  *
- * Straight  printf and fprintf states are strongly discouraged in Python except
+ * Straight  printf and fprintf states are strongly discouraged in Sirocco except
  * as issued withing the routines here.  This routine preface an fprintf statement
  * with Dobug so such statements are issue to grep out of a log file, and in the code
  *
@@ -861,7 +863,7 @@ Debug (char *format, ...)
 
 /**********************************************************/
 /**
- *  @brief Wrapper function to exit MPI/Python.
+ *  @brief Wrapper function to exit MPI/Sirocco.
  *
  *  @param[in] int error_code. An integer classifying the error. Note that this
  *  number should be a non-zero integer.
@@ -910,4 +912,141 @@ Exit (int error_code)
   error_summary ("summary prior to abort");
   exit (error_code);
 #endif
+}
+
+
+// Platform detection
+#ifdef __APPLE__
+#define PLATFORM_MAC 1
+#define PLATFORM_LINUX 0
+#elif __linux__
+#define PLATFORM_MAC 0
+#define PLATFORM_LINUX 1
+#else
+#define PLATFORM_MAC 0
+#define PLATFORM_LINUX 0
+#endif
+
+void
+print_platform_info ()
+{
+  if (PLATFORM_MAC)
+  {
+    Log ("SYS-Running on macOS\n");
+  }
+  else if (PLATFORM_LINUX)
+  {
+    Log ("SYS-Running on Linux\n");
+  }
+  else
+  {
+    Log ("SYS-Running on unknown platform\n");
+  }
+}
+
+void
+print_linux_detailed_memory ()
+{
+  FILE *file = fopen ("/proc/self/status", "r");
+  char line[256];
+
+  if (!file)
+  {
+    Log ("Error: Could not open /proc/self/status\n");
+    return;
+  }
+
+  Log ("SYS---- Detailed Linux Memory Information ---\n");
+
+  while (fgets (line, sizeof (line), file))
+  {
+    // Current memory usage
+    if (strncmp (line, "VmRSS:", 6) == 0)
+    {
+      Log ("SYS-Current Physical Memory (RSS): %s", line + 6);
+    }
+    if (strncmp (line, "VmSize:", 7) == 0)
+    {
+      Log ("SYS-Current Virtual Memory Size: %s", line + 7);
+    }
+    if (strncmp (line, "VmPeak:", 7) == 0)
+    {
+      Log ("SYS-Peak Virtual Memory Size: %s", line + 7);
+    }
+    if (strncmp (line, "VmHWM:", 6) == 0)
+    {
+      Log ("SYS-Peak Physical Memory (RSS): %s", line + 6);
+    }
+    if (strncmp (line, "VmData:", 7) == 0)
+    {
+      Log ("SYS-Data Segment Size: %s", line + 7);
+    }
+    if (strncmp (line, "VmStk:", 6) == 0)
+    {
+      Log ("SYS-Stack Size: %s", line + 6);
+    }
+    if (strncmp (line, "VmExe:", 6) == 0)
+    {
+      Log ("SYS-Executable Size: %s", line + 6);
+    }
+    if (strncmp (line, "Threads:", 8) == 0)
+    {
+      Log ("SYS-Number of Threads: %s", line + 8);
+    }
+  }
+
+  fclose (file);
+  Log ("SYS-----------------------------------------\n");
+}
+
+
+/**********************************************************/
+/**
+ *  @brief Get memory usange at the  current time
+ *
+ *  @param[in] chr*  label  A string which labels where in 
+ * code we are
+ *
+ *  @details
+ *
+ *  ### Notes ###
+ *
+ *
+ **********************************************************/
+
+void
+print_memory_usage (const char *label)
+{
+  struct rusage usage;
+  getrusage (RUSAGE_SELF, &usage);
+
+  Log ("\nSYS-=== Memory Usage: %s ===\n", label);
+
+  if (PLATFORM_MAC)
+  {
+    // On macOS, ru_maxrss is in bytes
+    Log ("SYS-Peak RSS (macOS): %.2f MB (%ld bytes)\n", usage.ru_maxrss / (1024.0 * 1024.0), usage.ru_maxrss);
+  }
+  else if (PLATFORM_LINUX)
+  {
+    // On Linux, ru_maxrss is in kilobytes
+    Log ("SYS-Peak RSS (Linux): %.2f MB (%ld KB)\n", usage.ru_maxrss / 1024.0, usage.ru_maxrss);
+
+    // Provide detailed Linux information
+    print_linux_detailed_memory ();
+  }
+  else
+  {
+    // Unknown platform - assume Linux behavior
+    Log ("SYS-Peak RSS (Unknown platform): %.2f MB (%ld KB)\n", usage.ru_maxrss / 1024.0, usage.ru_maxrss);
+  }
+
+  // Additional rusage information available on both platforms
+  // Cast to long for portable formatting
+  Log ("SYS-User CPU time: %ld.%06ld seconds\n", (long) usage.ru_utime.tv_sec, (long) usage.ru_utime.tv_usec);
+  Log ("SYS-System CPU time: %ld.%06ld seconds\n", (long) usage.ru_stime.tv_sec, (long) usage.ru_stime.tv_usec);
+  Log ("SYS-Page faults (no I/O): %ld\n", usage.ru_minflt);
+  Log ("SYS-Page faults (with I/O): %ld\n", usage.ru_majflt);
+
+  Log ("SYS-===============================\n");
 }

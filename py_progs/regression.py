@@ -103,11 +103,6 @@ import regression_check
 def sum_errors(root='1d_sn'):
     '''
     This sums the errors from various threads
-
-    Note that this effectively duplicates a routine
-    py_error which James wrote, but in Python 3
-
-
     '''
     diag_files=glob('diag_%s/%s_*.diag' % (root,root))
 
@@ -248,11 +243,13 @@ def doit(version='py',pf_dir='',out_dir='',np=3,switches='',outputfile='Summary.
         txt_files=glob(pf_dir+'/*.txt')
         dat_files=glob(pf_dir+'/*.dat')
         wind_save=glob(pf_dir+'/*.wind_save')
+        pluto_files=glob(pf_dir+'/*.pluto')
     elif os.path.isdir('%s/examples/%s' % (SIROCCO,pf_dir)):
         pf_files=glob('%s/examples/%s/*pf' % (SIROCCO,pf_dir))
         txt_files=glob('%s/examples/%s/*.txt' % (SIROCCO,pf_dir))
         dat_files=glob(pf_dir+'/*.dat')
         wind_save=glob(pf_dir+'/*.wind_save')
+        pluto_files=glob(pf_dir+'/*.pluto')
     else:
         print('Error: The pf directory %s does not appear to exist' % pf_dir)
         return
@@ -280,7 +277,7 @@ def doit(version='py',pf_dir='',out_dir='',np=3,switches='',outputfile='Summary.
     for one in txt_files:
         shutil.copy(one,out_dir)
 
-    # Get any windsave files is any
+    # Get any windsave files if any
     for one in wind_save:
         shutil.copy(one,out_dir)
 
@@ -289,22 +286,29 @@ def doit(version='py',pf_dir='',out_dir='',np=3,switches='',outputfile='Summary.
     for one in dat_files:
         shutil.copy(one,out_dir)
 
-    # Lookd for a file with extra switches for some models
-    try:
-        x=open('%s/commands.txt' % (out_dir))
-        xx=x.readlines()
-        xcommands=[]
-        for one in xx:
-            words=one.split()
-            if words[0][0]!='#':
-                xcommands.append(words)
-    except:
-        print('There is no special command file in ')
-        xcommands=[]
+    # get any pluto files if any
 
-    print('xcommands')
-    print(xcommands)
-    			
+    for one in pluto_files:
+        shutil.copy(one,out_dir)
+
+    # Lookd for a file with extra switches for some models
+
+    command_file='%s/commands.txt' % (out_dir)
+    xcommands=[]
+
+    try:
+        x=open(command_file)
+        try:
+            xx=x.readlines()
+            for one in xx:
+                words=one.split()
+                if words[0][0]!='#':
+                    xcommands.append(words)
+        except:
+            print('Found %s, but encountered error when reading' % command_file)
+
+    except:
+        print('Did not find a special command file: %s' % command_file)
 
 
     commands=[]

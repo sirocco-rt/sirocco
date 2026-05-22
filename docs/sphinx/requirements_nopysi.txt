@@ -1,0 +1,16 @@
+sphinx~=7.3
+sphinx-issues==4.1.0
+ipython
+nbsphinx
+sphinx-rtd-theme
+docutils
+astropy
+numpy
+matplotlib
+scipy
+sqlalchemy
+jinja2==3.1.4
+sphinx_gallery
+pyhdf
+sphinx-autoapi
+sphinx-autobuild

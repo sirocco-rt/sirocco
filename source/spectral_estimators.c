@@ -28,16 +28,22 @@ double lspec_numin, lspec_numax;
 
 /**********************************************************/
 /**
- * @brief      Calculate the parameters of a model for J_nu in a cell
+ * @brief      Create a model for J_nu in a cell, based on the photons that have passed through a ceell
  *
  * @param [in] PlasmaPtr  xplasma   Pointer to the a specific element in the plasma structure
  * @return     0 if successful
  *
  * @details
- * This routine uses the mean frequency (calculated during photon
- * transport) find a power law model and an exponential model.
- * It then uses the standard deviation to decide which is best.
- * The routine is called from ionization.c
+ *
+ * The purpose of this routine is to try to create a model of the
+ * spectrum of photons passing through the cell, based on estimators
+ * that have been constructed during photon passages in predefined 
+ * bands.  
+ * 
+ * This routine uses the intensity (xj) mean frequency (xave_freq) calculated during photon
+ * to find a power law model and an exponential model.
+ * It then uses the standard deviation (xsd_freq) to decide which is best.
+ * 
  * The results are stored in parameters in the PlasmaPtr structure
  * in variables, such as spec_mod_type, pl_alpah, pl_log,exp_temp, etc.
  *
@@ -104,7 +110,7 @@ spectral_estimators (xplasma)
     if (xplasma->nxtot[n] <= 1) /* Catch the situation where there are only 1 or 0 photons in a band -
                                    we cannot reasonably try to model this situation */
     {
-      if (geo.xfreq[n] >= genmax || geo.xfreq[n + 1] <= genmin)
+      if (xplasma->f1[n] >= genmax || xplasma->f2[n] <= genmin)
       {
         /* The band is outside where photons were generated, so not very
            surprising that there are no photons - just generate a log */
@@ -152,18 +158,18 @@ spectral_estimators (xplasma)
          end of the band is 'surprisingly' empty then we wasume this is because absolutely
          no photons are here - its probably an edge so we should modify the model bands. */
 
-      dfreq = (geo.xfreq[n + 1] - geo.xfreq[n]) / sqrt (xplasma->nxtot[n]);     //This is a measure of the spacing between photons on average
-      if ((xplasma->fmin[n] - geo.xfreq[n]) < dfreq)    //If true, this check suggests that there are no edges
+      dfreq = (xplasma->f2[n] - xplasma->f1[n]) / sqrt (xplasma->nxtot[n]);     //This is a measure of the spacing between photons on average
+      if ((xplasma->fmin[n] - xplasma->f1[n]) < dfreq)  //If true, this check suggests that there are no edges
       {
-        spec_numin = geo.xfreq[n];      //Use the photon generation band edge to set the lower frequency band for the model
+        spec_numin = xplasma->f1[n];    //Use the photon generation band edge to set the lower frequency band for the model
       }
       else
       {
         spec_numin = xplasma->fmin[n];  //There may be an edge, use the lowest observed photon frequency for the lower nu band in the model
       }
-      if ((geo.xfreq[n + 1] - xplasma->fmax[n]) < dfreq)        //Repeat above but for upper band edge
+      if ((xplasma->f2[n] - xplasma->fmax[n]) < dfreq)  //Repeat above but for upper band edge
       {
-        spec_numax = geo.xfreq[n + 1];
+        spec_numax = xplasma->f2[n];
       }
       else
       {
@@ -340,7 +346,6 @@ spectral_estimators (xplasma)
         xplasma->fmax_mod[n] = spec_numin;
       }
 
-      Log_silent ("NSH In cell %i, band %i, the best model is %i\n", xplasma->nplasma, n, xplasma->spec_mod_type[n]);
     }                           //End of loop that does things if there are more than zero photons in the band.
 
   }                             //End of loop over bands

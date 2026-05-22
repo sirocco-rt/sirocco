@@ -420,7 +420,7 @@ cylindrical_make_grid_import (w, ndom)
  * ### Notes ###
  * In practice this routine is only used to initalize v in
  * wind structure.  This is consistent with the way velocities
- * are treated throughout Python.
+ * are treated throughout Sirocco.
  *
  **********************************************************/
 

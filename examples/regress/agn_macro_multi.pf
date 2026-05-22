@@ -30,9 +30,9 @@ Wind.dim.in.z_or_theta.direction           30
 Photons_per_cycle                          2000000
 Ionization_cycles                          3
 Spectrum_cycles                            2
-Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,fixed,matrix_bb,matrix_pow,matrix_est)           matrix_pow
+Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,fixed,matrix_bb,matrix_pow,matrix_est)           matrix_multi
 Line_transfer(pure_abs,pure_scat,sing_scat,escape_prob,thermal_trapping,macro_atoms_escape_prob,macro_atoms_thermal_trapping) macro_atoms_thermal_trapping
-Matom_transition_mode(mc_jumps,matrix)             mc_jumps
+Matom_transition_mode(mc_jumps,matrix)             matrix
 Atomic_data                                data/h20_hetop_standard80.dat
 Surface.reflection.or.absorption(reflect,absorb,thermalized.rerad)               absorb
 Wind_heating.extra_processes(none,adiabatic,nonthermal,both)            adiabatic

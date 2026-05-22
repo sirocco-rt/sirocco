@@ -9,20 +9,52 @@ Type
 
 Values
   on.the.spot
-    Use a simple on the spot approximation to calculated the ionization.
+    Use a simple on-the-spot approximation to calculate the ionization.
 
   LTE_te
     Calculate ionization based on the Saha equation using
-    the electron temperature.  (This is intended as a diagnostic
-    mode.)
+    the electron temperature.  The electron temperature is not
+    iterated; it remains at the value set during initialization
+    (from Wind.t.init, or from the imported model for hydro winds).
+    (This is intended as a diagnostic mode.)
 
   LTE_tr
     Calculate ionization based on the Saha equation using
-    the radiation temperature. (This is intended as a diagnstic mode)
+    the radiation temperature.  Unlike LTE_te, the radiation
+    temperature is updated each cycle from the mean frequency
+    of the radiation field estimated during photon transport,
+    so the ionization evolves as the radiation field converges.
+    The electron temperature is not iterated.
+    (This is intended as a diagnostic mode.)
+
+  LTE_iterate
+    Calculate ionization using the Saha equation at the electron temperature,
+    with the electron temperature determined by balancing heating and cooling.
+    Both ion populations and partition functions are calculated in LTE.
+    Unlike other modes, here, both the heating and cooling are changed as part 
+    of the iteration proces.  At each trial temperature, the Saha equation
+    is solved to update ion densities, and the heating is scaled to
+    reflect the new densities. Specifically, the routine scales heated recorded
+    during photon transfer by the ratio of the original ion density for each cycle
+    to the trial densites for  photoionization and Auger heating.  Similarly,
+    for free free, Compton and line heating are scaled by the electron density.
+    This approach is more self-conistent than modifying only the cooling. 
+    As is the case for other most modes, changes are dampted with results from the
+    previous ionization cycle to prevent changes from being too large between ionization 
+    cycles.  This mode is intended for situations where LTE ionization is
+    physically appropriate and one wants to determine the electron temperature
+    self-consistently.
 
   ML93
-    Use the modified on the spot approimation  described by 
-    `Mazzli & Lucy 1993 <https://ui.adsabs.harvard.edu/abs/1993A%26A...279..447M/abstract>`_  
+    Use the modified on-the-spot approximation described by
+    `Mazzali & Lucy 1993 <https://ui.adsabs.harvard.edu/abs/1993A%26A...279..447M/abstract>`_.
+    At each ionization cycle, the electron temperature is set to
+    t_e = 0.9 * t_r. Ionization fractions are first computed using
+    the Saha equation at t_r, then corrected using the Lucy-Mazzali
+    estimators which account for the dilute, non-Planckian radiation field.
+    The partition functions are evaluated using the dilution factor W.
+    This mode does not attempt to balance heating and cooling to determine
+    t_e self-consistently.  
 
   fixed
     Read the ion aboundances in from a file.  All cells will have
@@ -48,6 +80,16 @@ Values
     Estimate photoionization rates by calculating rates directly from the photons that pass
     through a cell.  There is no attempt to model the spectrum. Invert the rate matrix equation to
     calculate the ionization.
+
+  matrix_multi
+    Similar to matrix_pow, except in this case a more aggessive approach to reaching
+    ion state/temperature balance is attempted.  With matrix_pow and the various other
+    matrix methods, a single attempt is made to balance heating and cooling and then
+    a new ionization state is calculate based on the derived electron temperature.  With
+    this method, an interation is performed, with this process being carried out multiple
+    times. Currently number of iterations is fixed and set by the parameter NEBULARMODE_MATRIX_MULTISHOT
+    which can be found in sirrocco.h.  This mode was developed to accelerate convergence in
+    dense plasmas, but is still regarded as somewhat experimental as of 2025 Sept.  
 
 
 File

@@ -137,7 +137,7 @@ init_choices ()
  * disk.spec_type(bb,models)
  *
  * wheres there are other types of spectra, power, brems, that 
- * Python can produce.
+ * Sirocco can produce.
  *
  * This routine reads the quesion, and returns a string that
  * contains the numbers that correspond to the choices bb, and models
@@ -152,7 +152,7 @@ init_choices ()
  * structure.
  *
  * Init_choices must have been called, prior to get_choices.   
- * If not, Python exits with an error.
+ * If not, Sirocco exits with an error.
  * 
 **********************************************************/
 int

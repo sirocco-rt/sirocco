@@ -6,9 +6,9 @@
  * @brief  Calculate parameter to use a default inputs of
  * models of catalclysmic variables
  *
- * These routines are largely independent of Python as a whole
+ * These routines are largely independent of Sirocco as a whole
  * and are only intended to intialize variables to be used in 
- * Python
+ * Sirocco
 ***********************************************************/
 
 #include	<math.h>
@@ -148,7 +148,7 @@ roche2 (q, a)
  *
  * ### Notes ###
  *
- * It is likely this code is duplicated elsewhere in Python
+ * It is likely this code is duplicated elsewhere in Sirocco
  * 
 **********************************************************/
 double

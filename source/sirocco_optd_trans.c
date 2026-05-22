@@ -181,7 +181,7 @@ integrate_tau_across_cell (PhotPtr photon, double *c_column_density, double *c_o
  * The direction of the observer is set in porig.lmn and should be set prior
  * to passing a photon to this function. If any values of lmn are negative, the
  * photon will translate in the negative direction. However, have no fear as this
- * is normal and is fine due to the assumed symmetry of models in Python.
+ * is normal and is fine due to the assumed symmetry of models in Sirocco.
  *
  * ************************************************************************** */
 

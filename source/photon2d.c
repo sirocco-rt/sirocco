@@ -62,7 +62,7 @@
  * On exit, the position of the photon will have been updated.
  *
  * ### Notes ###
- * Translate controls the flow of the photon through one grid cell.  In Python,
+ * Translate controls the flow of the photon through one grid cell.  In Sirocco,
  * there are additional possibilities since there are wind free regions.
  *
  * The routine first calls where_in_wind which returns the correct domain for a given position, or domain 0 if the
@@ -142,7 +142,8 @@ int
 translate_in_space (pp)
      PhotPtr pp;
 {
-  double ds, delta, s, smax, prhosq;
+  //OLD double ds, delta, s, smax, prhosq;
+  double ds, delta, s, smax;
   int ndom, ndom_next;
   struct photon ptest;
 
@@ -165,10 +166,29 @@ translate_in_space (pp)
      * wind cell
      */
 
-    prhosq = (pp->x[0] * pp->x[0]) + (pp->x[1] * pp->x[1]);
+    double qmin, qmax, qval;
+    if (zdom[ndom].coord_type == RTHETA || zdom[ndom].coord_type == SPHERICAL)
+    {
+      qval = (pp->x[0] * pp->x[0]) + (pp->x[1] * pp->x[1]) + (pp->x[2] * pp->x[2]);
+      qmin = zdom[ndom].rmin * zdom[ndom].rmin;
+      qmax = zdom[ndom].rmax * zdom[ndom].rmax;
 
-    if ((prhosq > (zdom[ndom].wind_rhomin_at_disk * zdom[ndom].wind_rhomin_at_disk)) &&
-        (prhosq < (zdom[ndom].wind_rhomax_at_disk * zdom[ndom].wind_rhomax_at_disk)))
+    }
+    else
+    {
+      qval = (pp->x[0] * pp->x[0]) + (pp->x[1] * pp->x[1]);
+      qmin = (zdom[ndom].wind_rhomin_at_disk * zdom[ndom].wind_rhomin_at_disk);
+      qmax = (zdom[ndom].wind_rhomax_at_disk * zdom[ndom].wind_rhomax_at_disk);
+
+    }
+
+
+//OLD    prhosq = (pp->x[0] * pp->x[0]) + (pp->x[1] * pp->x[1]);
+
+//OLD    if ((prhosq > (zdom[ndom].wind_rhomin_at_disk * zdom[ndom].wind_rhomin_at_disk)) &&
+//OLD        (prhosq < (zdom[ndom].wind_rhomax_at_disk * zdom[ndom].wind_rhomax_at_disk)))
+
+    if (qval > qmin && qval < qmax)
     {
       stuff_phot (pp, &ptest);
       ds = 0.0;
@@ -220,7 +240,7 @@ translate_in_space (pp)
  * 	the boudary applies.
  *
  * @details
- * Python defines the boundaries of the wind in term of the intersection
+ * Sirocco defines the boundaries of the wind in term of the intersection
  * of a biconical flow (defined by an inner and outer windcone) and
  * an inner and outer radius centered on the star.	 If the user is interested
  * in a biconical flow, he/she will most likely set the radii so that they
@@ -465,9 +485,23 @@ translate_in_wind (w, p, tau_scat, tau, nres)
     ds_current = calculate_ds (w, p, tau_scat, tau, nres, smax, &istat);
 
     if (p->nres == NRES_ES)
+    {
       xplasma->nscat_es++;
+    }
+    if (p->nres > NLINES)
+    {
+      xplasma->nscat_bf++;
+    }
+
     else if (p->nres > 0)
+    {
       xplasma->nscat_res++;
+    }
+    else if (p->nres == NRES_FF)
+    {
+      xplasma->nscat_ff++;
+    }
+
 
     /* We now increment the radiation field in the cell, translate the photon and wrap
      * things up.  For simple atoms, the routine radiation also reduces

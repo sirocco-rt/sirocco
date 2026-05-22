@@ -140,6 +140,12 @@ def get_data(filename='fiducial_agn_master.txt', var='t_r',grid='ij',inwind='',s
     This routine reads and scales the data from a single variable that is read from an ascii table 
     representation of one or more of the parameters in a windsave file
 
+    The grid obptions:
+
+    ij
+    log
+    lin
+
     '''
 
     try:
@@ -182,8 +188,6 @@ def get_data(filename='fiducial_agn_master.txt', var='t_r',grid='ij',inwind='',s
         ylogmin=numpy.log10(xmin/10)
         x=numpy.select([x>1],[numpy.log10(x)],default=xlogmin)
         y=numpy.select([y>1],[numpy.log10(y)],default=ylogmin)
-        # x=numpy.log10(x)
-        # y=numpy.log10(y)
         xlabel='log(x)'
         ylabel='log(z)'
     else:
@@ -333,15 +337,51 @@ def doit(filename='fiducial_agn.master.txt', var='t_r',grid='ij',inwind='',scale
     return plotfile
 
     
+def steer(argv):
+    '''
+    Controlling routine for py_wind
+    '''
+
+    xfile=''
+    xvar=''
+    xgrid='ij'
+    xmin=-1e50
+    xmax=1e50
+    xscale='guess'
+
+    i=1
+    while i<len(argv):
+        if argv[i][0:2]=='-h':
+            print(__doc__)
+            return
+        elif argv[i]=='-log':
+            xgrid='log'
+        elif argv[i][0:4]=='-lin':
+            xgrid='linear'
+        elif argv[i][0:4]=='-min':
+            i+=1
+            xmin=eval(argv[i])
+        elif argv[i][0:4]=='-max':
+            i+=1
+            xmax=eval(argv[i])
+        elif argv[i][0]=='-':
+            print('Unknown options :',argv)
+            return
+        elif xfile=='':
+            xfile=argv[i]
+        elif xvar=='':
+            xvar=argv[i]
+        i+=1
 
 
-
+    doit(filename=xfile, var=xvar,grid=xgrid,inwind='',scale='log',zmin=xmin,zmax=xmax,
+        plot_dir='',root='')
 
 
 # Next lines permit one to run the routine from the command line
 if __name__ == "__main__":
     import sys
     if len(sys.argv)>2:
-        doit(sys.argv[1],sys.argv[2])
+         steer(sys.argv)
     else:
-        print('usage: plot_wind filename variable')
+        print(__doc__)

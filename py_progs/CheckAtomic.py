@@ -16,7 +16,7 @@ Description:
 
     The routine reads a master file and
     and then all of the data that would
-    be read into Python using this master
+    be read into Sirocco using this master
     file.  It then parses the concatenated
     list of data and attempts to summarize
     how many inputs are read in.
@@ -227,7 +227,7 @@ def analyze_lines(line_tab):
 def doit(master='data/fe_23to27.dat'):
     '''
     Anaylyse a set of atomicdata for use
-    with Python, given a masterifle listing
+    with Sirocco, given a masterifle listing
     all of the files that consitute the inputs
     '''
     xmaster=xread(master)

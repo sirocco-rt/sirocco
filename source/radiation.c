@@ -734,6 +734,11 @@ pop_kappa_ff_array ()
   double gsqrd, gaunt, sum;
   int i, j;
 
+  if (gaunt_n_gsqrd == 0)
+  {
+    return (0);
+  }
+
 
   for (i = 0; i < NPLASMA; i++)
   {
@@ -844,10 +849,10 @@ mean_intensity_from_models (PlasmaPtr xplasma, double freq, int mode)
      * cycles.
      */
 
-    for (i = 0; i < geo.nxfreq; i++)
+    for (i = 0; i < xplasma->nbands; i++)
     {
       // Check that the band has the correct frequency range
-      if (geo.xfreq[i] < freq && freq <= geo.xfreq[i + 1])
+      if (xplasma->f1[i] < freq && freq <= xplasma->f2[i])
       {
         // Check we have a model for this band
         if (xplasma->spec_mod_type[i] > 0)

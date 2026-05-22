@@ -295,7 +295,8 @@ photo_gen_wind (p, weight, freqmin, freqmax, photstart, nphot)
   limit_lines (freqmin, freqmax);
 
   photstop = photstart + nphot;
-  Log_silent ("photo_gen_wind creates nphot %5d photons from %5d to %5d \n", nphot, photstart, photstop);
+  // Log_silent ("photo_gen_wind creates nphot %5d photons from %5d to %5d \n", nphot, photstart, photstop);
+  Log ("photo_gen_wind creates nphot %5d photons from %5d to %5d \n", nphot, photstart, photstop);
 
   for (kkk = photstart; kkk < photstop; kkk++)
   {

@@ -52,9 +52,8 @@ Notes:
 History:
 
 231013 ksl Coding begun
-240910 ksl Updated to add collisions to the process and to get the
-            correct format for the output photometry files
-
+240910 ksl Updated to add collisions to the process and to get the correct 
+format for the output photometry files
 '''
 
 import sys
@@ -69,7 +68,7 @@ from RedoUpsilon import convert_ups, rewrite
 
 def read_phot(file='h_1_phot.dat'):
     '''
-    Read a Python photoionization file and return 
+    Read a Sirocco photoionization file and return 
     the information in a form the is eacy to manipulate
     
     The routine returns a table that summarizes all of the

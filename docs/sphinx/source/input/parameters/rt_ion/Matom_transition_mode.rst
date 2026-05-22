@@ -1,5 +1,5 @@
 Matom_transition_mode
-================
+================================
 
 This option allows the user to determine which mode to use for the macro-atom transition probabilities. The macro atom is not a single atom; it represents an ensemble of atoms of a particular type. The mc_jumps method is a stochastic treatment and the matrix method is a state machine. The default is set to mc_jumping. More information on macro atoms can be found in the :ref:`macro atoms` section. Be wary of using matrix mode due to the high memory requirements.
 

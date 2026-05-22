@@ -7,7 +7,7 @@
  * @brief  Routines needed to define a KWD wind
  *
  * The routines here are all that are needed to define a KWD-type
- * wind within Python.  Inputs are gathered, and the any values
+ * wind within Sirocco.  Inputs are gathered, and the any values
  * such as the nomalization needed to convert a global to a local
  * mass loss rate.  Functions are provided to calculated the density
  * and velocity of the wind at any point.
@@ -47,7 +47,7 @@ double kn_lambda;
  *
  * ###Notes###
  *
- * The KWD model implemenented in Python follows that of KWD97 (ApJ,486,445), with
+ * The KWD model implemenented in Sirocco follows that of KWD97 (ApJ,486,445), with
  * some modifications.  
  * 
  * * We allow  the wind to start
@@ -62,7 +62,7 @@ double kn_lambda;
  *
  * There is confusion in various papers concerning whether to use d or d/dmin.  In KWD95, d/dmin was
  * used but in later papers, e.g KD97 d in WD radii was used.   This is more natural and is used in
- * Python.
+ * Sirocco.
  *
  * To repeat, kn_dratio is the distance to the focus point in stellar radii!
  *

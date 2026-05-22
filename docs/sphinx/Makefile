@@ -14,6 +14,9 @@ help:
 
 .PHONY: help Makefile
 
+livehtml:
+	sphinx-autobuild "$(SOURCEDIR)" "$(BUILDDIR)/html" $(SPHINXOPTS) $(O) --ignore "*py4py_auto*" --ignore "*/.ipynb_checkpoints*" --ignore "*/__pycache__*" --ignore "*.sphinx_cannot_doc"
+
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile

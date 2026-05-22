@@ -5,16 +5,16 @@
  * @date   April, 2018
  *
  * @brief  Except for where_in_wind, these are convenience routines
- * which make it easier to incorporate wind models into Python.  
+ * which make it easier to incorporate wind models into Sirocco.  
  *
  * where_in_wind determines whether a position is x is in the wind
- * and if so in what domain.  Since grid can overlap, the Python
+ * and if so in what domain.  Since grid can overlap, the Sirocco
  * convention is that the domains are overlaid on one another, and
  * the last one is the one that matters at a particular postion.  
  * where_in_wind is therefore one of the basic utilites to determine
  * where one is at any time.
  *
- * In Python, the actual radiative transfer is carried on various
+ * In Sirocco, the actual radiative transfer is carried on various
  * grids (domains).  During radiative transfer quatnities like
  * velocity and density are obtained by interpolating on values
  * in the grid, and not from the formulae that defince for, e. g.
@@ -61,7 +61,7 @@
  * Since domains can overlap in principle, e.g one can have say a bipolar wind which starts
  * at the disk surface and goes to a very large radius, and then a coronal just above the disk,
  * one needs a convention to know which domain to use when there are two possibilities.  The
- * Python convention is to lay the grids on top of one another so that the last one matters when 
+ * Sirocco convention is to lay the grids on top of one another so that the last one matters when 
  * there is a conflict. For this reason the grids are searched in reverse order.
  *
  * Where_in_wind does not tell you whether a position is in the grid or not, just whether 

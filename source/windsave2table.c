@@ -21,7 +21,7 @@
  *
  * All of the files begin
  * with the rootname and the domain number.
- * If Python run that created the windsave file
+ * If Sirocco run that created the windsave file
  * has multiple domains a sepearate output file is created for each
  * domain
  *
@@ -67,7 +67,7 @@
  *
  * @param[in] int argc        The number of arguments in the command line
  * @param[in] char *argv[]    The command line arguments
- * @param[out] char root[]    The rootname of the Python simulation
+ * @param[out] char root[]    The rootname of the Sirocco simulation
  *
  * @return void
  *
@@ -88,8 +88,8 @@
  *
  * The switches only affect the ion tables not the master table
  * This was originally implemented to enable somebody to query which version of
- * Python windsave2table was compiled with. Works in a similar fashion to how
- * the version information is stored and viewed in Python.
+ * Sirocco windsave2table was compiled with. Works in a similar fashion to how
+ * the version information is stored and viewed in Sirocco.
  * 
  * 
  *
@@ -138,7 +138,7 @@ parse_arguments (int argc, char *argv[], char root[], int *ion_switch, int *spec
     {
       if (!strcmp (argv[i], "--version"))
       {
-        printf ("Python Version %s\n", VERSION);
+        printf ("Sirocco Version %s\n", VERSION);
         printf ("windsave2table built from git commit hash %s\n", GIT_COMMIT_HASH);
         if (GIT_DIFF_STATUS)
           printf ("This version was compiled with %i files with uncommitted changes.\n", GIT_DIFF_STATUS);
@@ -206,7 +206,7 @@ parse_arguments (int argc, char *argv[], char root[], int *ion_switch, int *spec
 /**********************************************************/
 /** 
  * @brief      windsave2table writes key variables in a windsave file 
- * to an astropy table calculated Python.  This is the  main routine.
+ * to an astropy table calculated Sirocco.  This is the  main routine.
  *
  * @param [in] int  argc   The number of argments in the command line
  * @param [in] char *  argv[]   The command line

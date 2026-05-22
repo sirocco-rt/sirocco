@@ -235,7 +235,7 @@ bf_estimators_increment (one, p, ds)
   /* JM 2402 note that previously we incorrectly included Compton processes in kpkt_abs, which could lead to large 
      amounts of radiation coming out incorrectly in other k->r channels in spectral cycles */
   xplasma->kpkt_abs += heat_contribution;
-     
+
 
 
   /* Now for contribution to heating due to compton processes. (JM, Sep 013) */
@@ -380,7 +380,7 @@ bb_estimators_increment (one, p, tau_sobolev, dvds, nn)
  * next iteration.
  *
  * It is performed as part of the wind update stage
- * of Python. The estimators should only be changed during the ionisation
+ * of Sirocco. The estimators should only be changed during the ionisation
  * cycles - after that they should be fixed.
  * It also now computes the bf heating rate using the normalised
  * estimators. heat_tot and heat_photo are incremented but nothing else
@@ -678,6 +678,7 @@ total_bb_cooling (xplasma, t_e)
   double coll_rate, rad_rate;
 
   total = 0;                    // initialise
+  xplasma->cool_lines_macro = 0;
   for (i = 0; i < nlines; i++)
   {
     line_ptr = &line[i];
@@ -686,12 +687,13 @@ total_bb_cooling (xplasma, t_e)
       //the upper and lower level populations
       lower_density = den_config (xplasma, line_ptr->nconfigl);
       cool_contribution = (lower_density * q12 (line_ptr, t_e)) * xplasma->ne * xplasma->vol * line_ptr->freq * PLANCK;
+      xplasma->cool_lines_macro += cool_contribution;
     }
     else
     {                           //It's a simple line - don't know the level populations
       // - just use a two-level-atom approach
 
-      //The cooling rate is computed using the scattering probability formalism in KSL's notes on Python.
+      //The cooling rate is computed using the scattering probability formalism in KSL's notes on Sirocco.
 
       two_level_atom (line_ptr, xplasma, &lower_density, &upper_density);
       coll_rate = q21 (line_ptr, t_e) * xplasma->ne * (1. - exp (-H_OVER_K * line_ptr->freq / t_e));
@@ -838,7 +840,7 @@ macro_bf_heating (xplasma, t_e)
  * calculations for the radiative excitation rate. This (energy) excitation
  * rate is multiplied by the destruction probability to get the heating. 
  * The destruction probability is obtained following the discussion in KSL's notes
- * on Python.
+ * on Sirocco.
  *
  **********************************************************/
 

@@ -911,7 +911,9 @@ photo_gen_star (p, r, t, weight, f1, f2, spectype, istart, nphot)
   {
     Error ("photo_gen_star: Cannot generate photons if freqmax %g < freqmin %g\n", f2, f1);
   }
-  Log_silent ("photo_gen_star creates nphot %5d photons from %5d to %5d \n", nphot, istart, iend);
+  Log ("photo_gen_star creates nphot %5d photons from %5d to %5d \n", nphot, istart, iend);
+  Log_flush ();
+
   freqmin = f1;
   freqmax = f2;
   r = (1. + EPSILON) * r;       /* Generate photons just outside the photosphere */
@@ -1075,7 +1077,7 @@ bl_init (lum_bl, t_bl, freqmin, freqmax, ioniz_or_extract, f)
  * photon distribution, specifically having to do with the ionizing
  * photons.  It is not entirely clear why this is where this is done
  *
- * 181009 - ksl - Previously, this routine caused Python to exit 
+ * 181009 - ksl - Previously, this routine caused Sirocco to exit 
  * if photon_checks produced more than a small number of errors. I
  * have removed this extreme measure but that does not mean that
  * photon checks should be ignored.

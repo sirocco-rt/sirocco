@@ -19,7 +19,7 @@ Command line usage (if any):
 Description:  
 
     The program checks all the .pf files in a directory by
-    running the file with Python with the -i switch turned 
+    running the file with Sirocco with the -i switch turned 
     on so to check whether the pf file will run, querying
     the user for any missing inputs.  
 
@@ -36,7 +36,7 @@ Description:
 
     will test the parameter files in `$SIROCCO/examples/beta`.
 
-    After running Python in -i mode for each of the files, 
+    After running Sirocco in -i mode for each of the files, 
     the routine diffs the .out.pf file with the original.pf
     file to see if changes should be made to the .pf file
 

@@ -1,4 +1,4 @@
-Plotting \& Processing Outputs
+Tutorials \& Plotting
 #####################################
 
 SIROCCO produces a large number of files in both binary and ascii format. Tools exist to examine the binary files.
@@ -8,14 +8,30 @@ PySi
 PySi, short for PySIROCCO, is a python package designed to interface with the SIROCCO code.
 It can be installed from its `own Github repository <https://github.com/sirocco-rt/pysi>`_ 
 under the sirocco-rt organisation. We recommend installing this package for reading code outputs.:
-isntructions to do so can be found in the README of that repository.
+instructions to do so can be found in the README of that repository. 
+
+The API documentation for PySi can be found :doc:`here <py_progs/pysi>`.
+
+PySi can also be used from the command line. For example, the command 
+
+.. code-block:: bash
+
+    pysi plot spectrum observer [model_name]
+
+will allow you to plot a spectrum, whereas 
+
+.. code-block:: bash
+
+    pysi plot wind property [model_name] [variable]
+
+will allow you to plot the wind property specified by [variable]. For more flexibility, see the tutorials. 
 
 .. admonition :: Warning to users! 
 
-These tutorials are not complete, and our approach to interfacing 
-with the code has not been uniform across the collaboration. Nevertheless, these 
-tutorials should give you the basic tools needed to look at spectra and wind properties, 
-with more detail on python scripts and packages provided in :ref:`the API documentation <py_progs>`. 
+    These tutorials are not complete, and our approach to interfacing 
+    with the code has not been uniform across the collaboration. Nevertheless, these 
+    tutorials should give you the basic tools needed to look at spectra and wind properties, 
+    with more detail on python scripts and packages provided in :doc:`the API documentation <py_progs>`. 
 
 .. toctree::
    :glob:
@@ -25,3 +41,4 @@ with more detail on python scripts and packages provided in :ref:`the API docume
    plotting/plot_wind
    plotting/Convergence
    plotting/ion-models
+   plotting/gui

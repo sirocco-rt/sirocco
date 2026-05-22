@@ -215,7 +215,7 @@ get_shell_wind_params (ndom)
 /**
  * @brief      defines the cells in a thin shell, a special case of a spherical wind.
  *
- * @param [in, out] WindPtr  w   The structure which defines the wind in Python
+ * @param [in, out] WindPtr  w   The structure which defines the wind in Sirocco
  * @param [in, out] int  ndom   The domain number
  * @return     Always retunrs 0
  *

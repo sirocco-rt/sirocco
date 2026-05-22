@@ -11,7 +11,7 @@
  * many photons or photon bundles to create in various wavelength ranges,
  * and how to record the spectrum that pass through individual cells.
  *
- * Photons, or photon bundles, in Python are created with certain
+ * Photons, or photon bundles, in Sirocco are created with certain
  * frequency and carry a certain amount of energy.  Without
  * any kind of stratified sampling all of the photons would be created
  * with the same energy content and frequencies which sample the spectrum
@@ -19,7 +19,7 @@
  * photons bundles originating in, for example, a stellar photosphere
  * would equal that of the luminosity of the star.
  *
- * Normally, however, Python uses a form of stratified sampling to assure
+ * Normally, however, Sirocco uses a form of stratified sampling to assure
  * we have photons in various energy bands.  This is important, especially
  * for calculating ionization rates since one needs enough photons
  * above ionization edges to estimate the rate accurately.  In banding,
@@ -77,7 +77,7 @@ xband;
  * used to ensure that photons are created in sufficient numbers across
  * a large range of frequency during ionization cycles.
  *
- * Python uses a form of stratified sampling in an attempt to assure
+ * Sirocco uses a form of stratified sampling in an attempt to assure
  * that there are photon bundles at (high, generally) frequencies
  * in sufficient numbers for accurate ionization equilibria to be
  * calculated.
@@ -608,6 +608,11 @@ bands_init (imode, band)
   geo.cell_log_freq_min = log10 (band->f1[0]);
   geo.cell_log_freq_max = log10 (band->f2[band->nbands - 1]);
   geo.cell_delta_lfreq = (geo.cell_log_freq_max - geo.cell_log_freq_min) / NBINS_IN_CELL_SPEC;
+
+  for (ii = 0; ii <= NBINS_IN_CELL_SPEC; ii++)
+  {
+    geo.cell_freq[ii] = pow (10., (geo.cell_log_freq_min + ii * geo.cell_delta_lfreq));
+  }
 
   return (0);
 }

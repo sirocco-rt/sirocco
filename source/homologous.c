@@ -4,7 +4,7 @@
  * @author ksl
  * @date   January, 2018
  *
- * @brief  Routines describing a homologous flow in Python.
+ * @brief  Routines describing a homologous flow in Sirocco.
  *
  * A homlogous flow is a flow in which the velocity is proportional
  * to the distance from the central source.  In this case, the

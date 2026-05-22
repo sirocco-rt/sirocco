@@ -342,7 +342,7 @@ void
 print_help (void)
 {
   char *help =
-    "A utility program to analyse the optical depth in a Python model.\n\n"
+    "A utility program to analyse the optical depth in a Sirocco model.\n\n"
     "usage: py_optical_depth [-h] [-d ndom] [-p tau_stop] [-cion nion] \n"
     "                        [-freq_min min] [-freq_max max] [-i i1 i2 ...]\n"
     "                        [--nonrel] [--smax frac] [--no-es] [--version]\n"
@@ -360,7 +360,7 @@ print_help (void)
     "-freq_min min    The lower frequency boundary for optical depth spectra\n"
     "-freq_max max    The upper frequency boundary for optical depth spectra\n"
     "-i i1 i2 i3 ...  Calculate the optical depth for the given space seperated list of sight lines\n"
-    "--nonrel         Use linear frequency transforms, to be used when Python was run\n"
+    "--nonrel         Use linear frequency transforms, to be used when Sirocco was run\n"
     "                 in non-relativistic mode\n"
     "--smax frac      Set the maximum fraction a photon can move in terms of cell distances\n"
     "--no-es          Do not include opacity contributions from electron scattering\n"
@@ -434,7 +434,7 @@ get_arguments (int argc, char *argv[])
     }
     else if (!strcmp (argv[i], "--version"))    //NOTE: print version number
     {
-      printf ("Python version %s\n", VERSION);
+      printf ("Sirocco version %s\n", VERSION);
       printf ("Built from git commit %s\n", GIT_COMMIT_HASH);
       if (GIT_DIFF_STATUS)
         printf ("This version was compiled with %d files with uncommited changes\n", GIT_DIFF_STATUS);

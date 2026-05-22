@@ -53,10 +53,10 @@ description_dict = {
     "nioniz": "total ionizing photons passing through cell"
 }
 
-def get_pywind_summary (fname, vers="", den_or_frac=0):
+def get_swind_summary (fname, vers="", den_or_frac=0):
 
     '''
-    run version vers of py_wind on file fname.wind_save
+    run version vers of swind on file fname.wind_save
     and generate the complete wind summary as output
 
     produce the output fname.complete to read
@@ -72,9 +72,9 @@ def get_pywind_summary (fname, vers="", den_or_frac=0):
 
 
 
-def run_py_wind (fname, vers="", cmds=None, ilv=None, py_wind_cmd = "py_wind", return_output = False):
+def run_swind (fname, vers="", cmds=None, ilv=None, swind_cmd = "swind", return_output = False):
     '''
-    run version vers of py_wind on file fname.wind_save
+    run version vers of swind on file fname.wind_save
     '''
 
     if cmds == None:
@@ -84,9 +84,9 @@ def run_py_wind (fname, vers="", cmds=None, ilv=None, py_wind_cmd = "py_wind", r
     np.savetxt("_tempcmd.txt", x, fmt = "%s")
     logfilename = "tempfile"
 
-    print ("Running py_wind...")
+    print ("Running swind for Sirocco...")
     print ("commands = {}".format(cmds))
-    cmd_to_run = "{}{} {} < _tempcmd.txt > {}".format(py_wind_cmd, vers, fname, logfilename)
+    cmd_to_run = "{}{} {} < _tempcmd.txt > {}".format(swind_cmd, vers, fname, logfilename)
     isys = os.system(cmd_to_run)
     time.sleep(3)
 
@@ -105,9 +105,9 @@ def run_py_wind (fname, vers="", cmds=None, ilv=None, py_wind_cmd = "py_wind", r
 
 
 
-def read_pywind_smart(filename, return_inwind=False):
+def read_swind_smart(filename, return_inwind=False):
     '''
-    read a py_wind file using np array reshaping and manipulation
+    read a swind file using np array reshaping and manipulation
 
     DEPRECATED
     '''

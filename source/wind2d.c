@@ -48,7 +48,7 @@ double wig_x, wig_y, wig_z;
  * What one means by inside or outside the grid may well be different
  * for different coordinate systems.
  *
- * This is one of the routines in Python that has a long history, in that
+ * This is one of the routines in Sirocco that has a long history, in that
  * it existed prior to the implementation of domains.  This is why it
  * returns the position in wmain, rather than the position in one of
  * the plasma domains.  It would make sense to revise this.

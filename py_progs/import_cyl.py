@@ -6,7 +6,7 @@ Create a cylindrical `.pf` file from a `windsave2table` file.
 
 Read the master file produced by windsave2table for a
 model created in cylindrical coordinates and produce
-a file which can be imported into Python and run
+a file which can be imported into Sirocco and run
 
 
 Command line usage (if any):
@@ -23,7 +23,7 @@ Primary routines:
 Notes:
 
     Windsave2table saves the values of rho in the CMF frame,
-    but Python expects models to be in the observer frame
+    but Sirocco expects models to be in the observer frame
     so this routine corrects for this.
                                        
 '''
@@ -127,12 +127,13 @@ def doit(root='cv',outputfile=''):
 
     data['v']=v
 
-    xdata=data['i','j','inwind','x','z','v_x','v_y','v_z','rho','t_r']
+    xdata=data['i','j','inwind','x','z','v_x','v_y','v_z','rho','t_e','t_r']
 
     C=2.997925e10
 
     gamma=1./numpy.sqrt(1-(v/C)**2)
     xdata['rho']*=gamma
+    xdata['rho'].format='.2e'
 
 
     
@@ -155,7 +156,6 @@ def doit(root='cv',outputfile=''):
 if __name__ == "__main__":
     import sys
     if len(sys.argv)>1:
-        # doit(int(sys.argv[1]))
         doit(sys.argv[1])
     else:
         print ('usage: import_cyl.py filename')

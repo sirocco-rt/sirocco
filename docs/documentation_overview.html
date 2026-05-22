@@ -32,6 +32,22 @@
           tracked in git.</li>
         <li>To generate the Sphinx documentation one needs <a
             href="http://www.sphinx-doc.org/en/master/">sphinx</a></li>
+        <li>Because we use an package called <a moz-do-not-send="true"
+            href="https://pysi.readthedocs.io/en/stable/">PySi</a> in
+          conjunction with some of the Jupyter scripts and because this
+          code has some verison dependences, we recommend creating an
+          environment to encapsulate the version needed to compile all
+          of the documention.&nbsp; In conda, one can create this with:</li>
+        <ul>
+          <li>conda<span class="w"> </span>create<span class="w"> </span>-n<span
+              class="w"> </span>xsphinx<span class="w"> </span><span
+              class="nv">python</span><span class="o">=</span><span
+              class="m">3</span>.1</li>
+          <li>conda<span class="w"> </span>activate<span class="w"> </span>xsphinx</li>
+          <li>cd docs/sphinx</li>
+          <li>pip3<span class="w"> </span>install<span class="w"> </span>-r<span
+              class="w"> </span>requirements.txt</li>
+        </ul>
       </ul>
       <ul>
       </ul>
@@ -78,6 +94,7 @@
 
 
 
+
         provides information about the source code.</li>
       <ul>
         <li>Like the other documentation, the Doxygen information is not
@@ -102,6 +119,7 @@
         </li>
         <ul>
           <li>The Doxygen home page is <a href="http://www.doxygen.nl/">here</a>.&nbsp;
+
 
 
 

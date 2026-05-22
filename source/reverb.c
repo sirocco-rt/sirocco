@@ -105,7 +105,7 @@ delay_dump_prep (int restart_stat)
     }
     else
     {                           // Construct and write a header string for the output file
-      fprintf (fptr, "# Python Version %s\n", VERSION);
+      fprintf (fptr, "# Sirocco Version %s\n", VERSION);
       get_time (s_time);
       fprintf (fptr, "# Date	%s\n#  \n", s_time);
       fprintf (fptr, "#\n# %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s\n", "Np", "Freq.", "Lambda",

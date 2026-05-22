@@ -34,7 +34,7 @@ write_generic_file_header (FILE *fp)
   char time_string[LINELENGTH];
 
   get_time (time_string);
-  fprintf (fp, "# Python Version %s\n", VERSION);
+  fprintf (fp, "# Sirocco Version %s\n", VERSION);
   fprintf (fp, "# Git commit hash %s\n", GIT_COMMIT_HASH);
   fprintf (fp, "# Date %s\n", time_string);
   fprintf (fp, "#\n");
