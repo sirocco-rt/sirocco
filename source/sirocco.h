@@ -473,12 +473,16 @@ struct geometry
 
   int disk_type;
 
+  
 #define BACK_RAD_ABSORB_AND_DESTROY  0  /**< Disk simply absorbs the radiation and it is lost */
-#define BACK_RAD_SCATTER            1   /**< Disk reradiates the radiation immediately via electron scattering */
+#define BACK_RAD_SCATTER            1   /**< Disk reradiates and retains the photon's frequency but 
+                                            gives it a new direction, selected randomly according to 
+                                            cos(theta) */
 #define BACK_RAD_ABSORB_AND_HEAT     2  /**< Correct disk temperature for illumination by photons
                                            which hit the dsik.  Disk radiation is absorbed and changes
                                            the temperature of the disk for future ionization cycles
                                          */
+#define BACK_RAD_SPECULAR     3  /**< True "specular refleciton", reversing the sign of v_z */
 
   int absorb_reflect;           /**< Controls what happens when a photon hits the disk or star
                                  */
