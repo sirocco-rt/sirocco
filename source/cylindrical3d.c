@@ -326,6 +326,7 @@ cylind3d_wind_complete (int ndom, WindPtr w)
         w[n].xmax[0] = xmax_rho;
         w[n].xmax[1] = 0.0;
         w[n].xmax[2] = xmax_z;
+        w[n].phimax = one_dom->wind_phi[k + 1];
       }
     }
   }
