@@ -78,13 +78,30 @@ def get_data(filename, var, scale='log', inwind=''):
     # Reshape: storage order is i slowest, k fastest
     xvar_3d = xvar.reshape(ndim, mdim, pdim)
 
-    # Coordinate centres — extract from k=0 slice and i=0,j=0 row
-    k0 = np.array(data['k']) == 0
-    rho_cen = np.array(data['xcen'][k0]).reshape(ndim, mdim)[:, 0]
-    z_cen   = np.array(data['zcen'][k0]).reshape(ndim, mdim)[0, :]
+    # Detect coordinate system from column names
+    is_sph3d = 'rcen' in data.colnames
 
+    # Coordinate centres — extract from k=0 slice and i=0,j=0 row
+    k0  = np.array(data['k']) == 0
     ij0 = (np.array(data['i']) == 0) & (np.array(data['j']) == 0)
     phi_cen = np.array(data['phicen'][ij0])
+
+    if is_sph3d:
+        # SPH3D: radial (r) and polar angle (theta, in degrees)
+        rad_cen   = np.array(data['rcen'][k0]).reshape(ndim, mdim)[:, 0]
+        theta_cen = np.array(data['thetacen'][k0]).reshape(ndim, mdim)[0, :]
+        rad_label   = 'r (cm)'
+        theta_label = 'theta (degrees)'
+        # equatorial default: theta nearest 90°
+        j_eq = int(np.argmin(np.abs(theta_cen - 90.0)))
+    else:
+        # CYLIND3D: cylindrical radius (rho) and height (z)
+        rad_cen   = np.array(data['xcen'][k0]).reshape(ndim, mdim)[:, 0]
+        theta_cen = np.array(data['zcen'][k0]).reshape(ndim, mdim)[0, :]
+        rad_label   = 'rho (cm)'
+        theta_label = 'z (cm)'
+        # equatorial default: z nearest 0
+        j_eq = int(np.argmin(np.abs(theta_cen)))
 
     title = var
     if scale == 'log':
@@ -92,9 +109,10 @@ def get_data(filename, var, scale='log', inwind=''):
             xvar_3d = np.where(xvar_3d > 0, np.log10(xvar_3d), np.nan)
         title = 'log₁₀(' + var + ')'
 
-    return dict(xvar_3d=xvar_3d, rho_cen=rho_cen, z_cen=z_cen,
+    return dict(xvar_3d=xvar_3d, rad_cen=rad_cen, theta_cen=theta_cen,
                 phi_cen=phi_cen, ndim=ndim, mdim=mdim, pdim=pdim,
-                title=title)
+                rad_label=rad_label, theta_label=theta_label,
+                j_eq=j_eq, title=title)
 
 
 # ---------------------------------------------------------------------------
@@ -118,12 +136,14 @@ def doit(filename, var='t_e', scale='log', outfile=None, inwind='', j_slice=None
     if d is None:
         return None
 
-    xvar_3d = d['xvar_3d']
-    rho_cen = d['rho_cen']
-    z_cen   = d['z_cen']
-    phi_cen = d['phi_cen']
+    xvar_3d   = d['xvar_3d']
+    rad_cen   = d['rad_cen']
+    theta_cen = d['theta_cen']
+    phi_cen   = d['phi_cen']
     ndim, mdim, pdim = d['ndim'], d['mdim'], d['pdim']
-    title   = d['title']
+    rad_label   = d['rad_label']
+    theta_label = d['theta_label']
+    title       = d['title']
 
     # Shared colour limits
     finite = xvar_3d[np.isfinite(xvar_3d)]
@@ -134,64 +154,68 @@ def doit(filename, var='t_e', scale='log', outfile=None, inwind='', j_slice=None
         zmin = float(np.nanmin(finite))
         zmax = float(np.nanmax(finite))
 
-    # j index for the rho-phi panel
+    # j index for the transverse-phi panel (use coord-appropriate default)
     if j_slice is None:
-        j_slice = int(np.argmin(np.abs(z_cen)))
+        j_slice = d['j_eq']
+    theta_val = theta_cen[j_slice]
 
     # ------------------------------------------------------------------
     # Build figure with two side-by-side subplots
     # ------------------------------------------------------------------
-    phi_deg = np.degrees(phi_cen)
-    z_label = 'z = %.2e cm  (j=%d)' % (z_cen[j_slice], j_slice)
+    phi_deg  = np.degrees(phi_cen)
+    j_label  = '%s = %.2g  (j=%d)' % (theta_label.split()[0], theta_val, j_slice)
 
     fig = make_subplots(
         rows=1, cols=2,
         subplot_titles=[
-            'rho-z plane  (use slider to change ϕ)',
-            'rho-ϕ plane  (' + z_label + ')',
+            'rad-%s plane  (use slider to change ϕ)' % theta_label.split()[0],
+            'rad-ϕ plane  (' + j_label + ')',
         ],
         horizontal_spacing=0.18,
     )
 
     # --- Left panel: one Heatmap trace per phi slice --------------------
     for k in range(pdim):
-        # Heatmap expects z[row, col] with row = y-axis, col = x-axis
-        z_slice = xvar_3d[:, :, k].T    # (mdim, ndim): rows=z, cols=rho
+        slice_k = xvar_3d[:, :, k].T    # (mdim, ndim): rows=theta/z, cols=rad
         fig.add_trace(
             go.Heatmap(
-                z=z_slice,
-                x=rho_cen,
-                y=z_cen,
+                z=slice_k,
+                x=rad_cen,
+                y=theta_cen,
                 colorscale='Viridis',
                 zmin=zmin, zmax=zmax,
                 showscale=True,
                 colorbar=dict(x=0.40, thickness=15, title=dict(text=title, side='right')),
                 visible=(k == 0),
                 name='ϕ=%.0f°' % phi_deg[k],
-                hovertemplate='rho=%{x:.2e}<br>z=%{y:.2e}<br>' + title + '=%{z:.3f}<extra></extra>',
+                hovertemplate=(rad_label.split()[0] + '=%{x:.2e}<br>'
+                               + theta_label.split()[0] + '=%{y:.2g}<br>'
+                               + title + '=%{z:.3f}<extra></extra>'),
             ),
             row=1, col=1,
         )
 
-    # --- Right panel: rho-phi slice at chosen j (always visible) -------
-    eq_slice = xvar_3d[:, j_slice, :].T    # (pdim, ndim): rows=phi, cols=rho
+    # --- Right panel: rad-phi slice at chosen j (always visible) -------
+    eq_slice = xvar_3d[:, j_slice, :].T    # (pdim, ndim): rows=phi, cols=rad
     fig.add_trace(
         go.Heatmap(
             z=eq_slice,
-            x=rho_cen,
+            x=rad_cen,
             y=phi_deg,
             colorscale='Viridis',
             zmin=zmin, zmax=zmax,
             showscale=True,
             colorbar=dict(x=1.01, thickness=15, title=dict(text=title, side='right')),
-            name='rho-phi',
-            hovertemplate='rho=%{x:.2e}<br>ϕ=%{y:.0f}°<br>' + title + '=%{z:.3f}<extra></extra>',
+            name='rad-phi',
+            hovertemplate=(rad_label.split()[0] + '=%{x:.2e}<br>'
+                           + 'ϕ=%{y:.0f}°<br>'
+                           + title + '=%{z:.3f}<extra></extra>'),
         ),
         row=1, col=2,
     )
 
     # --- Phi slider (controls left panel only) --------------------------
-    n_left = pdim   # indices 0..pdim-1 are the left traces; pdim is the right trace
+    n_left = pdim
     steps = []
     for k in range(pdim):
         visible = [kk == k for kk in range(n_left)] + [True]
@@ -210,10 +234,10 @@ def doit(filename, var='t_e', scale='log', outfile=None, inwind='', j_slice=None
     )]
 
     # --- Axes and layout ------------------------------------------------
-    fig.update_xaxes(title_text='rho (cm)', type='log', row=1, col=1)
-    fig.update_yaxes(title_text='z (cm)',               row=1, col=1)
-    fig.update_xaxes(title_text='rho (cm)', type='log', row=1, col=2)
-    fig.update_yaxes(title_text='ϕ (degrees)',     row=1, col=2)
+    fig.update_xaxes(title_text=rad_label,   type='log', row=1, col=1)
+    fig.update_yaxes(title_text=theta_label,             row=1, col=1)
+    fig.update_xaxes(title_text=rad_label,   type='log', row=1, col=2)
+    fig.update_yaxes(title_text='ϕ (degrees)',           row=1, col=2)
 
     fig.update_layout(
         title_text='%s  —  %s' % (os.path.basename(filename), title),
