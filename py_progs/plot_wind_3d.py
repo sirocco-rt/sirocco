@@ -124,6 +124,14 @@ def get_data(filename, var, scale='log', inwind=''):
 def _build_figure(filename, var, scale='log', inwind='', j_slice=None, grid='physical'):
     """Build and return a Plotly figure for a single variable.
 
+    Two panels, each with an independent slider:
+
+      Left  : i-j (or rho-theta/z) plane — slider steps through k (phi slices).
+      Right : i-k (or rho-phi) plane     — slider steps through j (theta/z slices).
+
+    The sliders operate independently via Plotly's restyle method, so moving
+    one does not reset the other.
+
     grid='physical'  axes show physical coordinates (default)
     grid='ij'        axes show grid indices i, j, k
     """
@@ -158,31 +166,32 @@ def _build_figure(filename, var, scale='log', inwind='', j_slice=None, grid='phy
         y_left  = np.arange(mdim)
         x_right = np.arange(ndim)
         y_right = np.arange(pdim)
-        xlabel_left  = 'i'
-        ylabel_left  = 'j'
-        xlabel_right = 'i'
-        ylabel_right = 'k'
-        slider_labels = ['k=%d' % k for k in range(pdim)]
-        slider_prefix = 'k = '
-        j_label = 'j=%d' % j_slice
-        left_title  = 'i-j plane  (slider controls k)'
-        right_title = 'i-k plane  (' + j_label + ')'
+        xlabel_left   = 'i'
+        ylabel_left   = 'j'
+        xlabel_right  = 'i'
+        ylabel_right  = 'k'
+        k_labels      = ['k=%d' % k for k in range(pdim)]
+        j_labels      = ['j=%d' % j for j in range(mdim)]
+        left_prefix   = 'k = '
+        right_prefix  = 'j = '
+        left_title    = 'i-j plane  (left slider → k)'
+        right_title   = 'i-k plane  (right slider → j)'
         log_x = False
     else:
         x_left  = rad_cen
         y_left  = theta_cen
         x_right = rad_cen
         y_right = np.degrees(phi_cen)
-        xlabel_left  = rad_label
-        ylabel_left  = theta_label
-        xlabel_right = rad_label
-        ylabel_right = 'ϕ (degrees)'
-        theta_val = theta_cen[j_slice]
-        slider_labels = ['%.0f°' % np.degrees(p) for p in phi_cen]
-        slider_prefix = 'ϕ = '
-        j_label = '%s = %.2g  (j=%d)' % (theta_label.split()[0], theta_val, j_slice)
-        left_title  = 'rad-%s plane  (use slider to change ϕ)' % theta_label.split()[0]
-        right_title = 'rad-ϕ plane  (' + j_label + ')'
+        xlabel_left   = rad_label
+        ylabel_left   = theta_label
+        xlabel_right  = rad_label
+        ylabel_right  = 'ϕ (degrees)'
+        k_labels      = ['%.0f°' % np.degrees(p) for p in phi_cen]
+        j_labels      = ['%.2g' % v for v in theta_cen]
+        left_prefix   = 'ϕ = '
+        right_prefix  = theta_label.split()[0] + ' = '
+        left_title    = 'rad-%s plane  (left slider → ϕ)' % theta_label.split()[0]
+        right_title   = 'rad-ϕ plane  (right slider → %s)' % theta_label.split()[0]
         log_x = True
 
     fig = make_subplots(
@@ -191,19 +200,21 @@ def _build_figure(filename, var, scale='log', inwind='', j_slice=None, grid='phy
         horizontal_spacing=0.18,
     )
 
+    # --- Left panel: pdim traces, one per k slice -----------------------
+    # Trace indices: 0 .. pdim-1
+    left_indices = list(range(pdim))
     for k in range(pdim):
-        slice_k = xvar_3d[:, :, k].T    # (mdim, ndim)
+        slice_k = xvar_3d[:, :, k].T    # (mdim, ndim): y=j/theta, x=i/rad
         fig.add_trace(
             go.Heatmap(
                 z=slice_k,
-                x=x_left,
-                y=y_left,
-                colorscale='Viridis',
-                zmin=zmin, zmax=zmax,
+                x=x_left, y=y_left,
+                colorscale='Viridis', zmin=zmin, zmax=zmax,
                 showscale=True,
-                colorbar=dict(x=0.40, thickness=15, title=dict(text=title, side='right')),
+                colorbar=dict(x=0.40, thickness=15,
+                              title=dict(text=title, side='right')),
                 visible=(k == 0),
-                name=slider_labels[k],
+                name=k_labels[k],
                 hovertemplate=(xlabel_left + '=%{x:.2g}<br>'
                                + ylabel_left + '=%{y:.2g}<br>'
                                + title + '=%{z:.3f}<extra></extra>'),
@@ -211,32 +222,46 @@ def _build_figure(filename, var, scale='log', inwind='', j_slice=None, grid='phy
             row=1, col=1,
         )
 
-    eq_slice = xvar_3d[:, j_slice, :].T    # (pdim, ndim)
-    fig.add_trace(
-        go.Heatmap(
-            z=eq_slice,
-            x=x_right,
-            y=y_right,
-            colorscale='Viridis',
-            zmin=zmin, zmax=zmax,
-            showscale=True,
-            colorbar=dict(x=1.01, thickness=15, title=dict(text=title, side='right')),
-            name='right-panel',
-            hovertemplate=(xlabel_right + '=%{x:.2g}<br>'
-                           + ylabel_right + '=%{y:.2g}<br>'
-                           + title + '=%{z:.3f}<extra></extra>'),
-        ),
-        row=1, col=2,
-    )
+    # --- Right panel: mdim traces, one per j slice ----------------------
+    # Trace indices: pdim .. pdim+mdim-1
+    right_indices = list(range(pdim, pdim + mdim))
+    for j in range(mdim):
+        slice_j = xvar_3d[:, j, :].T    # (pdim, ndim): y=k/phi, x=i/rad
+        fig.add_trace(
+            go.Heatmap(
+                z=slice_j,
+                x=x_right, y=y_right,
+                colorscale='Viridis', zmin=zmin, zmax=zmax,
+                showscale=True,
+                colorbar=dict(x=1.01, thickness=15,
+                              title=dict(text=title, side='right')),
+                visible=(j == j_slice),
+                name=j_labels[j],
+                hovertemplate=(xlabel_right + '=%{x:.2g}<br>'
+                               + ylabel_right + '=%{y:.2g}<br>'
+                               + title + '=%{z:.3f}<extra></extra>'),
+            ),
+            row=1, col=2,
+        )
 
-    n_left = pdim
-    steps = []
+    # --- Left slider (k / phi) — only restyles left traces --------------
+    left_steps = []
     for k in range(pdim):
-        visible = [kk == k for kk in range(n_left)] + [True]
-        steps.append(dict(
-            method='update',
-            args=[{'visible': visible}],
-            label=slider_labels[k],
+        vis = [kk == k for kk in range(pdim)]   # True for this k only
+        left_steps.append(dict(
+            method='restyle',
+            args=[{'visible': vis}, left_indices],
+            label=k_labels[k],
+        ))
+
+    # --- Right slider (j / theta/z) — only restyles right traces --------
+    right_steps = []
+    for j in range(mdim):
+        vis = [jj == j for jj in range(mdim)]
+        right_steps.append(dict(
+            method='restyle',
+            args=[{'visible': vis}, right_indices],
+            label=j_labels[j],
         ))
 
     fig.update_xaxes(title_text=xlabel_left,  type='log' if log_x else 'linear', row=1, col=1)
@@ -246,16 +271,27 @@ def _build_figure(filename, var, scale='log', inwind='', j_slice=None, grid='phy
 
     fig.update_layout(
         title_text='%s  —  %s' % (os.path.basename(filename), title),
-        sliders=[dict(
-            active=0,
-            steps=steps,
-            currentvalue=dict(prefix=slider_prefix, font=dict(size=14)),
-            pad=dict(t=55),
-            x=0.0, len=0.42,
-        )],
-        height=560,
+        sliders=[
+            dict(
+                active=0,
+                steps=left_steps,
+                currentvalue=dict(prefix=left_prefix, font=dict(size=13)),
+                pad=dict(t=50, b=10),
+                x=0.0, len=0.44,
+                y=0.0,
+            ),
+            dict(
+                active=j_slice,
+                steps=right_steps,
+                currentvalue=dict(prefix=right_prefix, font=dict(size=13)),
+                pad=dict(t=50, b=10),
+                x=0.56, len=0.44,
+                y=0.0,
+            ),
+        ],
+        height=620,
         width=1150,
-        margin=dict(t=100, b=80),
+        margin=dict(t=100, b=130),
     )
 
     return fig
