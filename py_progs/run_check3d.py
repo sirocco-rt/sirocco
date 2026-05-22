@@ -1,17 +1,13 @@
 #!/usr/bin/env python
 
 """
-run_check3d.py -- Comprehensive run diagnostics for all model dimensionalities.
+run_check3d.py -- Comprehensive run diagnostics using interactive Plotly plots.
 
-Intended as a future replacement for run_check.py.  Handles 1D, 2D, and 3D
-wind models and adds interactive Plotly plots alongside the traditional static
-matplotlib summaries.
+Handles 1D, 2D, and 3D wind models.  All plots are embedded directly in the
+HTML summary page.  The 3D wind plot (large) is kept in a separate file and
+shown via an iframe.
 
-Interactive HTML files are stored in diag_<root>/interactive/ and linked
-relatively from the main HTML summary page.
-
-If Plotly is not available the interactive section is skipped gracefully and
-the static plots are still produced.
+Requires Plotly (pip install plotly).
 
 Usage
 -----
@@ -22,39 +18,27 @@ Usage
 import os
 import sys
 import subprocess
-import numpy
 import numpy as np
 from glob import glob
 from astropy.io import ascii
 from astropy.table import Table
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as pylab
 
 import xhtml
-import plot_wind
-import plot_wind_1d
-import plot_spec
-import plot_tot
+import plot_wind_3d
 
-# ---------------------------------------------------------------------------
-# Optional Plotly imports — graceful fallback
-# ---------------------------------------------------------------------------
 try:
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
-    import plot_wind_3d
     PLOTLY_AVAILABLE = True
 except ImportError:
     PLOTLY_AVAILABLE = False
-
-if not PLOTLY_AVAILABLE:
-    print('Note: Plotly not found — interactive plots will not be generated.')
-    print('      Install with:  pip install plotly')
+    print('Error: Plotly not found — run_check3d.py requires Plotly.')
+    print('       Install with:  pip install plotly')
+    sys.exit(1)
 
 
 # ---------------------------------------------------------------------------
-# Utility functions  (copied from run_check.py so this file is self-contained)
+# Utility functions
 # ---------------------------------------------------------------------------
 
 def windsave2table(root):
@@ -219,58 +203,59 @@ def how_many_dimensions(filename):
 
 
 # ---------------------------------------------------------------------------
-# Static matplotlib plots  (same as run_check.py)
-# ---------------------------------------------------------------------------
-
-def plot_converged(root, converged, converging, t_r, t_e, hc):
-    """Save a convergence-by-cycle plot to diag_<root>/convergence.png."""
-    pylab.close(1)
-    pylab.figure(1, (6, 6))
-    pylab.plot(t_r, '--', label='t_r')
-    pylab.plot(t_e, '--', label='t_e')
-    pylab.plot(hc,  '--', label='heating:cooling')
-    pylab.plot(converged,  lw=2, label='Converged')
-    pylab.plot(converging, lw=2, label='Converging')
-    pylab.legend(loc='best')
-    pylab.xlabel('Ionization Cycle')
-    pylab.ylabel('Fraction of Cells in Wind')
-    pylab.savefig('diag_%s/convergence.png' % root)
-
-
-# ---------------------------------------------------------------------------
-# Interactive Plotly plots
+# Interactive Plotly plot builders — each returns an HTML div string or None
 # ---------------------------------------------------------------------------
 
 def _smooth(x, n=21):
-    """Simple boxcar smooth (same algorithm as plot_tot.xsmooth)."""
+    """Boxcar smooth."""
     if n <= 1 or len(x) <= n:
         return x
     kernel = np.ones(n) / n
     return np.convolve(x, kernel, mode='same')
 
 
-def make_interactive_spec_tot(root, include_plotlyjs=True):
-    """
-    Build a Plotly nuLnu vs frequency figure from <root>.log_spec_tot.
-    Returns an HTML div string on success, or None.
-    include_plotlyjs controls whether the Plotly.js bundle is embedded.
-    """
+def make_convergence_div(root, converged, converging, t_r, t_e, hc,
+                         include_plotlyjs=True):
+    """Interactive convergence-by-cycle plot."""
+    ncycle = list(range(len(converged)))
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=ncycle, y=list(t_r), mode='lines', name='t_r',
+                             line=dict(dash='dash')))
+    fig.add_trace(go.Scatter(x=ncycle, y=list(t_e), mode='lines', name='t_e',
+                             line=dict(dash='dash')))
+    fig.add_trace(go.Scatter(x=ncycle, y=list(hc), mode='lines',
+                             name='heating:cooling', line=dict(dash='dash')))
+    fig.add_trace(go.Scatter(x=ncycle, y=converged, mode='lines',
+                             name='Converged', line=dict(width=2)))
+    fig.add_trace(go.Scatter(x=ncycle, y=converging, mode='lines',
+                             name='Converging', line=dict(width=2)))
+    fig.update_layout(
+        title='%s — convergence by cycle' % root,
+        xaxis_title='Ionization cycle',
+        yaxis_title='Fraction of cells in wind',
+        height=420, width=750,
+        legend=dict(x=0.01, y=0.99),
+    )
+    return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
+
+
+def make_spec_tot_div(root, include_plotlyjs=False):
+    """Interactive nuLnu vs frequency from <root>.log_spec_tot."""
     filename = root + '.log_spec_tot'
     try:
         data = ascii.read(filename)
     except IOError:
-        print('Warning: %s not found; skipping interactive spec_tot' % filename)
+        print('Warning: %s not found; skipping spec_tot plot' % filename)
         return None
 
     freq = np.array(data['Freq.'], dtype=float)
-
     fig = go.Figure()
 
     for col, label, dash in [
-        ('Created',  'Created (ext)',    'solid'),
-        ('Emitted',  'Observed (tot)',   'solid'),
-        ('Wind',     'Observed (wind)',  'dash'),
-        ('HitSurf',  'Hit surface',      'dot'),
+        ('Created',  'Created (ext)',   'solid'),
+        ('Emitted',  'Observed (tot)',  'solid'),
+        ('Wind',     'Observed (wind)', 'dash'),
+        ('HitSurf',  'Hit surface',     'dot'),
     ]:
         try:
             y = freq * _smooth(np.array(data[col], dtype=float))
@@ -278,7 +263,6 @@ def make_interactive_spec_tot(root, include_plotlyjs=True):
                                      name=label, line=dict(dash=dash)))
         except Exception:
             pass
-
     try:
         y = freq * _smooth(np.array(data['WCreated'], dtype=float))
         fig.add_trace(go.Scatter(x=freq, y=y, mode='lines',
@@ -293,27 +277,21 @@ def make_interactive_spec_tot(root, include_plotlyjs=True):
 
     fig.update_xaxes(type='log', title='Frequency (Hz)')
     fig.update_yaxes(type='log', title='νL<sub>ν</sub>')
-    fig.update_layout(title='%s — spec_tot' % root, height=500, width=950,
-                      legend=dict(x=0.01, y=0.99))
-
+    fig.update_layout(title='%s — spectral energy distribution' % root,
+                      height=500, width=950, legend=dict(x=0.01, y=0.99))
     return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
 
 
-def make_interactive_spec(root, include_plotlyjs=False):
-    """
-    Build a Plotly flux vs wavelength figure from <root>.spec.
-    All inclination angles are togglable via the legend.
-    Returns an HTML div string on success, or None.
-    """
+def make_spec_div(root, include_plotlyjs=False):
+    """Interactive flux vs wavelength from <root>.spec; angles togglable."""
     filename = root + '.spec'
     try:
         data = ascii.read(filename)
     except IOError:
-        print('Warning: %s not found; skipping interactive spec' % filename)
+        print('Warning: %s not found; skipping angle spectra plot' % filename)
         return None
 
     wave = np.array(data['Lambda'], dtype=float)
-
     angle_cols = [c for c in data.colnames if c.startswith('A')]
     if not angle_cols:
         return None
@@ -328,128 +306,163 @@ def make_interactive_spec(root, include_plotlyjs=False):
     fig.update_yaxes(title='Flux')
     fig.update_layout(
         title='%s — angle spectra (click legend to toggle)' % root,
-        height=500, width=950,
-        legend=dict(x=0.01, y=0.99),
+        height=500, width=950, legend=dict(x=0.01, y=0.99),
     )
-
     return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
 
 
-def make_interactive_wind(root, master_file, outdir):
+def make_wind_2d_div(root, master_file,
+                     vars=('t_e', 't_r', 'ne', 'rho'),
+                     include_plotlyjs=False):
     """
-    Write a Plotly 3D wind HTML file via plot_wind_3d (kept separate due to size).
-    Returns the output path on success, or None.
+    Interactive heatmap subplots for a 2D (CYLIND or RTHETA) wind model.
+    Uses physical coordinates (log rho vs z) with the same masking as plot_wind.
     """
+    try:
+        data = ascii.read(master_file)
+    except IOError:
+        print('Warning: cannot read %s' % master_file)
+        return None
+
+    is_sph = 'rcen' in data.colnames
+    xcol = 'rcen' if is_sph else 'xcen'
+    ycol = 'thetacen' if is_sph else 'zcen'
+    # Fall back to x/z for plain 2D tables
+    if xcol not in data.colnames:
+        xcol, ycol = 'x', 'z'
+
+    ii = np.array(data['i'])
+    jj = np.array(data['j'])
+    ndim = int(np.max(ii)) + 1
+    mdim = int(np.max(jj)) + 1
+    inwind = np.array(data['inwind']).reshape(ndim, mdim)
+
+    x_raw = np.array(data[xcol]).reshape(ndim, mdim)
+    y_raw = np.array(data[ycol]).reshape(ndim, mdim)
+
+    # Log-scale the radial axis
+    xpos = x_raw[x_raw > 1]
+    xlogmin = np.log10(np.min(xpos) / 10) if len(xpos) else 0.0
+    x_plot = np.where(x_raw > 1, np.log10(x_raw), xlogmin)
+
+    nvars = len(vars)
+    ncols = min(2, nvars)
+    nrows = (nvars + 1) // 2
+    fig = make_subplots(rows=nrows, cols=ncols,
+                        subplot_titles=list(vars),
+                        horizontal_spacing=0.12,
+                        vertical_spacing=0.15)
+
+    for idx, var in enumerate(vars):
+        row = idx // ncols + 1
+        col = idx % ncols + 1
+        if var not in data.colnames:
+            continue
+        z = np.array(data[var], dtype=float).reshape(ndim, mdim)
+        mask = inwind < 0
+        z[mask] = np.nan
+        with np.errstate(divide='ignore', invalid='ignore'):
+            zlog = np.where(z > 0, np.log10(z), np.nan)
+        fig.add_trace(
+            go.Heatmap(z=zlog.T, x=x_plot[:, 0], y=y_raw[0, :],
+                       colorscale='Viridis', showscale=True,
+                       name='log(%s)' % var,
+                       hovertemplate='log(ρ)=%{x:.2g}<br>z=%{y:.2g}<br>'
+                                     + 'log(%s)' % var + '=%{z:.3f}<extra></extra>'),
+            row=row, col=col,
+        )
+        fig.update_xaxes(title_text='log(ρ)' if not is_sph else 'log(r)',
+                         row=row, col=col)
+        fig.update_yaxes(title_text='z' if not is_sph else 'θ (°)',
+                         row=row, col=col)
+
+    fig.update_layout(
+        title='%s — wind structure' % root,
+        height=420 * nrows, width=950,
+    )
+    return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
+
+
+def make_wind_1d_div(root, master_file,
+                     vars=('t_e', 't_r', 'ne', 'rho'),
+                     include_plotlyjs=False):
+    """
+    Interactive line plots for a 1D (spherical/shell) wind model.
+    """
+    try:
+        data = ascii.read(master_file)
+    except IOError:
+        print('Warning: cannot read %s' % master_file)
+        return None
+
+    rcol = 'rcen' if 'rcen' in data.colnames else 'xcen'
+    if rcol not in data.colnames:
+        rcol = 'x'
+
+    inwind = np.array(data['inwind'])
+    r = np.array(data[rcol], dtype=float)
+    mask = inwind >= 0
+
+    fig = go.Figure()
+    for var in vars:
+        if var not in data.colnames:
+            continue
+        y = np.array(data[var], dtype=float)
+        y[~mask] = np.nan
+        with np.errstate(divide='ignore', invalid='ignore'):
+            ylog = np.where(y > 0, np.log10(y), np.nan)
+        fig.add_trace(go.Scatter(x=r[mask], y=ylog[mask], mode='lines',
+                                 name='log(%s)' % var))
+
+    fig.update_xaxes(type='log', title='r (cm)')
+    fig.update_yaxes(title='log(value)')
+    fig.update_layout(title='%s — wind structure' % root,
+                      height=450, width=750, legend=dict(x=0.01, y=0.99))
+    return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
+
+
+def make_wind_3d_file(root, master_file, outdir):
+    """Write the 3D wind interactive HTML; returns the file path or None."""
     outfile = os.path.join(outdir, '%s_wind_interactive.html' % root)
-    result = plot_wind_3d.doit(master_file, var=['t_e', 't_r', 'ne', 'rho'],
-                                scale='log', outfile=outfile)
-    return result
+    return plot_wind_3d.doit(master_file, var=['t_e', 't_r', 'ne', 'rho'],
+                              scale='log', outfile=outfile)
 
 
 # ---------------------------------------------------------------------------
 # HTML summary
 # ---------------------------------------------------------------------------
 
-_convergence_description = '''
-The plot shows the fraction of cells satisfying convergence criteria for the
-radiation temperature (t_r), electron temperature (t_e), and
-heating-to-cooling ratio (hc).  A cell "converges" when all three criteria
-are met; "converging" cells are evolving monotonically rather than
-oscillating.
-'''
+def make_html(root, complete_message, errors, divs, wind_3d_path=None):
+    """
+    Write the HTML summary.
 
-_ne_description = '''
-Electron density throughout the wind (k=0 phi slice for 3D models).
-Traces the density structure; directly related to wind optical depth.
-'''
-
-_spec_tot_description = '''
-Photon budget from the last ionization cycle: photons created externally
-(star/disk), observed total, observed from wind, and those hitting the disk
-or star surface (nuLnu vs frequency).
-'''
-
-_spec_description = '''
-Angle-resolved spectra from the .spec file (flux vs wavelength).
-'''
-
-
-def make_html(root, converge_plot, te_plot, tr_plot, ne_plot,
-              spec_tot_plot, spec_plot, nspectra,
-              complete_message, errors,
-              interactive_spec_tot_div=None,
-              interactive_spec_div=None,
-              interactive_wind_path=None):
-    """Write the HTML summary page, embedding interactive plots inline."""
-
+    divs : ordered list of (heading, html_div_string) pairs; None entries skipped.
+    wind_3d_path : relative path to 3D wind iframe file, or None.
+    """
     string = xhtml.begin('%s: Run summary' % root)
     string += xhtml.paragraph('Summary for %s' % root)
     string += xhtml.hline()
 
-    # Completion status
     string += xhtml.h2('Run status')
     for msg in complete_message:
         string += xhtml.paragraph(msg)
 
-    # Convergence plot
-    if os.path.isfile('diag_%s/convergence.png' % root):
-        string += xhtml.h2('Convergence by cycle')
-        string += xhtml.paragraph(_convergence_description)
-        string += xhtml.image('file:./diag_%s/convergence.png' % root)
+    for heading, div in divs:
+        if div is None:
+            continue
+        string += xhtml.h2(heading)
+        string += div + '\n'
 
-    # Wind structure plots (static)
-    string += xhtml.h2('Wind structure (static)')
-    for plot, label in [(converge_plot, 'Convergence map'),
-                        (te_plot,       'Electron temperature'),
-                        (tr_plot,       'Radiation temperature'),
-                        (ne_plot,       'Electron density')]:
-        if plot and plot != 'none' and os.path.isfile(plot):
-            string += xhtml.paragraph(label)
-            string += xhtml.image('file:%s' % plot)
-    string += xhtml.paragraph(_ne_description)
-
-    # Interactive SED — embedded inline
-    if interactive_spec_tot_div:
-        string += xhtml.h2('Spectral energy distribution (interactive)')
-        string += xhtml.paragraph(_spec_tot_description)
-        string += interactive_spec_tot_div + '\n'
-    else:
-        if spec_tot_plot and os.path.isfile(spec_tot_plot):
-            string += xhtml.h2('Spectral energy distribution (static)')
-            string += xhtml.paragraph(_spec_tot_description)
-            string += xhtml.image('file:%s' % spec_tot_plot, width=800)
-
-    # Interactive angle spectra — embedded inline
-    if interactive_spec_div:
-        string += xhtml.h2('Angle spectra (interactive)')
-        string += xhtml.paragraph(_spec_description)
-        string += interactive_spec_div + '\n'
-    else:
-        if spec_plot and spec_plot != 'None' and spec_plot != 'none':
-            if os.path.isfile(str(spec_plot)):
-                string += xhtml.h2('Angle spectra (static)')
-                string += xhtml.paragraph(_spec_description)
-                string += xhtml.image('file:%s' % spec_plot, width=800)
-
-    # Interactive 3D wind — embedded via iframe (kept separate due to file size)
-    if interactive_wind_path:
+    if wind_3d_path:
         string += xhtml.h2('3D wind structure (interactive)')
         string += xhtml.paragraph(
-            'Use the sliders to explore different phi and z/theta slices.')
+            'Use the sliders to explore phi and z/theta slices.')
         string += ('<iframe src="%s" width="100%%" height="720px" '
                    'frameborder="0" style="border:1px solid #ccc;"></iframe>\n'
-                   % interactive_wind_path)
+                   % wind_3d_path)
 
-    if not PLOTLY_AVAILABLE:
-        string += xhtml.h2('Interactive plots')
-        string += xhtml.paragraph(
-            'Plotly is not installed; interactive plots were not generated. '
-            'Install with: pip install plotly')
-
-    # Errors
     string += xhtml.h2('Error summary')
     string += xhtml.preformat(errors)
-
     string += xhtml.end()
 
     htmlfile = root + '.html'
@@ -476,7 +489,6 @@ def doit(root='test'):
     for msg in complete_message:
         print(msg)
 
-    # Locate master file
     master_file = '%s.master.txt' % root
     if not os.path.exists(master_file):
         master_file = master_file.replace('master', '0.master')
@@ -489,86 +501,55 @@ def doit(root='test'):
     xdim = how_many_dimensions(master_file)
     print('Grid dimensionality: %dD' % xdim)
 
-    interactive_dir = './diag_%s/interactive' % root
-
     # ----------------------------------------------------------------
-    # Static wind plots (matplotlib)
-    # ----------------------------------------------------------------
-    plot_dir = './diag_%s' % root
-    if xdim == 3:
-        print('3D grid: generating k=0 phi-slice static wind plots')
-        converge_plot = plot_wind.doit(master_file, 'converge', plot_dir=plot_dir, k=0)
-        te_plot       = plot_wind.doit(master_file, 't_e',      plot_dir=plot_dir, k=0)
-        tr_plot       = plot_wind.doit(master_file, 't_r',      plot_dir=plot_dir, k=0)
-        ne_plot       = plot_wind.doit(master_file, 'ne',       plot_dir=plot_dir, k=0)
-    elif xdim == 2:
-        converge_plot = plot_wind.doit(master_file, 'converge', plot_dir=plot_dir)
-        te_plot       = plot_wind.doit(master_file, 't_e',      plot_dir=plot_dir)
-        tr_plot       = plot_wind.doit(master_file, 't_r',      plot_dir=plot_dir)
-        ne_plot       = plot_wind.doit(master_file, 'ne',       plot_dir=plot_dir)
-    else:
-        converge_plot = plot_wind_1d.doit(master_file, 'converge', plot_dir=plot_dir)
-        te_plot       = plot_wind_1d.doit(master_file, 't_e',      plot_dir=plot_dir)
-        tr_plot       = plot_wind_1d.doit(master_file, 't_r',      plot_dir=plot_dir)
-        ne_plot       = plot_wind_1d.doit(master_file, 'ne',       plot_dir=plot_dir)
-
-    # ----------------------------------------------------------------
-    # Convergence cycle plot
+    # Convergence (first div — embeds Plotly.js for whole page)
     # ----------------------------------------------------------------
     converged, converging, t_r, t_e, hc = read_diag(root)
     if len(converged) > 1:
-        plot_converged(root, converged, converging, t_r, t_e, hc)
+        conv_div = make_convergence_div(root, converged, converging, t_r, t_e, hc,
+                                        include_plotlyjs=True)
     else:
         print('Not enough cycles to plot convergence history')
+        conv_div = None
 
     # ----------------------------------------------------------------
-    # Static spectral plots
+    # Spectral plots (reuse already-loaded Plotly.js)
     # ----------------------------------------------------------------
-    plot_tot.doit(root)
-    spec_tot_plot = root + '.spec_tot.png'
-    try:
-        spec_plot, nspectra = plot_spec.do_mosaic(root, wmin=0, wmax=0)
-    except Exception:
-        print('Warning: could not generate static spectrum plot')
-        spec_plot = 'none'
-        nspectra = 0
+    spec_tot_div = make_spec_tot_div(root, include_plotlyjs=(conv_div is None))
+    spec_div = make_spec_div(root,
+                             include_plotlyjs=(conv_div is None and
+                                              spec_tot_div is None))
 
     # ----------------------------------------------------------------
-    # Interactive Plotly plots
+    # Wind structure plots
     # ----------------------------------------------------------------
-    interactive_spec_tot_div = None
-    interactive_spec_div     = None
-    interactive_wind_path    = None
+    wind_3d_path = None
+    wind_div = None
 
-    if PLOTLY_AVAILABLE:
-        print('Generating interactive Plotly plots ...')
-        # Embed Plotly.js in the first div produced; reuse it for the rest.
-        interactive_spec_tot_div = make_interactive_spec_tot(
-            root, include_plotlyjs=True)
-        interactive_spec_div = make_interactive_spec(
-            root, include_plotlyjs=(interactive_spec_tot_div is None))
-        if xdim == 3:
-            os.makedirs(interactive_dir, exist_ok=True)
-            wind_path = make_interactive_wind(root, master_file, interactive_dir)
-            if wind_path:
-                interactive_wind_path = os.path.relpath(wind_path)
+    if xdim == 3:
+        interactive_dir = './diag_%s/interactive' % root
+        os.makedirs(interactive_dir, exist_ok=True)
+        wind_path = make_wind_3d_file(root, master_file, interactive_dir)
+        if wind_path:
+            wind_3d_path = os.path.relpath(wind_path)
+    elif xdim == 2:
+        wind_div = make_wind_2d_div(root, master_file, include_plotlyjs=False)
     else:
-        print('Skipping interactive plots (Plotly not available)')
+        wind_div = make_wind_1d_div(root, master_file, include_plotlyjs=False)
 
     # ----------------------------------------------------------------
-    # Error summary
+    # HTML summary
     # ----------------------------------------------------------------
     errors = py_error(root)
 
-    # ----------------------------------------------------------------
-    # Write HTML summary
-    # ----------------------------------------------------------------
-    make_html(root, converge_plot, te_plot, tr_plot, ne_plot,
-              spec_tot_plot, spec_plot, nspectra,
-              complete_message, errors,
-              interactive_spec_tot_div=interactive_spec_tot_div,
-              interactive_spec_div=interactive_spec_div,
-              interactive_wind_path=interactive_wind_path)
+    divs = [
+        ('Convergence by cycle',              conv_div),
+        ('Spectral energy distribution',      spec_tot_div),
+        ('Angle spectra',                     spec_div),
+        ('Wind structure',                    wind_div),
+    ]
+
+    make_html(root, complete_message, errors, divs, wind_3d_path=wind_3d_path)
 
 
 # ---------------------------------------------------------------------------
