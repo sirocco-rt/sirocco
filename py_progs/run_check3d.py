@@ -294,13 +294,13 @@ def make_convergence_div(root, converged, converging, t_r, t_e, hc,
     return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
 
 
-def make_wind_3d_div(master_file, var, scale='log', inwind='',
+def make_wind_3d_div(master_file, var, scale='log', inwind='', grid='ij',
                      include_plotlyjs=False):
     """
     Inline interactive 3D wind plot for a single variable using plot_wind_3d.
     Returns an HTML div string or None.
     """
-    fig = plot_wind_3d._build_figure(master_file, var, scale=scale, inwind=inwind)
+    fig = plot_wind_3d._build_figure(master_file, var, scale=scale, inwind=inwind, grid=grid)
     if fig is None:
         return None
     return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
@@ -370,8 +370,7 @@ def make_wind_2d_div(root, master_file, vars=('t_e',), scale='log', inwind='',
         var_scale = 'lin' if var == 'converge' else scale
         x, y, z, title, xl, yl = _wind_heatmap_2d(
             data, xcol, ycol, var, var_scale,
-            inwind_arr if var != 'converge' else np.zeros_like(inwind_arr),
-            ndim, mdim, xlabel, ylabel)
+            inwind_arr, ndim, mdim, xlabel, ylabel)
         fig.add_trace(
             go.Heatmap(z=z, x=x, y=y, colorscale='Viridis', showscale=True,
                        name=title,
@@ -384,6 +383,7 @@ def make_wind_2d_div(root, master_file, vars=('t_e',), scale='log', inwind='',
         fig.update_yaxes(title_text=yl, row=row, col=col)
 
     fig.update_layout(title='%s — %s' % (root, ', '.join(vars)),
+                      plot_bgcolor='#eeeeee',
                       height=420 * nrows, width=950)
     return fig.to_html(full_html=False, include_plotlyjs=include_plotlyjs)
 
@@ -627,19 +627,19 @@ def doit(root='test'):
     print('Generating wind plots ...')
     if xdim == 3:
         converge_map_div = make_wind_3d_div(master_file, 'converge',
-                                            scale='lin', inwind='all', **kw)
+                                            scale='lin', **kw)
         te_div = make_wind_3d_div(master_file, 't_e', **kw)
         tr_div = make_wind_3d_div(master_file, 't_r', **kw)
         ne_div = make_wind_3d_div(master_file, 'ne',  **kw)
     elif xdim == 2:
         converge_map_div = make_wind_2d_div(root, master_file, vars=('converge',),
-                                            scale='lin', inwind='all', **kw)
+                                            scale='lin', **kw)
         te_div = make_wind_2d_div(root, master_file, vars=('t_e',), **kw)
         tr_div = make_wind_2d_div(root, master_file, vars=('t_r',), **kw)
         ne_div = make_wind_2d_div(root, master_file, vars=('ne',),  **kw)
     else:
         converge_map_div = make_wind_1d_div(root, master_file, vars=('converge',),
-                                            scale='lin', inwind='all', **kw)
+                                            scale='lin', **kw)
         te_div = make_wind_1d_div(root, master_file, vars=('t_e',), **kw)
         tr_div = make_wind_1d_div(root, master_file, vars=('t_r',), **kw)
         ne_div = make_wind_1d_div(root, master_file, vars=('ne',),  **kw)

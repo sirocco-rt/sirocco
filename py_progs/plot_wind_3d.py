@@ -271,6 +271,7 @@ def _build_figure(filename, var, scale='log', inwind='', j_slice=None, grid='phy
 
     fig.update_layout(
         title_text='%s  —  %s' % (os.path.basename(filename), title),
+        plot_bgcolor='#eeeeee',
         sliders=[
             dict(
                 active=0,
