@@ -615,7 +615,7 @@ int set_max_time(char *root, double t);
 int check_time(char *root);
 /* spectra.c */
 void spectrum_allocate(int nspec);
-int spectrum_init(double f1, double f2, int nangle, double angle[], double phase[], int scat_select[], int top_bot_select[], int select_extract, double rho_select[], double z_select[], double az_select[], double r_select[]);
+int spectrum_init(double f1, double f2, int nangle, double angle[], double observer_phi[], int scat_select[], int top_bot_select[], int select_extract, double rho_select[], double z_select[], double az_select[], double r_select[]);
 int spectrum_create(PhotPtr p, int nangle, int select_extract);
 int spec_add_one(PhotPtr p, int spec_type);
 int spectrum_summary(char filename[], int nspecmin, int nspecmax, int select_spectype, double renorm, int loglin, int iwind);

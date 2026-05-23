@@ -68,8 +68,11 @@ Spectrum.wavemax(Angstroms)                2600
 ### The observers and their location relative to the system
 Spectrum.no_observers                      3
 Spectrum.angle(0=pole)                     20
+Spectrum.phi(degrees)                      0.0
 Spectrum.angle(0=pole)                     75
+Spectrum.phi(degrees)                      0.0
 Spectrum.angle(0=pole)                     85
+Spectrum.phi(degrees)                      0.0
 Spectrum.live_or_die(live.or.die,extract)              extract
 Spectrum.type(flambda,fnu,basic)              flambda
 

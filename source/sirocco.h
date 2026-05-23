@@ -435,7 +435,7 @@ struct geometry
 
 #define NSPEC   20
   int nangles;   /**< The number of angles to create spectra for */
-  double angle[NSPEC], phase[NSPEC];  /**< The angle and associated binary phase (if relevant) for the extracted spectra */
+  double angle[NSPEC], observer_phi[NSPEC]; /**< Inclination angle and azimuthal observer angle (degrees) for extracted spectra */
   int scat_select[NSPEC], top_bot_select[NSPEC];  /**< Variables to constrain the spectra by number of scatters
                                                     * and whether the photons "originate" from above or relow the disk
                                                     * plane

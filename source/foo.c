@@ -125,7 +125,7 @@ calculate_ionization (int restart_stat)
     /* Initialize all of the arrays, etc, that need initialization for each cycle
      */
 
-    spectrum_init (freqmin, freqmax, geo.nangles, geo.angle, geo.phase,
+    spectrum_init (freqmin, freqmax, geo.nangles, geo.angle, geo.observer_phi,
                    geo.scat_select, geo.top_bot_select, geo.select_extract, geo.rho_select, geo.z_select, geo.az_select, geo.r_select);
 
     xsignal (files.root, "%-20s Begin wind radiative property initialisation\n", "NOK");
@@ -516,7 +516,7 @@ make_spectra (int restart_stat)
 
   if (geo.pcycle == 0)
   {
-    spectrum_init (freqmin, freqmax, geo.nangles, geo.angle, geo.phase,
+    spectrum_init (freqmin, freqmax, geo.nangles, geo.angle, geo.observer_phi,
                    geo.scat_select, geo.top_bot_select, geo.select_extract, geo.rho_select, geo.z_select, geo.az_select, geo.r_select);
 
     /* zero the portion of plasma main that records the numbers of scatters by
