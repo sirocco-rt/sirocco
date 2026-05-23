@@ -319,7 +319,7 @@ def _wind_heatmap_2d(data, xcol, ycol, var, scale, inwind_arr, ndim, mdim,
 
     z = np.array(data[var], dtype=float).reshape(ndim, mdim)
     if inwind != 'all':
-        mask = inwind_arr.reshape(ndim, mdim) < 0
+        mask = inwind_arr.reshape(ndim, mdim) != 0
         z[mask] = np.nan
 
     if scale == 'log':
@@ -400,7 +400,7 @@ def make_wind_1d_div(root, master_file, vars=('t_e',), scale='log', inwind='',
     rcol = 'rcen' if 'rcen' in data.colnames else ('xcen' if 'xcen' in data.colnames else 'x')
     inwind_arr = np.array(data['inwind'])
     r = np.array(data[rcol], dtype=float)
-    mask = inwind_arr >= 0
+    mask = inwind_arr == 0
 
     fig = go.Figure()
     for var in vars:

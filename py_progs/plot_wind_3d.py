@@ -75,7 +75,7 @@ def get_data(filename, var, scale='log', inwind=''):
     xvar = np.array(data[var], dtype=float)
 
     if inwind != 'all':
-        xvar[inwind_arr < 0] = np.nan
+        xvar[inwind_arr != 0] = np.nan
 
     # Reshape: storage order is i slowest, k fastest
     xvar_3d = xvar.reshape(ndim, mdim, pdim)
