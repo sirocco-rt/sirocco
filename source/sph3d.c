@@ -167,7 +167,6 @@ sph3d_wind_complete (int ndom, WindPtr w)
 {
   int i, j, k, n;
   int nstart, ndim, mdim, pdim;
-  double dphi;
   double r_outer, theta_outer_deg, theta_outer_rad;
   double theta_inner_deg, theta_inner_rad;
   DomainPtr one_dom;
@@ -177,7 +176,6 @@ sph3d_wind_complete (int ndom, WindPtr w)
   ndim = one_dom->ndim;
   mdim = one_dom->mdim;
   pdim = one_dom->pdim;
-  dphi = 2.0 * PI / pdim;
 
   /* Radial lookup array: read r from cell (i, j=0, k=0) */
   for (i = 0; i < ndim; i++)
@@ -197,14 +195,14 @@ sph3d_wind_complete (int ndom, WindPtr w)
     one_dom->wind_midz[j] = w[nstart + j * pdim].thetacen;
   one_dom->wind_midz[mdim - 1] = 2.0 * one_dom->wind_z[mdim - 1] - one_dom->wind_midz[mdim - 2];
 
-  /* Phi lookup array: uniform 0..2pi */
+  /* Phi lookup array: read from cell boundaries so non-uniform phi grids are supported */
   for (k = 0; k < pdim; k++)
-    one_dom->wind_phi[k] = k * dphi;
-  one_dom->wind_phi[pdim] = 2.0 * PI;
+    one_dom->wind_phi[k] = w[nstart + k].phi;
+  one_dom->wind_phi[pdim] = w[nstart + pdim - 1].phimax;
 
   /* Mid-phi */
   for (k = 0; k < pdim; k++)
-    one_dom->wind_midphi[k] = (k + 0.5) * dphi;
+    one_dom->wind_midphi[k] = w[nstart + k].phicen;
 
   /* Per-cell boundary data: xmax, rmax, thetamax, phimax, wcone, wcone_max */
   for (i = 0; i < ndim; i++)
@@ -225,7 +223,7 @@ sph3d_wind_complete (int ndom, WindPtr w)
 
         w[n].rmax = r_outer;
         w[n].thetamax = theta_outer_deg;
-        w[n].phimax = (k + 1) * dphi;
+        w[n].phimax = one_dom->wind_phi[k + 1];
 
         w[n].xmax[0] = r_outer * sin (theta_outer_rad);
         w[n].xmax[1] = 0.0;

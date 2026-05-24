@@ -276,7 +276,6 @@ cylind3d_wind_complete (int ndom, WindPtr w)
 {
   int i, j, k, n;
   int nstart, ndim, mdim, pdim;
-  double dphi;
   DomainPtr one_dom;
 
   one_dom = &zdom[ndom];
@@ -284,7 +283,6 @@ cylind3d_wind_complete (int ndom, WindPtr w)
   ndim = one_dom->ndim;
   mdim = one_dom->mdim;
   pdim = one_dom->pdim;
-  dphi = 2.0 * PI / pdim;
 
   /* Rho axis: read from k=0 column of each i-row */
   for (i = 0; i < ndim; i++)
@@ -305,13 +303,13 @@ cylind3d_wind_complete (int ndom, WindPtr w)
   one_dom->wind_midz[mdim - 1] = 2.0 * one_dom->wind_z[mdim - 1] - one_dom->wind_midz[mdim - 2];
   one_dom->wind_midz[0] = 2.0 * one_dom->wind_z[0] - one_dom->wind_midz[1];
 
-  /* Phi axis */
+  /* Phi axis: read from cell boundaries so non-uniform phi grids are supported */
   for (k = 0; k < pdim; k++)
-    one_dom->wind_phi[k] = k * dphi;
-  one_dom->wind_phi[pdim] = 2.0 * PI;
+    one_dom->wind_phi[k] = w[nstart + k].phi;
+  one_dom->wind_phi[pdim] = w[nstart + pdim - 1].phimax;
 
   for (k = 0; k < pdim; k++)
-    one_dom->wind_midphi[k] = (k + 0.5) * dphi;
+    one_dom->wind_midphi[k] = w[nstart + k].phicen;
 
   /* xmax: step one grid position forward in each axis */
   for (i = 0; i < ndim; i++)
