@@ -501,8 +501,20 @@ init_observers ()
   }
   else
   {
-    for (n = 0; n < geo.nangles; n++)
-      rddoub ("Spectrum.phi(degrees)", &geo.observer_phi[n]);
+    int has_3d = 0;
+    for (int ndom = 0; ndom < geo.ndomain; ndom++)
+    {
+      if (zdom[ndom].coord_type == CYLIND3D || zdom[ndom].coord_type == SPH3D)
+      {
+        has_3d = 1;
+        break;
+      }
+    }
+    if (has_3d)
+    {
+      for (n = 0; n < geo.nangles; n++)
+        rddoub ("Spectrum.phi(degrees)", &geo.observer_phi[n]);
+    }
   }
 
 
