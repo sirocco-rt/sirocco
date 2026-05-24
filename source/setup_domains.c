@@ -551,7 +551,11 @@ init_windcone (double r, double z, double dzdr, int allow_negative_dzdr, ConePtr
  * @param [in] ndom  Domain index
  * @return 0 on success
  *
- * Must be called after coord_type is set for the domain.
+ * @details
+ * Sets zdom[ndom].ops function pointers (where_in_grid, ds_in_cell,
+ * cell_volume, make_grid, get_random_location) based on coord_type and
+ * wind_type.  Must be called after coord_type is set, and again after
+ * reading zdom from a windsave file to replace the stale pointers.
  **********************************************************/
 
 int

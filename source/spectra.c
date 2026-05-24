@@ -5,10 +5,7 @@
  * @author ksl
  * @date   May, 2018
  *
- * @brief
- *
- * The subroutines in this file handle allocating, incrementing, and writing out the
- * spectrum arrays for Sirocco
+ * @brief  Routines to allocate, initialise, increment, and write the spectrum arrays
  *
 ***********************************************************/
 
@@ -99,8 +96,8 @@ spectrum_allocate (int nspec)
  * angle cosines and the names of each spectrum.
  *
  * ### Notes ###
- * angle[],phase[] and scat_select[] only apply to the spectra extracted at
- * specific angles.  angle[0], phase[0], and scat_select[0] all affect spec[3]
+ * angle[], observer_phi[] and scat_select[] only apply to the spectra extracted at
+ * specific angles.  angle[0], observer_phi[0], and scat_select[0] all affect spec[3]
  *
  * scat_select allows one to select spectra with a specific number of scattere or range og
  * scatters.  If nscat > 999 select all.  This is the normal case. The rest are used

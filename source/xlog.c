@@ -936,6 +936,19 @@ print_platform_info ()
   }
 }
 
+/**********************************************************/
+/**
+ * @brief  Print detailed virtual-memory statistics for this process in MB.
+ *
+ * @return  void
+ *
+ * @details
+ * Reads /proc/self/status and logs VmPeak, VmSize, VmRSS, VmHWM, and
+ * thread count.  Values in the file are in kB and are converted to MB
+ * before printing.  Does nothing on non-Linux platforms.
+ *
+ **********************************************************/
+
 void
 print_linux_detailed_memory ()
 {

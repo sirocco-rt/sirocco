@@ -691,21 +691,14 @@ cylind3d_extend_density (int ndom, WindPtr w)
 
 /**********************************************************/
 /**
- * @brief  Distance to the far boundary of a CYLIND3D cell.
+ * @brief  Distance along the photon path to a phi half-plane boundary.
  *
- * @param [in] ndom   Domain number
+ * @param [in] phi0   Azimuthal angle (radians) of the bounding half-plane
  * @param [in] p      Photon pointer (position p->x, direction p->lmn)
- * @return  Distance smax to the nearest cell boundary, or negative
- *          if the photon is not in the grid.
+ * @return  Travel distance t to the half-plane, or VERY_BIG if the ray
+ *          is parallel to or moving away from the plane.
  *
  * @details
- * Checks five boundaries: inner rho cylinder, outer rho cylinder,
- * lower z plane, upper z plane, and (for pdim > 1) the two phi
- * half-planes bounding the azimuthal sector.
- *
- * For pdim == 1 the cell covers the full 2π azimuth and there are
- * no phi boundaries, so the function reduces to cylind_ds_in_cell.
- *
  * A phi half-plane at angle phi0 is the set of points satisfying
  *   y·cos(phi0) − x·sin(phi0) = 0   with   x·cos(phi0) + y·sin(phi0) > 0.
  * The intersection time with the ray (x0+lx·t, y0+ly·t) is
@@ -736,6 +729,26 @@ ds_phi_boundary (double phi0, PhotPtr p)
   return (t);
 }
 
+
+/**********************************************************/
+/**
+ * @brief  Distance to the far boundary of a CYLIND3D cell.
+ *
+ * @param [in] ndom   Domain number
+ * @param [in] p      Photon pointer (position p->x, direction p->lmn)
+ * @return  Distance smax to the nearest cell boundary, or negative
+ *          if the photon is not in the grid.
+ *
+ * @details
+ * Checks five boundaries: inner rho cylinder, outer rho cylinder,
+ * lower z plane, upper z plane, and (for pdim > 1) the two phi
+ * half-planes bounding the azimuthal sector.  Uses ds_phi_boundary()
+ * for the phi half-plane intersections.
+ *
+ * For pdim == 1 the cell covers the full 2π azimuth and there are
+ * no phi boundaries, so the function reduces to cylind_ds_in_cell.
+ *
+ **********************************************************/
 
 double
 cylind3d_ds_in_cell (int ndom, PhotPtr p)
