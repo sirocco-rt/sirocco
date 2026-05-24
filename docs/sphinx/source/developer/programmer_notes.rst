@@ -1,9 +1,9 @@
 Programming Notes
 #################
 
-SIROCCO is written in C and is normally tested on linux machines and on Macs, where the compiler usually turns out to be clang. It is also regularly compiled with gcc as part of the travis-CI tests. Certain portions of the code are parallelized using the Message Parsing Interface (MPI).
+SIROCCO is written in C and is normally tested on linux machines and on Macs, where the compiler usually turns out to be clang. It is also regularly compiled with gcc as part of the GitHub Actions CI tests. Certain portions of the code are parallelized using the Message Parsing Interface (MPI).
 
-Version control is (obviously) managed through **git**.  The stable version is on the `master` branch; the main development is carried out on the `dev` branch. This is generally the branch to start with in developing new code. If possible, a developer should use the so-called Fork and Pull model for their version control workflow. See e.g. `this gist post <https://gist.github.com/Chaser324/ce0505fbed06b947d962>`_.
+Version control is (obviously) managed through **git**.  The stable version is on the ``main`` branch; the main development is carried out on the ``dev`` branch. This is generally the branch to start with in developing new code. If possible, a developer should use the so-called Fork and Pull model for their version control workflow. See e.g. `this gist post <https://gist.github.com/Chaser324/ce0505fbed06b947d962>`_.
 
 If one modifies the code, a developer needs to be sure to have ``$SIROCCO/py_progs`` both in ``PYTHONPATH`` and ``PATH``.  One should also have a version of indent installed, preferably but not necessarily gnu_indent installed.  This is because, the Makefile will call a script run_indent.py on files that the developer has changed, which enforces a specific indent style on the code.
 
@@ -113,6 +113,39 @@ appropriate sub-structure based on when it is read and written:
 * If it is set during initialization/wind updates and only read during transport → ``state``
 * If it is accumulated (``+=``) during transport and reduced across ranks → ``est``
 * If it is computed from estimators during wind updates and then broadcast → ``derived``
+
+Geometry dispatch vtable
+-------------------------
+
+Each wind domain has a ``GeomOps`` struct (field ``zdom[ndom].ops``) that holds
+function pointers for the coordinate-system-specific operations:
+
+.. code:: c
+
+    typedef struct {
+        int   (*where_in_grid)       (int ndom, double x[]);
+        double (*ds_in_cell)         (int ndom, PhotPtr p);
+        int   (*cell_volume)         (WindPtr cell);
+        int   (*make_grid)           (int ndom, WindPtr w);
+        int   (*get_random_location) (int n, double x[]);
+    } GeomOps;
+
+These are set by ``setup_geometry_ops(ndom)`` in ``setup_domains.c``, which
+dispatches on ``zdom[ndom].coord_type``.  Callers (``wind2d.c``,
+``photon2d.c``, ``define_wind.c``) invoke them as
+``zdom[ndom].ops.ds_in_cell(ndom, p)`` etc.
+
+**Important:** ``zdom`` is written as raw bytes to the wind-save file and read
+back the same way.  Because function pointers are process-address-space
+specific, the stored values are garbage in any other process.
+``wind_complete()`` in ``windsave.c`` therefore calls ``setup_geometry_ops()``
+for every domain immediately after reading the save, before any geometry
+routines run.  If you add a new coordinate system, add its dispatch in
+``setup_geometry_ops`` and ensure ``wind_complete`` handles it.
+
+When adding a new geometry operation, add the function pointer to ``GeomOps``
+in ``sirocco.h``, implement it for every coordinate system, wire it in
+``setup_geometry_ops``, and update ``templates.h`` via ``make prototypes``.
 
 
 Program Flow
