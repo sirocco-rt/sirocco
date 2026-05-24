@@ -622,6 +622,7 @@ smax_in_cell (PhotPtr p)
 
     Error ("translate_in_wind: Grid cell %d of photon is not in wind, moving photon %.2e\n", n, smax);
     Error ("translate_in_wind: photon %d position: x %g y %g z %g\n", p->np, p->x[0], p->x[1], p->x[2]);
+    smax += one->dfudge;        /* dfudge pushes photon past boundary so where_in_grid finds next cell */
     move_phot (p, smax);
     return (smax);
 
