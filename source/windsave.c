@@ -443,6 +443,10 @@ wind_complete ()
 
   for (ndom = 0; ndom < geo.ndomain; ndom++)
   {
+    /* Re-initialize function-pointer vtable: zdom was read raw from the
+     * windsave so stored pointers are from the previous process and invalid. */
+    setup_geometry_ops (ndom);
+
     if (zdom[ndom].coord_type == SPHERICAL)
     {
       spherical_wind_complete (ndom, wmain);
