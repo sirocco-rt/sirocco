@@ -233,13 +233,14 @@ cylind3d_make_grid (int ndom, WindPtr w)
       /* Now fill all phi slices for this (i, j) */
       for (k = 0; k < one_dom->pdim; k++)
       {
+        double phicen_k = (k + 0.5) * dphi;
         wind_ijk_to_n (ndom, i, j, k, &n);
 
         w[n].x[0] = rho_i;
         w[n].x[1] = 0.0;
         w[n].x[2] = z_lo;
-        w[n].xcen[0] = rho_icen;
-        w[n].xcen[1] = 0.0;
+        w[n].xcen[0] = rho_icen * cos (phicen_k);
+        w[n].xcen[1] = rho_icen * sin (phicen_k);
         w[n].xcen[2] = z_cen;
 
         w[n].phi = k * dphi;

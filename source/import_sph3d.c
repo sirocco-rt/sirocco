@@ -373,8 +373,8 @@ sph3d_make_grid_import (WindPtr w, int ndom)
     w[nn].phicen = m->wind_midphi[m->k[n]];
 
     thetacen_rad = w[nn].thetacen / RADIAN;
-    w[nn].xcen[0] = w[nn].rcen * sin (thetacen_rad);
-    w[nn].xcen[1] = 0.0;
+    w[nn].xcen[0] = w[nn].rcen * sin (thetacen_rad) * cos (w[nn].phicen);
+    w[nn].xcen[1] = w[nn].rcen * sin (thetacen_rad) * sin (w[nn].phicen);
     w[nn].xcen[2] = w[nn].rcen * cos (thetacen_rad);
 
     w[nn].v[0] = m->v_x[n];

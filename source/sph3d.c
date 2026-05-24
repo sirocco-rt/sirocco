@@ -119,6 +119,7 @@ sph3d_make_grid (int ndom, WindPtr w)
 
       for (k = 0; k < pdim; k++)
       {
+        double phicen_k = (k + 0.5) * dphi;
         wind_ijk_to_n (ndom, i, j, k, &n);
 
         w[n].r = r_ij;
@@ -129,8 +130,8 @@ sph3d_make_grid (int ndom, WindPtr w)
         w[n].x[0] = x0;
         w[n].x[1] = 0.0;
         w[n].x[2] = x2;
-        w[n].xcen[0] = xcen0;
-        w[n].xcen[1] = 0.0;
+        w[n].xcen[0] = xcen0 * cos (phicen_k);
+        w[n].xcen[1] = xcen0 * sin (phicen_k);
         w[n].xcen[2] = xcen2;
 
         w[n].phi = k * dphi;

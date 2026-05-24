@@ -370,8 +370,8 @@ cylindrical3d_make_grid_import (WindPtr w, int ndom)
     w[nn].phi = m->phi[n];
     w[nn].phimax = m->wind_phi[m->k[n] + 1];
 
-    w[nn].xcen[0] = m->wind_midx[m->i[n]];
-    w[nn].xcen[1] = 0.0;
+    w[nn].xcen[0] = m->wind_midx[m->i[n]] * cos (m->wind_midphi[m->k[n]]);
+    w[nn].xcen[1] = m->wind_midx[m->i[n]] * sin (m->wind_midphi[m->k[n]]);
     w[nn].xcen[2] = m->wind_midz[m->j[n]];
     w[nn].phicen = m->wind_midphi[m->k[n]];
 
