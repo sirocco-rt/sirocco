@@ -12,6 +12,13 @@ set ``pdim`` to the number of phi divisions in the import file.
 Unlike the z/theta direction, the phi dimension is **not** doubled for
 hemispheres: the grid always covers 0 to 2π in a single pass.
 
+For analytic wind models the phi cells are always uniformly spaced.  For
+imported models (``Wind.type = imported``) the phi spacing may be
+non-uniform, but the phi boundaries must be **strictly increasing** in k
+order and must span 0 to 2π.  The phi lookup grid is built from the ``phi``
+column of the cells at (i=0, j=0, k=0 … pdim-1), so every cell with the
+same k must carry the same phi boundary value.
+
 Type
   Integer
 

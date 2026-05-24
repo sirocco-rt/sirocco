@@ -11,6 +11,9 @@
  *
  * where x, z, phi are the cell corner coordinates (lower rho/z/phi
  * corner of the cell), and rho is the observer-frame mass density.
+ * Cells must be in row-major order (k varies fastest, then j, then i).
+ * The phi grid may be non-uniformly spaced but must be strictly increasing
+ * in k order and span 0 to 2pi.
  * Lines where sscanf returns fewer than READ_NO_TEMP_3D values are
  * silently skipped (handles comment/header lines).
  ***********************************************************/
@@ -365,6 +368,7 @@ cylindrical3d_make_grid_import (WindPtr w, int ndom)
     w[nn].x[1] = 0.0;
     w[nn].x[2] = m->z[n];
     w[nn].phi = m->phi[n];
+    w[nn].phimax = m->wind_phi[m->k[n] + 1];
 
     w[nn].xcen[0] = m->wind_midx[m->i[n]];
     w[nn].xcen[1] = 0.0;

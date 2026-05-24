@@ -151,8 +151,17 @@ A full 3-D model on a (rho, z, phi) grid, with phi running from 0 to 2 pi.
 * ``t_r`` (optional) — radiation temperature (K)
 
 The grid must be **complete**: all ``ndim × mdim × pdim`` cells must be
-present.  The phi grid must be **uniformly spaced** from 0 to 2 pi; the last
-phi boundary is set automatically to 2 pi and need not be supplied.
+present.
+
+.. admonition:: Phi ordering
+
+   Phi values must be **strictly increasing** in k order and must span the
+   full 0–2π azimuth.  The phi lookup grid is built from the ``phi`` column
+   of the cells at (i=0, j=0, k=0 … pdim-1), so all cells with the same k
+   must carry the same ``phi`` boundary value.  The phi spacing may be
+   non-uniform (e.g. finer sampling near a feature of interest), but the
+   boundaries must be monotonically increasing.  Photons at phi values
+   outside the covered range are silently clamped to the nearest edge cell.
 
 .. admonition:: Guard cells
 
@@ -190,7 +199,17 @@ Velocities must be given in **Cartesian** coordinates (not spherical
 components), consistent with all other SIROCCO coordinate systems.
 
 The grid must be **complete**: all ``ndim × mdim × pdim`` cells must be
-present.  The phi grid must be **uniformly spaced** from 0 to 2 pi.
+present.
+
+.. admonition:: Phi ordering
+
+   Phi values must be **strictly increasing** in k order and must span the
+   full 0–2π azimuth.  The phi lookup grid is built from the ``phi`` column
+   of the cells at (i=0, j=0, k=0 … pdim-1), so all cells with the same k
+   must carry the same ``phi`` boundary value.  The phi spacing may be
+   non-uniform, but the boundaries must be monotonically increasing.
+   Photons at phi values outside the covered range are silently clamped to
+   the nearest edge cell.
 
 .. admonition:: Hemisphere coverage
 

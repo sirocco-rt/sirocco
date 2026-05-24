@@ -17,8 +17,8 @@
  *   rho   is the mass density (g/cm^3)
  *
  * Cells must be written in row-major order (k varies fastest, then j, then i).
- * The phi grid must be uniformly spaced; sph3d_wind_complete will recompute
- * phimax as (k+1)*2pi/pdim.
+ * The phi grid may be non-uniformly spaced but must be strictly increasing in
+ * k order and span 0 to 2pi.  phimax is set from wind_phi[k+1] for each cell.
  *
  * Lines where sscanf returns fewer than READ_NO_TEMP_3D columns are skipped
  * (handles comment and header lines).
@@ -361,6 +361,7 @@ sph3d_make_grid_import (WindPtr w, int ndom)
     w[nn].r = m->r[n];
     w[nn].theta = m->theta[n];
     w[nn].phi = m->phi[n];
+    w[nn].phimax = m->wind_phi[m->k[n] + 1];
 
     theta_rad = m->theta[n] / RADIAN;
     w[nn].x[0] = m->r[n] * sin (theta_rad);
