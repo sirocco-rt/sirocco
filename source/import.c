@@ -159,8 +159,144 @@ import_set_wind_boundaries (int ndom)
 
 
 /**********************************************************/
-/** 
- * @brief      Make the Sirocco grid 
+/**
+ * @brief  Check that boundary slices of an imported grid carry guard cells.
+ *
+ * @param [in] ndom   Domain index
+ * @param [in] w      Wind array (cells already populated by make_grid_import)
+ * @return  void — calls Exit(1) if any boundary violation is found
+ *
+ * @details
+ * Guard cells (inwind == W_IGNORE) must line the outer edges of the grid so
+ * that photons exiting the wind pass through a transparent cell rather than
+ * leaving directly from an active wind cell.  Missing guard cells cause
+ * photon trapping or incorrect path lengths near the boundary.
+ *
+ * After the import make_grid functions run, user-supplied W_NOT_INWIND cells
+ * have been converted to W_IGNORE.  This routine checks that the outermost
+ * boundary slice in each required direction contains no W_ALL_INWIND cells.
+ * All violations are reported before the program exits.
+ *
+ * Boundaries checked by coordinate system:
+ *   SPHERICAL  -- skipped (import_1d forces guard cells programmatically)
+ *   CYLIND     -- outer rho (i=ndim-1), outer z (j=mdim-1)
+ *   RTHETA     -- outer r  (i=ndim-1), pole (j=0)
+ *   CYLIND3D   -- outer rho (i=ndim-1), outer z (j=mdim-1)
+ *   SPH3D      -- outer r  (i=ndim-1), pole (j=0)
+ * The phi direction never requires guard cells.
+ *
+ **********************************************************/
+
+static void
+check_import_guard_cells (int ndom, WindPtr w)
+{
+  int i, j, k;
+  int nstart, ndim, mdim, pdim;
+  int nbad, nbad_total;
+  DomainPtr one_dom;
+
+  one_dom = &zdom[ndom];
+  if (one_dom->coord_type == SPHERICAL)
+    return;
+
+  nstart = one_dom->nstart;
+  ndim = one_dom->ndim;
+  mdim = one_dom->mdim;
+  pdim = one_dom->pdim;
+  nbad_total = 0;
+
+  /* Outer radial boundary: i = ndim-1.
+   * 2D index: nstart + i*mdim + j
+   * 3D index: nstart + i*mdim*pdim + j*pdim + k          */
+  nbad = 0;
+  i = ndim - 1;
+  if (one_dom->coord_type == CYLIND || one_dom->coord_type == RTHETA)
+  {
+    for (j = 0; j < mdim; j++)
+      if (w[nstart + i * mdim + j].inwind == W_ALL_INWIND)
+        nbad++;
+    if (nbad)
+      Error ("check_import_guard_cells: domain %d outer radial boundary (i=%d) has %d/%d active cells; guard cells (inwind=-1) required\n",
+             ndom, i, nbad, mdim);
+  }
+  else
+  {
+    for (j = 0; j < mdim; j++)
+      for (k = 0; k < pdim; k++)
+        if (w[nstart + i * mdim * pdim + j * pdim + k].inwind == W_ALL_INWIND)
+          nbad++;
+    if (nbad)
+      Error ("check_import_guard_cells: domain %d outer radial boundary (i=%d) has %d/%d active cells; guard cells (inwind=-1) required\n",
+             ndom, i, nbad, mdim * pdim);
+  }
+  nbad_total += nbad;
+
+  /* Outer z boundary: j = mdim-1  (CYLIND and CYLIND3D only) */
+  if (one_dom->coord_type == CYLIND || one_dom->coord_type == CYLIND3D)
+  {
+    nbad = 0;
+    j = mdim - 1;
+    if (one_dom->coord_type == CYLIND)
+    {
+      for (i = 0; i < ndim; i++)
+        if (w[nstart + i * mdim + j].inwind == W_ALL_INWIND)
+          nbad++;
+      if (nbad)
+        Error ("check_import_guard_cells: domain %d outer z boundary (j=%d) has %d/%d active cells; guard cells (inwind=-1) required\n",
+               ndom, j, nbad, ndim);
+    }
+    else
+    {
+      for (i = 0; i < ndim; i++)
+        for (k = 0; k < pdim; k++)
+          if (w[nstart + i * mdim * pdim + j * pdim + k].inwind == W_ALL_INWIND)
+            nbad++;
+      if (nbad)
+        Error ("check_import_guard_cells: domain %d outer z boundary (j=%d) has %d/%d active cells; guard cells (inwind=-1) required\n",
+               ndom, j, nbad, ndim * pdim);
+    }
+    nbad_total += nbad;
+  }
+
+  /* Polar boundary: j = 0  (RTHETA and SPH3D only) */
+  if (one_dom->coord_type == RTHETA || one_dom->coord_type == SPH3D)
+  {
+    nbad = 0;
+    j = 0;
+    if (one_dom->coord_type == RTHETA)
+    {
+      for (i = 0; i < ndim; i++)
+        if (w[nstart + i * mdim + j].inwind == W_ALL_INWIND)
+          nbad++;
+      if (nbad)
+        Error ("check_import_guard_cells: domain %d polar boundary (j=0, theta~0) has %d/%d active cells; guard cells (inwind=-1) required\n",
+               ndom, nbad, ndim);
+    }
+    else
+    {
+      for (i = 0; i < ndim; i++)
+        for (k = 0; k < pdim; k++)
+          if (w[nstart + i * mdim * pdim + j * pdim + k].inwind == W_ALL_INWIND)
+            nbad++;
+      if (nbad)
+        Error ("check_import_guard_cells: domain %d polar boundary (j=0, theta~0) has %d/%d active cells; guard cells (inwind=-1) required\n",
+               ndom, nbad, ndim * pdim);
+    }
+    nbad_total += nbad;
+  }
+
+  if (nbad_total > 0)
+  {
+    Error ("check_import_guard_cells: domain %d has %d boundary cells missing guard status -- import file must supply inwind=-1 at all outer edges\n",
+           ndom, nbad_total);
+    Exit (1);
+  }
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Make the Sirocco grid
  *
  * @param [in] WindPtr  w  The entire wind structure
  * @param [in] int  ndom   The domain for the imported model
@@ -204,6 +340,8 @@ import_make_grid (int ndom, WindPtr w)
     Error ("import_wind: Do not know how to import a model of coord_type %d\n", zdom[ndom].coord_type);
     Exit (0);
   }
+
+  check_import_guard_cells (ndom, w);
 
   return (0);
 }

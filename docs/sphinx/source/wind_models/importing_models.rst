@@ -28,18 +28,24 @@ General rules for all import formats
   g/cm\ :sup:`3`, temperatures in K) unless stated otherwise.
 * Cell position coordinates are supplied at the **inner corner** (lower-left)
   of each cell, not at cell centres.
-* Ghost cells **must** be included at the outer edges of the grid and at the
-  poles (for polar-type grids).  Ghost cells should carry a plausible velocity
+* Guard cells **must** be included at the outer edges of the grid and at the
+  poles (for polar-type grids).  Guard cells should carry a plausible velocity
   but have density and temperature set to zero.
 * The ``inwind`` flag marks whether a cell is in the wind:
 
   .. code:: c
 
-     W_IGNORE      = -2   // ignore this grid cell
-     W_NOT_INWIND  = -1   // this cell is not in the wind
+     W_IGNORE      = -2   // ignore this grid cell (transparent to photons)
+     W_NOT_INWIND  = -1   // this cell is not in the wind (treated as W_IGNORE on import)
      W_ALL_INWIND  =  0   // this cell is in the wind
 
   Cells with ``inwind = 1`` (partially in wind) are treated as ``W_IGNORE``.
+
+  After the grid is built, SIROCCO checks that the required boundary slices
+  contain no active (``inwind = 0``) cells.  All violations are reported to
+  the error log, and then the program exits.  Every boundary that is missing
+  guard cells is listed before the exit so the full extent of the problem is
+  visible in one run.
 
 * Temperature columns are optional.  If one temperature value per cell is
   provided, SIROCCO treats it as the electron temperature and sets
