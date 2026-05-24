@@ -387,8 +387,8 @@ create_master_table (int ndom, char rootname[])
     /* First assemble the header line */
 
     sprintf (start,
-             "%8s %9s %9s %8s %9s %9s %4s %4s %4s %8s %7s %6s %8s %9s %9s %9s ", "x", "z", "phi", "xcen",
-             "zcen", "phicen", "i", "j", "k", "nwind", "nplasma", "inwind", "converge", "v_x", "v_y", "v_z");
+             "%8s %9s %9s %8s %9s %9s %9s %4s %4s %4s %8s %7s %6s %8s %9s %9s %9s ", "x", "z", "phi", "xcen",
+             "ycen", "zcen", "phicen", "i", "j", "k", "nwind", "nplasma", "inwind", "converge", "v_x", "v_y", "v_z");
     strcpy (one_line, start);
     n = 0;
     while (n < ncols)
@@ -406,9 +406,10 @@ create_master_table (int ndom, char rootname[])
     {
       wind_n_to_ijk (ndom, nstart + i, &ii, &jj, &kk);
       sprintf (start,
-               "%8.2e % 9.2e %9.2e %8.2e % 9.2e %9.2e %4d %4d %4d %8d %7d %6d %8.0f %9.2e %9.2e %9.2e ",
-               wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].phi,
-               wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], wmain[nstart + i].phicen,
+               "%8.2e % 9.2e %9.2e %8.2e % 9.2e % 9.2e %9.2e %4d %4d %4d %8d %7d %6d %8.0f %9.2e %9.2e %9.2e ",
+               wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].phi * RADIAN,
+               wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[1], wmain[nstart + i].xcen[2],
+               wmain[nstart + i].phicen * RADIAN,
                ii, jj, kk, wmain[nstart + i].nwind, wmain[nstart + i].nplasma,
                wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
@@ -428,8 +429,9 @@ create_master_table (int ndom, char rootname[])
     /* First assemble the header line */
 
     sprintf (start,
-             "%9s %9s %9s %9s %9s %9s %4s %4s %4s %8s %7s %6s %8s %9s %9s %9s ", "r", "theta", "phi", "rcen",
-             "thetacen", "phicen", "i", "j", "k", "nwind", "nplasma", "inwind", "converge", "v_x", "v_y", "v_z");
+             "%9s %9s %9s %9s %9s %9s %9s %9s %9s %4s %4s %4s %8s %7s %6s %8s %9s %9s %9s ", "r", "theta", "phi", "rcen",
+             "thetacen", "phicen", "xcen", "ycen", "zcen", "i", "j", "k", "nwind", "nplasma", "inwind", "converge", "v_x", "v_y",
+             "v_z");
     strcpy (one_line, start);
     n = 0;
     while (n < ncols)
@@ -447,9 +449,10 @@ create_master_table (int ndom, char rootname[])
     {
       wind_n_to_ijk (ndom, nstart + i, &ii, &jj, &kk);
       sprintf (start,
-               "%9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %4d %4d %4d %8d %7d %6d %8.0f %9.2e %9.2e %9.2e ",
-               wmain[nstart + i].r, wmain[nstart + i].theta, wmain[nstart + i].phi,
-               wmain[nstart + i].rcen, wmain[nstart + i].thetacen, wmain[nstart + i].phicen,
+               "%9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %4d %4d %4d %8d %7d %6d %8.0f %9.2e %9.2e %9.2e ",
+               wmain[nstart + i].r, wmain[nstart + i].theta, wmain[nstart + i].phi * RADIAN,
+               wmain[nstart + i].rcen, wmain[nstart + i].thetacen, wmain[nstart + i].phicen * RADIAN,
+               wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[1], wmain[nstart + i].xcen[2],
                ii, jj, kk, wmain[nstart + i].nwind, wmain[nstart + i].nplasma,
                wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
@@ -669,7 +672,7 @@ create_heat_table (int ndom, char rootname[])
 
     /* First assemble the header line */
 
-    sprintf (start, "%8s %8s %8s %4s %4s %4s %6s %8s %9s %9s %9s ", "xcen", "zcen", "phicen", "i", "j", "k",
+    sprintf (start, "%8s %8s %8s %8s %4s %4s %4s %6s %8s %9s %9s %9s ", "xcen", "ycen", "zcen", "phicen", "i", "j", "k",
              "inwind", "converge", "v_x", "v_y", "v_z");
     strcpy (one_line, start);
     n = 0;
@@ -687,8 +690,9 @@ create_heat_table (int ndom, char rootname[])
     for (i = 0; i < ndim2; i++)
     {
       wind_n_to_ijk (ndom, nstart + i, &ii, &jj, &kk);
-      sprintf (start, "%8.2e %8.2e %8.2e %4d %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
-               wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], wmain[nstart + i].phicen,
+      sprintf (start, "%8.2e %8.2e %8.2e %8.2e %4d %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+               wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[1], wmain[nstart + i].xcen[2],
+               wmain[nstart + i].phicen * RADIAN,
                ii, jj, kk, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
@@ -903,7 +907,7 @@ create_convergence_table (int ndom, char rootname[])
 
     /* First assemble the header line */
 
-    sprintf (start, "%8s %8s %8s %4s %4s %4s %6s %8s %9s %9s %9s ", "xcen", "zcen", "phicen", "i", "j", "k",
+    sprintf (start, "%8s %8s %8s %8s %4s %4s %4s %6s %8s %9s %9s %9s ", "xcen", "ycen", "zcen", "phicen", "i", "j", "k",
              "inwind", "converge", "v_x", "v_y", "v_z");
     strcpy (one_line, start);
     n = 0;
@@ -921,8 +925,9 @@ create_convergence_table (int ndom, char rootname[])
     for (i = 0; i < ndim2; i++)
     {
       wind_n_to_ijk (ndom, nstart + i, &ii, &jj, &kk);
-      sprintf (start, "%8.2e %8.2e %8.2e %4d %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
-               wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], wmain[nstart + i].phicen,
+      sprintf (start, "%8.2e %8.2e %8.2e %8.2e %4d %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+               wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[1], wmain[nstart + i].xcen[2],
+               wmain[nstart + i].phicen * RADIAN,
                ii, jj, kk, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
@@ -1120,7 +1125,7 @@ create_velocity_gradient_table (int ndom, char rootname[])
 
     /* First assemble the header line */
 
-    sprintf (start, "%8s %8s %8s %4s %4s %4s %6s %8s %9s %9s %9s ", "xcen", "zcen", "phicen", "i", "j", "k",
+    sprintf (start, "%8s %8s %8s %8s %4s %4s %4s %6s %8s %9s %9s %9s ", "xcen", "ycen", "zcen", "phicen", "i", "j", "k",
              "inwind", "converge", "v_x", "v_y", "v_z");
     strcpy (one_line, start);
     n = 0;
@@ -1138,8 +1143,9 @@ create_velocity_gradient_table (int ndom, char rootname[])
     for (i = 0; i < ndim2; i++)
     {
       wind_n_to_ijk (ndom, nstart + i, &ii, &jj, &kk);
-      sprintf (start, "%8.2e %8.2e %8.2e %4d %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
-               wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], wmain[nstart + i].phicen,
+      sprintf (start, "%8.2e %8.2e %8.2e %8.2e %4d %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+               wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[1], wmain[nstart + i].xcen[2],
+               wmain[nstart + i].phicen * RADIAN,
                ii, jj, kk, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
@@ -1322,7 +1328,7 @@ create_ion_table (int ndom, char rootname[], int iz, int ion_switch)
 
     /* First assemble the header line */
 
-    sprintf (start, "%8s %8s %8s %4s %4s %4s %6s ", "xcen", "zcen", "phicen", "i", "j", "k", "inwind");
+    sprintf (start, "%8s %8s %8s %8s %4s %4s %4s %6s ", "xcen", "ycen", "zcen", "phicen", "i", "j", "k", "inwind");
     strcpy (one_line, start);
     n = 0;
     while (n < number_ions)
@@ -1338,8 +1344,8 @@ create_ion_table (int ndom, char rootname[], int iz, int ion_switch)
     for (i = 0; i < ndim2; i++)
     {
       wind_n_to_ijk (ndom, nstart + i, &ii, &jj, &kk);
-      sprintf (start, "%8.2e %8.2e %8.2e %4d %4d %4d %6d ", wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2],
-               wmain[nstart + i].phicen, ii, jj, kk, wmain[nstart + i].inwind);
+      sprintf (start, "%8.2e %8.2e %8.2e %8.2e %4d %4d %4d %6d ", wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[1],
+               wmain[nstart + i].xcen[2], wmain[nstart + i].phicen * RADIAN, ii, jj, kk, wmain[nstart + i].inwind);
       strcpy (one_line, start);
       n = 0;
       while (n < number_ions)
@@ -2228,7 +2234,7 @@ create_spec_table (int ndom, char rootname[])
 
     /* First assemble the header line */
 
-    sprintf (start, "%8s %8s %8s %4s %4s %4s %6s %8s %6s ", "xcen", "zcen", "phicen", "i", "j", "k", "inwind", "converge", "nband");
+    sprintf (start, "%8s %8s %8s %8s %4s %4s %4s %6s %8s %6s ", "xcen", "ycen", "zcen", "phicen", "i", "j", "k", "inwind", "converge", "nband");
     strcpy (one_line, start);
     n = 0;
     while (n < ncols)
@@ -2248,9 +2254,9 @@ create_spec_table (int ndom, char rootname[])
       for (i = 0; i < ndim2; i++)
       {
         wind_n_to_ijk (ndom, nstart + i, &ii, &jj, &kk);
-        sprintf (start, "%8.2e %8.2e %8.2e %4d %4d %4d %6d %8.0f %6d ",
-                 wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], wmain[nstart + i].phicen,
-                 ii, jj, kk, wmain[nstart + i].inwind, converge[i], nx);
+        sprintf (start, "%8.2e %8.2e %8.2e %8.2e %4d %4d %4d %6d %8.0f %6d ",
+                 wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[1], wmain[nstart + i].xcen[2],
+                 wmain[nstart + i].phicen * RADIAN, ii, jj, kk, wmain[nstart + i].inwind, converge[i], nx);
         strcpy (one_line, start);
         n = 0;
         while (n < ncols)

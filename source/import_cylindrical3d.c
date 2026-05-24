@@ -9,11 +9,12 @@
  * The import file format is:
  *   i  j  k  inwind  x  z  phi  v_x  v_y  v_z  rho  [t_e  [t_r]]
  *
- * where x, z, phi are the cell corner coordinates (lower rho/z/phi
- * corner of the cell), and rho is the observer-frame mass density.
+ * where x, z are the cell corner coordinates (lower rho/z corner, in cm),
+ * phi is the lower azimuthal corner in degrees (0-360), and rho is the
+ * observer-frame mass density.  Sirocco converts phi to radians internally.
  * Cells must be in row-major order (k varies fastest, then j, then i).
  * The phi grid may be non-uniformly spaced but must be strictly increasing
- * in k order and span 0 to 2pi.
+ * in k order and span 0 to 360 degrees.
  * Lines where sscanf returns fewer than READ_NO_TEMP_3D values are
  * silently skipped (handles comment/header lines).
  ***********************************************************/
@@ -152,7 +153,7 @@ import_cylindrical3d (int ndom, char *filename)
     m->inwind[n] = inwind;
     m->x[n] = x;
     m->z[n] = z;
-    m->phi[n] = phi;
+    m->phi[n] = phi / RADIAN;
     m->v_x[n] = v_x;
     m->v_y[n] = v_y;
     m->v_z[n] = v_z;
@@ -216,10 +217,9 @@ import_cylindrical3d (int ndom, char *filename)
     delta = m->wind_z[md - 1] - m->wind_z[md - 2];
     m->wind_z[md] = m->wind_z[md - 1] + delta;
 
-    /* For phi the grid must close at 2*pi; the import file stores only the
-     * lower boundary of each cell, so add 2*pi as the upper edge of the last
-     * cell.  If pdim==1 (full torus collapsed to one phi cell) set 2*pi
-     * directly. */
+    /* Phi is stored internally in radians; the import file uses degrees.
+     * The grid must close at 2*pi; add it as the upper edge of the last cell.
+     * If pdim==1 (full torus collapsed to one phi cell) set 2*pi directly. */
     if (pd > 1)
       m->wind_phi[pd] = 2.0 * M_PI;
     else

@@ -12,13 +12,14 @@
  * where:
  *   r     is the inner radial boundary of the cell (cm)
  *   theta is the inner polar-angle boundary (degrees, 0-180)
- *   phi   is the inner azimuthal boundary (radians, 0-2pi)
+ *   phi   is the inner azimuthal boundary (degrees, 0-360)
  *   v_x, v_y, v_z are Cartesian velocity components (cm/s)
  *   rho   is the mass density (g/cm^3)
  *
  * Cells must be written in row-major order (k varies fastest, then j, then i).
  * The phi grid may be non-uniformly spaced but must be strictly increasing in
- * k order and span 0 to 2pi.  phimax is set from wind_phi[k+1] for each cell.
+ * k order and span 0 to 360 degrees.  Sirocco converts phi to radians
+ * internally.  phimax is set from wind_phi[k+1] for each cell.
  *
  * Lines where sscanf returns fewer than READ_NO_TEMP_3D columns are skipped
  * (handles comment and header lines).
@@ -157,7 +158,7 @@ import_sph3d (int ndom, char *filename)
     m->inwind[n] = inwind;
     m->r[n] = r;
     m->theta[n] = theta;
-    m->phi[n] = phi;
+    m->phi[n] = phi / RADIAN;
     m->v_x[n] = v_x;
     m->v_y[n] = v_y;
     m->v_z[n] = v_z;
