@@ -6,18 +6,20 @@ Create a CYLIND3D import file from a windsave2table master file.
 Read the master file produced by windsave2table for a CYLIND3D model
 and write a file that can be imported back into Sirocco.
 
-Command line usage:
+Command line usage::
+
     import_cyl3d.py rootname [outputfile]
 
     e.g.
         import_cyl3d.py agn_cyl3d
-    reads  agn_cyl3d.master.txt
-    writes agn_cyl3d.import.txt
+        reads  agn_cyl3d.master.txt
+        writes agn_cyl3d.import.txt
 
-Output columns (space-separated, readable by import_cylindrical3d.c):
+Output columns (space-separated, readable by import_cylindrical3d.c)::
+
     i  j  k  inwind  x  z  phi  v_x  v_y  v_z  rho  t_e  t_r
 
-where x, z, phi are the cell corner coordinates (lower-left-phi corner),
+where x and z are in cm, phi is the azimuthal lower boundary in degrees (0–360),
 rho is the observer-frame mass density (CMF rho * Lorentz gamma), and
 t_e, t_r are the electron and radiation temperatures.
 

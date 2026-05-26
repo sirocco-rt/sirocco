@@ -10,3 +10,5 @@ This page contains documentation intended for developers.
     developer/mpi_comms
     developer/cuda
     developer/tests
+    developer/regression
+    developer/meta

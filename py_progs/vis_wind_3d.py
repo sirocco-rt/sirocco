@@ -9,6 +9,9 @@ variable is coloured by log10(value).
 
 Command-line usage
 ------------------
+
+.. code-block:: text
+
     vis_wind_3d.py  master.txt  var1  [var2  var3 ...]  [options]
 
     master.txt   path to a windsave2table master.txt file
@@ -16,25 +19,39 @@ Command-line usage
 
 Options
 -------
-    -q           quantile (rank-based) colour normalisation: equal numbers of
-                 cells fall in each colour band.  The colorbar tick labels
-                 show the actual log10 values at selected quantiles.
-    -p lo hi     clip the colour scale to the lo-th and hi-th percentiles of
-                 the log10 values (e.g. -p 2 98).  Ignored when -q is used.
-    -a alpha     marker opacity, 0–1 (default 1.0).
-    -s size      marker size in pixels (default 3).
-    -c scale     Plotly colorscale name, e.g. Plasma, Inferno, Hot (default Viridis).
-                 Run `python -c "import plotly.express as px; print(px.colors.named_colorscales())"``
-                 for the full list of ~70 named scales.
-    -o file      output HTML path (default: <root>_<vars>.html beside input).
+
+``-q``
+    Quantile (rank-based) colour normalisation: equal numbers of cells fall
+    in each colour band.  Colorbar tick labels show actual log10 values at
+    selected quantiles.
+
+``-p lo hi``
+    Clip the colour scale to the lo-th and hi-th percentiles of the log10
+    values (e.g. ``-p 2 98``).  Ignored when ``-q`` is used.
+
+``-a alpha``
+    Marker opacity, 0–1 (default 1.0).
+
+``-s size``
+    Marker size in pixels (default 3).
+
+``-c scale``
+    Plotly colorscale name, e.g. Plasma, Inferno, Hot (default Viridis).
+
+``-o file``
+    Output HTML path (default: <root>_<vars>.html beside input).
 
 Output
 ------
-    A self-contained HTML file.  Open in any browser; rotating one panel
-    rotates all panels to the same viewpoint.
+
+A self-contained HTML file.  Open in any browser; rotating one panel
+rotates all panels to the same viewpoint.
 
 Python usage
 ------------
+
+.. code-block:: python
+
     from vis_wind_3d import vis_wind_3d
     vis_wind_3d('run.master.txt', ['rho', 'ne', 't_e'],
                 quantile=True, alpha=0.7)

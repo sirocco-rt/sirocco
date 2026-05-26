@@ -138,7 +138,7 @@ A 2.5-D model on a (r, theta) grid.
 3-D Cylindrical Grids (CYLIND3D)
 ---------------------------------
 
-A full 3-D model on a (rho, z, phi) grid, with phi running from 0 to 2 pi.
+A full 3-D model on a (rho, z, phi) grid, with phi running from 0 to 360°.
 
 **Required columns** (one row per cell, k varies fastest, then j, then i):
 
@@ -148,7 +148,7 @@ A full 3-D model on a (rho, z, phi) grid, with phi running from 0 to 2 pi.
 * ``inwind``         — in-wind flag
 * ``x``              — cylindrical rho coordinate at lower-rho corner (cm)
 * ``z``              — z coordinate at lower-z corner (cm)
-* ``phi``            — azimuthal lower boundary (radians, 0–2 pi)
+* ``phi``            — azimuthal lower boundary (degrees, 0–360)
 * ``v_x``            — x velocity (cm/s)
 * ``v_y``            — y velocity (cm/s)
 * ``v_z``            — z velocity (cm/s)
@@ -162,12 +162,12 @@ present.
 .. admonition:: Phi ordering
 
    Phi values must be **strictly increasing** in k order and must span the
-   full 0–2π azimuth.  The phi lookup grid is built from the ``phi`` column
+   full azimuth (0–360°).  The phi lookup grid is built from the ``phi`` column
    of the cells at (i=0, j=0, k=0 … pdim-1), so all cells with the same k
    must carry the same ``phi`` boundary value.  The phi spacing may be
    non-uniform (e.g. finer sampling near a feature of interest), but the
-   boundaries must be monotonically increasing.  Photons at phi values
-   outside the covered range are silently clamped to the nearest edge cell.
+   boundaries must be monotonically increasing.  Sirocco converts phi to
+   radians internally; the import file always uses degrees.
 
 .. admonition:: Guard cells
 
@@ -177,13 +177,13 @@ present.
 .. admonition:: Single phi-slice (axisymmetric)
 
    Setting ``pdim = 1`` in the import file (all cells have ``k = 0``) gives a
-   single phi slice covering the full 0–2 pi azimuth, equivalent to the 2-D
+   single phi slice covering the full 360° azimuth, equivalent to the 2-D
    cylindrical case.
 
 3-D Spherical Polar Grids (SPH3D)
 -----------------------------------
 
-A full 3-D model on a (r, theta, phi) grid, with phi running from 0 to 2 pi.
+A full 3-D model on a (r, theta, phi) grid, with phi running from 0 to 360°.
 
 **Required columns** (one row per cell, k varies fastest, then j, then i):
 
@@ -193,7 +193,7 @@ A full 3-D model on a (r, theta, phi) grid, with phi running from 0 to 2 pi.
 * ``inwind``         — in-wind flag
 * ``r``              — inner radial boundary (cm)
 * ``theta``          — inner polar-angle boundary (degrees, 0–180)
-* ``phi``            — inner azimuthal boundary (radians, 0–2 pi)
+* ``phi``            — inner azimuthal boundary (degrees, 0–360)
 * ``v_x``            — x velocity (cm/s)
 * ``v_y``            — y velocity (cm/s)
 * ``v_z``            — z velocity (cm/s)
@@ -210,12 +210,11 @@ present.
 .. admonition:: Phi ordering
 
    Phi values must be **strictly increasing** in k order and must span the
-   full 0–2π azimuth.  The phi lookup grid is built from the ``phi`` column
+   full azimuth (0–360°).  The phi lookup grid is built from the ``phi`` column
    of the cells at (i=0, j=0, k=0 … pdim-1), so all cells with the same k
    must carry the same ``phi`` boundary value.  The phi spacing may be
    non-uniform, but the boundaries must be monotonically increasing.
-   Photons at phi values outside the covered range are silently clamped to
-   the nearest edge cell.
+   Sirocco converts phi to radians internally; the import file always uses degrees.
 
 .. admonition:: Hemisphere coverage
 
@@ -239,8 +238,8 @@ Example format (first two cells of a small SPH3D grid):
 .. code::
 
    i  j  k  inwind  r       theta   phi     v_x     v_y     v_z     rho     t_e    t_r
-   0  0  0    -1    1.4e9   0.0     0.0000  0.0     0.0     0.0     0.0     0.0    0.0
-   0  0  1    -1    1.4e9   0.0     1.5708  0.0     0.0     0.0     0.0     0.0    0.0
+   0  0  0    -1    1.4e9   0.0     0.0     0.0     0.0     0.0     0.0     0.0    0.0
+   0  0  1    -1    1.4e9   0.0     90.0    0.0     0.0     0.0     0.0     0.0    0.0
 
 Setting Wind Temperatures
 -------------------------

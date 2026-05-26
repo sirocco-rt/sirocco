@@ -5,8 +5,10 @@ Primarily to verify that changes made to SIROCCO do not inadvertently cause unex
 if models, several routines exist to run a fixed set of (relatively fast) models that are
 **nominally**  contained in Examples/regress.
 
-Developers are encouraged to use this routines, before they merge anything into one of the
-major branches of SIROCCO.
+Developers are encouraged to use these routines before merging into any major branch of SIROCCO.
+A fuller description of the regression framework, including the 3D test suite
+(``examples/regress3d/``) and the interactive ``run_check3d.py`` diagnostic tool, can be found
+in the :doc:`Developer Documentation <../developer/regression>`.
 
 The routines involved are
 

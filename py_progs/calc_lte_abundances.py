@@ -7,50 +7,48 @@ Synopsis:
 Calculate LTE ion abundances using Sirocco atomic data and the Saha equation.
 
 
-Command line usage:
+Command line usage::
 
-    Single temperature calculation:
-        calc_lte_abundances.py masterfile temperature nh
-        calc_lte_abundances.py data/standard80.dat 10000 1e10
+    calc_lte_abundances.py masterfile temperature nh
+    calc_lte_abundances.py data/standard80.dat 10000 1e10
 
-    Multi-temperature calculation (do_many):
-        calc_lte_abundances.py -many [options]
-        calc_lte_abundances.py -many -masterfile data/standard80.dat -nh 1e10
-        calc_lte_abundances.py -many -log_tmin 4 -log_tmax 5 -n_per_decade 20
-        calc_lte_abundances.py -many -ion_tables
+    calc_lte_abundances.py -many [options]
+    calc_lte_abundances.py -many -masterfile data/standard80.dat -nh 1e10
+    calc_lte_abundances.py -many -log_tmin 4 -log_tmax 5 -n_per_decade 20
+    calc_lte_abundances.py -many -ion_tables
 
-    Options for -many mode:
-        -masterfile FILE   Atomic data masterfile (default: data/h20_hetop_standard80.dat)
-        -nh VALUE          Hydrogen number density in cm^-3 (default: 1e9)
-        -log_tmin VALUE    Log10 of minimum temperature (default: 3)
-        -log_tmax VALUE    Log10 of maximum temperature (default: 6)
-        -n_per_decade N    Number of temperature points per decade (default: 30)
-        -outfile FILE      Output filename (default: auto-generated from masterfile)
-        -ion_tables        Also produce per-element ion tables (like windsave2table format)
+Options for ``-many`` mode:
+
+- ``-masterfile FILE``  Atomic data masterfile (default: data/h20_hetop_standard80.dat)
+- ``-nh VALUE``         Hydrogen number density in cm^-3 (default: 1e9)
+- ``-log_tmin VALUE``   Log10 of minimum temperature (default: 3)
+- ``-log_tmax VALUE``   Log10 of maximum temperature (default: 6)
+- ``-n_per_decade N``   Number of temperature points per decade (default: 30)
+- ``-outfile FILE``     Output filename (default: auto-generated from masterfile)
+- ``-ion_tables``       Also produce per-element ion tables (like windsave2table format)
 
 Description:
 
-    This script calculates ionization equilibrium using the Saha equation,
-    following the approach in Sirocco's saha.c. It reads atomic data from
-    a masterfile and computes ion fractions for a given temperature and
-    hydrogen number density.
+This script calculates ionization equilibrium using the Saha equation,
+following the approach in Sirocco's saha.c. It reads atomic data from
+a masterfile and computes ion fractions for a given temperature and
+hydrogen number density.
 
-    Before running, ensure that Setup_Sirocco_Dir has been run to create
-    the necessary symlinks so that file paths in the masterfile are valid.
+Before running, ensure that Setup_Sirocco_Dir has been run to create
+the necessary symlinks so that file paths in the masterfile are valid.
 
-    The -ion_tables option produces additional output files for each element,
-    with ion fractions as columns (i01, i02, etc.) similar to the format
-    produced by windsave2table.
+The -ion_tables option produces additional output files for each element,
+with ion fractions as columns (i01, i02, etc.) similar to the format
+produced by windsave2table.
 
 Primary routines:
 
-    steer           Processes command line options and calls do_one or do_many
-    do_one          Loads data, runs calculation for a single temperature
-    do_many         Runs calculations over a range of temperatures, writes table
-    get_ion         Extracts per-element tables from do_many output
-    calc_ionization Performs the ionization calculation, returns results as
-                    a list of dictionaries suitable for conversion to a Table
-    read_atomicdata Reads atomic data from a masterfile
+- ``steer``            Processes command line options and calls do_one or do_many
+- ``do_one``           Loads data, runs calculation for a single temperature
+- ``do_many``          Runs calculations over a range of temperatures, writes table
+- ``get_ion``          Extracts per-element tables from do_many output
+- ``calc_ionization``  Performs the ionization calculation
+- ``read_atomicdata``  Reads atomic data from a masterfile
 
 Notes:
 

@@ -426,3 +426,53 @@ The chunk size is computed at runtime as
 1000 cells per chunk and 13 Allreduce calls instead of one for big.pf.
 Peak transient memory is reduced from ~1.17 GB to ~50 MB at the cost of
 a small increase in Allreduce call overhead.
+
+3D models (CYLIND3D and SPH3D)
+================================
+
+3D coordinate types add a third azimuthal (phi) grid dimension, but this
+requires no special-casing in the MPI layer.
+
+Cell indexing and distribution
+-------------------------------
+
+For a 2D domain (CYLIND, RTHETA, SPHERICAL), ``ndim2 = ndim × mdim``.
+For a 3D domain (CYLIND3D or SPH3D), ``ndim2 = ndim × mdim × pdim``, where
+``pdim`` is the number of azimuthal slices (set by the
+``Wind.dim.in.phi.direction`` parameter).  Cells within a 3D domain are stored
+in a flat array with index ``nstart + i*(mdim*pdim) + j*pdim + k``.
+
+The global ``NDIM2`` is the sum of ``ndim2`` across all domains, so it already
+accounts for the phi dimension.  ``get_max_cells_per_rank(NDIM2)`` and
+``get_parallel_nrange()`` divide this flat array uniformly across ranks without
+any knowledge of coord type.  Wind-grid initialisation (``define_wind.c``)
+distributes NDIM2 cells to ranks in the same way for all coord types.
+
+Wind grid broadcast
+--------------------
+
+``broadcast_wind_grid()`` in ``communicate_wind.c`` packs and broadcasts every
+field of ``wmain[n]`` for all NDIM2 cells.  This includes the azimuthal
+coordinate fields ``phi``, ``phicen``, and ``phimax``, which are set to their
+geometric values for CYLIND3D/SPH3D cells and are simply zero for cells in
+2D/1D domains.  No conditional logic is needed: the broadcast is
+coord-type-agnostic.
+
+Plasma and macro-atom communication
+-------------------------------------
+
+Plasma and macro-atom communication functions (``communicate_plasma.c``,
+``communicate_macro.c``) operate on ``NPLASMA``, the number of active plasma
+cells.  This count depends on the wind geometry (how many cells are flagged as
+in-wind) but not on whether the coord type is 2D or 3D.  The same pack/bcast/
+unpack pattern and shared-memory layout therefore apply identically to 3D models.
+
+Memory implications
+--------------------
+
+A 3D model with ``ndim × mdim × pdim`` cells has a larger ``NDIM2`` than the
+equivalent 2D model, which increases the size of ``wmain`` proportionally.
+The shared ``wmain`` window (see `Shared wind structure`_ above) ensures that
+only one copy exists per node regardless of grid size.  Plasma cell counts
+(NPLASMA) remain determined by the wind density structure, not the full grid
+volume, and are typically much smaller than NDIM2 for both 2D and 3D models.

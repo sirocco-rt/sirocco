@@ -6,24 +6,27 @@ Create a SPH3D import file from a windsave2table master file.
 Read the master file produced by windsave2table for a SPH3D model
 and write a file that can be imported back into Sirocco.
 
-Command line usage:
+Command line usage::
+
     import_sph3d.py rootname [outputfile]
 
     e.g.
         import_sph3d.py cv_sph3d
-    reads  cv_sph3d.master.txt
-    writes cv_sph3d.import.txt
+        reads  cv_sph3d.master.txt
+        writes cv_sph3d.import.txt
 
-Output columns (space-separated, readable by import_sph3d.c):
+Output columns (space-separated, readable by import_sph3d.c)::
+
     i  j  k  inwind  r  theta  phi  v_x  v_y  v_z  rho  t_e  t_r
 
-where:
-    r      is the inner radial boundary of the cell (cm)
-    theta  is the inner polar-angle boundary (degrees, 0-180)
-    phi    is the inner azimuthal boundary (radians, 0-2pi)
-    v_x, v_y, v_z  are Cartesian velocity components (cm/s)
-    rho    is the observer-frame mass density (CMF rho * Lorentz gamma, g/cm^3)
-    t_e, t_r  are the electron and radiation temperatures (K)
+Column descriptions:
+
+- ``r``       inner radial boundary of the cell (cm)
+- ``theta``   inner polar-angle boundary (degrees, 0–180)
+- ``phi``     inner azimuthal boundary (degrees, 0–360)
+- ``v_x, v_y, v_z``  Cartesian velocity components (cm/s)
+- ``rho``     observer-frame mass density (CMF rho * Lorentz gamma, g/cm³)
+- ``t_e, t_r``  electron and radiation temperatures (K)
 
 The SPH3D master.txt corner coordinates are labelled r, theta, phi
 (distinct from the cell-centre columns rcen, thetacen, phicen).
