@@ -614,7 +614,11 @@ main (int argc, char *argv[])
   Log ("There are %d domains\n", geo.ndomain);
   for (n = 0; n < geo.ndomain; n++)
   {
-    Log ("%20s type: %3d  ndim: %3d mdim: %3d ndim2: %4d\n", zdom[n].name, zdom[n].wind_type, zdom[n].ndim, zdom[n].mdim, zdom[n].ndim2);
+    if (zdom[n].coord_type == CYLIND3D || zdom[n].coord_type == SPH3D)
+      Log ("%20s type: %3d  ndim: %3d mdim: %3d pdim: %3d ndim2: %4d\n",
+           zdom[n].name, zdom[n].wind_type, zdom[n].ndim, zdom[n].mdim, zdom[n].pdim, zdom[n].ndim2);
+    else
+      Log ("%20s type: %3d  ndim: %3d mdim: %3d ndim2: %4d\n", zdom[n].name, zdom[n].wind_type, zdom[n].ndim, zdom[n].mdim, zdom[n].ndim2);
   }
 
 

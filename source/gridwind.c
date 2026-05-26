@@ -1004,7 +1004,7 @@ calloc_matom_matrix (int nelem)
     return (0);
   }
 
-  /* Free any previously allocated blocks */
+  /* Free any previously allocated blocks (handles mode switch from matrix to mc_jumps on re-call) */
   if (macro_block_ptrs.matom_matrix_block != NULL)
   {
 #ifdef MPI_ON
@@ -1013,6 +1013,13 @@ calloc_matom_matrix (int nelem)
     free_block ((void **) &macro_block_ptrs.matom_matrix_block, &MACRO_WIN (win_matom_matrix), was_shared);
     free (macro_block_ptrs.matom_matrix_rowptrs);
     macro_block_ptrs.matom_matrix_rowptrs = NULL;
+  }
+
+  /* In mc_jumps mode no cell uses the matrix: skip the shared allocation entirely */
+  if (modes.store_matom_matrix == FALSE)
+  {
+    Log_silent ("Skipping matom_matrix allocation (mc_jumps mode)\n");
+    return (0);
   }
 
 #ifdef MPI_ON

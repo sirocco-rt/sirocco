@@ -294,10 +294,13 @@ transition probability matrix ``matom_matrix``) are shared, while estimator arra
 
 The ``matom_matrix`` (an *nrows × nrows* transition probability matrix per cell,
 where *nrows = nlevels_macro + 1*) is allocated as a single contiguous shared
-block in ``calloc_matom_matrix()``.  The flat data (``NPLASMA × nrows × nrows``
-doubles) lives in ``macro_block_ptrs.matom_matrix_block`` (shared), while a
-private per-rank array of row-pointers (``matom_matrix_rowptrs``) points into
-the shared block to preserve the ``double **`` interface used throughout the code.
+block in ``calloc_matom_matrix()`` — but only when the ``matrix``
+macro-atom transition mode is active (``modes.store_matom_matrix == TRUE``).
+In ``mc_jumps`` mode the block is not allocated at all.  When allocated, the
+flat data (``NPLASMA × nrows × nrows`` doubles) lives in
+``macro_block_ptrs.matom_matrix_block`` (shared), while a private per-rank
+array of row-pointers (``matom_matrix_rowptrs``) points into the shared block
+to preserve the ``double **`` interface used throughout the code.
 The matrix is computed during wind updates — each rank fills its own cell slice —
 then broadcast via ``broadcast_macro_atom_state_matrix()`` so all nodes obtain
 a complete copy.  The ``MPI_Barrier(node_comm)`` at the end of that function
@@ -366,13 +369,17 @@ NPLASMA: for a model with 80K cells and 29 ranks, this adds approximately
 177 MB of per-rank savings.
 
 The transition probability matrix ``matom_matrix`` (``nrows × nrows`` doubles
-per cell, allocated by ``calloc_matom_matrix()``) is also placed in shared
-memory.  For the ``h20_hetop_standard80`` atomic dataset (85 macro-atom levels,
-*nrows* = 86) and a 300×300 grid with ~12,000 active plasma cells, this matrix
-totals approximately 726 MB.  Without shared memory each of the *R* ranks holds
-its own copy; with shared memory there is one copy per node.  On a 24-rank
-single-node run this saves roughly ``726 × 23 ≈ 16.7 GB`` of physical memory,
-making it the single largest shared-memory saving in the code.
+per cell, allocated by ``calloc_matom_matrix()``) is placed in shared memory
+only when the ``matrix`` macro-atom transition mode is selected
+(``modes.store_matom_matrix == TRUE``).  In ``mc_jumps`` mode the allocation
+is skipped entirely, saving the full shared block.  When the matrix is
+allocated — for the ``h20_hetop_standard80`` atomic dataset (85 macro-atom
+levels, *nrows* = 86) and a 300×300 grid with ~12,000 active plasma cells —
+it totals approximately 726 MB.  Without shared memory each of the *R* ranks
+holds its own copy; with shared memory there is one copy per node.  On a
+24-rank single-node run this saves roughly ``726 × 23 ≈ 16.7 GB`` of physical
+memory, making it the single largest shared-memory saving in the code when
+using matrix mode.
 
 Shared wind structure
 ^^^^^^^^^^^^^^^^^^^^^
@@ -392,6 +399,22 @@ these via ``wind_paths_main[cell_index]`` instead of ``wmain[cell_index]``.
 For a 300x300 grid (NDIM2 = 90,000, ``sizeof(wind_dummy)`` = 288 bytes),
 this saves approximately ``90000 * 288 * (R-1)/R`` bytes, or about 25 MB
 per rank with 29 ranks.
+
+``matom_matrix`` allocation and mc_jumps mode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``calloc_matom_matrix()`` in ``gridwind.c`` allocates the shared
+``NPLASMA × nrows × nrows`` block only when ``modes.store_matom_matrix`` is
+TRUE (i.e., the ``matrix`` macro-atom transition mode is selected).  In
+``mc_jumps`` mode ``modes.store_matom_matrix`` is FALSE, so the allocation is
+skipped entirely and the block remains NULL.  This avoids wasting a shared
+memory window of roughly ``NPLASMA × (nlevels\_macro+1)^2 × 8`` bytes per
+node — approximately 300–700 MB per node for a typical macro-atom dataset and
+a 3D grid — in runs that never use the matrix.
+
+The check is made after freeing any previously allocated block, so a re-run
+that switches from ``matrix`` to ``mc_jumps`` mode correctly frees the old
+window before returning.
 
 Single-node optimisation for matom_matrix broadcast
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
