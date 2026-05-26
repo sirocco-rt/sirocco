@@ -35,6 +35,11 @@ cd source && make INDENT=no sirocco      # skip auto-indentation
 - `make rad_hydro_files`, `make modify_wind`, `make inspect_wind` — wind utilities
 - `make sirocco_optd` — optical depth calculations
 
+**Clean build artifacts**:
+```bash
+cd source && make clean
+```
+
 **Unit tests** (requires CUnit + cmake):
 ```bash
 make check                    # from top-level
@@ -43,7 +48,9 @@ cd source && make check       # from source directory
 
 **Running Sirocco**:
 ```bash
+$SIROCCO/bin/Setup_Sirocco_Dir              # set up working directory with symlinks
 sirocco parameter_file.pf                    # serial
+sirocco -i root                              # interactive mode (creates parameter file)
 mpirun -n 4 sirocco parameter_file.pf       # parallel with MPI
 ```
 
@@ -102,6 +109,28 @@ Support scripts for data processing, visualization, and code maintenance:
 - `source/tests/Makefile` includes the main source Makefile and links all Sirocco source for unit tests
 - `get_models.c` cannot be included in `sirocco_source` list (prototype generation issue) but is added separately to object lists
 - `make prototypes` regenerates `templates.h`, `log.h`, `atomic_proto.h`, `math_proto.h` via `cproto`
+
+## Dependencies
+- GSL 2.6 (bundled in `software/`)
+- CUnit 3.2.7 (bundled in `software/`, requires CMake)
+- MPI: OpenMPI or MPICH (`mpicc`)
+- Optional: cfitsio (for FITS output via `windsave2fits`)
+- Optional: CUDA (for GPU matrix operations via `--with-cuda`)
+
+## Parameter Files
+
+Sirocco uses `.pf` parameter files with key-value pairs:
+```
+System_type(star,cv,bh,agn,previous)       cv
+Central_object.mass(msol)                   0.8
+Wind.type(SV,star,hydro,corona,...)         sv
+Photons_per_cycle                           100000
+```
+Example files are in `examples/basic/`, `examples/extended/`, and `examples/gh-workflow/`.
+
+## Documentation
+- Full docs: https://sirocco-rt.readthedocs.io
+- Model spectra (optional): clone `https://github.com/sirocco-rt/xmod` into `xmod/`
 
 ## Coding Conventions
 - GNU indent style enforced automatically on changed files during build (unless `INDENT=no`)
