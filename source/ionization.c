@@ -474,6 +474,7 @@ static double lte_heat_photo_orig, lte_heat_ff_orig;
 static double lte_heat_comp_orig, lte_heat_ind_comp_orig;
 static double lte_heat_lines_orig, lte_heat_auger_orig;
 static double lte_heat_lines_macro_orig, lte_heat_photo_macro_orig;
+static double lte_heat_qrecomb_macro_orig;
 static double lte_heat_ch_ex_orig;
 
 
@@ -860,11 +861,15 @@ zero_emit_lte (double t)
   /* Now subtract the original macro contributions (which are included
      in the scaled heat_photo and heat_lines above) and replace with
      freshly computed macro heating at the new temperature and densities */
+  /* note that we have to include collisional recombination (qrecomb) */
   xxxplasma->heat_photo -= lte_heat_photo_macro_orig;
+  xxxplasma->heat_photo -= lte_heat_qrecomb_macro_orig;
 
-  xxxplasma->heat_photo_macro = macro_bf_heating (xxxplasma, t);
-
+  xxxplasma->heat_photo_macro = macro_photo_heating (xxxplasma, t);
   xxxplasma->heat_photo += xxxplasma->heat_photo_macro;
+
+  xxxplasma->heat_qrecomb_macro = macro_qrecomb_heating (xxxplasma, t);
+  xxxplasma->heat_photo += xxxplasma->heat_qrecomb_macro;
 
   xxxplasma->heat_lines_macro = macro_bb_heating (xxxplasma, t);
 
@@ -951,6 +956,7 @@ calc_te_lte (PlasmaPtr xplasma, double tmin, double tmax)
   lte_heat_auger_orig = xplasma->heat_auger;
   lte_heat_lines_macro_orig = xplasma->heat_lines_macro;
   lte_heat_photo_macro_orig = xplasma->heat_photo_macro;
+  lte_heat_qrecomb_macro_orig = xplasma->heat_qrecomb_macro;
   lte_heat_ch_ex_orig = xplasma->heat_ch_ex;
 
   /* Evaluate heating-cooling difference at bracket endpoints */
