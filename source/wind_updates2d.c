@@ -202,7 +202,6 @@ wind_update (WindPtr w)
     }
   }
   /* Finished updating region outside of wind */
-
   /* Check the balance between the absorbed and the emitted flux */
   /* NSH 0717 - ensure the cooling and luminosities reflect the current temperature */
 
@@ -281,8 +280,12 @@ wind_update (WindPtr w)
     cool_macro_photo_sum += plasmamain[n_plasma].cool_bf_macro;
     cool_macro_lines_sum += plasmamain[n_plasma].cool_lines_macro;
     cool_macro_di_sum += plasmamain[n_plasma].cool_di_macro;
-    macro_energy_in += macromain[n_plasma].energy_flow_in;
-    macro_energy_out += macromain[n_plasma].energy_flow_out;
+
+    if (geo.rt_mode == RT_MODE_MACRO)
+    {
+      macro_energy_in += macromain[n_plasma].energy_flow_in;
+      macro_energy_out += macromain[n_plasma].energy_flow_out;
+    }
   }
 
   /* We can now calculate the average of the t */
@@ -735,8 +738,12 @@ init_macro_rad_properties (void)
     plasmamain[n_plasma].kpkt_emiss = 0.0;
     plasmamain[n_plasma].kpkt_abs = 0.0;
 
-    macromain[n_plasma].energy_flow_out = 0.0;
-    macromain[n_plasma].energy_flow_in = 0.0;
+
+    if (geo.rt_mode == RT_MODE_MACRO)   /* macromain is only allocated if geo.rt_mode == RT_MODE_MACRO */
+    {
+      macromain[n_plasma].energy_flow_out = 0.0;
+      macromain[n_plasma].energy_flow_in = 0.0;
+    }
 
     for (macro_level = 0; macro_level < nlevels_macro; ++macro_level)
     {
@@ -759,7 +766,6 @@ init_macro_rad_properties (void)
 
   /* calculating recomb_sp and recomb_simple is expensive due to calls to
    * `alpha_sp()` , so we do this part of the initialisation in parallel */
-
 #ifdef MPI_ON
   n_cells = get_parallel_nrange (rank_global, NPLASMA, np_mpi_global, &n_start, &n_stop);
 #else
