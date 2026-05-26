@@ -27,6 +27,18 @@ NVCC =
 EXTRA_FLAGS = -DMATOM_VER=$(MATOM_VER)
 LDFLAGS =
 
+# On macOS the linker warns (and reduces) alignment of __DATA,__common when
+# large uninitialized globals push the common section alignment past 0x4000.
+# -fno-common places each global in its own section, avoiding the issue.
+# Linux behaviour is unchanged.
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S), Darwin)
+	EXTRA_FLAGS += -fno-common
+	CP = cp -f
+else
+	CP = cp --remove-destination
+endif
+
 # Use the next line if you want to change the c compiler that mpicc uses, or
 # better, set this outside the Makefile. Use unset to go back to the default cc
 # export OMPI_MPICC=gcc-11
@@ -241,7 +253,7 @@ endif
 
 sirocco: startup sirocco.o $(sirocco_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) sirocco.o $(sirocco_objects) $(CUDA_OBJECTS) $(kpar_objects) $(LDFLAGS) -o sirocco
-	cp --remove-destination $@ $(BIN)/sirocco
+	$(CP) $@ $(BIN)/sirocco
         ifdef XDEBUG
 	  mv $@ $(BIN)/sirocco-$(VERSION)_debug
         else
@@ -273,50 +285,50 @@ run_indent:
 
 swind: startup $(swind_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(swind_objects) $(CUDA_OBJECTS) $(LDFLAGS) -o swind
-	cp --remove-destination $@ $(BIN)
+	$(CP) $@ $(BIN)
 	mv $@ $(BIN)/swind-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 windsave2table: startup $(table_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(table_objects) $(CUDA_OBJECTS) $(LDFLAGS) -o windsave2table
-	cp --remove-destination $@ $(BIN)
+	$(CP) $@ $(BIN)
 	mv $@ $(BIN)/windsave2table-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 windsave2fits: startup $(windsave2fits_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(windsave2fits_objects) $(CUDA_OBJECTS) $(LDFLAGS) -lcfitsio -o windsave2fits 
-	cp --remove-destination $@ $(BIN)
+	$(CP) $@ $(BIN)
 	mv $@ $(BIN)/windsave2fits-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 rad_hydro_files: startup $(rhf_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(rhf_objects) $(CUDA_OBJECTS) $(LDFLAGS) -o rad_hydro_files
-	cp --remove-destination $@ $(BIN)
+	$(CP) $@ $(BIN)
 	mv $@ $(BIN)/rad_hydro_files-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 modify_wind: startup $(modify_wind_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(modify_wind_objects) $(CUDA_OBJECTS) $(LDFLAGS) -o modify_wind
-	cp --remove-destination $@ $(BIN)
+	$(CP) $@ $(BIN)
 	mv $@ $(BIN)/modify_wind-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 inspect_wind: startup $(inspect_wind_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(inspect_wind_objects) $(CUDA_OBJECTS) $(LDFLAGS)  -o inspect_wind
-	cp --remove-destination $@ $(BIN)
+	$(CP) $@ $(BIN)
 	mv $@ $(BIN)/inspect_wind-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 
 test_cooling: startup $(test_cooling_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(test_cooling_objects) $(CUDA_OBJECTS) $(LDFLAGS)  -o test_cooling 
-	cp --remove-destination $@ $(BIN)
+	$(CP) $@ $(BIN)
 	mv $@ $(BIN)/test_cooling-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 sirocco_optd: startup $(sirocco_optd_obj) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(sirocco_optd_obj) $(CUDA_OBJECTS) $(LDFLAGS) -o $@
-	cp --remove-destination $@ $(BIN)
+	$(CP) $@ $(BIN)
 	mv $@ $(BIN)/sirocco_optd-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
@@ -324,7 +336,7 @@ sirocco_optd: startup $(sirocco_optd_obj) $(CUDA_OBJECTS)
 # everything in the main routine before one can probe a particular routine.
 unit_test: startup unit_test.o $(sirocco_objects)
 	$(CC) ${CFLAGS} unit_test.o $(sirocco_objects) $(kpar_objects) $(LDFLAGS) -o unit_test
-	cp --remove-destination $@ $(BIN)/unit_test
+	$(CP) $@ $(BIN)/unit_test
 	# Fix indenting, if necessary.
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
