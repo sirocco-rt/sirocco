@@ -80,8 +80,8 @@ def compare(f1='sv_master.txt',f2='sv_master.txt',var='t_r',grid='ij',inwind='',
 
     
 
+    pylab.close(fig_no)
     pylab.figure(fig_no,(18,6))
-    pylab.clf()
     pylab.subplot(131)
 
     ax=pylab.gca()
@@ -267,8 +267,8 @@ def just_plot(x,y,xvar,root,title,xlabel,ylabel,fig_no=1,vmin=0,vmax=0):
 
     '''
 
+    pylab.close(fig_no)
     pylab.figure(fig_no,(6,6))
-    pylab.clf()
     ax=pylab.gca()
     cmap=copy.copy(pylab.cm.jet)
     cmap.set_bad(color='white')

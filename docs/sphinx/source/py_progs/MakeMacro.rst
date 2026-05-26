@@ -94,4 +94,7 @@ API Documentation
 
     MakeMacro
     MacroCombine
+    Macro2Simple
     RedoPhot
+    RedoUpsilon
+    photo_xs

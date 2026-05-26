@@ -3,9 +3,10 @@
 
 .. automodule:: import_rtheta
 
-
+   
    .. rubric:: Functions
 
    .. autosummary::
-
+   
       doit
+   

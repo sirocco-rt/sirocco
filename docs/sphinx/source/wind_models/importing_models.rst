@@ -3,366 +3,325 @@
 Importing Models
 ################
 
-SIROCCO can read 1D or 2.5D grids of density and velocity, instead of setting up
-the model from an analytic prescription. Caution should be exercised with this
-mode, as it is still in a development phase, and the mode requires the user to
-ensure that things like mass and angular momentum conservation are enforced.
+SIROCCO can read 1-D, 2.5-D, or full 3-D grids of density and velocity
+instead of setting up the model from an analytic prescription.  Caution should
+be exercised with this mode, as it is still in a development phase, and the
+mode requires the user to ensure that things like mass and angular momentum
+conservation are enforced.
 
-This mode is activated via wind type option "imported", which triggers an extra
-question, e.g.
+This mode is activated via the wind type ``imported``, which triggers an extra
+question for the file to import, e.g.
 
 .. code::
 
    Wind.type(SV,star,hydro,corona,kwd,homologous,shell,imported)             imported
-   Wind.coord_system(spherical,cylindrical,polar)          cylindrical
+   Wind.coord_system(spherical,cylindrical,polar,cyl3d,sph3d)               cylindrical
    Wind.model2import                    cv.import.txt
 
 An example in cylindrical geometry, :code:`cv_import.pf`, is given with a
 supplementary grid file in :code:`examples/beta/`.
-The format expected in the grid input file for such a cylindrical model is as
-follows, although the column headers lines are actually not read.
 
-.. code::
+General rules for all import formats
+=====================================
 
-   i  j  inwind    x      z     v_x   v_y   v_z     rho   t_e    t_r
-   -- -- ------  -----  -----  ----- ----- -----   ----- -----  -----
-   0  0    -1    1.4e9  3.5e9   0.0   0.0   6e5     0.0   0.0    0.0
-   0  1     0    1.4e9  3.5e10  1e5   0.0   2e6     1e9   0.0    0.0
+* All physical units are CGS (velocities in cm/s, lengths in cm, densities in
+  g/cm\ :sup:`3`, temperatures in K) unless stated otherwise.
+* Cell position coordinates are supplied at the **inner corner** (lower-left)
+  of each cell, not at cell centres.
+* Guard cells **must** be included at the outer edges of the grid and at the
+  poles (for polar-type grids).  Guard cells should carry a plausible velocity
+  but have density and temperature set to zero.
+* The ``inwind`` flag marks whether a cell is in the wind:
 
-where all physical units are CGS. i and j refer to the rows and
-columns of the wind cells respectively, while inwind tells the code whether
-the cell is in the wind (:code:`0`), or out of the wind (:code:`-1`). If a
-partially in wind flag is provided (:code:`1`), the code defaults to treating
-this cell as not in the wind. This could in principle be adapted, but means that
-for the moment this mode is most useful when using models with sufficiently high
-resolution or covering factors that partially in wind cells are unimportant.
+  .. code:: c
 
-The other input files have slightly different formats.  The best way to see the
-format is use the process described at the end of the page.
+     W_IGNORE      = -2   // ignore this grid cell (transparent to photons)
+     W_NOT_INWIND  = -1   // this cell is not in the wind (treated as W_IGNORE on import)
+     W_ALL_INWIND  =  0   // this cell is in the wind
 
-Creating your own model
-=======================
+  Cells with ``inwind = 1`` (partially in wind) are treated as ``W_IGNORE``.
 
-In order to create your own model, there are a few important things to consider:
+  After the grid is built, SIROCCO checks that the required boundary slices
+  contain no active (``inwind = 0``) cells.  All violations are reported to
+  the error log, and then the program exits.  Every boundary that is missing
+  guard cells is listed before the exit so the full extent of the problem is
+  visible in one run.
 
-* all units should be CGS (except for indices and flags, which are integers)
-* x and z for cylindrical (or r and theta for spherical polar) coordinates are
-  supplied at the edges, rather than centres, of cells. Thus, a given cell is
-  described by the location of it's bottom left hand corner in (x,z) space.
-* Ghost cells **must** be included. This means that additional rows and columns
-  of cells must be included at the edges of the grid, and they must be excluded
-  from the wind so that their temperatures and densities are set to zero, but
-  have a velocity that SIROCCO can interpolate with.
-* i and j correspond to rows and columns respectively, so that the first row of
-  cells at the disk plane has i = 0.
-* rho the density of the cell in cgs units
-* The t_e and t_r columns are optional and correspond to the electron and
-  radiation temperature
-
-Although :code:`cv_import.pf` is designed to closely match the
-:code:`cv_standard.pf` model, it does not match the model perfectly as
-the imported model does not deal with 'partially in wind' cells. As such,
-we generally recommend imported models are used for either wind models
-that entirely fill the grid or that have sufficiently high resolution
-that the partial filled cells are relatively unimportant.
+* Temperature columns are optional.  If one temperature value per cell is
+  provided, SIROCCO treats it as the electron temperature and sets
+  :math:`T_r = 1.1\,T_e`.  If two values are provided, the first is taken as
+  :math:`T_e` and the second as :math:`T_r`.  If no temperature is provided,
+  both are initialised from the ``Wind.t.init`` parameter.
 
 Spherical Grids
 ---------------
 
-Using a spherical coordinate system, a 1D spherically symmetric model can be
-read into SIROCCO.
+A 1-D spherically symmetric model.
 
-To read in a grid of this type, the following columns are required for each cell:
+**Required columns** (one row per cell, i increasing outward):
 
-* i                        :  the element number for each cell
-* inwind                   :  a flag indicating whether the cell is in the wind or not
-* :math:`r`                :  the radial coordinate in CGS
-* :math:`v_{r}`            :  the radial velocity in CGS
-* :math:`\rho`             :  the mass density in CGS
-* :math:`T_{e}` (optional) :  the electron temperature in Kelvin
-* :math:`T_{r}` (optional) :  the radiation temperature in Kelvin
+* ``i``              — cell index
+* ``inwind``         — in-wind flag
+* ``r``              — inner radial boundary (cm)
+* ``v_r``            — radial velocity (cm/s)
+* ``rho``            — mass density (g/cm\ :sup:`3`)
+* ``t_e`` (optional) — electron temperature (K)
+* ``t_r`` (optional) — radiation temperature (K)
 
-.. admonition :: Grid Coordinates
+.. admonition:: Guard cells
 
-    The radial coordinates of the cells must be constantly increasing in size.
+   Three guard cells are expected: one at the inner edge and two at the outer
+   edge.  The radial coordinate must be strictly increasing.
 
 Cylindrical Grids
 -----------------
 
-Using cylindrical coordinates, a 2.5D model can be read into SIROCCO.
+A 2.5-D axisymmetric model on a (rho, z) grid.
 
-.. admonition :: Grid Coordinates and hemisphere coverage
+**Required columns** (one row per cell):
 
-    Grid coordinates and velocities are specified in Cartesian coordinates.
-    The :math:`z` column gives the **signed** z coordinate.  SIROCCO detects
-    hemisphere coverage from the data:
+* ``i``              — radial (rho) index
+* ``j``              — vertical (z) index
+* ``inwind``         — in-wind flag
+* ``x``              — cylindrical rho coordinate (cm)
+* ``z``              — signed z coordinate (cm); negative for lower hemisphere
+* ``v_x``            — x velocity (cm/s)
+* ``v_y``            — y velocity (cm/s)
+* ``v_z``            — z velocity (cm/s)
+* ``rho``            — mass density (g/cm\ :sup:`3`)
+* ``t_e`` (optional) — electron temperature (K)
+* ``t_r`` (optional) — radiation temperature (K)
 
-    * If all :math:`z` values are ≥ 0 (**single-hemisphere** file), lower-
-      hemisphere photons are automatically folded to their mirrored upper-
-      hemisphere cell so the wind is symmetric about the disk plane.
-    * If any :math:`z` value is < 0 (**two-hemisphere** file), each cell is
-      used for the hemisphere it belongs to, allowing asymmetric winds.
+.. admonition:: Hemisphere coverage
 
-To read in a grid of this type, the following columns are required for each cell:
+   If all ``z`` values are ≥ 0 (**single-hemisphere** file), lower-hemisphere
+   photons are automatically folded to the mirror upper-hemisphere cell.
+   If any ``z`` value is < 0 (**two-hemisphere** file), each cell is used for
+   the hemisphere it belongs to, allowing asymmetric winds.
 
-* i                        :  the i element number (row)
-* j                        :  the j element number (column)
-* inwind                   :  a flag indicating whether the cell is in the wind or not
-* :math:`x`                :  the x coordinate in CGS
-* :math:`z`                :  the z coordinate in CGS
-* :math:`v_x`              :  the velocity in the x direction in CGS
-* :math:`v_y`              :  the velocity in the y direction in CGS
-* :math:`v_z`              :  the velocity in the z direction in CGS
-* :math:`\rho`             :  the mass density in CGS
-* :math:`T_{e}` (optional) :  the electron temperature in Kelvin
-* :math:`T_{r}` (optional) :  the radiation temperature in Kelvin
+.. admonition:: Guard cells
 
-.. admonition :: Two-hemisphere grids
-
-    SIROCCO supports cylindrical grids that span both hemispheres, with z
-    running from negative values (lower hemisphere) to positive values (upper
-    hemisphere).  The two-hemisphere case is detected automatically when the
-    first z coordinate in the file is negative.  Single-hemisphere grids have
-    z :math:`\geq 0` throughout.
-
-    The z extent does **not** need to be equal above and below the disk plane:
-    the grid may reach further in one hemisphere than the other, and the wind
-    (as controlled by the ``inwind`` flags) may be confined entirely to one
-    hemisphere.  SIROCCO uses the actual signed z boundaries of each cell and
-    does not assume bilateral symmetry for two-hemisphere files.
-
-.. admonition :: Unstructed/non-linear Grids
-
-    In principle, it is possible to read in an unstructured or non-linear
-    cylindrical grid, i.e. where the cells are not regularly spaced, however,
-    SIROCCO has been designed for structured grids with regular grid spacing, and
-    as such there may be undefined behaviour for unstructured grids.
+   Two guard cells at the outer radial boundary (large x) and two at the outer
+   z boundary of each hemisphere.  For single-hemisphere files guard cells at
+   z = 0 are not required.
 
 Polar Grids
 -----------
 
-Using polar coordinates, a 2.5D model can be read into SIROCCO.
+A 2.5-D model on a (r, theta) grid.
 
-.. admonition :: Cartesian Velocity
+**Required columns** (one row per cell):
 
-    The velocity in for the polar grid is required to be in Cartesian
-    coordinates due to conventions within the SIROCCO programming style. As such,
-    any polar velocity components must first be projected into their Cartesian
-    equivalent.
+* ``i``              — radial index
+* ``j``              — polar-angle (theta) index
+* ``inwind``         — in-wind flag
+* ``r``              — inner radial boundary (cm)
+* ``theta``          — inner polar angle (degrees, 0–180)
+* ``v_x``            — x velocity (cm/s)
+* ``v_y``            — y velocity (cm/s)
+* ``v_z``            — z velocity (cm/s)
+* ``rho``            — mass density (g/cm\ :sup:`3`)
+* ``t_e`` (optional) — electron temperature (K)
+* ``t_r`` (optional) — radiation temperature (K)
 
+.. admonition:: Hemisphere coverage
 
-* i                        :  the i element number (row)
-* j                        :  the j element number (column)
-* inwind                   :  a flag indicating whether the cell is in the wind or not
-* :math:`r`                :  the radial coordinate in CGS
-* :math:`\theta`           :  the :math:`\theta` coordinate in degrees
-* :math:`v_x`              :  the velocity in the x direction in CGS
-* :math:`v_y`              :  the velocity in the y direction in CGS
-* :math:`v_z`              :  the velocity in the z direction in CGS
-* :math:`\rho`             :  the mass density in CGS
-* :math:`T_{e}` (optional) :  the electron temperature in Kelvin
-* :math:`T_{r}` (optional) :  the radiation temperature in Kelvin
+   If the maximum theta value in the file is ≤ 90°, the grid covers only the
+   upper hemisphere and SIROCCO folds lower-hemisphere photons symmetrically.
+   If any theta exceeds 90°, the grid covers both hemispheres explicitly.
 
-.. admonition :: :math:`\theta`-cells and hemisphere coverage
+.. admonition:: Guard cells
 
-    The :math:`\theta` range must start near 0° (or have a guard cell at
-    the pole).  The range may stop at 90° (**single-hemisphere** file) or
-    extend beyond 90° up to 180° (**two-hemisphere** file).  SIROCCO
-    detects which case applies from the data itself:
+   One guard cell at the north pole (theta near 0°).  For two-hemisphere files,
+   two guard cells at the south pole (theta near 180°) are also required.
 
-    * If the largest :math:`\theta` value in the file is ≤ 90°, the grid
-      is treated as covering only the upper hemisphere.  Lower-hemisphere
-      photons are automatically folded to their mirrored upper-hemisphere
-      cell, so the file is used symmetrically above and below the disk
-      plane.
-    * If any :math:`\theta` value exceeds 90°, the grid is treated as
-      covering both hemispheres.  Each cell is used for the hemisphere it
-      explicitly belongs to, allowing asymmetric upper/lower-hemisphere
-      winds.  The :math:`\theta` range in the two hemispheres need not be
-      symmetric about 90°: a grid running from 0° to 120°, or one whose
-      wind cells are confined entirely to theta > 90°, is equally valid.
-      SIROCCO uses each cell's actual :math:`\theta` boundaries and does
-      not assume bilateral symmetry.
+3-D Cylindrical Grids (CYLIND3D)
+---------------------------------
 
-    In both cases guard cells at the pole (theta near 0°) and at the
-    south pole (theta near 180°, two-hemisphere only) must be included and
-    marked ``inwind = -1``.
+A full 3-D model on a (rho, z, phi) grid, with phi running from 0 to 360°.
+
+**Required columns** (one row per cell, k varies fastest, then j, then i):
+
+* ``i``              — radial (rho) index
+* ``j``              — vertical (z) index
+* ``k``              — azimuthal (phi) index
+* ``inwind``         — in-wind flag
+* ``x``              — cylindrical rho coordinate at lower-rho corner (cm)
+* ``z``              — z coordinate at lower-z corner (cm)
+* ``phi``            — azimuthal lower boundary (degrees, 0–360)
+* ``v_x``            — x velocity (cm/s)
+* ``v_y``            — y velocity (cm/s)
+* ``v_z``            — z velocity (cm/s)
+* ``rho``            — mass density (g/cm\ :sup:`3`)
+* ``t_e`` (optional) — electron temperature (K)
+* ``t_r`` (optional) — radiation temperature (K)
+
+The grid must be **complete**: all ``ndim × mdim × pdim`` cells must be
+present.
+
+.. admonition:: Phi ordering
+
+   Phi values must be **strictly increasing** in k order and must span the
+   full azimuth (0–360°).  The phi lookup grid is built from the ``phi`` column
+   of the cells at (i=0, j=0, k=0 … pdim-1), so all cells with the same k
+   must carry the same ``phi`` boundary value.  The phi spacing may be
+   non-uniform (e.g. finer sampling near a feature of interest), but the
+   boundaries must be monotonically increasing.  Sirocco converts phi to
+   radians internally; the import file always uses degrees.
+
+.. admonition:: Guard cells
+
+   Same rules as the 2-D cylindrical case applied independently in rho and z.
+   No guard cells are required in the phi direction.
+
+.. admonition:: Single phi-slice (axisymmetric)
+
+   Setting ``pdim = 1`` in the import file (all cells have ``k = 0``) gives a
+   single phi slice covering the full 360° azimuth, equivalent to the 2-D
+   cylindrical case.
+
+3-D Spherical Polar Grids (SPH3D)
+-----------------------------------
+
+A full 3-D model on a (r, theta, phi) grid, with phi running from 0 to 360°.
+
+**Required columns** (one row per cell, k varies fastest, then j, then i):
+
+* ``i``              — radial index
+* ``j``              — polar-angle (theta) index
+* ``k``              — azimuthal (phi) index
+* ``inwind``         — in-wind flag
+* ``r``              — inner radial boundary (cm)
+* ``theta``          — inner polar-angle boundary (degrees, 0–180)
+* ``phi``            — inner azimuthal boundary (degrees, 0–360)
+* ``v_x``            — x velocity (cm/s)
+* ``v_y``            — y velocity (cm/s)
+* ``v_z``            — z velocity (cm/s)
+* ``rho``            — mass density (g/cm\ :sup:`3`)
+* ``t_e`` (optional) — electron temperature (K)
+* ``t_r`` (optional) — radiation temperature (K)
+
+Velocities must be given in **Cartesian** coordinates (not spherical
+components), consistent with all other SIROCCO coordinate systems.
+
+The grid must be **complete**: all ``ndim × mdim × pdim`` cells must be
+present.
+
+.. admonition:: Phi ordering
+
+   Phi values must be **strictly increasing** in k order and must span the
+   full azimuth (0–360°).  The phi lookup grid is built from the ``phi`` column
+   of the cells at (i=0, j=0, k=0 … pdim-1), so all cells with the same k
+   must carry the same ``phi`` boundary value.  The phi spacing may be
+   non-uniform, but the boundaries must be monotonically increasing.
+   Sirocco converts phi to radians internally; the import file always uses degrees.
+
+.. admonition:: Hemisphere coverage
+
+   As for the 2-D polar case: if the maximum theta in the file is ≤ 90°,
+   only upper-hemisphere cells are present and lower-hemisphere photons are
+   folded symmetrically.  If theta extends beyond 90°, both hemispheres are
+   covered explicitly.
+
+.. admonition:: Guard cells
+
+   Same rules as the 2-D polar case applied in (r, theta).  No guard cells are
+   required in the phi direction.
+
+.. admonition:: Single phi-slice (axisymmetric)
+
+   Setting ``pdim = 1`` (all ``k = 0``) gives a single phi slice equivalent to
+   the 2-D polar case.
+
+Example format (first two cells of a small SPH3D grid):
+
+.. code::
+
+   i  j  k  inwind  r       theta   phi     v_x     v_y     v_z     rho     t_e    t_r
+   0  0  0    -1    1.4e9   0.0     0.0     0.0     0.0     0.0     0.0     0.0    0.0
+   0  0  1    -1    1.4e9   0.0     90.0    0.0     0.0     0.0     0.0     0.0    0.0
 
 Setting Wind Temperatures
 -------------------------
 
-Reading in a temperature is optional when importing a model. However, if one
-temperature value for a cell is provided, then SIROCCO assumes that this is
-the electron temperature and the radiation temperature will be initialised as,
+Reading in a temperature is optional when importing a model.  If one
+temperature value per cell is provided, SIROCCO assumes it is the electron
+temperature and sets:
 
-.. math ::
-    T_{r} = 1.1 T_{e}.
+.. math::
 
-However, if two temperature values are provided for the cells, then the first
-temperature will be assumed as being the electron temperature and the second
-will be the radiation temperature.
+   T_{r} = 1.1\,T_{e}
 
-If no temperature is provided with the imported model, then the radiation
-temperature will be initialised using the parameter, e.g.,
+If two values are provided, the first is :math:`T_e` and the second is
+:math:`T_r`.  If no temperature is provided, both are initialised from:
 
 `Wind.t.init 40000`
 
-The electron temperature is then initialised using the Lucy approximation,
+and the electron temperature uses the Lucy approximation:
 
-.. math ::
-    T_{e} = 0.9 T_{r}
+.. math::
 
-Ghost Cells and Setting Values for `inwind`
--------------------------------------------
-
-The `inwind` flag is used to mark if a grid cell is either in the wind or not
-in the wind. The following enumerator flags are used,
-
-.. code :: c
-
-    W_IGNORE      = -2   // ignore this grid cell
-    W_NOT_INWIND  = -1   // this cell is not in the wind
-    W_ALL_INWIND  =  0   // this cell is in the wind
-
-Whilst it is possible to set in `inwind = 1` for a grid cell, that is that the
-cell is partially in the wind, SIROCCO will instead set these cells with
-`inwind = -2` and ignore these grid cells.
-
-Spherical
-^^^^^^^^^
-
-Three guard cells are expected. One guard cell is expected at the inner edge of
-wind and two are expected at the outer edge of the wind. Guard cells should still
-have a velocity, but the mass density and temperatures should be zero.
-
-Cylindrical
-^^^^^^^^^^^
-
-For cylindrical grids, two guard cells are needed at the outer radial boundary
-(large x), and two guard cells at the outer z boundary of each hemisphere (the
-most negative z cells for the lower hemisphere, the most positive z cells for
-the upper hemisphere).  For single-hemisphere files the guard cells at z = 0
-(disk plane) are not required — SIROCCO classifies equatorial cells by wind
-geometry.  For all cells not in the wind, an inwind value of -1 or -2 should
-be set.
-
-.. figure:: ../images/import_cylindrical_inwind.png
-    :width: 700px
-    :align: center
-
-    A colour plot of the inwind variable for the cv_standard.pf example. Here, a
-    SV model is being imposed on a cylindrical coordinate grid.
-
-Polar
-^^^^^
-
-For polar grids, the outer boundaries of the wind should have guard cells in
-the same way as the spherical and cylindrical grids above.  For all cells not
-in the wind, an inwind value of -1 or -2 should be set.
-
-The required guard cells depend on the hemisphere coverage of the file:
-
-* **Single-hemisphere file** (theta ≤ 90°): include one guard cell at the pole
-  (theta near 0°) and at least one guard cell at theta = 90°.
-* **Two-hemisphere file** (theta up to 180°): include one guard cell at the
-  north pole (theta near 0°) and two guard cells at the south pole (theta near
-  180°).  Guard cells at the equatorial boundary (theta = 90°) are not required
-  because SIROCCO does not impose an equatorial guard for polar grids — cells
-  adjacent to the disk plane are classified by the wind-cone geometry.
-
-.. figure:: ../images/import_polar_inwind.png
-    :width: 700px
-    :align: center
-
-    A colour plot of the inwind variable for the rtheta.pf example. Here, a SV
-    model is being imposed on an polar coordinate grid.
-
-.. figure:: ../images/import_stellar_polar_inwind.png
-    :width: 700px
-    :align: center
-
-    A colour plot of the inwind variable for a stellar wind imposed on a polar
-    coordinate grid. Important to note is the "halo" of inwind = -1 cells
-    surrounding the inwind cells. The cells with inwind = 1 will be set to
-    inwind = -2 when imported into SIROCCO and ignored.
-
+   T_{e} = 0.9\,T_{r}
 
 Maximum and Minimum Wind Radius
 --------------------------------
 
-The maximum and minimum spherical extent of the wind is calculated automatically
-by SIROCCO, and does not take into account guard cells when it is doing this.
+The maximum and minimum spherical extent of the wind is calculated
+automatically by SIROCCO from cells with ``inwind ≥ 0``.  Guard cells are
+excluded from this calculation.
 
-Generating example inputs for testing and familiarizing oneself with SIROCCO imports
-===============================================================================================
+Generating import files from a SIROCCO run
+==========================================
 
-If one is trying to use the import capability of SIROCCO for the first time,
-it will be useful to familiarize oneself with the process, and the file format
-for a particular coordinate system, by running first running SIROCCO on a model
-that is something similar to model to be imported, but which takes advantage of
-one of the kinematic models available with the code.
+The easiest way to learn the import format for a particular coordinate system
+is to first run SIROCCO with an analytic wind model in the same coordinate
+system, then convert the output to an import file using the provided Python
+scripts.
 
-For example, suppose you have a hydrodynamical simulation of an AGN wind which
-is in polar coordinates and you want to use SIROCCO to calculate the spectrum.
-Then you might create a model of an AGN with a similar coordinate system using,
-say, a Knigge Wood & Drew wind (and similar atomic data).
-For specificity, suppose this model has the root name "test"
-
-Once you have run the model, you can create an import file file by first running
-the routine :code:`windsave2table`, or more specifically:
+For example, to create an import file for a 3-D spherical polar model with
+root name ``test``:
 
 .. code:: bash
 
-   windsave2table test
+   windsave2table test          # produces test.master.txt
+   import_sph3d.py test         # produces test.import.txt
 
-This produces a large number of ascii tables, which are described elsewhere.
-For a single-domain model the master table is named :code:`test.master.txt`;
-for multi-domain models each domain gets its own file, e.g.
-:code:`test.0.master.txt`, :code:`test.1.master.txt`, etc.
+The import file can then be used in a new run with ``Wind.type = imported``.
 
-In the py_progs directory, you will find 3 scripts:
+The available conversion scripts in ``py_progs/`` are:
 
-* :code:`import_1d.py` — 1D spherical models
-* :code:`import_cyl.py` — 2.5D cylindrical models (single- or two-hemisphere)
-* :code:`import_rtheta.py` — 2.5D polar (r-theta) models (single- or two-hemisphere)
+* ``import_1d.py``      — 1-D spherical models
+* ``import_cyl.py``     — 2.5-D cylindrical models
+* ``import_rtheta.py``  — 2.5-D polar (r-theta) models
+* ``import_cyl3d.py``   — 3-D cylindrical models (CYLIND3D)
+* ``import_sph3d.py``   — 3-D spherical polar models (SPH3D)
 
-Each script reads the corresponding :code:`test.master.txt` file and writes
-:code:`test.import.txt`, which can be used directly with the import mode of
-SIROCCO.
+Each script reads ``<root>.master.txt`` and writes ``<root>.import.txt``.  The
+scripts also apply a Lorentz factor correction to the density column:
 
-Assuming the py_progs directory is in your PATH, and given that our example is
-for cylindrical coordinates, one would run:
+.. math::
 
-.. code:: bash
+   \rho_{\mathrm{import}} = \rho_{\mathrm{CMF}} \times \gamma
 
-   import_cyl.py test
-
-At that point, you can test this import file, by modifying the first .pf file to
-import mode (imported). Running SIROCCO on this file, will result in your being
-asked the name of the import file, and give you a "baseline" for any modications
-one might want to make to the file, such as setting the electron or radation 
-temperature differently.
+For typical sub-relativistic winds (v/c << 1) this correction is negligible.
 
 .. warning::
-   If you use astropy or other routines to modify an import file and create a
-   new one, be sure to check that all of
-   the variables in the file remain reasonable.  In particular, we have 
-   observed a tendency, when using astropy tables, to find that rho is set
-   to 0.0.  The solution in that case is to specify the output format
-   for the offending column or columns.
 
+   If you use astropy or other tools to modify an import file, check that all
+   variables remain reasonable.  In particular, we have observed that astropy
+   tables can silently set ``rho`` to 0.0 if the format is not specified.
+   The provided scripts set explicit output formats for all floating-point
+   columns to avoid this.
 
-Note that one should not assume that spectra produced by the original run of
-SIROCCO and the run of the imported model will be identical. There are several
-reasons for this:
+.. note::
 
-First, in creating the original model, SIROCCO accounts for the possibility that
-some cells are partially in the wind. This is not possible in the imported
-models. Only cells that are complete in the wind are counted.
+   Spectra produced by the original analytic-model run and by the imported
+   re-run will not be identical.  Two effects contribute:
 
-Second, within SIROCCO, positions and velocities are assumed defined at the
-corners of cells, whereas densities are assumed to be cell centered. If one
-provides a table where all of the quantities are at the same exact position
-(namely density is at the same position as x), there will be a slight
-discrepancy between the way in model as calculated internally and as represented
-within SIROCCO.
+   1. **Partial cells**: the original run classifies cells as partially in
+      the wind and handles them specially; imported models accept only fully
+      in-wind or fully out-of-wind cells.
+   2. **Density placement**: SIROCCO assumes velocities at cell corners and
+      densities at cell centres.  If an import file places densities at the
+      same position as the corner coordinates there will be a small systematic
+      offset.

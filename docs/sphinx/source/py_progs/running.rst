@@ -14,6 +14,7 @@ Several scripts have been developed to run *SIROCCO* and **Cloudy** simulations 
     :toctree: running
 
     cloudy_pl_loop
+    PL_loop_comp
     py79_pl_loop
     python_pl_loop
 

@@ -69,3 +69,44 @@ In order to get a summary of all the threads, there is a script py_error.py that
 Note that in many cases, the summary will be the number times an error occurred in one thread times the number of threads, but not always.
 
 One should be aware of these errors, and watch out for situations where the number of errors  of a particular type is much larger than usual.
+
+Quick Look at Model Results
+============================
+
+Two scripts provide a quick overview of a completed (or in-progress) model run.
+
+``run_check.py``
+----------------
+
+``run_check.py`` is the standard diagnostic script for 1D and 2D (spherical,
+cylindrical, RTHETA) models.  Given the root name of a run it produces an HTML
+summary containing:
+
+- convergence fraction as a function of ionization cycle
+- number of failed convergence checks per wind cell
+- overview plots of the wind structure (temperature, density, ion fractions)
+- the extracted spectra
+
+Usage::
+
+    run_check.py rootname
+
+The output is an HTML file (``rootname.html``) that can be opened in any browser.
+
+``run_check3d.py``
+------------------
+
+``run_check3d.py`` is the successor to ``run_check.py`` for 3D models
+(CYLIND3D, SPH3D) as well as any 1D or 2D model.  Because static 2D slice
+plots are insufficient to visualise a full 3D wind, all figures are
+interactive `Plotly <https://plotly.com/python/>`_ panels embedded directly
+in the HTML output — no separate image files are produced.
+
+Usage::
+
+    run_check3d.py rootname [rootname ...]   # one or more models
+    run_check3d.py -all                      # every .wind_save in the current directory
+
+Both scripts call ``windsave2table`` internally to extract the wind data, so
+SIROCCO must be compiled and the ``$SIROCCO`` environment variable set before
+running them.

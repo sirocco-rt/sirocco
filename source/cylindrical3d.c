@@ -233,13 +233,14 @@ cylind3d_make_grid (int ndom, WindPtr w)
       /* Now fill all phi slices for this (i, j) */
       for (k = 0; k < one_dom->pdim; k++)
       {
+        double phicen_k = (k + 0.5) * dphi;
         wind_ijk_to_n (ndom, i, j, k, &n);
 
         w[n].x[0] = rho_i;
         w[n].x[1] = 0.0;
         w[n].x[2] = z_lo;
-        w[n].xcen[0] = rho_icen;
-        w[n].xcen[1] = 0.0;
+        w[n].xcen[0] = rho_icen * cos (phicen_k);
+        w[n].xcen[1] = rho_icen * sin (phicen_k);
         w[n].xcen[2] = z_cen;
 
         w[n].phi = k * dphi;
@@ -276,7 +277,6 @@ cylind3d_wind_complete (int ndom, WindPtr w)
 {
   int i, j, k, n;
   int nstart, ndim, mdim, pdim;
-  double dphi;
   DomainPtr one_dom;
 
   one_dom = &zdom[ndom];
@@ -284,7 +284,6 @@ cylind3d_wind_complete (int ndom, WindPtr w)
   ndim = one_dom->ndim;
   mdim = one_dom->mdim;
   pdim = one_dom->pdim;
-  dphi = 2.0 * PI / pdim;
 
   /* Rho axis: read from k=0 column of each i-row */
   for (i = 0; i < ndim; i++)
@@ -305,13 +304,13 @@ cylind3d_wind_complete (int ndom, WindPtr w)
   one_dom->wind_midz[mdim - 1] = 2.0 * one_dom->wind_z[mdim - 1] - one_dom->wind_midz[mdim - 2];
   one_dom->wind_midz[0] = 2.0 * one_dom->wind_z[0] - one_dom->wind_midz[1];
 
-  /* Phi axis */
+  /* Phi axis: read from cell boundaries so non-uniform phi grids are supported */
   for (k = 0; k < pdim; k++)
-    one_dom->wind_phi[k] = k * dphi;
-  one_dom->wind_phi[pdim] = 2.0 * PI;
+    one_dom->wind_phi[k] = w[nstart + k].phi;
+  one_dom->wind_phi[pdim] = w[nstart + pdim - 1].phimax;
 
   for (k = 0; k < pdim; k++)
-    one_dom->wind_midphi[k] = (k + 0.5) * dphi;
+    one_dom->wind_midphi[k] = w[nstart + k].phicen;
 
   /* xmax: step one grid position forward in each axis */
   for (i = 0; i < ndim; i++)
@@ -326,6 +325,7 @@ cylind3d_wind_complete (int ndom, WindPtr w)
         w[n].xmax[0] = xmax_rho;
         w[n].xmax[1] = 0.0;
         w[n].xmax[2] = xmax_z;
+        w[n].phimax = one_dom->wind_phi[k + 1];
       }
     }
   }
@@ -690,21 +690,14 @@ cylind3d_extend_density (int ndom, WindPtr w)
 
 /**********************************************************/
 /**
- * @brief  Distance to the far boundary of a CYLIND3D cell.
+ * @brief  Distance along the photon path to a phi half-plane boundary.
  *
- * @param [in] ndom   Domain number
+ * @param [in] phi0   Azimuthal angle (radians) of the bounding half-plane
  * @param [in] p      Photon pointer (position p->x, direction p->lmn)
- * @return  Distance smax to the nearest cell boundary, or negative
- *          if the photon is not in the grid.
+ * @return  Travel distance t to the half-plane, or VERY_BIG if the ray
+ *          is parallel to or moving away from the plane.
  *
  * @details
- * Checks five boundaries: inner rho cylinder, outer rho cylinder,
- * lower z plane, upper z plane, and (for pdim > 1) the two phi
- * half-planes bounding the azimuthal sector.
- *
- * For pdim == 1 the cell covers the full 2π azimuth and there are
- * no phi boundaries, so the function reduces to cylind_ds_in_cell.
- *
  * A phi half-plane at angle phi0 is the set of points satisfying
  *   y·cos(phi0) − x·sin(phi0) = 0   with   x·cos(phi0) + y·sin(phi0) > 0.
  * The intersection time with the ray (x0+lx·t, y0+ly·t) is
@@ -713,7 +706,7 @@ cylind3d_extend_density (int ndom, WindPtr w)
  *
  **********************************************************/
 
-static double
+double
 ds_phi_boundary (double phi0, PhotPtr p)
 {
   double sphi = sin (phi0), cphi = cos (phi0);
@@ -735,6 +728,26 @@ ds_phi_boundary (double phi0, PhotPtr p)
   return (t);
 }
 
+
+/**********************************************************/
+/**
+ * @brief  Distance to the far boundary of a CYLIND3D cell.
+ *
+ * @param [in] ndom   Domain number
+ * @param [in] p      Photon pointer (position p->x, direction p->lmn)
+ * @return  Distance smax to the nearest cell boundary, or negative
+ *          if the photon is not in the grid.
+ *
+ * @details
+ * Checks five boundaries: inner rho cylinder, outer rho cylinder,
+ * lower z plane, upper z plane, and (for pdim > 1) the two phi
+ * half-planes bounding the azimuthal sector.  Uses ds_phi_boundary()
+ * for the phi half-plane intersections.
+ *
+ * For pdim == 1 the cell covers the full 2π azimuth and there are
+ * no phi boundaries, so the function reduces to cylind_ds_in_cell.
+ *
+ **********************************************************/
 
 double
 cylind3d_ds_in_cell (int ndom, PhotPtr p)

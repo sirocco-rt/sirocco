@@ -192,6 +192,10 @@ wind_update (WindPtr w)
     {
       cylind3d_extend_density (ndom, w);
     }
+    else if (zdom[ndom].coord_type == SPH3D)
+    {
+      sph3d_extend_density (ndom, w);
+    }
     else
     {
       Error ("Wind_update2d: Unknown coordinate type %d for domain %d \n", zdom[ndom].coord_type, ndom);
@@ -382,8 +386,6 @@ wind_update (WindPtr w)
 
   check_convergence ();
 
-  /* Summarize the radiative temperatures (ksl 04 mar) */
-  xtemp_rad (w);
 
 /* This next block is to allow the output of data relating to the abundances of ions when sirocco is being tested
  * with thin shell mode.

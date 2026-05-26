@@ -147,7 +147,7 @@ LDFLAGS+= -L$(LIB) -lm -lgsl -lgslcblas $(CUDA_LIBS)
 #Note that version should be a single string without spaces.
 
 
-VERSION = 3.0
+VERSION = 3.1
 
 
 
@@ -199,12 +199,12 @@ sirocco_source = agn.c anisowind.c atomic_extern_init.c atomicdata.c atomicdata_
 	cv.c cylindrical.c cylindrical3d.c define_wind.c density.c diag.c dielectronic.c direct_ion.c  \
 	disk.c disk_init.c disk_photon_gen.c emission.c estimators_macro.c estimators_simple.c  \
 	extract.c frame.c  gradv.c gridwind.c homologous.c hydro_import.c import.c  \
-	import_calloc.c import_cylindrical.c import_cylindrical3d.c import_rtheta.c import_spherical.c ionization.c  \
+	import_calloc.c import_cylindrical.c import_cylindrical3d.c import_rtheta.c import_spherical.c import_sph3d.c ionization.c  \
 	janitor.c knigge.c levels.c lines.c macro_accelerate.c macro_gen_f.c macro_gov.c  \
 	matom.c matom_diag.c matrix_cpu.c matrix_ion.c models_extern_init.c para_update.c  \
 	parse.c partition.c paths.c phot_util.c photon2d.c photon_gen.c photon_gen_matom.c  \
 	pi_rates.c sirocco_extern_init.c radiation.c random.c rdpar.c rdpar_init.c recipes.c  \
-	recomb.c resonate.c reverb.c roche.c rtheta.c run.c saha.c setup.c setup_disk.c setup_domains.c  \
+	recomb.c resonate.c reverb.c roche.c rtheta.c run.c saha.c setup.c setup_disk.c setup_domains.c sph3d.c \
 	setup_files.c setup_line_transfer.c setup_reverb.c setup_star_bh.c shell_wind.c signal.c  \
 	spectra.c spectral_estimators.c spherical.c stellar_wind.c sv.c synonyms.c time.c  \
 	trans_phot.c vvector.c walls.c wind.c wind2d.c wind_sum.c wind_updates2d.c wind_util.c  \
@@ -241,7 +241,7 @@ endif
 
 sirocco: startup sirocco.o $(sirocco_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) sirocco.o $(sirocco_objects) $(CUDA_OBJECTS) $(kpar_objects) $(LDFLAGS) -o sirocco
-	cp $@ $(BIN)/sirocco
+	cp --remove-destination $@ $(BIN)/sirocco
         ifdef XDEBUG
 	  mv $@ $(BIN)/sirocco-$(VERSION)_debug
         else
@@ -273,50 +273,50 @@ run_indent:
 
 swind: startup $(swind_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(swind_objects) $(CUDA_OBJECTS) $(LDFLAGS) -o swind
-	cp $@ $(BIN)
+	cp --remove-destination $@ $(BIN)
 	mv $@ $(BIN)/swind-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 windsave2table: startup $(table_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(table_objects) $(CUDA_OBJECTS) $(LDFLAGS) -o windsave2table
-	cp $@ $(BIN)
+	cp --remove-destination $@ $(BIN)
 	mv $@ $(BIN)/windsave2table-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 windsave2fits: startup $(windsave2fits_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(windsave2fits_objects) $(CUDA_OBJECTS) $(LDFLAGS) -lcfitsio -o windsave2fits 
-	cp $@ $(BIN)
+	cp --remove-destination $@ $(BIN)
 	mv $@ $(BIN)/windsave2fits-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 rad_hydro_files: startup $(rhf_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(rhf_objects) $(CUDA_OBJECTS) $(LDFLAGS) -o rad_hydro_files
-	cp $@ $(BIN)
+	cp --remove-destination $@ $(BIN)
 	mv $@ $(BIN)/rad_hydro_files-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 modify_wind: startup $(modify_wind_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(modify_wind_objects) $(CUDA_OBJECTS) $(LDFLAGS) -o modify_wind
-	cp $@ $(BIN)
+	cp --remove-destination $@ $(BIN)
 	mv $@ $(BIN)/modify_wind-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 inspect_wind: startup $(inspect_wind_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(inspect_wind_objects) $(CUDA_OBJECTS) $(LDFLAGS)  -o inspect_wind
-	cp $@ $(BIN)
+	cp --remove-destination $@ $(BIN)
 	mv $@ $(BIN)/inspect_wind-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 
 test_cooling: startup $(test_cooling_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(test_cooling_objects) $(CUDA_OBJECTS) $(LDFLAGS)  -o test_cooling 
-	cp $@ $(BIN)
+	cp --remove-destination $@ $(BIN)
 	mv $@ $(BIN)/test_cooling-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
 sirocco_optd: startup $(sirocco_optd_obj) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(sirocco_optd_obj) $(CUDA_OBJECTS) $(LDFLAGS) -o $@
-	cp $@ $(BIN)
+	cp --remove-destination $@ $(BIN)
 	mv $@ $(BIN)/sirocco_optd-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
@@ -324,7 +324,7 @@ sirocco_optd: startup $(sirocco_optd_obj) $(CUDA_OBJECTS)
 # everything in the main routine before one can probe a particular routine.
 unit_test: startup unit_test.o $(sirocco_objects)
 	$(CC) ${CFLAGS} unit_test.o $(sirocco_objects) $(kpar_objects) $(LDFLAGS) -o unit_test
-	cp $@ $(BIN)/unit_test
+	cp --remove-destination $@ $(BIN)/unit_test
 	# Fix indenting, if necessary.
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 

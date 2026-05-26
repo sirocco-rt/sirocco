@@ -388,7 +388,7 @@ init_observers ()
     geo.angle[n] = 45;
   for (n = 0; n < NSPEC; n++)
   {
-    geo.phase[n] = 0.5;
+    geo.observer_phi[n] = 0.0;
     geo.scat_select[n] = MAXSCAT;
     geo.top_bot_select[n] = 0;
   }
@@ -491,12 +491,31 @@ init_observers ()
 
   if (geo.system_type == SYSTEM_TYPE_CV || geo.system_type == SYSTEM_TYPE_BH)
   {
-
+    double orbit_phase;
     for (n = 0; n < geo.nangles; n++)
-      rddoub ("Spectrum.orbit_phase(0=inferior_conjunction)", &geo.phase[n]);
+    {
+      orbit_phase = 0.5;
+      rddoub ("Spectrum.orbit_phase(0=inferior_conjunction)", &orbit_phase);
+      geo.observer_phi[n] = orbit_phase * 360.0;
+    }
   }
   else
-    Log ("No phase information needed as system type %i is not a binary\n", geo.system_type);
+  {
+    int has_3d = 0;
+    for (int ndom = 0; ndom < geo.ndomain; ndom++)
+    {
+      if (zdom[ndom].coord_type == CYLIND3D || zdom[ndom].coord_type == SPH3D)
+      {
+        has_3d = 1;
+        break;
+      }
+    }
+    if (has_3d)
+    {
+      for (n = 0; n < geo.nangles; n++)
+        rddoub ("Spectrum.phi(degrees)", &geo.observer_phi[n]);
+    }
+  }
 
 
   strcpy (answer, "extract");

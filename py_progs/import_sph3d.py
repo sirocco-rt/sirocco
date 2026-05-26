@@ -1,30 +1,35 @@
 #!/usr/bin/env python
 
 '''
-Create a CYLIND3D import file from a windsave2table master file.
+Create a SPH3D import file from a windsave2table master file.
 
-Read the master file produced by windsave2table for a CYLIND3D model
+Read the master file produced by windsave2table for a SPH3D model
 and write a file that can be imported back into Sirocco.
 
 Command line usage::
 
-    import_cyl3d.py rootname [outputfile]
+    import_sph3d.py rootname [outputfile]
 
     e.g.
-        import_cyl3d.py agn_cyl3d
-        reads  agn_cyl3d.master.txt
-        writes agn_cyl3d.import.txt
+        import_sph3d.py cv_sph3d
+        reads  cv_sph3d.master.txt
+        writes cv_sph3d.import.txt
 
-Output columns (space-separated, readable by import_cylindrical3d.c)::
+Output columns (space-separated, readable by import_sph3d.c)::
 
-    i  j  k  inwind  x  z  phi  v_x  v_y  v_z  rho  t_e  t_r
+    i  j  k  inwind  r  theta  phi  v_x  v_y  v_z  rho  t_e  t_r
 
-where x and z are in cm, phi is the azimuthal lower boundary in degrees (0–360),
-rho is the observer-frame mass density (CMF rho * Lorentz gamma), and
-t_e, t_r are the electron and radiation temperatures.
+Column descriptions:
 
-The CYLIND3D master.txt corner coordinates are labelled x, z, phi
-(distinct from the cell-centre columns xcen, zcen, phicen).
+- ``r``       inner radial boundary of the cell (cm)
+- ``theta``   inner polar-angle boundary (degrees, 0–180)
+- ``phi``     inner azimuthal boundary (degrees, 0–360)
+- ``v_x, v_y, v_z``  Cartesian velocity components (cm/s)
+- ``rho``     observer-frame mass density (CMF rho * Lorentz gamma, g/cm³)
+- ``t_e, t_r``  electron and radiation temperatures (K)
+
+The SPH3D master.txt corner coordinates are labelled r, theta, phi
+(distinct from the cell-centre columns rcen, thetacen, phicen).
 '''
 
 import sys
@@ -35,7 +40,7 @@ from astropy.table import Table
 
 def doit(root='model', outputfile=''):
     '''
-    Read a CYLIND3D master.txt and write a Sirocco 3D cylindrical import file.
+    Read an SPH3D master.txt and write a Sirocco 3D spherical polar import file.
 
     Parameters
     ----------
@@ -60,12 +65,13 @@ def doit(root='model', outputfile=''):
         print('Error reading %s: %s' % (filename, e))
         return None
 
-    # Verify this looks like a CYLIND3D master file
-    required = {'x', 'z', 'phi', 'i', 'j', 'k', 'inwind', 'v_x', 'v_y', 'v_z', 'rho', 't_e', 't_r'}
+    # Verify this looks like a SPH3D master file
+    required = {'r', 'theta', 'phi', 'i', 'j', 'k', 'inwind',
+                'v_x', 'v_y', 'v_z', 'rho', 't_e', 't_r'}
     missing = required - set(data.colnames)
     if missing:
         print('Error: master file is missing columns: %s' % ', '.join(sorted(missing)))
-        print('Expected a CYLIND3D master.txt; got columns: %s' % ', '.join(data.colnames))
+        print('Expected an SPH3D master.txt; got columns: %s' % ', '.join(data.colnames))
         return None
 
     C = 2.997925e10
@@ -78,8 +84,8 @@ def doit(root='model', outputfile=''):
     out['j'] = data['j']
     out['k'] = data['k']
     out['inwind'] = data['inwind']
-    out['x'] = data['x']
-    out['z'] = data['z']
+    out['r'] = data['r']
+    out['theta'] = data['theta']
     out['phi'] = data['phi']
     out['v_x'] = data['v_x']
     out['v_y'] = data['v_y']
@@ -88,7 +94,7 @@ def doit(root='model', outputfile=''):
     out['t_e'] = data['t_e']
     out['t_r'] = data['t_r']
 
-    for col in ('x', 'z', 'phi', 'v_x', 'v_y', 'v_z', 'rho', 't_e', 't_r'):
+    for col in ('r', 'theta', 'phi', 'v_x', 'v_y', 'v_z', 'rho', 't_e', 't_r'):
         out[col].format = '.4e'
 
     ascii.write(out, outputfile, format='basic', overwrite=True)

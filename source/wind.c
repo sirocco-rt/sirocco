@@ -612,7 +612,7 @@ wind_check (WindPtr www, int n)
   {
     ndim = zdom[ndom].ndim;
     mdim = zdom[ndom].mdim;
-    if (zdom[ndom].coord_type == RTHETA)
+    if (zdom[ndom].coord_type == RTHETA || zdom[ndom].coord_type == SPH3D)
     {
       drmin = 1e99;
       dtmin = 1e99;
@@ -620,13 +620,23 @@ wind_check (WindPtr www, int n)
       {
         for (j = 0; j < mdim; j++)
         {
-          wind_ij_to_n (ndom, i, j, &n);
-          if (wmain[n].vol > 0.0)
+          int kk = 0, nn, outer_nn, outer_mm;
+          if (zdom[ndom].coord_type == SPH3D)
           {
-            wind_ij_to_n (ndom, i + 1, j, &outer_n);
-            wind_ij_to_n (ndom, i, j + 1, &outer_m);
-            drmin = fabs (wmain[outer_n].r - wmain[n].r);
-            dtmin = fabs (wmain[n].r * (wmain[outer_m].theta - wmain[n].theta) / RADIAN);
+            wind_ijk_to_n (ndom, i, j, kk, &nn);
+            wind_ijk_to_n (ndom, i + 1, j, kk, &outer_nn);
+            wind_ijk_to_n (ndom, i, j + 1, kk, &outer_mm);
+          }
+          else
+          {
+            wind_ij_to_n (ndom, i, j, &nn);
+            wind_ij_to_n (ndom, i + 1, j, &outer_nn);
+            wind_ij_to_n (ndom, i, j + 1, &outer_mm);
+          }
+          if (wmain[nn].vol > 0.0)
+          {
+            drmin = fabs (wmain[outer_nn].r - wmain[nn].r);
+            dtmin = fabs (wmain[nn].r * (wmain[outer_mm].theta - wmain[nn].theta) / RADIAN);
             if (drmin < delta || dtmin < delta)
             {
               Error ("wind_check: DFUDGE may be large in cell %d %d (%.1e %.1e)\n", i, j, drmin, dtmin);

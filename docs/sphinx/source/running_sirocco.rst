@@ -23,6 +23,10 @@ to modify it's operation.  These include the following:
   for setting up a proper ``.pf`` file.  (Often one will want to copy ``xxx.out.pf`` back
   to ``xxx.pf`` before proceeding.
 
+--grid-only
+  Causes SIROCCO to read the inputs and define the wind grid, then stop without running
+  any ionization or spectral cycles. Useful for inspecting the grid setup.
+
 -t time_max
   Limits a run of SIROCCO to approximately time_max in sec.  This switch is
   used in situations where one would like to check whether the routine is operating
@@ -100,13 +104,17 @@ which may be useful in certain special cases.  These include:
 -f                    
   Invoke a fixed temperature mode
 
--nonrel
-  Reverts to using v/c corrections for special relativity and eliminates work done to treat
-  co-moving frames properly.  This is for testing, and is likely to be removed in the not
-  too distant future.
+-gamma
+  Use the full special-relativistic treatment, including co-moving frame effects.  This is
+  the most physically complete mode and is the recommended choice for high-velocity winds.
 
 -sr_doppler_only
-  Use SIROCCO with full special relativity for Doppler shits, etc., but do not include any co-moving frame effects.
+  Use SIROCCO with full special relativity for Doppler shifts, but do not include
+  co-moving frame effects.
+
+-nonrel
+  Reverts to using linear v/c Doppler corrections and eliminates co-moving frame treatment.
+  This is for testing purposes and may be removed in a future version.
 
 -no-matrix-storage
   Do not store macro-atom transition matrices if using the macro-atom line transfer and the matrix matom_transition_mode.
@@ -117,9 +125,21 @@ which may be useful in certain special cases.  These include:
 -include_partial_cells
   Include wind cells that are only partially filled by the wind
 
+-cell_spec_dim N
+  Sets the number of frequency bins used for the per-cell spectrum estimator (default 100,
+  maximum 1000).  Increasing this improves spectral resolution in the cell-by-cell diagnostics
+  at the cost of additional memory.
+
+-z
+  Enables Zeus-connect mode, which writes hydro-coupling files for use with the Zeus
+  radiation-hydrodynamics interface.
+
 -xtest
-  Instead of running sirocco, call the routine xtest so that one can diagnose issues associted with the 
-  setup.  This is only useful to developers.
+  Instead of running sirocco, call the routine xtest so that one can diagnose issues
+  associated with the setup.  This is only useful to developers.
+
+-xdev
+  Enables a development code path.  This is only useful to developers.
 
 Running Different Versions of SIROCCO
 =========================================

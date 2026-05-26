@@ -87,9 +87,9 @@ calloc_import (int coord_type, int ndom)
       imported_model[ndom].theta = calloc (sizeof *imported_model[ndom].theta, NDIM_MAX2D);
     }
   }
-  else if (coord_type == CYLIND3D)
+  else if (coord_type == CYLIND3D || coord_type == SPH3D)
   {
-    /* For CYLIND3D we do not pre-allocate cell arrays here; import_cylindrical3d
+    /* For CYLIND3D and SPH3D we do not pre-allocate cell arrays here; the reader
      * performs a two-pass read so it can determine ncell before allocating. */
     imported_model[ndom].ndim = 0;
     imported_model[ndom].mdim = 0;
@@ -160,6 +160,28 @@ free_import (int coord_type, int ndom)
     free (imported_model[ndom].inwind);
     free (imported_model[ndom].x);
     free (imported_model[ndom].z);
+    free (imported_model[ndom].phi);
+    free (imported_model[ndom].v_x);
+    free (imported_model[ndom].v_y);
+    free (imported_model[ndom].v_z);
+    free (imported_model[ndom].mass_rho);
+    free (imported_model[ndom].t_e);
+    free (imported_model[ndom].t_r);
+    free (imported_model[ndom].wind_x);
+    free (imported_model[ndom].wind_z);
+    free (imported_model[ndom].wind_midx);
+    free (imported_model[ndom].wind_midz);
+    free (imported_model[ndom].wind_phi);
+    free (imported_model[ndom].wind_midphi);
+  }
+  else if (coord_type == SPH3D)
+  {
+    free (imported_model[ndom].i);
+    free (imported_model[ndom].j);
+    free (imported_model[ndom].k);
+    free (imported_model[ndom].inwind);
+    free (imported_model[ndom].r);
+    free (imported_model[ndom].theta);
     free (imported_model[ndom].phi);
     free (imported_model[ndom].v_x);
     free (imported_model[ndom].v_y);

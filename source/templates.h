@@ -132,6 +132,7 @@ int cylind3d_cell_volume(WindPtr w);
 int cylind3d_get_random_location(int n, double x[]);
 int cylind3d_extend_density(int ndom, WindPtr w);
 double cylind3d_ds_in_cell(int ndom, PhotPtr p);
+double ds_phi_boundary(double phi0, PhotPtr p);
 /* define_wind.c */
 void define_wind(void);
 /* density.c */
@@ -284,6 +285,13 @@ int cylindrical3d_make_grid_import(WindPtr w, int ndom);
 double velocity_cylindrical3d(int ndom, double *x, double *v);
 double rho_cylindrical3d(int ndom, double *x);
 double temperature_cylindrical3d(int ndom, double *x, int return_t_e);
+/* import_sph3d.c */
+int import_sph3d(int ndom, char *filename);
+int import_sph3d_setup_boundaries(int ndom);
+int sph3d_make_grid_import(WindPtr w, int ndom);
+double velocity_sph3d(int ndom, double *x, double *v);
+double rho_sph3d(int ndom, double *x);
+double temperature_sph3d(int ndom, double *x, int return_t_e);
 /* import_rtheta.c */
 int import_rtheta(int ndom, char *filename);
 int import_rtheta_setup_boundaries(int ndom);
@@ -545,6 +553,15 @@ int rtheta_where_in_grid(int ndom, double x[]);
 int rtheta_get_random_location(int n, double x[]);
 int rtheta_extend_density(int ndom, WindPtr w);
 int rtheta_is_cell_in_wind(int n);
+/* sph3d.c */
+int sph3d_make_grid(int ndom, WindPtr w);
+int sph3d_wind_complete(int ndom, WindPtr w);
+int sph3d_where_in_grid(int ndom, double x[]);
+int sph3d_is_cell_in_wind(int n);
+int sph3d_cell_volume(WindPtr w);
+int sph3d_get_random_location(int n, double x[]);
+int sph3d_extend_density(int ndom, WindPtr w);
+double sph3d_ds_in_cell(int ndom, PhotPtr p);
 /* run.c */
 int calculate_ionization(int restart_stat);
 int make_spectra(int restart_stat);
@@ -598,7 +615,7 @@ int set_max_time(char *root, double t);
 int check_time(char *root);
 /* spectra.c */
 void spectrum_allocate(int nspec);
-int spectrum_init(double f1, double f2, int nangle, double angle[], double phase[], int scat_select[], int top_bot_select[], int select_extract, double rho_select[], double z_select[], double az_select[], double r_select[]);
+int spectrum_init(double f1, double f2, int nangle, double angle[], double observer_phi[], int scat_select[], int top_bot_select[], int select_extract, double rho_select[], double z_select[], double az_select[], double r_select[]);
 int spectrum_create(PhotPtr p, int nangle, int select_extract);
 int spec_add_one(PhotPtr p, int spec_type);
 int spectrum_summary(char filename[], int nspecmin, int nspecmax, int select_spectype, double renorm, int loglin, int iwind);
@@ -684,8 +701,6 @@ int get_random_location(int n, double x[]);
 int zero_scatters(void);
 int check_corners_inwind(int n);
 int check_grid(void);
-/* wind_sum.c */
-int xtemp_rad(WindPtr w);
 /* wind_updates2d.c */
 int wind_update(WindPtr w);
 int report_bf_simple_ionpool(void);

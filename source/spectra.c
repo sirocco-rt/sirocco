@@ -5,10 +5,7 @@
  * @author ksl
  * @date   May, 2018
  *
- * @brief
- *
- * The subroutines in this file handle allocating, incrementing, and writing out the
- * spectrum arrays for Sirocco
+ * @brief  Routines to allocate, initialise, increment, and write the spectrum arrays
  *
 ***********************************************************/
 
@@ -78,7 +75,7 @@ spectrum_allocate (int nspec)
  * @param [in] double  f2   The maximum frequency in the spectra
  * @param [in] int  nangle   The number of different inclination angles (or more properly the number of spectra) to be created
  * @param [in] double  angle[]   The inclination angles associated with each spectrum
- * @param [in] double  phase[]   The orbital phase associated with each spectrum
+ * @param [in] double  observer_phi[]     The observer azimuthal angle (degrees) for each spectrum
  * @param [in] int  scat_select[]   A parameter for each spectrum which allows one to construct spectra with specifid numbers of scatters
  * @param [in] int  top_bot_select[]   A code which allows one to select photons only from below or above the disk
  * @param [in] int  select_extract   FALSE for Live or Die option, TRUE  for a normal extraction
@@ -99,8 +96,8 @@ spectrum_allocate (int nspec)
  * angle cosines and the names of each spectrum.
  *
  * ### Notes ###
- * angle[],phase[] and scat_select[] only apply to the spectra extracted at
- * specific angles.  angle[0], phase[0], and scat_select[0] all affect spec[3]
+ * angle[], observer_phi[] and scat_select[] only apply to the spectra extracted at
+ * specific angles.  angle[0], observer_phi[0], and scat_select[0] all affect spec[3]
  *
  * scat_select allows one to select spectra with a specific number of scattere or range og
  * scatters.  If nscat > 999 select all.  This is the normal case. The rest are used
@@ -124,7 +121,7 @@ spectrum_allocate (int nspec)
  *
  **********************************************************/
 int
-spectrum_init (double f1, double f2, int nangle, double angle[], double phase[], int scat_select[], int top_bot_select[],
+spectrum_init (double f1, double f2, int nangle, double angle[], double observer_phi[], int scat_select[], int top_bot_select[],
                int select_extract, double rho_select[], double z_select[], double az_select[], double r_select[])
 {
   int i, n;
@@ -228,8 +225,8 @@ spectrum_init (double f1, double f2, int nangle, double angle[], double phase[],
      */
 
     sprintf (xxspec[n].name, "A%02.0f", angle[n - MSPEC]);
-    xxspec[n].lmn[0] = sin (angle[n - MSPEC] / RADIAN) * cos (-phase[n - MSPEC] * 360. / RADIAN);
-    xxspec[n].lmn[1] = sin (angle[n - MSPEC] / RADIAN) * sin (-phase[n - MSPEC] * 360. / RADIAN);
+    xxspec[n].lmn[0] = sin (angle[n - MSPEC] / RADIAN) * cos (-observer_phi[n - MSPEC] / RADIAN);
+    xxspec[n].lmn[1] = sin (angle[n - MSPEC] / RADIAN) * sin (-observer_phi[n - MSPEC] / RADIAN);
     xxspec[n].lmn[2] = cos (angle[n - MSPEC] / RADIAN);
     Log_silent ("Angle %e Angle cosines:%e %e %e\n", angle[n - MSPEC], xxspec[n].lmn[0], xxspec[n].lmn[1], xxspec[n].lmn[2]);
 
@@ -300,7 +297,7 @@ spectrum_init (double f1, double f2, int nangle, double angle[], double phase[],
     /* Completed initialization of variables for live or die */
 
     strcpy (dummy, "");
-    sprintf (dummy, "P%04.2f", phase[n - MSPEC]);
+    sprintf (dummy, "P%05.1f", observer_phi[n - MSPEC]);
     strcat (xxspec[n].name, dummy);
 
     xxspec[n].nscat = scat_select[n - MSPEC];

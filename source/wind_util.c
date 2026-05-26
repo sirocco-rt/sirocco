@@ -127,7 +127,7 @@ coord_fraction (int ndom, int ichoice, double x[], int ii[], double frac[], int 
     else
       z = x[2];                 /* signed: lower-hemisphere cells have wind_z[j] < 0 */
   }
-  else if (zdom[ndom].coord_type == RTHETA)
+  else if (zdom[ndom].coord_type == RTHETA || zdom[ndom].coord_type == SPH3D)
   {
     r = length (x);
     /* Data-based hemisphere detection: if wind_z[mdim-1] <= 90 the grid only
@@ -169,10 +169,10 @@ coord_fraction (int ndom, int ichoice, double x[], int ii[], double frac[], int 
     fraction (r, xx, zdom[ndom].ndim, &ix, &dr, 0);
     fraction (z, zz, zdom[ndom].mdim, &iz, &dz, 0);
 
-    if (zdom[ndom].coord_type == CYLIND3D)
+    if (zdom[ndom].coord_type == CYLIND3D || zdom[ndom].coord_type == SPH3D)
     {
-      /* For CYLIND3D cells are spaced mdim*pdim apart in rho and pdim apart in z.
-         Indices are into the k=0 phi slice; velocity callers rotate to actual phi. */
+      /* For 3D grids cells are spaced mdim*pdim apart in the first axis and pdim
+         apart in the second.  Indices are into the k=0 phi slice. */
       int pdim = zdom[ndom].pdim;
       int mdim = zdom[ndom].mdim;
       ii[0] = ix * mdim * pdim + iz * pdim;
