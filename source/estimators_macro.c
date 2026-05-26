@@ -398,7 +398,7 @@ int
 normalise_macro_estimators (PlasmaPtr xplasma)
 {
   double invariant_volume_time;
-  int i, j, nlev_upper, n;
+  int i, j, nlev_upper;
   double stimfac, line_freq, stat_weight_ratio;
   double heat_contribution, lower_density, upper_density;
   WindPtr one;
