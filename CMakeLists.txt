@@ -108,7 +108,7 @@ set(PYTHON_SOURCE
     source/import.c
     source/import_calloc.c
     source/import_cylindrical.c
-    source/import_rtheta.c
+    source/import_polar.c
     source/import_spherical.c
     source/ionization.c
     source/knigge.c

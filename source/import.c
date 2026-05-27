@@ -77,7 +77,7 @@ import_wind2 (int ndom, char *filename)
   }
   else if (zdom[ndom].coord_type == RTHETA)
   {
-    import_rtheta (ndom, filename);
+    import_polar (ndom, filename);
   }
   else if (zdom[ndom].coord_type == CYLIND3D)
   {
@@ -136,7 +136,7 @@ import_set_wind_boundaries (int ndom)
   }
   else if (zdom[ndom].coord_type == RTHETA)
   {
-    import_rtheta_setup_boundaries (ndom);
+    import_polar_setup_boundaries (ndom);
   }
   else if (zdom[ndom].coord_type == CYLIND3D)
   {
@@ -325,7 +325,7 @@ import_make_grid (int ndom, WindPtr w)
   }
   else if (zdom[ndom].coord_type == RTHETA)
   {
-    rtheta_make_grid_import (w, ndom);
+    polar_make_grid_import (w, ndom);
   }
   else if (zdom[ndom].coord_type == CYLIND3D)
   {
@@ -382,7 +382,7 @@ import_velocity (int ndom, double *x, double *v)
   }
   else if (zdom[ndom].coord_type == RTHETA)
   {
-    speed = velocity_rtheta (ndom, x, v);
+    speed = velocity_polar (ndom, x, v);
   }
   else if (zdom[ndom].coord_type == CYLIND3D)
   {
@@ -440,7 +440,7 @@ import_rho (int ndom, double *x)
   }
   else if (zdom[ndom].coord_type == RTHETA)
   {
-    rho = rho_rtheta (ndom, x);
+    rho = rho_polar (ndom, x);
   }
   else if (zdom[ndom].coord_type == CYLIND3D)
   {
@@ -497,7 +497,7 @@ import_temperature (int ndom, double *x, int return_t_e)
   }
   else if (zdom[ndom].coord_type == RTHETA)
   {
-    temperature = temperature_rtheta (ndom, x, return_t_e);
+    temperature = temperature_polar (ndom, x, return_t_e);
   }
   else if (zdom[ndom].coord_type == CYLIND3D)
   {

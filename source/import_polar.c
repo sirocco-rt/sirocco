@@ -1,5 +1,5 @@
 /***********************************************************/
-/** @file  import_rtheta.c
+/** @file  import_polar.c
  * @author ksl
  * @date   May, 2018
  *
@@ -70,7 +70,7 @@
  **********************************************************/
 
 int
-import_rtheta (int ndom, char *filename)
+import_polar (int ndom, char *filename)
 {
   FILE *fptr;
   char line[LINELENGTH];
@@ -86,7 +86,7 @@ import_rtheta (int ndom, char *filename)
 
   if ((fptr = fopen (filename, "r")) == NULL)
   {
-    Error ("import_rtheta: No such file\n");
+    Error ("import_polar: No such file\n");
     Exit (0);
   }
 
@@ -156,7 +156,7 @@ import_rtheta (int ndom, char *filename)
 
   if (ncell != imported_model[ndom].ndim * imported_model[ndom].mdim)
   {
-    Error ("import_rtheta: The dimensions of the imported grid seem wrong % d x %d != %d\n", imported_model[ndom].ndim,
+    Error ("import_polar: The dimensions of the imported grid seem wrong % d x %d != %d\n", imported_model[ndom].ndim,
            imported_model[ndom].mdim, imported_model[ndom].ncell);
     exit (1);
   }
@@ -220,7 +220,7 @@ import_rtheta (int ndom, char *filename)
  *
  * @details
  *
- * This used to be contained within rtheta_make_grid_import, however, it
+ * This used to be contained within polar_make_grid_import, however, it
  * does not reply on any of the variables in that function and only relies on
  * the imported_model struct. Therefore, the boundary setup was moved into a
  * separate function so it could be done else where in the program flow.
@@ -228,7 +228,7 @@ import_rtheta (int ndom, char *filename)
  * ************************************************************************** */
 
 int
-import_rtheta_setup_boundaries (int ndom)
+import_polar_setup_boundaries (int ndom)
 {
   int n_inner, n_outer;
   double rho_max, rho_min, rho_inner, rho_outer, rmin, rmax;
@@ -256,7 +256,7 @@ import_rtheta_setup_boundaries (int ndom)
 
       if (n_outer + 1 >= zdom[ndom].ndim2)
       {
-        Error ("import_rtheta_setup_boundaries: attempting to access cell outside of grid");
+        Error ("import_polar_setup_boundaries: attempting to access cell outside of grid");
         Exit (1);               // Something has gone wrong programmatically, best thing to do imo is exit
       }
 
@@ -361,7 +361,7 @@ import_rtheta_setup_boundaries (int ndom)
  **********************************************************/
 
 int
-rtheta_make_grid_import (WindPtr w, int ndom)
+polar_make_grid_import (WindPtr w, int ndom)
 {
   int n, nn;
   double theta;
@@ -473,7 +473,7 @@ rtheta_make_grid_import (WindPtr w, int ndom)
  **********************************************************/
 
 double
-velocity_rtheta (int ndom, double *x, double *v)
+velocity_polar (int ndom, double *x, double *v)
 {
   int j;
   int nn;
@@ -527,7 +527,7 @@ velocity_rtheta (int ndom, double *x, double *v)
  **********************************************************/
 
 double
-rho_rtheta (int ndom, double *x)
+rho_polar (int ndom, double *x)
 {
   double rho = 0;
   double r, z;
@@ -584,7 +584,7 @@ rho_rtheta (int ndom, double *x)
  * ************************************************************************** */
 
 double
-temperature_rtheta (int ndom, double *x, int return_t_e)
+temperature_polar (int ndom, double *x, int return_t_e)
 {
   int i, j, n;
   double r, z;

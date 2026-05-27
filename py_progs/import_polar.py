@@ -7,14 +7,14 @@ Read the master file produced by windsave2table for an rtheta (polar)
 coordinate model and produce a file that can be imported into Sirocco.
 
 Command line usage:
-    import_rtheta.py rootname [outputfile]
+    import_polar.py rootname [outputfile]
 
     e.g.
-        import_rtheta.py agn_rtheta_small
+        import_polar.py agn_rtheta_small
     reads  agn_rtheta_small.master.txt
     writes agn_rtheta_small.import.txt
 
-Output columns (space-separated, readable by import_rtheta.c):
+Output columns (space-separated, readable by import_polar.c):
     i  j  inwind  r  theta  v_x  v_y  v_z  rho  t_e  t_r
 
 Notes:
@@ -23,7 +23,7 @@ Notes:
     gamma = 1/sqrt(1 - v^2/c^2).
 
     For xmem3d two-hemisphere models theta runs from 0 to 180 deg and the
-    output file covers both hemispheres.  import_rtheta.c detects the
+    output file covers both hemispheres.  import_polar.c detects the
     two-hemisphere case automatically when the last theta value exceeds 90 deg.
 
     For single-hemisphere (memory-branch) models theta runs from 0 to 90 deg

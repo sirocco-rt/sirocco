@@ -3191,7 +3191,7 @@ complete_physical_summary (WindPtr w, char rootname[], int ochoice)
   int frac_choice;
   int ii, jj;
   double vtot;
-  FILE *fptr;
+  FILE *fptr = NULL;
   PlasmaPtr xplasma;
   int ndom;
 

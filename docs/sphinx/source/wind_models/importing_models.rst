@@ -292,7 +292,7 @@ The available conversion scripts in ``py_progs/`` are:
 
 * ``import_1d.py``      — 1-D spherical models
 * ``import_cyl.py``     — 2.5-D cylindrical models
-* ``import_rtheta.py``  — 2.5-D polar (r-theta) models
+* ``import_polar.py``  — 2.5-D polar (r-theta) models
 * ``import_cyl3d.py``   — 3-D cylindrical models (CYLIND3D)
 * ``import_sph3d.py``   — 3-D spherical polar models (SPH3D)
 

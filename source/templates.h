@@ -292,13 +292,13 @@ int sph3d_make_grid_import(WindPtr w, int ndom);
 double velocity_sph3d(int ndom, double *x, double *v);
 double rho_sph3d(int ndom, double *x);
 double temperature_sph3d(int ndom, double *x, int return_t_e);
-/* import_rtheta.c */
-int import_rtheta(int ndom, char *filename);
-int import_rtheta_setup_boundaries(int ndom);
-int rtheta_make_grid_import(WindPtr w, int ndom);
-double velocity_rtheta(int ndom, double *x, double *v);
-double rho_rtheta(int ndom, double *x);
-double temperature_rtheta(int ndom, double *x, int return_t_e);
+/* import_polar.c */
+int import_polar(int ndom, char *filename);
+int import_polar_setup_boundaries(int ndom);
+int polar_make_grid_import(WindPtr w, int ndom);
+double velocity_polar(int ndom, double *x, double *v);
+double rho_polar(int ndom, double *x);
+double temperature_polar(int ndom, double *x, int return_t_e);
 /* import_spherical.c */
 int import_1d(int ndom, char *filename);
 int import_spherical_setup_boundaries(int ndom);

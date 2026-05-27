@@ -7,7 +7,7 @@ Utility, I/O and Imports
     import_1d
     import_cyl
     import_cyl3d
-    import_rtheta
+    import_polar
     import_sph3d
     py_classes
     py_error

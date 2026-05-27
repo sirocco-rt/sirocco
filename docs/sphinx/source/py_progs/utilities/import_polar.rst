@@ -1,7 +1,7 @@
 ﻿import\_rtheta
 ==============
 
-.. automodule:: import_rtheta
+.. automodule:: import_polar
 
    
    .. rubric:: Functions
