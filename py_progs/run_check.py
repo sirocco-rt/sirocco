@@ -1,6 +1,6 @@
 #!/usr/bin/env python 
 '''
-Sumarize a model run with python, ultimately generating an html file with various plots, etc.
+Summarize a Sirocco model run, ultimately generating an html file with various plots, etc.
 
 
 Command line usage (if any):
@@ -11,12 +11,12 @@ Command line usage (if any):
     run_check -all
 
     run_check -h
-            
 
-Description:  
-    This routine performs basic checks on one or more python runs
+
+Description:
+    This routine performs basic checks on one or more Sirocco runs
     and creates an html file for each that is intended to provide
-    a quick summary of a run.  
+    a quick summary of a run.
 
     The user can enter the runs to be tested from the command line,
     either in the form of a set of root names or .pf names. Wildcarding,
@@ -172,7 +172,7 @@ def windsave2table(root):
 
     Normally this will just run windsave2table, but if it turns out that that fails
     the routine will try to run the same version (not commit) of windsave2table that
-    python was run with.  This will only work, if the correct version exists in one's
+    Sirocco was run with.  This will only work, if the correct version exists in one's
     bin file
     '''
     command='windsave2table %s' % root
@@ -332,11 +332,11 @@ which have failed, so a value of 0 indicates that a cell is "converged".
 '''
 
 error_description='''
-Python accumulates a fairly large number of errors and warnings.  Most are benign, especially if they only occur a few
+Sirocco accumulates a fairly large number of errors and warnings.  Most are benign, especially if they only occur a few
 times, but one should beware if an error message occurs many times, or if messages that look unusual start to appear.
 A summary of the errors for this run of the program is shown below.  More information about where the errors occured
-can be found in the diag files directory.  This summary presents the total number of times an error message of a particularly 
-type was generated; many times the same error message will will occur in each of the threads.  
+can be found in the diag files directory.  This summary presents the total number of times an error message of a particular
+type was generated; many times the same error message will occur in each of the threads.
 '''
 
 tot_plot_description='''
@@ -363,7 +363,7 @@ def make_html(root,converge_plot,te_plot,tr_plot,ne_plot,spec_tot_plot,spec_plot
     Make an html file that collates all the results
     '''
 
-    string=xhtml.begin('%s: How well did the Python run go?' % root)
+    string=xhtml.begin('%s: How well did the Sirocco run go?' % root)
 
     string+=xhtml.paragraph('Provide an overview of whether the run of %s has succeeded' % root)
 
@@ -466,7 +466,7 @@ def how_many_dimensions(filename):
 
 def doit(root='ixvel',outputfile='out.txt'):
     '''
-    Create a summary of a Python run, which will enough information that one can assess
+    Create a summary of a Sirocco run, with enough information to assess
     whether the run was successful
 
     Description:

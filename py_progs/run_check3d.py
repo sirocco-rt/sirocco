@@ -57,7 +57,7 @@ of convergence tests which have failed, so a value of 0 indicates that a cell is
 '''
 
 error_description = '''
-Python accumulates a fairly large number of errors and warnings.  Most are benign, especially if they
+Sirocco accumulates a fairly large number of errors and warnings.  Most are benign, especially if they
 only occur a few times, but one should beware if an error message occurs many times, or if messages
 that look unusual start to appear.  A summary of the errors for this run of the program is shown below.
 More information about where the errors occurred can be found in the diag files directory.  This summary
@@ -311,16 +311,15 @@ def _wind_heatmap_2d(data, xcol, ycol, var, scale, inwind_arr, ndim, mdim,
     """Return (x_plot, y_plot, zlog, title) arrays for a single 2D wind variable."""
     x_raw = np.array(data[xcol]).reshape(ndim, mdim)
     y_raw = np.array(data[ycol]).reshape(ndim, mdim)
-    inwind = inwind_arr.reshape(ndim, mdim)
+    inwind_2d = inwind_arr.reshape(ndim, mdim)
 
     xpos = x_raw[x_raw > 1]
     xlogmin = np.log10(np.min(xpos) / 10) if len(xpos) else 0.0
     x_plot = np.where(x_raw > 1, np.log10(x_raw), xlogmin)
 
     z = np.array(data[var], dtype=float).reshape(ndim, mdim)
-    if inwind != 'all':
-        mask = inwind_arr.reshape(ndim, mdim) != 0
-        z[mask] = np.nan
+    mask = inwind_2d != 0
+    z[mask] = np.nan
 
     if scale == 'log':
         with np.errstate(divide='ignore', invalid='ignore'):
