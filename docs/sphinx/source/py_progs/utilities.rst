@@ -4,11 +4,8 @@ Utility, I/O and Imports
 .. autosummary::
     :toctree: utilities
 
-    import_1d
-    import_cyl
-    import_cyl3d
-    import_polar
-    import_sph3d
+    import_model
+    check_import_model
     py_classes
     py_error
     py_plot_util

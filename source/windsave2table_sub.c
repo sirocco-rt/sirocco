@@ -110,6 +110,20 @@ do_windsave2table (char *root, int ion_switch, int edge_switch)
 
 
 /**********************************************************/
+/** @brief  Write a coord_system comment as the first line of a table file.
+ *  The name matches the Wind.coord_system parameter file keyword.
+ **********************************************************/
+static void
+write_coord_comment (FILE *fptr, int ndom)
+{
+  const char *names[] = { "spherical", "cylindrical", "polar", "cyl3d", "sph3d" };
+  int ct = zdom[ndom].coord_type;
+  if (ct >= 0 && ct <= 4)
+    fprintf (fptr, "# coord_system: %s\n", names[ct]);
+}
+
+
+/**********************************************************/
 /**
  * @brief      writes specific  variables of a windsaave
  * that are intended to be of general interest to
@@ -168,6 +182,7 @@ create_master_table (int ndom, char rootname[])
 
 
   fptr = fopen (filename, "w");
+  write_coord_comment (fptr, ndom);
 
   /* Get the variables that one needs */
 
@@ -430,8 +445,7 @@ create_master_table (int ndom, char rootname[])
 
     sprintf (start,
              "%9s %9s %9s %9s %9s %9s %9s %9s %9s %4s %4s %4s %8s %7s %6s %8s %9s %9s %9s ", "r", "theta", "phi", "rcen",
-             "thetacen", "phicen", "xcen", "ycen", "zcen", "i", "j", "k", "nwind", "nplasma", "inwind", "converge", "v_x", "v_y",
-             "v_z");
+             "thetacen", "phicen", "xcen", "ycen", "zcen", "i", "j", "k", "nwind", "nplasma", "inwind", "converge", "v_x", "v_y", "v_z");
     strcpy (one_line, start);
     n = 0;
     while (n < ncols)
@@ -519,6 +533,7 @@ create_heat_table (int ndom, char rootname[])
 
 
   fptr = fopen (filename, "w");
+  write_coord_comment (fptr, ndom);
 
   /* Get the variables that one needs */
 
@@ -789,6 +804,7 @@ create_convergence_table (int ndom, char rootname[])
 
 
   fptr = fopen (filename, "w");
+  write_coord_comment (fptr, ndom);
 
   /* Get the variables that one needs */
 
@@ -1024,6 +1040,7 @@ create_velocity_gradient_table (int ndom, char rootname[])
 
 
   fptr = fopen (filename, "w");
+  write_coord_comment (fptr, ndom);
 
   /* Get the variables that one needs */
 
@@ -1271,6 +1288,7 @@ create_ion_table (int ndom, char rootname[], int iz, int ion_switch)
   sprintf (filename, "%.100s.%.10s.%.10s.txt", rootname, element_name, name);
 
   fptr = fopen (filename, "w");
+  write_coord_comment (fptr, ndom);
 
 
 
@@ -2037,6 +2055,7 @@ create_spec_table (int ndom, char rootname[])
 
 
   fptr = fopen (filename, "w");
+  write_coord_comment (fptr, ndom);
 
   /* Get the variables that one needs */
 
@@ -2234,7 +2253,8 @@ create_spec_table (int ndom, char rootname[])
 
     /* First assemble the header line */
 
-    sprintf (start, "%9s %9s %9s %9s %4s %4s %4s %6s %8s %6s ", "xcen", "ycen", "zcen", "phicen", "i", "j", "k", "inwind", "converge", "nband");
+    sprintf (start, "%9s %9s %9s %9s %4s %4s %4s %6s %8s %6s ", "xcen", "ycen", "zcen", "phicen", "i", "j", "k", "inwind", "converge",
+             "nband");
     strcpy (one_line, start);
     n = 0;
     while (n < ncols)

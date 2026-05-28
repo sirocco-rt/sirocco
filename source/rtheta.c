@@ -810,13 +810,12 @@ rtheta_extend_density (int ndom, WindPtr w)
  * Guard-cell logic:
  * - Outer radial guard: the last 2 cells in the i (radial) direction are
  *   always W_NOT_INWIND, providing an interpolation buffer at the outer edge.
- * - Theta-direction guards differ between hemispheres.  Upper-hemisphere cells
- *   (j < mdim/2) have no guard at the equatorial boundary: the equatorial
- *   cells are classified purely by the wind-cone/disk geometry.  Lower-
- *   hemisphere cells (j >= mdim/2) retain a 2-cell guard at the south-pole
- *   end (j_hemi >= mdim_half-2), analogous to the top-of-grid guard in CYLIND.
- *   The old equatorial guard for the upper hemisphere was vestigial from the
- *   single-hemisphere code and caused an asymmetry between the two hemispheres.
+ * - North-pole guard: j_hemi=0,1 (theta~0) are always W_NOT_INWIND.  The
+ *   rotation axis is a coordinate singularity (sin theta=0, zero cell volume).
+ * - South-pole guard: lower-hemisphere j_hemi=mdim_half-2,mdim_half-1
+ *   (theta~180) are always W_NOT_INWIND, providing the outer boundary buffer.
+ * - No guard at the equatorial boundary: cells near theta=90 are classified
+ *   by wind-cone/disk geometry in both hemispheres symmetrically.
  *
  * Comment:  The routine is only called by rtheta_cell_volume, and so we
  * already know that this cell is part of an rtheta coordinate system.
@@ -851,19 +850,20 @@ rtheta_is_cell_in_wind (int n)
 
   /* Theta-direction guards.
      With the doubled grid (upper hemisphere j=0..mdim/2-1, lower j=mdim/2..mdim-1):
-     - Upper hemisphere: no guard at the equatorial boundary.  The equatorial cells are
-     now active and classified by the wind-cone/disk geometry below, just like the
-     lower hemisphere equatorial cells.  The old equatorial guard was inherited from
-     the single-hemisphere code and caused an asymmetry: upper hemisphere cells near
-     the disk were always W_NOT_INWIND while the mirror lower hemisphere cells were not.
-     - Lower hemisphere: retain the 2-cell guard at the south-pole end (large theta,
-     j_hemi near mdim_half-1).  These are a true outer boundary, analogous to the
-     top-of-grid guard in CYLIND. */
+     - North-pole guard: j_hemi=0,1 (theta~0) are always W_NOT_INWIND.  The polar
+     axis is a coordinate singularity with zero cell volume; a 2-cell buffer is
+     required here just as at the south pole.
+     - No guard at the equatorial boundary: upper-hemisphere cells near theta=90 are
+     classified by wind-cone/disk geometry, symmetric with lower-hemisphere cells.
+     The old equatorial guard was vestigial from the single-hemisphere code and
+     caused an asymmetry between the two hemispheres.
+     - South-pole guard: lower-hemisphere j_hemi=mdim_half-2,mdim_half-1 (theta~180)
+     are always W_NOT_INWIND, providing the outer boundary buffer. */
   {
     int mdim_half = mdim / 2;
     int is_lower = (j >= mdim_half);
     int j_hemi = is_lower ? (j - mdim_half) : j;
-    if (is_lower && j_hemi >= (mdim_half - 2))
+    if (j_hemi <= 1 || (is_lower && j_hemi >= (mdim_half - 2)))
     {
       return (W_NOT_INWIND);
     }

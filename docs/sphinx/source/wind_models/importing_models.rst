@@ -270,48 +270,77 @@ The maximum and minimum spherical extent of the wind is calculated
 automatically by SIROCCO from cells with ``inwind ≥ 0``.  Guard cells are
 excluded from this calculation.
 
-Generating import files from a SIROCCO run
-==========================================
+Python tools for import files
+=============================
+
+Two scripts in ``py_progs/`` support the import workflow:
+``import_model.py`` for creating import files from SIROCCO output, and
+``check_import_model.py`` for validating any import file.
+
+Generating an import file from a SIROCCO run
+---------------------------------------------
 
 The easiest way to learn the import format for a particular coordinate system
-is to first run SIROCCO with an analytic wind model in the same coordinate
-system, then convert the output to an import file using the provided Python
-scripts.
-
-For example, to create an import file for a 3-D spherical polar model with
-root name ``test``:
+is to run SIROCCO with an analytic wind model, then convert the output with
+``import_model.py``.
 
 .. code:: bash
 
    windsave2table test          # produces test.master.txt
-   import_sph3d.py test         # produces test.import.txt
+   import_model.py test         # produces test.import.txt
 
-The import file can then be used in a new run with ``Wind.type = imported``.
+``windsave2table`` writes a ``# coord_system:`` comment as the first line of
+every table it produces.  ``import_model.py`` reads that comment and selects
+the correct format automatically, supporting all five coordinate systems:
+spherical, cylindrical, polar, cyl3d, and sph3d.
 
-The available conversion scripts in ``py_progs/`` are:
+``import_model.py`` also:
 
-* ``import_1d.py``      — 1-D spherical models
-* ``import_cyl.py``     — 2.5-D cylindrical models
-* ``import_polar.py``  — 2.5-D polar (r-theta) models
-* ``import_cyl3d.py``   — 3-D cylindrical models (CYLIND3D)
-* ``import_sph3d.py``   — 3-D spherical polar models (SPH3D)
+* Applies a Lorentz factor correction to the density column:
 
-Each script reads ``<root>.master.txt`` and writes ``<root>.import.txt``.  The
-scripts also apply a Lorentz factor correction to the density column:
+  .. math::
 
-.. math::
+     \rho_{\mathrm{import}} = \rho_{\mathrm{CMF}} \times \gamma
 
-   \rho_{\mathrm{import}} = \rho_{\mathrm{CMF}} \times \gamma
+  For typical sub-relativistic winds (v/c << 1) this correction is negligible.
 
-For typical sub-relativistic winds (v/c << 1) this correction is negligible.
+* Enforces guard cells at all required boundaries (outer radial rows,
+  north- and south-pole rows for polar-type grids), correcting any cells that
+  were not already marked ``inwind = -1``.
+
+* Automatically runs ``check_import_model.py`` on the output file and prints a
+  validation summary.
+
+Validating an import file
+--------------------------
+
+``check_import_model.py`` can be used to validate any import file, whether
+produced by ``import_model.py`` or created externally.  By default it also
+fixes any guard-cell violations it finds and writes the corrected file as
+``<name>.fixed.txt``:
+
+.. code:: bash
+
+   check_import_model.py test.import.txt        # fix + write test.import.fixed.txt
+   check_import_model.py test.import.txt --no-fix   # report only
+
+The script reports:
+
+* Coordinate system (detected from column names)
+* Grid dimensions and cell counts (total, in-wind, not-in-wind)
+* Guard-cell check results for each boundary
+* Physical sanity checks (velocities, density, temperature)
+* A final ``CLEAN`` or problem summary
+
+Physical issues (rho ≤ 0, T ≤ 0, v ≥ c) are reported but cannot be fixed
+automatically.
 
 .. warning::
 
    If you use astropy or other tools to modify an import file, check that all
-   variables remain reasonable.  In particular, we have observed that astropy
-   tables can silently set ``rho`` to 0.0 if the format is not specified.
-   The provided scripts set explicit output formats for all floating-point
-   columns to avoid this.
+   variables remain reasonable.  In particular, astropy tables can silently set
+   ``rho`` to 0.0 if the output format is not specified.  The provided scripts
+   set explicit formats for all floating-point columns to avoid this.
 
 .. note::
 

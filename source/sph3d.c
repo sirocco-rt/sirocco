@@ -333,10 +333,11 @@ sph3d_is_cell_in_wind (int n)
   if (i >= (ndim - 2))
     return (W_NOT_INWIND);
 
-  /* Theta-direction guards (same asymmetric logic as rtheta_is_cell_in_wind) */
+  /* Theta-direction guards: north-pole (j_hemi<=1) and south-pole (j_hemi>=mdim_half-2).
+     Symmetric 2-cell buffers at both poles; no guard at the equatorial boundary. */
   is_lower = (j >= mdim_half);
   j_hemi = is_lower ? (j - mdim_half) : j;
-  if (is_lower && j_hemi >= (mdim_half - 2))
+  if (j_hemi <= 1 || (is_lower && j_hemi >= (mdim_half - 2)))
     return (W_NOT_INWIND);
 
   /* Check 4 corners in the (r, theta) plane (phi = 0) */

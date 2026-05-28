@@ -87,7 +87,8 @@ Support scripts for data processing, visualization, and code maintenance:
 - `run_indent.py` — enforces GNU indent code style on changed C files
 - `MakeMacro.py` — generates macro-atom data from Chianti/Topbase databases
 - `plot_spec.py`, `plot_wind.py`, `plot_tot.py` — visualization
-- `hydro_2_python.py`, `import_1d.py`, `import_cyl.py`, `import_polar.py` — import external hydro models
+- `hydro_2_python.py` — parse hydro simulation output for use with Sirocco's hydro import facility
+- `import_model.py` — unified import-file generator for all coordinate systems (spherical, cylindrical, polar, cyl3d, sph3d)
 - `balmer_decrement.py` — physics validation test
 - `regression.py` — regression testing utilities
 
