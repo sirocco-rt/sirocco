@@ -10,6 +10,19 @@ Guard-cell violations (wrong inwind values at grid boundaries) are fixed
 automatically.  Physical issues (rho <= 0, T <= 0, v >= c) are reported
 but cannot be fixed automatically.
 
+Recognised ``inwind`` values:
+
+* ``-2``  W_IGNORE      — ignore this cell (transparent to photons)
+* ``-1``  W_NOT_INWIND  — not in the wind
+*  ``0``  W_ALL_INWIND  — fully in the wind
+*  ``1``  W_PART_INWIND — partially in the wind (reported in summary;
+                          physical checks are skipped for these cells)
+
+Sirocco converts both W_NOT_INWIND (−1) and W_PART_INWIND (1) to
+W_IGNORE (−2) on import, so the distinction matters only before import.
+Use ``import_model.py`` (without ``--keep-partial``) to suppress
+W_PART_INWIND cells before distributing an import file.
+
 Command line usage::
 
     check_import_model.py filename [--no-fix]
@@ -85,7 +98,7 @@ def _print_basic_info(data, coord):
     total     = len(data)
     n_inwind  = int(np.sum(data['inwind'] == 0))
     n_not     = int(np.sum(data['inwind'] == -1))
-    n_part    = int(np.sum(data['inwind'] == -2))
+    n_part    = int(np.sum((data['inwind'] == -2) | (data['inwind'] == 1)))
     n_other   = total - n_inwind - n_not - n_part
     print('Total cells      : %d' % total)
     print('In wind          : %d' % n_inwind)
@@ -141,7 +154,7 @@ def _run_physical_checks(data):
     n_inwind = int(np.sum(data['inwind'] == 0))
     phys_problems = 0
     if n_inwind > 0:
-        in_mask = data['inwind'] == 0
+        in_mask = data['inwind'] == 0   # fully in wind only; partial cells (1, -2) excluded
         rho = data['rho'][in_mask]
         n_zero_rho = int(np.sum(rho <= 0.0))
         flag = '  WARNING: %d cells have rho <= 0' % n_zero_rho if n_zero_rho else 'OK'

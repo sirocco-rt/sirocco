@@ -36,10 +36,14 @@ General rules for all import formats
   .. code:: c
 
      W_IGNORE      = -2   // ignore this grid cell (transparent to photons)
-     W_NOT_INWIND  = -1   // this cell is not in the wind (treated as W_IGNORE on import)
+     W_NOT_INWIND  = -1   // not in the wind (treated as W_IGNORE on import)
      W_ALL_INWIND  =  0   // this cell is in the wind
+     W_PART_INWIND =  1   // partially in the wind (treated as W_IGNORE on import)
 
-  Cells with ``inwind = 1`` (partially in wind) are treated as ``W_IGNORE``.
+  Both ``inwind = -1`` and ``inwind = 1`` are treated as W_IGNORE by
+  Sirocco's import code.  ``import_model.py`` converts ``inwind = 1`` to
+  ``inwind = -1`` by default to produce a cleaner file; use
+  ``--keep-partial`` to keep the original value.
 
   After the grid is built, SIROCCO checks that the required boundary slices
   contain no active (``inwind = 0``) cells.  All violations are reported to
@@ -304,6 +308,12 @@ spherical, cylindrical, polar, cyl3d, and sph3d.
 
   For typical sub-relativistic winds (v/c << 1) this correction is negligible.
 
+* Suppresses W_PART_INWIND cells: ``inwind = 1`` cells produced by
+  ``windsave2table`` are converted to ``inwind = -1`` before writing.
+  Sirocco converts both ``inwind = -1`` and ``inwind = 1`` to W_IGNORE
+  on import, so this produces a cleaner file without loss of information.
+  Pass ``--keep-partial`` to preserve the original ``inwind = 1`` values.
+
 * Enforces guard cells at all required boundaries (outer radial rows,
   north- and south-pole rows for polar-type grids), correcting any cells that
   were not already marked ``inwind = -1``.
@@ -327,9 +337,11 @@ fixes any guard-cell violations it finds and writes the corrected file as
 The script reports:
 
 * Coordinate system (detected from column names)
-* Grid dimensions and cell counts (total, in-wind, not-in-wind)
+* Grid dimensions and cell counts (total, in-wind, not-in-wind, part-in-wind)
 * Guard-cell check results for each boundary
-* Physical sanity checks (velocities, density, temperature)
+* Physical sanity checks (velocities, density, temperature) — applied only
+  to fully in-wind cells (``inwind = 0``); W_PART_INWIND cells (``inwind = 1``)
+  are listed separately and skipped in physical checks
 * A final ``CLEAN`` or problem summary
 
 Physical issues (rho ≤ 0, T ≤ 0, v ≥ c) are reported but cannot be fixed

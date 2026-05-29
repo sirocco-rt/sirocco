@@ -9,7 +9,7 @@ systems: spherical, cylindrical, polar, cyl3d, sph3d.
 
 Command line usage::
 
-    import_model.py rootname [outputfile]
+    import_model.py rootname [outputfile] [--keep-partial]
 
     e.g.
         import_model.py cv_polar
@@ -18,6 +18,16 @@ Command line usage::
 
 Old master.txt files without a coord_system header are handled via
 column-based detection with a printed warning.
+
+By default, cells with ``inwind = 1`` (W_PART_INWIND, partially in the
+wind) are converted to ``inwind = -1`` before writing.  Sirocco's import
+code converts both W_NOT_INWIND (−1) and W_PART_INWIND (1) to W_IGNORE
+(−2) on import anyway, so this produces a cleaner file.  Pass
+``--keep-partial`` on the command line (or ``keep_partial=True`` when
+calling :func:`doit`) to pass W_PART_INWIND cells through unchanged.
+
+After writing the import file the script automatically runs
+check_import_model.py and prints a validation summary.
 '''
 
 import sys
@@ -221,7 +231,7 @@ def _detect_coord(colnames):
     return None
 
 
-def doit(root='model', outputfile=''):
+def doit(root='model', outputfile='', keep_partial=False):
     '''
     Read a master.txt and write a Sirocco import file.
 
@@ -231,6 +241,11 @@ def doit(root='model', outputfile=''):
         Rootname.  Reads <root>.master.txt.
     outputfile : str, optional
         Output path.  Defaults to <root>.import.txt.
+    keep_partial : bool, optional
+        If False (default), W_PART_INWIND cells (inwind=1) are converted to
+        inwind=-1 before writing.  Sirocco converts them to W_IGNORE on import
+        anyway, so the default produces a cleaner file.  Set True to pass them
+        through unchanged.
 
     Returns
     -------
@@ -262,6 +277,12 @@ def doit(root='model', outputfile=''):
         print('Error: unknown coord_system "%s"' % coord)
         return None
 
+    if not keep_partial:
+        n_partial = int(np.sum(data['inwind'] == 1))
+        if n_partial:
+            data['inwind'][data['inwind'] == 1] = -1
+            print('Converted %d W_PART_INWIND (inwind=1) cells to inwind=-1' % n_partial)
+
     out = fn(data, outputfile)
     print('Read  %d rows from %s' % (len(out), filename))
     print()
@@ -270,9 +291,13 @@ def doit(root='model', outputfile=''):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 2:
-        doit(sys.argv[1], sys.argv[2])
-    elif len(sys.argv) > 1:
-        doit(sys.argv[1])
+    args = [a for a in sys.argv[1:] if not a.startswith('-')]
+    flags = [a for a in sys.argv[1:] if a.startswith('-')]
+    keep_partial = '--keep-partial' in flags
+
+    if len(args) > 1:
+        doit(args[0], args[1], keep_partial=keep_partial)
+    elif len(args) == 1:
+        doit(args[0], keep_partial=keep_partial)
     else:
         print(__doc__)
