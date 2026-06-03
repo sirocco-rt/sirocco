@@ -5,10 +5,9 @@
 [![Documentation Status](https://readthedocs.org/projects/sirocco-rt/badge/?version=latest)](https://sirocco-rt.readthedocs.io/en/latest/?badge=latest)
 [![arXiv](https://img.shields.io/badge/arXiv-2410.19908-b31b1b.svg)](https://arxiv.org/abs/2410.19908)
 
-*Sirocco* (Simulating Ionization and Radiation in Outflows Created by Compact Objects) is a Monte Carlo radiative transfer code which uses the Sobolev approximation. The code was formerly known as Python and renamed in October 2024. It has been developed by Knox Long, Christian Knigge, Stuart Sim, Nick Higginbottom, James Matthews, Sam Manghamm Edward Parkinson, Mandy Hewitt and Nico Scepi. The code has been used for a variety of research projects invovling the winds of cataclysmic variables, young stellar objects, X-ray binaries and AGN.
+*Sirocco* (Simulating Ionization and Radiation in Outflows Created by Compact Objects) is a Monte Carlo radiative transfer code which uses the Sobolev approximation. The code was formerly known as Python and renamed in October 2024. It has been developed by Knox Long, Christian Knigge, Stuart Sim, Nick Higginbottom, James Matthews, Sam Mangham, Edward Parkinson, Mandy Hewitt, Amin Mosallanezhad and Nico Scepi. The code has been used for a variety of research projects involving the winds of cataclysmic variables, young stellar objects, X-ray binaries and AGN.
 
-The code is under active development, but we are looking for beta users to test the code, and potentially use it for their own research. If you are interested in using Sirocco please contact Knox Long via long[at]stsci[dot]edu 
-or James Matthews via james[dot]matthews[at]physics[dot]ox[dot]ac[dot]uk.
+The code is under active development, but is open source and available to be used for research. If you have questions about Sirocco please either [join the user group](https://groups.google.com/g/sirocco-users) and direct your enquiries to the group, or contact one of the lead developers: James Matthews via james[dot]matthews[at]physics[dot]ox[dot]ac[dot]uk, or Knox Long via long[at]stsci[dot]edu.
 
 Documentation is hosted on [ReadTheDocs](https://sirocco-rt.readthedocs.io).
 
