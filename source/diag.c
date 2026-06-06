@@ -365,9 +365,8 @@ init_extra_diagnostics ()
   FILE *cellfile;               /*File that may or may not exist, pointing to cells we want to write out photon stats for */
   int cell;                     /*Temporary storage of cell to use */
 
-  if (eplinit == 0 && modes.extra_diagnostics)
+  if (eplinit == 0 && (modes.save_extract_photons || modes.track_resonant_scatters))
   {
-    //OLD sprintf (files.extra, "%.50s.ext.txt", files.root);
     epltptr = fopen (files.extra, "w");
     eplinit = 1;
   }
