@@ -383,6 +383,8 @@ extern int current_domain;      // This integer is used by swind only
  * structure.
  */
 
+#define CONVERGENCE_HISTORY_MAX 100
+
 struct geometry
 {
 
@@ -422,6 +424,19 @@ struct geometry
   int wcycles, pcycles, pcycles_renorm; /**< The number of ionization and spectrum cycles desired, pcycles_renorm
                                          * is only used on restarts.  See spectrum_restart_renormalize
                                          */
+  double convergence_tolerance; /**< Percentage tolerance for early stopping of ionization cycles.
+                                     If the average cycle-to-cycle change in convergence fraction over
+                                     the lookback window is below this percentage, ionization stops early.
+                                     E.g. 2 means stop when change < 2%. Default: 2 */
+  double convergence_fraction;  /**< Minimum percentage of cells that must be converged before early stopping
+                                     is allowed. E.g. 80 means at least 80% of cells must be converged.
+                                     This acts as a floor to prevent stopping on a stably unconverged model.
+                                     Values between 0 and 100. Default: 80 */
+  int min_ionization_cycles;    /**< Minimum number of ionization cycles before early stopping is allowed. Default: 0 */
+  int convergence_lookback;     /**< Number of consecutive cycles over which stability is assessed. Default: 5 */
+
+  double convergence_history[CONVERGENCE_HISTORY_MAX]; /**< Ring buffer storing fraction_converged per cycle */
+
 #define CYCLE_IONIZ    0
 #define CYCLE_EXTRACT  1
   int ioniz_or_extract;         /**<  Set to CYCLE_IONIZ during ionization cycles, set to CYCLE_EXTRACT during calculation of
@@ -474,12 +489,16 @@ struct geometry
 
   int disk_type;
 
+  
 #define BACK_RAD_ABSORB_AND_DESTROY  0  /**< Disk simply absorbs the radiation and it is lost */
-#define BACK_RAD_SCATTER            1   /**< Disk reradiates the radiation immediately via electron scattering */
+#define BACK_RAD_SCATTER            1   /**< Disk reradiates and retains the photon's frequency but 
+                                            gives it a new direction, selected randomly according to 
+                                            cos(theta) */
 #define BACK_RAD_ABSORB_AND_HEAT     2  /**< Correct disk temperature for illumination by photons
                                            which hit the dsik.  Disk radiation is absorbed and changes
                                            the temperature of the disk for future ionization cycles
                                          */
+#define BACK_RAD_SPECULAR     3  /**< True "specular refleciton", reversing the sign of v_z */
 
   int absorb_reflect;           /**< Controls what happens when a photon hits the disk or star
                                  */
@@ -1889,6 +1908,10 @@ struct advanced_modes
                                   that make it less useful than it might seem. */
   int no_macro_pops_for_ions;     /* if true, then use the ion densities from the ionization mode
                                      for macro-atoms, rather than from macro_pops */
+  int early_stopping;             /**< when TRUE, enables convergence-based early stopping of ionization
+                                   * cycles. Set by the -early_stopping command line switch. When active,
+                                   * sirocco queries the user for @estop parameters in the .pf file.
+                                   */
 };
 
 extern struct advanced_modes modes;

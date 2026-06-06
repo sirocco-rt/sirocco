@@ -40,7 +40,7 @@ The two largest data structures, ``plasma_dummy`` (accessed via ``PlasmaPtr``) a
 ``macro_dummy`` (accessed via ``MacroPtr``), are each split into three sub-structures
 that categorize fields by their role during a simulation cycle.  This split makes the
 MPI communication patterns self-documenting and enables the MPI-3 shared-memory model
-(see :doc:`mpi_comms`) where read-only data is shared between ranks on the same node
+(see :doc:`mixed_memory_model`) where read-only data is shared between ranks on the same node
 while private estimator data remains per-rank.
 
 The top-level ``plasma_dummy`` struct is:
@@ -212,7 +212,7 @@ The portions of the routine that are parallelized are:
 
 MPI requires initialization. For SIROCCO this is carried out in sirocco.c.  Various subroutines make
 use of MPI, and as a result, programmers need to be aware of this fact when they write auxiliary
-routines that use the various subroutines called by SIROCCO.  See :doc:`mpi_comms` for details
+routines that use the various subroutines called by SIROCCO.  See :doc:`mixed_memory_model` for details
 on the communication patterns and how they relate to the plasma and macro-atom sub-structures.
 
 Input naming conventions

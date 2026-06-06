@@ -49,7 +49,7 @@ Various documentation exists:
     * Parkinson, E. (2022): `Shining lights, even in death: modelling the optical and ultraviolet emission from tidal disruption events <https://eprints.soton.ac.uk/457482/>`_ . 
 
 For more information on how this page was generated and how to create documentation for SIROCCO,
-look at the page for :doc:`documentation on the documentation <developer/meta>`.
+look at the page for :doc:`documentation on the documentation <meta>`.
 
 `This ADS library <https://ui.adsabs.harvard.edu/public-libraries/dRea2kBFSCmzAji_7yTK9Q>`_ contains a list of publications using SIROCCO to date. 
 
@@ -106,6 +106,7 @@ Amin Mosallanezhad
    running_sirocco
    input
    output
+   c_executables
    plotting
    operation
    radiation
@@ -114,5 +115,7 @@ Amin Mosallanezhad
    examples
    physics
    atomic
+   speculate
+   meta
    developer
    *

@@ -15,10 +15,6 @@
 #include "../atomic.h"
 #include "../sirocco.h"
 
-/* rdpar_stat is defined in rdpar.c; reset it to 0 to allow opar to open a new
- * file even if a previous test left it in the "file open" state (rdpar_stat==2). */
-extern int rdpar_stat;
-
 #define PATH_SEPARATOR '/'
 
 /** *******************************************************************************************************************
@@ -83,7 +79,7 @@ int
 cleanup_model (const char *root_name)
 {
   char *SIROCCO_ENV;
-  char parameter_filepath[LINELENGTH];
+  char parameter_filepath[2 * LINELENGTH];
 
   (void) root_name;
 
@@ -94,7 +90,7 @@ cleanup_model (const char *root_name)
     return EXIT_FAILURE;
   }
 
-  snprintf (parameter_filepath, LINELENGTH, "%s/source/tests/test_data/define_wind/%s.pf", SIROCCO_ENV, files.root);
+  snprintf (parameter_filepath, 2 * LINELENGTH, "%s/source/tests/test_data/define_wind/%s.pf", SIROCCO_ENV, files.root);
   if (cpar (parameter_filepath) != 1)   /* cpar returns 1 when something is "normal" */
   {
     return EXIT_FAILURE;
@@ -207,7 +203,7 @@ setup_model_grid (const char *root_name, const char *atomic_data_location)
   char *SIROCCO_ENV;
   char rdchoice_answer[LINELENGTH];
   char rdchoice_choices[LINELENGTH];
-  char parameter_filepath[LINELENGTH];
+  char parameter_filepath[2 * LINELENGTH];
 
   SIROCCO_ENV = getenv ("SIROCCO");
   if (SIROCCO_ENV == NULL)
@@ -218,14 +214,10 @@ setup_model_grid (const char *root_name, const char *atomic_data_location)
 
   geo.run_type = RUN_TYPE_NEW;
 
-  /* Reset rdpar input state in case a previous test left opar open (e.g. via a
-   * fatal CUnit assertion that skipped cleanup_model). */
-  rdpar_stat = 0;
-
   /* Set up parameter file, that way we can get all the parameters from that
    * instead of defining them manually */
   strcpy (files.root, root_name);
-  snprintf (parameter_filepath, LINELENGTH, "%s/source/tests/test_data/define_wind/%s.pf", SIROCCO_ENV, files.root);
+  snprintf (parameter_filepath, 2 * LINELENGTH, "%s/source/tests/test_data/define_wind/%s.pf", SIROCCO_ENV, files.root);
   if (opar (parameter_filepath) != 2)   /* opar returns 2 when reading for the parameter file */
   {
     fprintf (stderr, "Unable to read from parameter file %s.pf", files.root);

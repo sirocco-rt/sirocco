@@ -63,6 +63,7 @@ Makefile
 docs/sphinx/html/
 docs/sphinx/doctrees/
 docs/sphinx/venv/
+docs/sphinx/source/py_progs/py4py_auto/
 
 # doxygen stuff
 docs/doxygen/html/
