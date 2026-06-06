@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <float.h>
 
 #include "atomic.h"
 #include "sirocco.h"
@@ -96,10 +97,19 @@ dvwind_ds_cmf (PhotPtr p)
     struct photon pnew;
     double v1[3], v2[3], dv[3], diff[3];
     double ds;
-    /* choose a small distance which is dependent on the cell size */
-    vsub (pp.x, wmain[pp.grid].x, diff);
+    /* choose a small distance dependent on the cell size, with a floor set by
+     * the floating-point precision at the photon's position.  For thin shells
+     * at large radii (e.g. 10 cm at 1e11 cm) 1e-6 * half_cell falls below
+     * ULP(r), so rmin+ds == rmin in double and the finite difference returns
+     * zero for every direction.  The floor is capped at 10% of the half-cell
+     * width so the step remains local. */
     vsub (wmain[pp.grid].xcen, wmain[pp.grid].x, diff);
     ds = 0.000001 * length (diff);
+    {
+      double ds_floor = 100.0 * DBL_EPSILON * length (pp.x);
+      if (ds < ds_floor)
+        ds = fmin (ds_floor, 0.1 * length (diff));
+    }
     /* calculate the velocity at the position of the photon */
     /* note we use model velocity, which could potentially be slow,
        but avoids interpolating (see #118) */
@@ -433,7 +443,7 @@ get_dvds_max (PhotPtr p)
 
   for (nn = 0; nn < nelem; nn++)
   {
-    dvds += wmain[nnn[nn]].dvds_max;
+    dvds += frac[nn] * wmain[nnn[nn]].dvds_max;
   }
 
   return dvds;
