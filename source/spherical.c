@@ -84,7 +84,7 @@ spherical_ds_in_cell (int ndom, PhotPtr p)
      * Instead return the distance to a sphere just outside the boundary; this is always
      * finite for a photon at r <= rmax and moves it cleanly into the next cell. */
     Error ("spherical: ds_in_cell: s and smax returning VERY_BIG in cell %i for photon %d; pushing past outer boundary\n", p->grid, p->np);
-    return (ds_to_sphere (wmain[n].rmax + DFUDGE, p));
+    return (ds_to_sphere (zdom[ndom].wind_x[ix + 1] + DFUDGE, p));
   }
 
 
