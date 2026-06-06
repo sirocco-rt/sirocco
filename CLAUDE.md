@@ -133,6 +133,9 @@ Example files are in `examples/basic/`, `examples/extended/`, and `examples/gh-w
 - Full docs: https://sirocco-rt.readthedocs.io
 - Model spectra (optional): clone `https://github.com/sirocco-rt/xmod` into `xmod/`
 
+## Claude Code Rules
+- **Never change the version number** in `source/version.h` or `source/Makefile` without explicit user instruction. Always ask before touching these.
+
 ## Coding Conventions
 - GNU indent style enforced automatically on changed files during build (unless `INDENT=no`)
 - ANSI C with gnu99 standard
