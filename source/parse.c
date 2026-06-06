@@ -324,7 +324,7 @@ parse_command_line (int argc, char *argv[])
 
     sprintf (dummy, "_%02d.ext.txt", rank_global);
 
-    sprintf (files.extra, "%.100s%.100s", files.root, dummy);
+    sprintf (files.extra, "%.100s%.100s%.100s", files.diagfolder, files.root, dummy);
 
 
 
