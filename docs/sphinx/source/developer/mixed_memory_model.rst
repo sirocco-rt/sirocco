@@ -573,6 +573,23 @@ On a 24-rank single-node run this saves roughly ``726 × 23 ≈ 16.7 GB`` of
 physical memory, making it the single largest shared-memory saving in the
 code.
 
+``matom_matrix`` allocation and ``mc_jumps`` mode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``calloc_matom_matrix()`` in ``gridwind.c`` allocates the shared
+``NPLASMA × nrows × nrows`` block **only** when
+``modes.store_matom_matrix == TRUE`` (i.e. the ``matrix`` macro-atom
+transition mode is selected).  In ``mc_jumps`` mode
+``modes.store_matom_matrix`` is ``FALSE``, so the allocation is skipped
+entirely and the block remains ``NULL``.  This avoids reserving a shared
+memory window of roughly ``NPLASMA × (nlevels_macro+1)^2 × 8`` bytes —
+approximately 300–700 MB per node for a typical macro-atom dataset and a large
+grid — in runs that never use the matrix.
+
+The check is performed after freeing any previously allocated block, so a
+re-run that switches from ``matrix`` to ``mc_jumps`` mode correctly frees the
+old window before returning.
+
 Shared wind structure
 ---------------------
 
@@ -690,3 +707,13 @@ the shared wind-grid code path are invisible on macOS**.  Specifically:
 ``MPI_Win_allocate_shared``, ``MPI_Win_shared_query``, or ``memset`` on a
 shared block, run the full regression suite on Linux before merging.  Mac
 testing is sufficient for everything else in the MPI layer.
+
+3D coordinate types (CYLIND3D and SPH3D)
+=========================================
+
+The 3D coordinate types add a third azimuthal (phi) grid dimension, increasing
+NDIM2 accordingly, but they require no special-casing in the MPI or shared
+memory layer.  The same shared/private split, broadcast pattern, and
+``MPI_Win_allocate_shared`` calls apply unchanged.  The larger NDIM2 simply
+means more cells in the shared ``wmain`` and plasma arrays, with
+proportionally greater memory savings from the mixed model.
