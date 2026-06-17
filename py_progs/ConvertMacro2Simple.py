@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-macro2simple.py -- Convert a Sirocco macro-atom atomic data set to simple-atom format.
+ConvertMacro2Simple.py -- Convert a Sirocco macro-atom atomic data set to simple-atom format.
 
 The script reads a macro-atom master data file (e.g. data/h20_hetop_standard80.dat),
 identifies the component files that contain macro-atom specific keywords (IonM,
