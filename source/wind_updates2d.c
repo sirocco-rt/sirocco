@@ -55,6 +55,9 @@ wind_update (WindPtr w)
   double xsum, psum, fsum, lsum, csum, icsum, ausum, chexsum;
   double cool_sum, lum_sum, radiated_luminosity_sum;    //1706 - the total cooling and luminosity of the wind
   double apsum, aausum, abstot; //Absorbed photon energy from PI and auger
+  double heat_macro_photo_sum, heat_macro_qrecomb_sum, heat_macro_lines_sum;
+  double cool_macro_photo_sum, cool_macro_di_sum, cool_macro_lines_sum;
+  double macro_energy_in, macro_energy_out;
   double flux_persist_scale;
   double volume;
   double dt_r, dt_e;
@@ -149,7 +152,6 @@ wind_update (WindPtr w)
     }
 
     /* Calculate the densities in various ways depending on the ioniz_mode */
-    Log ("XXXXX  updating %3d %3d\n", geo.wcycle, n_plasma);
     ion_abundances (&plasmamain[n_plasma], geo.ioniz_mode);
   }
 
@@ -200,7 +202,6 @@ wind_update (WindPtr w)
     }
   }
   /* Finished updating region outside of wind */
-
   /* Check the balance between the absorbed and the emitted flux */
   /* NSH 0717 - ensure the cooling and luminosities reflect the current temperature */
 
@@ -221,6 +222,9 @@ wind_update (WindPtr w)
   aausum = 0.0;
   abstot = 0.0;
   chexsum = 0.0;
+  heat_macro_photo_sum = heat_macro_qrecomb_sum = heat_macro_lines_sum = 0.0;
+  cool_macro_photo_sum = cool_macro_di_sum = cool_macro_lines_sum = 0.0;
+  macro_energy_in = macro_energy_out = 0.0;
 
   /* Each rank now has updated plasma cells (temperature, ion abundances, heat/cool rates, etc.), so we can now find
    * out what the max d_t is in the wind and also sum up properties to find the total/global values */
@@ -269,6 +273,19 @@ wind_update (WindPtr w)
     apsum += plasmamain[n_plasma].abs_photo;
     aausum += plasmamain[n_plasma].abs_auger;
     chexsum += plasmamain[n_plasma].heat_ch_ex;
+
+    heat_macro_photo_sum += plasmamain[n_plasma].heat_photo_macro;
+    heat_macro_qrecomb_sum += plasmamain[n_plasma].heat_qrecomb_macro;
+    heat_macro_lines_sum += plasmamain[n_plasma].heat_lines_macro;
+    cool_macro_photo_sum += plasmamain[n_plasma].cool_bf_macro;
+    cool_macro_lines_sum += plasmamain[n_plasma].cool_lines_macro;
+    cool_macro_di_sum += plasmamain[n_plasma].cool_di_macro;
+
+    if (geo.rt_mode == RT_MODE_MACRO)
+    {
+      macro_energy_in += macromain[n_plasma].energy_flow_in;
+      macro_energy_out += macromain[n_plasma].energy_flow_out;
+    }
   }
 
   /* We can now calculate the average of the t */
@@ -332,11 +349,15 @@ wind_update (WindPtr w)
     ("!!wind_update: Wind cooling     %8.2e (recomb %8.2e ff %8.2e compton %8.2e DR %8.2e DI %8.2e lines %8.2e adiabatic %8.2e) after update\n",
      cool_sum, geo.cool_rr, geo.lum_ff, geo.cool_comp, geo.cool_dr, geo.cool_di, geo.lum_lines, geo.cool_adiabatic);
 
-  if (modes.use_upweighting_of_simple_macro_atoms)
+  if (geo.rt_mode == RT_MODE_MACRO)
   {
-    /* If we have "indivisible packet" mode on but are using the
-       upweighting scheme for simple atoms then we report the flows into and out of the ion pool */
-    if (geo.rt_mode == RT_MODE_MACRO)
+    Log ("!!wind_update: macro-atom heating: photoionization %8.2e three body recomb %8.2e lines %8.2e\n", heat_macro_photo_sum,
+         heat_macro_qrecomb_sum, heat_macro_lines_sum);
+    Log ("!!wind_update: macro-atom cooling: photoionization %8.2e collisional ionization %8.2e lines %8.2e\n", cool_macro_photo_sum,
+         cool_macro_di_sum, cool_macro_lines_sum);
+    Log ("!!wind_update: macro-atom energy flow: in %8.2e out %8.2e\n", macro_energy_in, macro_energy_out);
+
+    if (modes.use_upweighting_of_simple_macro_atoms)
     {
       report_bf_simple_ionpool ();
     }
@@ -717,6 +738,13 @@ init_macro_rad_properties (void)
     plasmamain[n_plasma].kpkt_emiss = 0.0;
     plasmamain[n_plasma].kpkt_abs = 0.0;
 
+
+    if (geo.rt_mode == RT_MODE_MACRO)   /* macromain is only allocated if geo.rt_mode == RT_MODE_MACRO */
+    {
+      macromain[n_plasma].energy_flow_out = 0.0;
+      macromain[n_plasma].energy_flow_in = 0.0;
+    }
+
     for (macro_level = 0; macro_level < nlevels_macro; ++macro_level)
     {
       macromain[n_plasma].matom_abs[macro_level] = 0.0;
@@ -738,7 +766,6 @@ init_macro_rad_properties (void)
 
   /* calculating recomb_sp and recomb_simple is expensive due to calls to
    * `alpha_sp()` , so we do this part of the initialisation in parallel */
-
 #ifdef MPI_ON
   n_cells = get_parallel_nrange (rank_global, NPLASMA, np_mpi_global, &n_start, &n_stop);
 #else

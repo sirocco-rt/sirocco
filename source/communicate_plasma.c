@@ -18,7 +18,7 @@
 /* these next two numbers are the number of basic doubles and integers 
    in the plasma structure to be packed (i.e. things that are not arrays or pointers and
    have a size of MPI_INT or MPI_DOUBLE)*/
-#define N_BASIC_DOUBLES 73
+#define N_BASIC_DOUBLES 75
 #define N_BASIC_INTS 22
 
 /**********************************************************/
@@ -113,8 +113,10 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
         MPI_Pack (&cell->heat_ind_comp, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->heat_lines_macro, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->heat_photo_macro, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (&cell->heat_qrecomb_macro, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->cool_lines_macro, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->cool_bf_macro, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (&cell->cool_di_macro, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->heat_photo, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->heat_z, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&cell->heat_auger, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
@@ -272,8 +274,10 @@ broadcast_plasma_grid (const int n_start, const int n_stop, const int n_cells_ra
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->heat_ind_comp, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->heat_lines_macro, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->heat_photo_macro, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->heat_qrecomb_macro, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->cool_lines_macro, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->cool_bf_macro, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->cool_di_macro, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->heat_photo, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->heat_z, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &cell->heat_auger, 1, MPI_DOUBLE, MPI_COMM_WORLD);
@@ -615,8 +619,8 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
   //OLD  const int num_ints = 1 + n_cells_max * (20 + nphot_total + 2 * NXBANDS + 2 * N_PHOT_PROC + nions);
   const int num_ints = 1 + n_cells_max * (N_BASIC_INTS + nphot_total + 2 * NXBANDS + 2 * N_PHOT_PROC + nions);
   const int num_doubles =
-    n_cells_max * (N_BASIC_DOUBLES + 1 * 3 + 9 * 4 + 6 * NFLUX_ANGLES + 3 * NFORCE_DIRECTIONS + 9 * nions + 1 * nlte_levels + 3 * nphot_total +
-                   1 * n_inner_tot + 9 * NXBANDS + 1 * NBINS_IN_CELL_SPEC);
+    n_cells_max * (N_BASIC_DOUBLES + 1 * 3 + 9 * 4 + 6 * NFLUX_ANGLES + 3 * NFORCE_DIRECTIONS + 9 * nions + 1 * nlte_levels +
+                   3 * nphot_total + 1 * n_inner_tot + 9 * NXBANDS + 1 * NBINS_IN_CELL_SPEC);
 
   const int size_of_comm_buffer = calculate_comm_buffer_size (num_ints, num_doubles);
   char *const comm_buffer = malloc (size_of_comm_buffer);
@@ -669,8 +673,10 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
         MPI_Pack (&plasmamain[n_plasma].heat_ind_comp, 1, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].heat_lines_macro, 1, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].heat_photo_macro, 1, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
+        MPI_Pack (&plasmamain[n_plasma].heat_qrecomb_macro, 1, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].cool_lines_macro, 1, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].cool_bf_macro, 1, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
+        MPI_Pack (&plasmamain[n_plasma].cool_di_macro, 1, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].heat_photo, 1, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].heat_z, 1, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
         MPI_Pack (&plasmamain[n_plasma].heat_auger, 1, MPI_DOUBLE, comm_buffer, size_of_comm_buffer, &position, MPI_COMM_WORLD);
@@ -841,8 +847,10 @@ broadcast_updated_plasma_properties (const int n_start_rank, const int n_stop_ra
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].heat_ind_comp, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].heat_lines_macro, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].heat_photo_macro, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].heat_qrecomb_macro, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].cool_lines_macro, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].cool_bf_macro, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].cool_di_macro, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].heat_photo, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].heat_z, 1, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, size_of_comm_buffer, &position, &plasmamain[n_plasma].heat_auger, 1, MPI_DOUBLE, MPI_COMM_WORLD);
