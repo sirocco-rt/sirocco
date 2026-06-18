@@ -325,6 +325,14 @@ main (int argc, char *argv[])
       if (geo.run_type == RUN_TYPE_NEW)
       {
         init_geo ();
+        /* Re-apply command-line -cell_spec_dim if given; init_geo resets to default 100 */
+        if (cmd_nbins_in_cell_spec > 0)
+          geo.nbins_in_cell_spec = cmd_nbins_in_cell_spec;
+        if (geo.nbins_in_cell_spec < 1 || geo.nbins_in_cell_spec > NBINS_IN_CELL_SPEC)
+        {
+          Log ("cell_spec_dim %d out of range, resetting to 100\n", geo.nbins_in_cell_spec);
+          geo.nbins_in_cell_spec = 100;
+        }
       }
 
       /* get_stellar_params gets information like mstar, rstar, tstar etc.
