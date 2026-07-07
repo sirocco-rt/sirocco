@@ -129,10 +129,7 @@ xband;
  **********************************************************/
 
 int
-bands_init (imode, band)
-     int imode;                 // A switch used for determining how the bands are to be populated
-     struct xbands *band;
-
+bands_init (int imode, struct xbands *band)
 {
   int mode;
   int nband;
@@ -607,9 +604,13 @@ bands_init (imode, band)
   /* Now define the freqquency boundaries for the cell spectra */
   geo.cell_log_freq_min = log10 (band->f1[0]);
   geo.cell_log_freq_max = log10 (band->f2[band->nbands - 1]);
-  geo.cell_delta_lfreq = (geo.cell_log_freq_max - geo.cell_log_freq_min) / NBINS_IN_CELL_SPEC;
+  geo.cell_delta_lfreq = (geo.cell_log_freq_max - geo.cell_log_freq_min) / geo.nbins_in_cell_spec;
 
-  for (ii = 0; ii <= NBINS_IN_CELL_SPEC; ii++)
+  if (geo.cell_freq != NULL)
+    free (geo.cell_freq);
+  geo.cell_freq = calloc (geo.nbins_in_cell_spec + 1, sizeof (double));
+
+  for (ii = 0; ii <= geo.nbins_in_cell_spec; ii++)
   {
     geo.cell_freq[ii] = pow (10., (geo.cell_log_freq_min + ii * geo.cell_delta_lfreq));
   }
@@ -664,10 +665,7 @@ bands_init (imode, band)
 #define MIN_N_IONBANDS 7
 
 int
-ion_bands_init (mode, freqmin, freqmax, band)
-     int mode;
-     double freqmin, freqmax;
-     struct xbands *band;
+ion_bands_init (int mode, double freqmin, double freqmax, struct xbands *band)
 {
   int i, n, ngood, good[NXBANDS];
   double xfreq[NXBANDS];
@@ -803,9 +801,7 @@ ion_bands_init (mode, freqmin, freqmax, band)
  **********************************************************/
 
 void
-check_appropriate_banding (band, mode)
-     struct xbands *band;
-     int mode;
+check_appropriate_banding (struct xbands *band, int mode)
 {
   if (geo.system_type == SYSTEM_TYPE_AGN)
   {

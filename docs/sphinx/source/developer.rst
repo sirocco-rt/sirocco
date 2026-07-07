@@ -7,6 +7,6 @@ This page contains documentation intended for developers.
     :glob:
 
     developer/programmer_notes
-    developer/mpi_comms
+    developer/mixed_memory_model
     developer/cuda
     developer/tests

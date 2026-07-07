@@ -47,9 +47,7 @@
  **********************************************************/
 
 int
-levels (xplasma, mode)
-     PlasmaPtr xplasma;
-     int mode;
+levels (PlasmaPtr xplasma, int mode)
 {
   double t, weight;
   int n, m;
@@ -62,29 +60,29 @@ levels (xplasma, mode)
   t = weight = 0.0;
   if (mode == NEBULARMODE_TR)   // LTE with t_r
   {
-    t = xplasma->t_r;
+    t = xplasma->state.t_r;
     weight = 1;
   }
   else if (mode == NEBULARMODE_TE)      // LTE with t_e
   {
-    t = xplasma->t_e;
+    t = xplasma->state.t_e;
     weight = 1;
   }
   else if (mode == NEBULARMODE_ML93)    // non_LTE with t_r and weights
   {
-    t = xplasma->t_r;
-    weight = xplasma->w;
+    t = xplasma->state.t_r;
+    weight = xplasma->state.w;
   }
   else if (mode == NEBULARMODE_NLTE_SIM)        /* non_LTE with SS modification NSH 120912 - This mode is more or less defunct. 
                                                    It can be romoved once all the viestiges of the original PL ioinzation scheme are removed */
   {
-    t = xplasma->t_e;
+    t = xplasma->state.t_e;
     weight = 1;
   }
   else if (mode == NEBULARMODE_LTE_GROUND)      /* A test mode - this is to allow all levels to be set to GS, in the event we dont have a 
                                                    good idea of what the radiation field shoulb be. */
   {
-    t = xplasma->t_e;
+    t = xplasma->state.t_e;
     weight = 0;
   }
   else
@@ -108,7 +106,7 @@ levels (xplasma, mode)
       if (ion[nion].macro_info == FALSE || geo.macro_ioniz_mode == MACRO_IONIZ_MODE_NO_ESTIMATORS)
       {                         //Then calculate levels for this ion 
 
-        z = xplasma->partition[nion];
+        z = xplasma->state.partition[nion];
 
         /* N.B. partition functions will most likely have been 
            calculated from "lte" levels, at least for * now ??  */
@@ -116,12 +114,12 @@ levels (xplasma, mode)
         m = ion[nion].first_nlte_level;
         m_ground = m;           //store the ground state index - allow for gs energy neq 0 (SS) 
         nlevden = ion[nion].first_levden;
-        xplasma->levden[nlevden] = xconfig[m].g / z;    //Assumes first level is ground state
+        xplasma->state.levden[nlevden] = xconfig[m].g / z;      //Assumes first level is ground state
         for (n = 1; n < ion[nion].nlte; n++)
         {
           m++;
           nlevden++;
-          xplasma->levden[nlevden] = weight * xconfig[m].g * exp ((-xconfig[m].ex + xconfig[m_ground].ex) / kt) / z;
+          xplasma->state.levden[nlevden] = weight * xconfig[m].g * exp ((-xconfig[m].ex + xconfig[m_ground].ex) / kt) / z;
         }
       }
     }

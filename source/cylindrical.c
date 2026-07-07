@@ -47,11 +47,7 @@
  **********************************************************/
 
 double
-cylind_ds_in_cell (ndom, p)
-     int ndom;
-     PhotPtr p;
-
-
+cylind_ds_in_cell (int ndom, PhotPtr p)
 {
 
   int n, ix, iz, iroot;
@@ -262,9 +258,7 @@ cylind_make_grid (int ndom, WindPtr w)
  **********************************************************/
 
 int
-cylind_wind_complete (ndom, w)
-     int ndom;
-     WindPtr w;
+cylind_wind_complete (int ndom, WindPtr w)
 {
   int i, j;
   int nstart, mdim, ndim;
@@ -459,9 +453,7 @@ cylind_cell_volume (WindPtr w)
  **********************************************************/
 
 int
-cylind_where_in_grid (ndom, x)
-     int ndom;
-     double x[];
+cylind_where_in_grid (int ndom, double x[])
 {
   int i, j, n;
   double z;
@@ -529,9 +521,7 @@ cylind_where_in_grid (ndom, x)
  **********************************************************/
 
 int
-cylind_get_random_location (n, x)
-     int n;
-     double x[];
+cylind_get_random_location (int n, double x[])
 {
   int i, j;
   int inwind;
@@ -617,9 +607,7 @@ cylind_get_random_location (n, x)
  **********************************************************/
 
 int
-cylind_extend_density (ndom, w)
-     int ndom;
-     WindPtr w;
+cylind_extend_density (int ndom, WindPtr w)
 {
 
   int i, j, n, m;
@@ -714,8 +702,7 @@ History:
  **********************************************************/
 
 int
-cylind_is_cell_in_wind (n)
-     int n;                     // cell number
+cylind_is_cell_in_wind (int n)
 {
   int i, j;
   double r, z, dr, dz;

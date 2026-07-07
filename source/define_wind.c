@@ -80,12 +80,12 @@ calculate_mdot_wind (void)
         if (w[nstart + i * mdim].inwind == W_ALL_INWIND)
         {
           nplasma = w[nstart + i * mdim].nplasma;
-          mdotbase += plasmamain[nplasma].rho * PI * rr * w[nstart + i * mdim].v[2];
+          mdotbase += plasmamain[nplasma].state.rho * PI * rr * w[nstart + i * mdim].v[2];
         }
         if (w[n].inwind == W_ALL_INWIND)
         {
           nplasma = w[n].nplasma;
-          mdotwind += plasmamain[nplasma].rho * PI * rr * w[n].v[2];
+          mdotwind += plasmamain[nplasma].state.rho * PI * rr * w[n].v[2];
         }
       }
 
@@ -137,8 +137,8 @@ create_macro_grid (void)
 
   for (n_plasma = n_start; n_plasma < n_stop; ++n_plasma)
   {
-    macromain[n_plasma].store_matom_matrix = modes.store_matom_matrix;
-    macromain[n_plasma].matom_transition_mode = geo.matom_transition_mode;
+    macromain[n_plasma].state.store_matom_matrix = modes.store_matom_matrix;
+    macromain[n_plasma].state.matom_transition_mode = geo.matom_transition_mode;
   }
 
   calloc_matom_matrix (NPLASMA);
@@ -159,19 +159,19 @@ set_spectral_models (PlasmaPtr cell)
 
   for (n_band = 0; n_band < NXBANDS; n_band++)
   {
-    cell->spec_mod_type[n_band] = SPEC_MOD_FAIL;        /*NSH 120817 - setting this to
+    cell->state.spec_mod_type[n_band] = SPEC_MOD_FAIL;  /*NSH 120817 - setting this to
                                                            a negative number means that at the outset, we assume we do not have a
                                                            suitable model for the cell */
-    cell->exp_temp[n_band] = geo.tmax;  /*NSH 120817 - as an initial guess,
-                                           set this number to the hottest part of the model -
-                                           this should define where any exponential dropoff becomes important */
-    cell->exp_w[n_band] = 0.0;  /* 120817 Who knows what this should be! */
-    cell->pl_alpha[n_band] = geo.alpha_agn;     /*Awind2d: For domains an initial guess we assume the whole wind is
-                                                   optically thin and so the spectral index for a PL illumination will be the
-                                                   same everywhere.  */
-    cell->pl_log_w[n_band] = -1e99;     /*131114 - a tiny weight - just to fill the variable */
-    cell->fmin_mod[n_band] = 1e99;      /* Set the minium model frequency to the max frequency in the band - means it will never be used which is correct at this time - there is no model */
-    cell->fmax_mod[n_band] = 1e-99;     /* Set the maximum model frequency to the min frequency in the band */
+    cell->state.exp_temp[n_band] = geo.tmax;    /*NSH 120817 - as an initial guess,
+                                                   set this number to the hottest part of the model -
+                                                   this should define where any exponential dropoff becomes important */
+    cell->state.exp_w[n_band] = 0.0;    /* 120817 Who knows what this should be! */
+    cell->state.pl_alpha[n_band] = geo.alpha_agn;       /*Awind2d: For domains an initial guess we assume the whole wind is
+                                                           optically thin and so the spectral index for a PL illumination will be the
+                                                           same everywhere.  */
+    cell->state.pl_log_w[n_band] = -1e99;       /*131114 - a tiny weight - just to fill the variable */
+    cell->state.fmin_mod[n_band] = 1e99;        /* Set the minium model frequency to the max frequency in the band - means it will never be used which is correct at this time - there is no model */
+    cell->state.fmax_mod[n_band] = 1e-99;       /* Set the maximum model frequency to the min frequency in the band */
   }
 }
 
@@ -196,21 +196,21 @@ set_plasma_temperature (PlasmaPtr cell, int ndom, double xcen[3])
 
   if (dom->wind_type == HYDRO)
   {
-    cell->t_r = hydro_temp (xcen);
+    cell->state.t_r = hydro_temp (xcen);
   }
   else if (dom->wind_type == IMPORT)
   {
-    cell->t_r = import_temperature (ndom, xcen, FALSE);
+    cell->state.t_r = import_temperature (ndom, xcen, FALSE);
   }
   else                          /* Taken from parameter file */
   {
-    cell->t_r = dom->twind;
+    cell->state.t_r = dom->twind;
   }
 
   /* Initialize variables having to do with convergence in initial stages */
-  cell->gain = 0.5;
-  cell->dt_e_old = 0.0;
-  cell->dt_e = 0.0;
+  cell->derived.gain = 0.5;
+  cell->derived.dt_e_old = 0.0;
+  cell->derived.dt_e = 0.0;
 
   /* The next lines set the electron temperature to 0.9 times the radiation temperature (which is a bit
      odd since the input is the wind temperature, but is taken to be the radiation temperature). If we have
@@ -218,19 +218,19 @@ set_plasma_temperature (PlasmaPtr cell, int ndom, double xcen[3])
      user gets what they are expecting. For LTE_TE mode, t_e is set to t_r and remains fixed. */
   if (dom->wind_type == IMPORT)
   {
-    cell->t_e = import_temperature (ndom, xcen, TRUE);
+    cell->state.t_e = import_temperature (ndom, xcen, TRUE);
   }
   else if (geo.ioniz_mode == IONMODE_LTE_TE)
   {
-    cell->t_e = cell->t_e_old = cell->t_r;      // LTE_TE: t_e fixed at initial t_r
+    cell->state.t_e = cell->state.t_e_old = cell->state.t_r;    // LTE_TE: t_e fixed at initial t_r
   }
   else if (modes.fixed_temp == FALSE && modes.zeus_connect == FALSE)
   {
-    cell->t_e = cell->t_e_old = 0.9 * cell->t_r;        // Lucy guess
+    cell->state.t_e = cell->state.t_e_old = 0.9 * cell->state.t_r;      // Lucy guess
   }
   else                          //If we want to fix the temperature, we set it to tr which has previously been set to twind
   {
-    cell->t_e = cell->t_e_old = cell->t_r;
+    cell->state.t_e = cell->state.t_e_old = cell->state.t_r;
   }
 }
 
@@ -285,9 +285,9 @@ create_plasma_grid (void)
     ndom = wmain[nwind].ndom;
     stuff_v (w[nwind].xcen, xcen);
 
-    plasmamain[n_plasma].xgamma = wmain[nwind].xgamma_cen;
-    plasmamain[n_plasma].rho = model_rho (ndom, xcen) / (zdom[ndom].fill * plasmamain[n_plasma].xgamma);
-    plasmamain[n_plasma].vol = w[nwind].vol * zdom[ndom].fill;
+    plasmamain[n_plasma].state.xgamma = wmain[nwind].xgamma_cen;
+    plasmamain[n_plasma].state.rho = model_rho (ndom, xcen) / (zdom[ndom].fill * plasmamain[n_plasma].state.xgamma);
+    plasmamain[n_plasma].state.vol = w[nwind].vol * zdom[ndom].fill;
 
     /* This is where we initialise the spectral models for the wind. */
     set_spectral_models (&plasmamain[n_plasma]);
@@ -299,11 +299,11 @@ create_plasma_grid (void)
     rrstar = 1.0 - (geo.rstar * geo.rstar) / (xcen[0] * xcen[0] + xcen[1] * xcen[1] + xcen[2] * xcen[2]);
     if (rrstar > 0)
     {
-      plasmamain[n_plasma].w = 0.5 * (1 - sqrt (rrstar));
+      plasmamain[n_plasma].state.w = 0.5 * (1 - sqrt (rrstar));
     }
     else
     {                           /* Allow for possibility that grid point is inside star */
-      plasmamain[n_plasma].w = 0.5;
+      plasmamain[n_plasma].state.w = 0.5;
     }
 
     /* Determine the initial ion abundances, using either LTE or fixed concentrations */
@@ -323,33 +323,34 @@ create_plasma_grid (void)
     {
       Error
         ("wind_define after ion_abundances: cell %d rho %8.2e t_r %8.2e t_e %8.2e w %8.2e\n",
-         n_plasma, plasmamain[n_plasma].rho, plasmamain[n_plasma].t_r, plasmamain[n_plasma].t_e, plasmamain[n_plasma].w);
+         n_plasma, plasmamain[n_plasma].state.rho, plasmamain[n_plasma].state.t_r, plasmamain[n_plasma].state.t_e,
+         plasmamain[n_plasma].state.w);
     }
 
     /* Initialize arrays for tracking number of scatters in the cell */
     for (nion = 0; nion < nions; nion++)
     {
-      plasmamain[n_plasma].scatters[nion] = 0;
-      plasmamain[n_plasma].xscatters[nion] = 0;
+      plasmamain[n_plasma].derived.scatters[nion] = 0;
+      plasmamain[n_plasma].derived.xscatters[nion] = 0;
     }
 
     /* Calculate adiabatic and non-thermal heating contributions */
     if (geo.adiabatic)
     {
-      plasmamain[n_plasma].cool_adiabatic = adiabatic_cooling (&w[nwind], plasmamain[n_plasma].t_e);
+      plasmamain[n_plasma].derived.cool_adiabatic = adiabatic_cooling (&w[nwind], plasmamain[n_plasma].state.t_e);
     }
     else
     {
-      plasmamain[n_plasma].cool_adiabatic = 0.0;
+      plasmamain[n_plasma].derived.cool_adiabatic = 0.0;
     }
     if (geo.nonthermal)
     {
       nwind = plasmamain[n_plasma].nwind;
-      plasmamain[n_plasma].heat_shock = shock_heating (&w[nwind]);
+      plasmamain[n_plasma].derived.heat_shock = shock_heating (&w[nwind]);
     }
     else
     {
-      plasmamain[n_plasma].heat_shock = 0.0;
+      plasmamain[n_plasma].derived.heat_shock = 0.0;
     }
   }
 
@@ -634,6 +635,14 @@ create_wind_grid (void)
     offset += zdom[ndom].ndim;
   }
 
+  /* Barrier: ensure all ranks have finished initialising wmain fields above
+   * before any rank enters make_coordinate_grid.  With shared wmain, a fast
+   * rank could otherwise start writing import-derived inwind values while a
+   * slow rank's init loop is still writing W_NOT_ASSIGNED to the same cells. */
+#ifdef MPI_ON
+  MPI_Barrier (node_comm);
+#endif
+
   /* The first thing we need to do is to create the coordinate grid. We'll do
    * this in serial, as it's very difficult to untangle this process into
    * something done in parallel due to data dependencies and how certain/special
@@ -647,6 +656,14 @@ create_wind_grid (void)
    * also tangled up in other serial parts of the code and is also very short.
    * As above, it is impractical and not worthwhile to parallelise this step */
   wind_complete ();
+
+  /* Barrier: ensure all ranks have completed make_coordinate_grid and
+   * wind_complete before any rank enters the parallel volume/velocity loop.
+   * Without this, a fast rank could read a cell's inwind value before a slow
+   * rank has finished writing it from make_coordinate_grid. */
+#ifdef MPI_ON
+  MPI_Barrier (node_comm);
+#endif
 
 #ifdef MPI_ON
   n_cells_rank = get_parallel_nrange (rank_global, NDIM2, np_mpi_global, &n_start, &n_stop);

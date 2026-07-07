@@ -325,7 +325,7 @@ int levels(PlasmaPtr xplasma, int mode);
 /* lines.c */
 double total_line_emission(PlasmaPtr xplasma, double f1, double f2);
 double lum_lines(PlasmaPtr xplasma, int nmin, int nmax);
-double two_level_atom(struct lines *line_ptr, PlasmaPtr xplasma, double *d1, double *d2);
+double two_level_atom(struct lines *line_ptr, PlasmaPtr xplasma, double *d1, double *d2, double density_override);
 double line_nsigma(struct lines *line_ptr, PlasmaPtr xplasma);
 double scattering_fraction(struct lines *line_ptr, PlasmaPtr xplasma);
 double p_escape(struct lines *line_ptr, PlasmaPtr xplasma);

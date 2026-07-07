@@ -93,6 +93,7 @@ init_geo ()
 
 
   geo.run_type = 0;             // Not a restart of a previous run
+  geo.nbins_in_cell_spec = 100; // Default number of bins for cell spectra (max NBINS_IN_CELL_SPEC)
 
   geo.star_ion_spectype = geo.star_spectype
     = geo.disk_ion_spectype = geo.disk_spectype = geo.bl_ion_spectype = geo.bl_spectype = SPECTYPE_BB;
@@ -190,17 +191,13 @@ char get_spectype_oldname[LINELENGTH] = "data/kurucz91.ls";
  **********************************************************/
 
 int
-get_spectype (yesno, question, spectype)
-     int yesno;
-     char *question;
-     int *spectype;
+get_spectype (int yesno, char *question, int *spectype)
 {
   char model_list[LINELENGTH];
   char one_choice[LINELENGTH];
   char choices[LINELENGTH];
-  int get_models ();            // Note: Needed because get_models cannot be included in templates.h
+  int get_models (char modellist[], int npars, int *spectype);
   int i;
-  int init_choices (), get_choices ();
 
 
   if (yesno)

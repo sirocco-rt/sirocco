@@ -13,6 +13,14 @@ int np_mpi_global;              ///< Global variable which holds the number of M
 
 int rank_global;                ///<  Rank of a particular thread
 
+#ifdef MPI_ON
+MPI_Comm node_comm;             ///< Communicator for ranks on the same shared-memory node
+MPI_Comm leader_comm;           ///< Communicator among node leaders, MPI_COMM_NULL for non-leaders
+int node_rank;                  ///< Rank of this process within its node
+int node_size;                  ///< Number of MPI processes on this node
+int num_nodes;                  ///< Number of distinct shared-memory nodes
+#endif
+
 int verbosity;                  ///< verbosity level. 0 low, 10 is high 
 
 int rel_mode;                   ///< How doppler effects and co-moving frames are treated
@@ -70,6 +78,10 @@ struct xdisk disk, qdisk;   /**< disk defines zones in the disk which in a speci
 struct blmodel blmod;
 
 WindPtr wmain;
+#ifdef MPI_ON
+MPI_Win wmain_win;
+#endif
+wind_paths_store *wind_paths_main;
 
 PlasmaPtr plasmamain;
 
@@ -82,6 +94,9 @@ MacroPtr macromain;
 //int xxxpdfwind;                 ///< When 1, line luminosity calculates pdf
 
 int size_Jbar_est, size_gamma_est, size_alpha_est;
+
+plasma_blocks plasma_block_ptrs;
+macro_blocks macro_block_ptrs;
 
 PhotPtr photmain;               /**< A pointer to all of the photons that have been created in a subcycle. Added to ease 
                                    breaking the main routine of sirocco into separate rooutines for inputs and 

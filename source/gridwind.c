@@ -47,10 +47,177 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 #include "atomic.h"
 #include "sirocco.h"
+
+
+/* Convenience macros to pass MPI_Win addresses or NULL depending on MPI mode */
+#ifdef MPI_ON
+#define PLASMA_WIN(field) plasma_block_ptrs.field
+#define MACRO_WIN(field)  macro_block_ptrs.field
+#else
+/* Use a dummy variable to satisfy the void* parameter when MPI is off */
+static int _dummy_win;
+#define PLASMA_WIN(field) _dummy_win
+#define MACRO_WIN(field)  _dummy_win
+#endif
+
+
+/**********************************************************/
+/**
+ * @brief  Allocate a contiguous block, using MPI shared memory when available.
+ *
+ * @param [in]     count       Number of elements to allocate
+ * @param [in]     elem_size   Size of each element in bytes
+ * @param [out]    ptr         Pointer set to the allocated block (shared or private)
+ * @param [out]    win         MPI_Win handle (set only when MPI shared memory is used)
+ * @param [in]     use_shared  If TRUE, use MPI_Win_allocate_shared (state/derived);
+ *                             if FALSE, use regular calloc (est arrays)
+ * @return         0 on success, exits on failure
+ *
+ * @details
+ * When MPI-3 shared memory is available and use_shared is TRUE, only the
+ * node leader (node_rank == 0) allocates memory; other ranks on the same
+ * node query the leader's pointer via MPI_Win_shared_query.  This means
+ * one physical copy per node for read-only (state) and broadcast (derived)
+ * data.
+ *
+ * For estimator arrays (use_shared == FALSE), each rank gets its own
+ * private allocation via regular calloc, since estimators are accumulated
+ * independently per rank.
+ *
+ * In non-MPI builds, always uses calloc.
+ **********************************************************/
+
+static int
+alloc_block_double (long count, double **ptr, void *win_ptr, int use_shared)
+{
+#ifdef MPI_ON
+  if (use_shared && np_mpi_global > 1)
+  {
+    MPI_Win *win = (MPI_Win *) win_ptr;
+    MPI_Aint block_size = (node_rank == 0) ? count * (MPI_Aint) sizeof (double) : 0;
+    MPI_Win_allocate_shared (block_size, sizeof (double), MPI_INFO_NULL, node_comm, ptr, win);
+
+    if (node_rank != 0)
+    {
+      MPI_Aint sz;
+      int disp;
+      MPI_Win_shared_query (*win, 0, &sz, &disp, ptr);
+    }
+
+    /* Zero-initialize the shared block (only leader needs to, but barrier ensures visibility) */
+    if (node_rank == 0)
+    {
+      memset (*ptr, 0, count * sizeof (double));
+    }
+    MPI_Barrier (node_comm);
+
+    if (*ptr == NULL)
+    {
+      Error ("alloc_block_double: MPI_Win_allocate_shared returned NULL\n");
+      Exit (0);
+    }
+    return (0);
+  }
+#endif
+
+  (void) win_ptr;
+  (void) use_shared;
+  *ptr = calloc (count, sizeof (double));
+  if (*ptr == NULL)
+  {
+    Error ("alloc_block_double: calloc failed for %ld doubles\n", count);
+    Exit (0);
+  }
+  return (0);
+}
+
+
+/**********************************************************/
+/**
+ * @brief  Allocate a contiguous int block, using MPI shared memory when available.
+ *
+ * @details Same as alloc_block_double but for int arrays.
+ **********************************************************/
+
+static int
+alloc_block_int (long count, int **ptr, void *win_ptr, int use_shared)
+{
+#ifdef MPI_ON
+  if (use_shared && np_mpi_global > 1)
+  {
+    MPI_Win *win = (MPI_Win *) win_ptr;
+    MPI_Aint block_size = (node_rank == 0) ? count * (MPI_Aint) sizeof (int) : 0;
+    MPI_Win_allocate_shared (block_size, sizeof (int), MPI_INFO_NULL, node_comm, ptr, win);
+
+    if (node_rank != 0)
+    {
+      MPI_Aint sz;
+      int disp;
+      MPI_Win_shared_query (*win, 0, &sz, &disp, ptr);
+    }
+
+    if (node_rank == 0)
+    {
+      memset (*ptr, 0, count * sizeof (int));
+    }
+    MPI_Barrier (node_comm);
+
+    if (*ptr == NULL)
+    {
+      Error ("alloc_block_int: MPI_Win_allocate_shared returned NULL\n");
+      Exit (0);
+    }
+    return (0);
+  }
+#endif
+
+  (void) win_ptr;
+  (void) use_shared;
+  *ptr = calloc (count, sizeof (int));
+  if (*ptr == NULL)
+  {
+    Error ("alloc_block_int: calloc failed for %ld ints\n", count);
+    Exit (0);
+  }
+  return (0);
+}
+
+
+/**********************************************************/
+/**
+ * @brief  Free a block, using MPI_Win_free for shared blocks or free() for private.
+ *
+ * @param [in,out]  ptr          Pointer to set to NULL after freeing
+ * @param [in]      win_ptr      MPI_Win handle (or NULL for non-shared)
+ * @param [in]      is_shared    TRUE if block was allocated with MPI shared memory
+ **********************************************************/
+
+static void
+free_block (void **ptr, void *win_ptr, int is_shared)
+{
+  if (*ptr == NULL)
+    return;
+
+#ifdef MPI_ON
+  if (is_shared && np_mpi_global > 1)
+  {
+    MPI_Win *win = (MPI_Win *) win_ptr;
+    MPI_Win_free (win);
+    *ptr = NULL;
+    return;
+  }
+#endif
+
+  (void) win_ptr;
+  (void) is_shared;
+  free (*ptr);
+  *ptr = NULL;
+}
 
 
 /**********************************************************/
@@ -147,16 +314,60 @@ create_wind_and_plasma_cell_maps ()
  **********************************************************/
 
 int
-calloc_wind (nelem)
-     int nelem;
+calloc_wind (int nelem)
 {
+  long alloc_size = (long) (nelem + 1) * sizeof (wind_dummy);
 
+#ifdef MPI_ON
   if (wmain != NULL)
   {
+#ifdef __APPLE__
+    /* On macOS wmain is always calloc'd (see below) */
     free (wmain);
+#else
+    MPI_Win_free (&wmain_win);
+#endif
+    wmain = NULL;
   }
 
-  wmain = (WindPtr) calloc (nelem + 1, sizeof (wind_dummy));
+  if (np_mpi_global > 1)
+  {
+#ifndef __APPLE__
+    /* Linux: use MPI-3 shared memory so all ranks on a node share one copy
+     * of wmain, avoiding per-rank duplication of large wind grids. */
+    MPI_Aint win_size;
+    int disp_unit;
+    void *base;
+
+    if (node_rank == 0)
+    {
+      MPI_Win_allocate_shared (alloc_size, 1, MPI_INFO_NULL, node_comm, &base, &wmain_win);
+      memset (base, 0, alloc_size);
+    }
+    else
+    {
+      MPI_Win_allocate_shared (0, 1, MPI_INFO_NULL, node_comm, &base, &wmain_win);
+      MPI_Win_shared_query (wmain_win, 0, &win_size, &disp_unit, &base);
+    }
+    wmain = (WindPtr) base;
+    /* Barrier to ensure node leader's memset is visible before any rank uses wmain */
+    MPI_Barrier (node_comm);
+#else
+    /* macOS: MPI-3 shared memory windows are mapped with invalid permissions
+     * for non-allocating ranks, causing SEGV_ACCERR.  Use private calloc on
+     * every rank instead; broadcast_wind_grid() keeps copies in sync. */
+    wmain = (WindPtr) calloc (nelem + 1, sizeof (wind_dummy));
+#endif
+  }
+  else
+#endif
+  {
+    if (wmain != NULL)
+    {
+      free (wmain);
+    }
+    wmain = (WindPtr) calloc (nelem + 1, sizeof (wind_dummy));
+  }
 
   if (wmain == NULL)
   {
@@ -166,8 +377,30 @@ calloc_wind (nelem)
   else
   {
     Log
-      ("Allocated %10d bytes for each of %5d elements of             totaling %10.1f Mb\n",
-       sizeof (wind_dummy), nelem + 1, 1.e-6 * (nelem + 1) * sizeof (wind_dummy));
+      ("Allocated %10d bytes for each of %5d elements of      wind totaling %10.1f Mb (%s)\n",
+       sizeof (wind_dummy), nelem + 1, 1.e-6 * alloc_size,
+#ifdef MPI_ON
+#ifndef __APPLE__
+       (np_mpi_global > 1) ? "shared" : "private"
+#else
+       "private"
+#endif
+#else
+       "private"
+#endif
+      );
+  }
+
+  /* Allocate per-rank wind paths storage (always private) */
+  if (wind_paths_main != NULL)
+  {
+    free (wind_paths_main);
+  }
+  wind_paths_main = (wind_paths_store *) calloc (nelem + 1, sizeof (wind_paths_store));
+  if (wind_paths_main == NULL)
+  {
+    Error ("There is a problem in allocating memory for wind_paths_main\n");
+    Exit (0);
   }
 
   return (0);
@@ -204,8 +437,7 @@ calloc_wind (nelem)
  **********************************************************/
 
 int
-calloc_plasma (nelem)
-     int nelem;
+calloc_plasma (int nelem)
 {
 
   if (plasmamain != NULL)
@@ -298,9 +530,7 @@ calloc_plasma (nelem)
  **********************************************************/
 
 int
-check_plasma (xplasma, message)
-     PlasmaPtr xplasma;
-     char message[];
+check_plasma (PlasmaPtr xplasma, char message[])
 {
   if (xplasma->nplasma == NPLASMA)
   {
@@ -337,8 +567,7 @@ check_plasma (xplasma, message)
  **********************************************************/
 
 int
-calloc_macro (nelem)
-     int nelem;
+calloc_macro (int nelem)
 {
 
   /* JM 1502 -- commented out this if loop because we want 
@@ -395,8 +624,7 @@ calloc_macro (nelem)
  **********************************************************/
 
 int
-calloc_estimators (nelem)
-     int nelem;
+calloc_estimators (int nelem)
 {
   int n;
 
@@ -432,118 +660,77 @@ calloc_estimators (nelem)
   Log ("calloc_estimators: size_Jbar_est %d size_gamma_est %d size_alpha_est %d\n", size_Jbar_est, size_gamma_est, size_alpha_est);
 
 
+  /* Allocate contiguous blocks for all macro atom dynamic arrays.
+   * State and derived arrays use MPI shared memory (one copy per node).
+   * Estimator arrays are always private (each rank accumulates independently). */
+
+  int use_shared = FALSE;
+#ifdef MPI_ON
+  use_shared = (np_mpi_global > 1) ? TRUE : FALSE;
+#endif
+
+  /* state arrays — shared across node-local ranks */
+  alloc_block_double ((long) nelem * size_Jbar_est, &macro_block_ptrs.jbar_old_block, &MACRO_WIN (win_jbar_old), use_shared);
+  alloc_block_double ((long) nelem * size_gamma_est, &macro_block_ptrs.gamma_old_block, &MACRO_WIN (win_gamma_old), use_shared);
+  alloc_block_double ((long) nelem * size_gamma_est, &macro_block_ptrs.gamma_e_old_block, &MACRO_WIN (win_gamma_e_old), use_shared);
+  alloc_block_double ((long) nelem * size_gamma_est, &macro_block_ptrs.alpha_st_old_block, &MACRO_WIN (win_alpha_st_old), use_shared);
+  alloc_block_double ((long) nelem * size_gamma_est, &macro_block_ptrs.alpha_st_e_old_block, &MACRO_WIN (win_alpha_st_e_old), use_shared);
+
+  /* est arrays — always private per rank */
+  alloc_block_double ((long) nelem * size_Jbar_est, &macro_block_ptrs.jbar_block, NULL, FALSE);
+  alloc_block_double ((long) nelem * size_gamma_est, &macro_block_ptrs.gamma_block, NULL, FALSE);
+  alloc_block_double ((long) nelem * size_gamma_est, &macro_block_ptrs.gamma_e_block, NULL, FALSE);
+  alloc_block_double ((long) nelem * size_gamma_est, &macro_block_ptrs.alpha_st_block, NULL, FALSE);
+  alloc_block_double ((long) nelem * size_gamma_est, &macro_block_ptrs.alpha_st_e_block, NULL, FALSE);
+  alloc_block_double ((long) nelem * size_alpha_est, &macro_block_ptrs.recomb_sp_block, NULL, FALSE);
+  alloc_block_double ((long) nelem * size_alpha_est, &macro_block_ptrs.recomb_sp_e_block, NULL, FALSE);
+  alloc_block_double ((long) nelem * nlevels_macro, &macro_block_ptrs.matom_abs_block, NULL, FALSE);
+  alloc_block_double ((long) nelem * nphot_total, &macro_block_ptrs.cooling_bf_block, NULL, FALSE);
+  alloc_block_double ((long) nelem * nphot_total, &macro_block_ptrs.cooling_bf_col_block, NULL, FALSE);
+  alloc_block_double ((long) nelem * nlines, &macro_block_ptrs.cooling_bb_block, NULL, FALSE);
+
+  /* derived arrays — shared across node-local ranks */
+  alloc_block_double ((long) nelem * nlevels_macro, &macro_block_ptrs.matom_emiss_block, &MACRO_WIN (win_matom_emiss), use_shared);
+
+#ifdef MPI_ON
+  macro_block_ptrs.shared_memory_active = use_shared;
+#endif
+
+  /* Point each cell's pointers into the contiguous blocks */
   for (n = 0; n < nelem; n++)
   {
-    if ((macromain[n].jbar = calloc (sizeof (double), size_Jbar_est)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
+    macromain[n].state.jbar_old = macro_block_ptrs.jbar_old_block + n * size_Jbar_est;
+    macromain[n].state.gamma_old = macro_block_ptrs.gamma_old_block + n * size_gamma_est;
+    macromain[n].state.gamma_e_old = macro_block_ptrs.gamma_e_old_block + n * size_gamma_est;
+    macromain[n].state.alpha_st_old = macro_block_ptrs.alpha_st_old_block + n * size_gamma_est;
+    macromain[n].state.alpha_st_e_old = macro_block_ptrs.alpha_st_e_old_block + n * size_gamma_est;
 
-    if ((macromain[n].jbar_old = calloc (sizeof (double), size_Jbar_est)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
+    macromain[n].est.jbar = macro_block_ptrs.jbar_block + n * size_Jbar_est;
+    macromain[n].est.gamma = macro_block_ptrs.gamma_block + n * size_gamma_est;
+    macromain[n].est.gamma_e = macro_block_ptrs.gamma_e_block + n * size_gamma_est;
+    macromain[n].est.alpha_st = macro_block_ptrs.alpha_st_block + n * size_gamma_est;
+    macromain[n].est.alpha_st_e = macro_block_ptrs.alpha_st_e_block + n * size_gamma_est;
+    macromain[n].est.recomb_sp = macro_block_ptrs.recomb_sp_block + n * size_alpha_est;
+    macromain[n].est.recomb_sp_e = macro_block_ptrs.recomb_sp_e_block + n * size_alpha_est;
+    macromain[n].est.matom_abs = macro_block_ptrs.matom_abs_block + n * nlevels_macro;
+    macromain[n].est.cooling_bf = macro_block_ptrs.cooling_bf_block + n * nphot_total;
+    macromain[n].est.cooling_bf_col = macro_block_ptrs.cooling_bf_col_block + n * nphot_total;
+    macromain[n].est.cooling_bb = macro_block_ptrs.cooling_bb_block + n * nlines;
 
-    if ((macromain[n].gamma = calloc (sizeof (double), size_gamma_est)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
-
-    if ((macromain[n].gamma_old = calloc (sizeof (double), size_gamma_est)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
-
-    if ((macromain[n].gamma_e = calloc (sizeof (double), size_gamma_est)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
-
-    if ((macromain[n].gamma_e_old = calloc (sizeof (double), size_gamma_est)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
-
-    if ((macromain[n].alpha_st = calloc (sizeof (double), size_gamma_est)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
-
-    if ((macromain[n].alpha_st_old = calloc (sizeof (double), size_gamma_est)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
-
-    if ((macromain[n].alpha_st_e = calloc (sizeof (double), size_gamma_est)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
-
-    if ((macromain[n].alpha_st_e_old = calloc (sizeof (double), size_gamma_est)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
-
-    if ((macromain[n].recomb_sp = calloc (sizeof (double), size_alpha_est)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
-
-    if ((macromain[n].recomb_sp_e = calloc (sizeof (double), size_alpha_est)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
-
-    if ((macromain[n].matom_emiss = calloc (sizeof (double), nlevels_macro)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
-
-    if ((macromain[n].matom_abs = calloc (sizeof (double), nlevels_macro)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
-
-    if ((macromain[n].cooling_bf = calloc (sizeof (double), nphot_total)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
-
-    if ((macromain[n].cooling_bf_col = calloc (sizeof (double), nphot_total)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
-
-    if ((macromain[n].cooling_bb = calloc (sizeof (double), nlines)) == NULL)
-    {
-      Error ("calloc_estimators: Error in allocating memory for MA estimators\n");
-      Exit (0);
-    }
+    macromain[n].derived.matom_emiss = macro_block_ptrs.matom_emiss_block + n * nlevels_macro;
   }
 
 
 
   if (nlevels_macro > 0 || geo.nmacro > 0)
   {
+    double nrows = nlevels_macro + 1;
+    double macro_shared_bytes = (double) nelem * sizeof (double) * (size_Jbar_est + 4.0 * size_gamma_est + nlevels_macro + nrows * nrows);
+    double macro_private_bytes = (double) nelem * sizeof (double) *
+      (size_Jbar_est + 4.0 * size_gamma_est + 2.0 * size_alpha_est + nlevels_macro + 2.0 * nphot_total + nlines);
     Log
-      ("Allocated %10.1f Mb for MA estimators \n",
-       1.e-6 * (nelem + 1) * (2. * nlevels_macro + 2. * size_alpha_est + 8. * size_gamma_est + 2. * size_Jbar_est) * sizeof (double));
+      ("Macro-atom memory per rank: dynamic shared %.1f MB (one copy/node), dynamic private %.1f MB (per rank)\n",
+       1.e-6 * macro_shared_bytes, 1.e-6 * macro_private_bytes);
 
   }
   else
@@ -558,133 +745,231 @@ calloc_estimators (nelem)
 
 
 /**********************************************************/
-/** 
- * @brief      This subroutine allocates space for dynamic arrays in the plasma 
- * 	structure
+/**
+ * @brief      Allocate contiguous blocks for all dynamic plasma arrays.
  *
- * @param [in] int  nelem  the number of plasma cells (actually NPLASMA+1) 
- * to allow for empty cell
+ * @param [in] int  nelem  the number of plasma cells (NPLASMA; one extra
+ * element is added internally for the empty/dummy cell)
  * @return     Returns 0, unless the memory cannot be allocated in which case
- * the proram exits
+ * the program exits
  *
  * @details
- * This subroutine allocates space for variable length arrays in the plasma structure.
+ * Allocates contiguous blocks for variable-length arrays in the plasma structure,
+ * then points each cell's sub-struct pointers into the blocks at the correct offset.
+ *
+ * In MPI builds with np_mpi_global > 1, blocks are allocated using MPI-3
+ * shared memory so that only one physical copy exists per node:
+ *
+ * - **State arrays** (density, partition, levden, recomb_simple, etc.) —
+ *   shared across node-local ranks (read-only during photon transport).
+ * - **Estimator arrays** (ioniz, heat_ion, heat_inner_ion, inner_ioniz) —
+ *   always private per rank (each rank accumulates independently).
+ * - **Derived arrays** (recomb, cool_rr_ion, lum_rr_ion, cool_dr_ion,
+ *   inner_recomb) — shared across node-local ranks.
+ * - **scatters, xscatters** — always private per rank despite being
+ *   derived quantities, because they are incremented during photon
+ *   transport and would otherwise create a race condition in shared memory.
+ *
+ * In non-MPI builds or with a single MPI rank, all blocks use regular calloc.
  *
  * ### Notes ###
  * Arrays sized to the number of ions are largest,
- * and dominate the size of nplasma, so these were first to be 
- * dynamically allocated.
+ * and dominate the memory footprint of the plasma grid.
  *
  **********************************************************/
 
 int
-calloc_dyn_plasma (nelem)
-     int nelem;
+calloc_dyn_plasma (int nelem)
 {
   int n;
+  int nelem_alloc = nelem + 1;  /* One extra element for the empty/dummy cell */
+  long nalloc_ions = (long) nelem_alloc * nions;
+  long nalloc_nlte = (long) nelem_alloc * nlte_levels;
+  long nalloc_phot = (long) nelem_alloc * nphot_total;
+  long nalloc_inner = (long) nelem_alloc * n_inner_tot;
+  int use_shared = FALSE;
+  int was_shared = FALSE;
 
-/*  Loop over all elements in the plasma array, adding one for an empty cell 
- *  used for extrapolations.
- */
+#ifdef MPI_ON
+  use_shared = (np_mpi_global > 1) ? TRUE : FALSE;
+  was_shared = plasma_block_ptrs.shared_memory_active;
+#endif
 
-  for (n = 0; n < nelem + 1; n++)
+  /* Free any previously allocated blocks */
+  if (plasma_block_ptrs.density_block != NULL)
   {
-    if ((plasmamain[n].density = calloc (sizeof (double), nions)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for density\n");
-      Exit (0);
-    }
-    if ((plasmamain[n].partition = calloc (sizeof (double), nions)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for partition\n");
-      Exit (0);
-    }
-    if ((plasmamain[n].ioniz = calloc (sizeof (double), nions)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for ioniz\n");
-      Exit (0);
-    }
-    if ((plasmamain[n].recomb = calloc (sizeof (double), nions)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for recomb\n");
-      Exit (0);
-    }
-    if ((plasmamain[n].scatters = calloc (sizeof (int), nions)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for scatters\n");
-      Exit (0);
-    }
-    if ((plasmamain[n].xscatters = calloc (sizeof (double), nions)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for xscatters\n");
-      Exit (0);
-    }
-    if ((plasmamain[n].heat_ion = calloc (sizeof (double), nions)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for heat_ion\n");
-      Exit (0);
-    }
-    if ((plasmamain[n].heat_inner_ion = calloc (sizeof (double), nions)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for heat_ion\n");
-      Exit (0);
-    }
-    if ((plasmamain[n].cool_rr_ion = calloc (sizeof (double), nions)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for cool_rr_ion\n");
-      Exit (0);
-    }
-    if ((plasmamain[n].lum_rr_ion = calloc (sizeof (double), nions)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for lum_rr_ion\n");
-      Exit (0);
-    }
-    if ((plasmamain[n].inner_recomb = calloc (sizeof (double), nions)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for inner_recomb\n");
-      Exit (0);
-    }
-    if ((plasmamain[n].inner_ioniz = calloc (sizeof (double), n_inner_tot)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for inner_ioniz\n");
-      Exit (0);
-    }
-    if ((plasmamain[n].cool_dr_ion = calloc (sizeof (double), nions)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for lum_inner_recomb\n");
-      Exit (0);
-    }
-
-
-    if ((plasmamain[n].levden = calloc (sizeof (double), nlte_levels)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for levden\n");
-      Exit (0);
-    }
-
-    if ((plasmamain[n].recomb_simple = calloc (sizeof (double), nphot_total)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for recomb_simple\n");
-      Exit (0);
-    }
-
-    if ((plasmamain[n].recomb_simple_upweight = calloc (sizeof (double), nphot_total)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for recomb_simple_upweight\n");
-      Exit (0);
-    }
-
-
-    if ((plasmamain[n].kbf_use = calloc (sizeof (double), nphot_total)) == NULL)
-    {
-      Error ("calloc_dyn_plasma: Error in allocating memory for kbf_use\n");
-      Exit (0);
-    }
+    free_block ((void **) &plasma_block_ptrs.density_block, &PLASMA_WIN (win_density), was_shared);
+    free_block ((void **) &plasma_block_ptrs.partition_block, &PLASMA_WIN (win_partition), was_shared);
+    free_block ((void **) &plasma_block_ptrs.levden_block, &PLASMA_WIN (win_levden), was_shared);
+    free_block ((void **) &plasma_block_ptrs.recomb_simple_block, &PLASMA_WIN (win_recomb_simple), was_shared);
+    free_block ((void **) &plasma_block_ptrs.recomb_simple_upweight_block, &PLASMA_WIN (win_recomb_simple_upweight), was_shared);
+    free_block ((void **) &plasma_block_ptrs.kbf_use_block, &PLASMA_WIN (win_kbf_use), was_shared);
+    free_block ((void **) &plasma_block_ptrs.ioniz_block, NULL, FALSE);
+    free_block ((void **) &plasma_block_ptrs.heat_ion_block, NULL, FALSE);
+    free_block ((void **) &plasma_block_ptrs.heat_inner_ion_block, NULL, FALSE);
+    free_block ((void **) &plasma_block_ptrs.inner_ioniz_block, NULL, FALSE);
+    free_block ((void **) &plasma_block_ptrs.recomb_block, &PLASMA_WIN (win_recomb), was_shared);
+    free_block ((void **) &plasma_block_ptrs.scatters_block, NULL, FALSE);
+    free_block ((void **) &plasma_block_ptrs.xscatters_block, NULL, FALSE);
+    free_block ((void **) &plasma_block_ptrs.cool_rr_ion_block, &PLASMA_WIN (win_cool_rr_ion), was_shared);
+    free_block ((void **) &plasma_block_ptrs.lum_rr_ion_block, &PLASMA_WIN (win_lum_rr_ion), was_shared);
+    free_block ((void **) &plasma_block_ptrs.cool_dr_ion_block, &PLASMA_WIN (win_cool_dr_ion), was_shared);
+    free_block ((void **) &plasma_block_ptrs.inner_recomb_block, &PLASMA_WIN (win_inner_recomb), was_shared);
+    free_block ((void **) &plasma_block_ptrs.state_xbands_dblock, &PLASMA_WIN (win_state_xbands_d), was_shared);
+    free_block ((void **) &plasma_block_ptrs.state_spec_mod_type_block, &PLASMA_WIN (win_state_spec_mod_type), was_shared);
+    free_block ((void **) &plasma_block_ptrs.derived_persist_force_block, &PLASMA_WIN (win_derived_persist_force), was_shared);
+    free_block ((void **) &plasma_block_ptrs.derived_persist_angle_block, &PLASMA_WIN (win_derived_persist_angle), was_shared);
+    free_block ((void **) &plasma_block_ptrs.cell_spec_flux_block, NULL, FALSE);
+    free_block ((void **) &plasma_block_ptrs.n_bf_in_block, NULL, FALSE);
+    free_block ((void **) &plasma_block_ptrs.n_bf_out_block, NULL, FALSE);
   }
 
-  Log
-    ("Allocated %10d bytes for each of %5d elements variable length plasma arrays totaling %10.1f Mb \n",
-     sizeof (double) * nions * 14, (nelem + 1), 1.e-6 * (nelem + 1) * sizeof (double) * (nions * 14 + nlte_levels + nphot_total * 2));
+  /* Allocate contiguous blocks for all dynamic plasma arrays.
+   * State and derived arrays use MPI shared memory (one copy per node).
+   * Estimator arrays are always private (each rank accumulates independently). */
+
+  /* state arrays — shared across node-local ranks */
+  alloc_block_double (nalloc_ions, &plasma_block_ptrs.density_block, &PLASMA_WIN (win_density), use_shared);
+  alloc_block_double (nalloc_ions, &plasma_block_ptrs.partition_block, &PLASMA_WIN (win_partition), use_shared);
+  alloc_block_double (nalloc_nlte, &plasma_block_ptrs.levden_block, &PLASMA_WIN (win_levden), use_shared);
+  alloc_block_double (nalloc_phot, &plasma_block_ptrs.recomb_simple_block, &PLASMA_WIN (win_recomb_simple), use_shared);
+  alloc_block_double (nalloc_phot, &plasma_block_ptrs.recomb_simple_upweight_block, &PLASMA_WIN (win_recomb_simple_upweight), use_shared);
+  /* kbf_use is int* but historically allocated/written as doubles for binary compat */
+  alloc_block_double (nalloc_phot, &plasma_block_ptrs.kbf_use_block, &PLASMA_WIN (win_kbf_use), use_shared);
+
+  /* est arrays — always private per rank */
+  alloc_block_double (nalloc_ions, &plasma_block_ptrs.ioniz_block, NULL, FALSE);
+  alloc_block_double (nalloc_ions, &plasma_block_ptrs.heat_ion_block, NULL, FALSE);
+  alloc_block_double (nalloc_ions, &plasma_block_ptrs.heat_inner_ion_block, NULL, FALSE);
+  alloc_block_double (nalloc_inner, &plasma_block_ptrs.inner_ioniz_block, NULL, FALSE);
+
+  /* derived arrays — shared across node-local ranks (except scatters/xscatters
+   * which are written during photon transport and must be private per rank) */
+  alloc_block_double (nalloc_ions, &plasma_block_ptrs.recomb_block, &PLASMA_WIN (win_recomb), use_shared);
+  alloc_block_int (nalloc_ions, &plasma_block_ptrs.scatters_block, NULL, FALSE);
+  alloc_block_double (nalloc_ions, &plasma_block_ptrs.xscatters_block, NULL, FALSE);
+  alloc_block_double (nalloc_ions, &plasma_block_ptrs.cool_rr_ion_block, &PLASMA_WIN (win_cool_rr_ion), use_shared);
+  alloc_block_double (nalloc_ions, &plasma_block_ptrs.lum_rr_ion_block, &PLASMA_WIN (win_lum_rr_ion), use_shared);
+  alloc_block_double (nalloc_ions, &plasma_block_ptrs.cool_dr_ion_block, &PLASMA_WIN (win_cool_dr_ion), use_shared);
+  alloc_block_double (nalloc_ions, &plasma_block_ptrs.inner_recomb_block, &PLASMA_WIN (win_inner_recomb), use_shared);
+
+  /* state fixed-size arrays — combined contiguous blocks (shared) */
+  {
+    int state_xbands_stride = 6 * NXBANDS + 2 * (NXBANDS + 1);
+    alloc_block_double ((long) nelem_alloc * state_xbands_stride, &plasma_block_ptrs.state_xbands_dblock,
+                        &PLASMA_WIN (win_state_xbands_d), use_shared);
+  }
+  alloc_block_int ((long) nelem_alloc * NXBANDS, &plasma_block_ptrs.state_spec_mod_type_block,
+                   &PLASMA_WIN (win_state_spec_mod_type), use_shared);
+
+  /* derived fixed-size arrays — combined contiguous blocks (shared) */
+  alloc_block_double ((long) nelem_alloc * 6 * NFORCE_DIRECTIONS, &plasma_block_ptrs.derived_persist_force_block,
+                      &PLASMA_WIN (win_derived_persist_force), use_shared);
+  alloc_block_double ((long) nelem_alloc * 3 * NFLUX_ANGLES, &plasma_block_ptrs.derived_persist_angle_block,
+                      &PLASMA_WIN (win_derived_persist_angle), use_shared);
+
+  /* est cell_spec_flux — private (accumulated during transport) */
+  alloc_block_double ((long) nelem_alloc * geo.nbins_in_cell_spec, &plasma_block_ptrs.cell_spec_flux_block, NULL, FALSE);
+
+  /* derived n_bf diagnostic counters — private (incremented during transport) */
+  alloc_block_int (nalloc_phot, &plasma_block_ptrs.n_bf_in_block, NULL, FALSE);
+  alloc_block_int (nalloc_phot, &plasma_block_ptrs.n_bf_out_block, NULL, FALSE);
+
+#ifdef MPI_ON
+  plasma_block_ptrs.shared_memory_active = use_shared;
+#endif
+
+  /* Point each cell's pointers into the contiguous blocks at the right offset */
+  for (n = 0; n < nelem_alloc; n++)
+  {
+    plasmamain[n].state.density = plasma_block_ptrs.density_block + n * nions;
+    plasmamain[n].state.partition = plasma_block_ptrs.partition_block + n * nions;
+    plasmamain[n].state.levden = plasma_block_ptrs.levden_block + n * nlte_levels;
+    plasmamain[n].state.recomb_simple = plasma_block_ptrs.recomb_simple_block + n * nphot_total;
+    plasmamain[n].state.recomb_simple_upweight = plasma_block_ptrs.recomb_simple_upweight_block + n * nphot_total;
+    plasmamain[n].state.kbf_use = (int *) (plasma_block_ptrs.kbf_use_block + n * nphot_total);
+
+    plasmamain[n].est.ioniz = plasma_block_ptrs.ioniz_block + n * nions;
+    plasmamain[n].est.heat_ion = plasma_block_ptrs.heat_ion_block + n * nions;
+    plasmamain[n].est.heat_inner_ion = plasma_block_ptrs.heat_inner_ion_block + n * nions;
+    plasmamain[n].est.inner_ioniz = plasma_block_ptrs.inner_ioniz_block + n * n_inner_tot;
+
+    plasmamain[n].derived.recomb = plasma_block_ptrs.recomb_block + n * nions;
+    plasmamain[n].derived.scatters = plasma_block_ptrs.scatters_block + n * nions;
+    plasmamain[n].derived.xscatters = plasma_block_ptrs.xscatters_block + n * nions;
+    plasmamain[n].derived.cool_rr_ion = plasma_block_ptrs.cool_rr_ion_block + n * nions;
+    plasmamain[n].derived.lum_rr_ion = plasma_block_ptrs.lum_rr_ion_block + n * nions;
+    plasmamain[n].derived.cool_dr_ion = plasma_block_ptrs.cool_dr_ion_block + n * nions;
+    plasmamain[n].derived.inner_recomb = plasma_block_ptrs.inner_recomb_block + n * nions;
+
+    /* State spectral block: stride = 6*NXBANDS + 2*(NXBANDS+1) = 162 */
+    {
+      int state_xbands_stride = 6 * NXBANDS + 2 * (NXBANDS + 1);
+      double *sbase = plasma_block_ptrs.state_xbands_dblock + n * state_xbands_stride;
+      plasmamain[n].state.f1 = sbase;
+      plasmamain[n].state.f2 = sbase + (NXBANDS + 1);
+      plasmamain[n].state.pl_alpha = sbase + 2 * (NXBANDS + 1);
+      plasmamain[n].state.pl_log_w = sbase + 2 * (NXBANDS + 1) + NXBANDS;
+      plasmamain[n].state.exp_temp = sbase + 2 * (NXBANDS + 1) + 2 * NXBANDS;
+      plasmamain[n].state.exp_w = sbase + 2 * (NXBANDS + 1) + 3 * NXBANDS;
+      plasmamain[n].state.fmin_mod = sbase + 2 * (NXBANDS + 1) + 4 * NXBANDS;
+      plasmamain[n].state.fmax_mod = sbase + 2 * (NXBANDS + 1) + 5 * NXBANDS;
+    }
+    plasmamain[n].state.spec_mod_type = (enum spec_mod_type_enum *) (plasma_block_ptrs.state_spec_mod_type_block + n * NXBANDS);
+
+    /* Derived persistent force block: stride = 6 * NFORCE_DIRECTIONS */
+    {
+      double *dbase = plasma_block_ptrs.derived_persist_force_block + n * 6 * NFORCE_DIRECTIONS;
+      plasmamain[n].derived.F_vis_persistent = dbase;
+      plasmamain[n].derived.F_UV_persistent = dbase + NFORCE_DIRECTIONS;
+      plasmamain[n].derived.F_Xray_persistent = dbase + 2 * NFORCE_DIRECTIONS;
+      plasmamain[n].derived.rad_force_es_persist = dbase + 3 * NFORCE_DIRECTIONS;
+      plasmamain[n].derived.rad_force_ff_persist = dbase + 4 * NFORCE_DIRECTIONS;
+      plasmamain[n].derived.rad_force_bf_persist = dbase + 5 * NFORCE_DIRECTIONS;
+    }
+
+    /* Derived persistent angle block: stride = 3 * NFLUX_ANGLES */
+    {
+      double *dbase = plasma_block_ptrs.derived_persist_angle_block + n * 3 * NFLUX_ANGLES;
+      plasmamain[n].derived.F_UV_ang_theta_persist = dbase;
+      plasmamain[n].derived.F_UV_ang_phi_persist = dbase + NFLUX_ANGLES;
+      plasmamain[n].derived.F_UV_ang_r_persist = dbase + 2 * NFLUX_ANGLES;
+    }
+
+    plasmamain[n].est.cell_spec_flux = plasma_block_ptrs.cell_spec_flux_block + n * geo.nbins_in_cell_spec;
+
+    plasmamain[n].derived.n_bf_in = plasma_block_ptrs.n_bf_in_block + n * nphot_total;
+    plasmamain[n].derived.n_bf_out = plasma_block_ptrs.n_bf_out_block + n * nphot_total;
+  }
+
+  /* Report memory breakdown: shared (one copy per node) vs private (per rank) vs base struct */
+  {
+    double shared_bytes =
+      (double) nelem_alloc * sizeof (double) * (2.0 * nions + nlte_levels + 3.0 * nphot_total + 5.0 * nions + n_inner_tot);
+    double private_bytes = (double) nelem_alloc * sizeof (double) * (3.0 * nions + n_inner_tot) + (double) nelem_alloc * sizeof (int) * nions;  /* scatters(int) + xscatters(double) already in shared_bytes above... */
+
+    /* Recalculate properly:
+     * Shared state: density(nions) + partition(nions) + levden(nlte) + recomb_simple(nphot) + recomb_simple_upweight(nphot) + kbf_use(nphot) = 2*nions + nlte + 3*nphot
+     *   + state_xbands_d(6*NXBANDS + 2*(NXBANDS+1)) + spec_mod_type(NXBANDS ints)
+     * Shared derived: recomb(nions) + cool_rr_ion(nions) + lum_rr_ion(nions) + cool_dr_ion(nions) + inner_recomb(nions) = 5*nions
+     *   + persist_force(6*NFORCE_DIRECTIONS) + persist_angle(3*NFLUX_ANGLES)
+     * Private est: ioniz(nions) + heat_ion(nions) + heat_inner_ion(nions) + inner_ioniz(n_inner) = 3*nions + n_inner
+     * Private derived: scatters(nions, int) + xscatters(nions, double) + n_bf_in(nphot, int) + n_bf_out(nphot, int) */
+    shared_bytes = (double) nelem_alloc *(sizeof (double) * (2.0 * nions + nlte_levels + 3.0 * nphot_total + 5.0 * nions
+                                                             + 6.0 * NXBANDS + 2.0 * (NXBANDS + 1)
+                                                             + 6.0 * NFORCE_DIRECTIONS + 3.0 * NFLUX_ANGLES) + sizeof (int) * NXBANDS);
+    private_bytes =
+      (double) nelem_alloc *(sizeof (double) * (3.0 * nions + n_inner_tot + nions + geo.nbins_in_cell_spec) +
+                             sizeof (int) * (nions + 2.0 * nphot_total));
+    double base_struct_bytes = (double) nelem_alloc * sizeof (plasma_dummy);
+
+    Log
+      ("Plasma memory per rank: base struct %.1f MB, dynamic shared %.1f MB (one copy/node), dynamic private %.1f MB (per rank)\n",
+       1.e-6 * base_struct_bytes, 1.e-6 * shared_bytes, 1.e-6 * private_bytes);
+    Log
+      ("  nions=%d, nlte_levels=%d, nphot_total=%d, n_inner_tot=%d, nelem=%d\n",
+       nions, nlte_levels, nphot_total, n_inner_tot, nelem_alloc - 1);
+  }
 
   return (0);
 }
@@ -706,12 +991,13 @@ calloc_dyn_plasma (nelem)
  **********************************************************/
 
 int
-calloc_matom_matrix (nelem)
-     int nelem;
+calloc_matom_matrix (int nelem)
 {
   int nrows = nlevels_macro + 1;
-  int n;
-  int nmatrices_allocated = 0;
+  int n, row;
+  int use_shared = FALSE;
+  int was_shared = FALSE;
+
   if (nlevels_macro == 0 && geo.nmacro == 0)
   {
     geo.nmacro = 0;
@@ -719,19 +1005,47 @@ calloc_matom_matrix (nelem)
     return (0);
   }
 
-  for (n = 0; n < nelem; n++)
+  /* Free any previously allocated blocks */
+  if (macro_block_ptrs.matom_matrix_block != NULL)
   {
-    if (macromain[n].store_matom_matrix == TRUE)
-    {
-      allocate_macro_matrix (&macromain[n].matom_matrix, nrows);
-      nmatrices_allocated += 1;
-    }
+#ifdef MPI_ON
+    was_shared = macro_block_ptrs.shared_memory_active;
+#endif
+    free_block ((void **) &macro_block_ptrs.matom_matrix_block, &MACRO_WIN (win_matom_matrix), was_shared);
+    free (macro_block_ptrs.matom_matrix_rowptrs);
+    macro_block_ptrs.matom_matrix_rowptrs = NULL;
   }
 
-  if (nlevels_macro > 0 && nmatrices_allocated > 0)
+#ifdef MPI_ON
+  use_shared = (np_mpi_global > 1) ? TRUE : FALSE;
+#endif
+
+  /* Allocate one contiguous shared block for all cell data: NPLASMA * nrows * nrows doubles */
+  alloc_block_double ((long) nelem * nrows * nrows, &macro_block_ptrs.matom_matrix_block, &MACRO_WIN (win_matom_matrix), use_shared);
+
+  /* Allocate private per-rank row-pointer arrays: NPLASMA * nrows double* */
+  macro_block_ptrs.matom_matrix_rowptrs = calloc ((long) nelem * nrows, sizeof (double *));
+  if (macro_block_ptrs.matom_matrix_rowptrs == NULL)
   {
-    Log ("Allocated %10.1f Mb for MA matrix \n", 1.e-6 * (nmatrices_allocated + 1) * (nrows * nrows) * sizeof (double));
+    Error ("calloc_matom_matrix: failed to allocate matom_matrix_rowptrs\n");
+    Exit (EXIT_FAILURE);
   }
+
+  /* Point each cell's matom_matrix into the shared block */
+  for (n = 0; n < nelem; n++)
+  {
+    if (macromain[n].state.store_matom_matrix == FALSE)
+      continue;
+
+    double *flat = macro_block_ptrs.matom_matrix_block + (long) n * nrows * nrows;
+    double **rowptrs = macro_block_ptrs.matom_matrix_rowptrs + (long) n * nrows;
+    for (row = 0; row < nrows; row++)
+      rowptrs[row] = flat + row * nrows;
+    macromain[n].derived.matom_matrix = rowptrs;
+  }
+
+  Log ("Allocated %10.1f Mb for MA matrix (%s)\n",
+       1.e-6 * (long) nelem * nrows * nrows * sizeof (double), use_shared ? "shared" : "private");
 
   return (0);
 }

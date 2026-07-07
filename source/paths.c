@@ -186,11 +186,11 @@ wind_paths_init (WindPtr wind)
 
   for (i = 0; i < geo.ndim2; i++)
   {                             //For each entry in the wind array
-    wind[i].paths = (Wind_Paths_Ptr) wind_paths_constructor (&wind[i]);
-    wind[i].line_paths = (Wind_Paths_Ptr *) calloc (sizeof (Wind_Paths_Ptr), geo.reverb_lines);
+    wind_paths_main[i].paths = (Wind_Paths_Ptr) wind_paths_constructor (&wind[i]);
+    wind_paths_main[i].line_paths = (Wind_Paths_Ptr *) calloc (sizeof (Wind_Paths_Ptr), geo.reverb_lines);
     for (j = 0; j < geo.reverb_lines; j++)
     {                           //For each line tracked on each cell
-      wind[i].line_paths[j] = (Wind_Paths_Ptr) wind_paths_constructor (&wind[i]);
+      wind_paths_main[i].line_paths[j] = (Wind_Paths_Ptr) wind_paths_constructor (&wind[i]);
     }
   }
   return (0);
@@ -216,6 +216,7 @@ int
 line_paths_add_phot (WindPtr wind, PhotPtr pp, int *nres)
 {
   int i, j;
+  wind_paths_store *wpaths = &wind_paths_main[wind - wmain];
 
   if (geo.reverb_disk == REV_DISK_IGNORE && pp->origin_orig == PTYPE_DISK)
     return (0);
@@ -231,23 +232,23 @@ line_paths_add_phot (WindPtr wind, PhotPtr pp, int *nres)
         if (pp->path >= reverb_path_bin[j] && pp->path <= reverb_path_bin[j + 1])
         {                       //If the photon's path lies in this bin's bounds, record it
           //printf("DEBUG: Added to line %d in cell %d - path %g weight %g\n",geo.reverb_line[i], wind->nwind, pp->path, pp->w);
-          wind->line_paths[i]->ad_path_flux[j] += pp->w;
-          wind->line_paths[i]->ai_path_num[j]++;
+          wpaths->line_paths[i]->ad_path_flux[j] += pp->w;
+          wpaths->line_paths[i]->ai_path_num[j]++;
           switch (pp->origin)
           {
           case PTYPE_STAR:
           case PTYPE_AGN:
           case PTYPE_BL:
-            wind->line_paths[i]->ad_path_flux_cent[j] += pp->w;
-            wind->line_paths[i]->ai_path_num_cent[j]++;
+            wpaths->line_paths[i]->ad_path_flux_cent[j] += pp->w;
+            wpaths->line_paths[i]->ai_path_num_cent[j]++;
             break;
           case PTYPE_DISK:
-            wind->line_paths[i]->ad_path_flux_disk[j] += pp->w;
-            wind->line_paths[i]->ai_path_num_disk[j]++;
+            wpaths->line_paths[i]->ad_path_flux_disk[j] += pp->w;
+            wpaths->line_paths[i]->ai_path_num_disk[j]++;
             break;
           default:
-            wind->line_paths[i]->ad_path_flux_wind[j] += pp->w;
-            wind->line_paths[i]->ai_path_num_wind[j]++;
+            wpaths->line_paths[i]->ad_path_flux_wind[j] += pp->w;
+            wpaths->line_paths[i]->ai_path_num_wind[j]++;
             break;
           }
           //Exit out of this loop
@@ -277,6 +278,7 @@ int
 wind_paths_add_phot (WindPtr wind, PhotPtr pp)
 {
   int i;
+  wind_paths_store *wpaths = &wind_paths_main[wind - wmain];
   if (geo.reverb_disk == REV_DISK_IGNORE && pp->origin_orig == PTYPE_DISK)
     return (0);
 
@@ -284,24 +286,24 @@ wind_paths_add_phot (WindPtr wind, PhotPtr pp)
   {                             //For each bin
     if (pp->path >= reverb_path_bin[i] && pp->path <= reverb_path_bin[i + 1])
     {                           //If the path falls within its bounds, add photon weight
-      wind->paths->ad_path_flux[i] += pp->w;
-      wind->paths->ai_path_num[i]++;
+      wpaths->paths->ad_path_flux[i] += pp->w;
+      wpaths->paths->ai_path_num[i]++;
 
       switch (pp->origin)
       {
       case PTYPE_STAR:
       case PTYPE_AGN:
       case PTYPE_BL:
-        wind->paths->ad_path_flux_cent[i] += pp->w;
-        wind->paths->ai_path_num_cent[i]++;
+        wpaths->paths->ad_path_flux_cent[i] += pp->w;
+        wpaths->paths->ai_path_num_cent[i]++;
         break;
       case PTYPE_DISK:
-        wind->paths->ad_path_flux_disk[i] += pp->w;
-        wind->paths->ai_path_num_disk[i]++;
+        wpaths->paths->ad_path_flux_disk[i] += pp->w;
+        wpaths->paths->ai_path_num_disk[i]++;
         break;
       default:
-        wind->paths->ad_path_flux_wind[i] += pp->w;
-        wind->paths->ai_path_num_wind[i]++;
+        wpaths->paths->ad_path_flux_wind[i] += pp->w;
+        wpaths->paths->ai_path_num_wind[i]++;
         break;
       }
       return (0);
@@ -395,11 +397,12 @@ r_draw_from_path_histogram (Wind_Paths_Ptr PathPtr)
 int
 wind_paths_gen_phot (WindPtr wind, PhotPtr pp)
 {
+  wind_paths_store *wpaths = &wind_paths_main[wind - wmain];
   if (geo.ioniz_or_extract == CYCLE_IONIZ)
   {
     simple_paths_gen_phot (pp);
   }
-  else if (wind->paths->i_num == 0)
+  else if (wpaths->paths->i_num == 0)
   {                             //If there's no path data registered in this cell, default to simple
     Error ("wind_paths_gen_phot: No path data in cell %d at r=%g, z=%g\n",
            wind->nwind, sqrt (wind->x[0] * wind->x[0] + wind->x[1] * wind->x[1]), wind->x[2]);
@@ -407,7 +410,7 @@ wind_paths_gen_phot (WindPtr wind, PhotPtr pp)
   }
   else
   {                             //Otherwise, draw a path for the photon from the cell's histogram
-    pp->path = r_draw_from_path_histogram (wind->paths);
+    pp->path = r_draw_from_path_histogram (wpaths->paths);
   }
   return (0);
 }
@@ -435,11 +438,12 @@ int
 line_paths_gen_phot (WindPtr wind, PhotPtr pp, int nres)
 {
   int i;
+  wind_paths_store *wpaths = &wind_paths_main[wind - wmain];
   if (geo.ioniz_or_extract == CYCLE_IONIZ)
   {
     simple_paths_gen_phot (pp);
   }
-  else if (wind->paths->i_num == 0)
+  else if (wpaths->paths->i_num == 0)
   {                             //If there's no path data registered in this cell, default to simple
     //Error ("line_paths_gen_phot: No path data in cell %d at r=%g, z=%g\n",
     //         wind->nwind, sqrt(wind->x[0]*wind->x[0] + wind->x[1]*wind->x[1]), wind->x[2]);
@@ -447,7 +451,7 @@ line_paths_gen_phot (WindPtr wind, PhotPtr pp, int nres)
   }
   else if (nres < 0 || nres >= nlines || lin_ptr[nres]->macro_info == FALSE)
   {                             //If this line is invalid, continuum or non-matom then default to wind
-    pp->path = r_draw_from_path_histogram (wind->paths);
+    pp->path = r_draw_from_path_histogram (wpaths->paths);
   }
   else
   {                             //Iterate over array to see if this line is tracked. If so, use that 
@@ -457,22 +461,22 @@ line_paths_gen_phot (WindPtr wind, PhotPtr pp, int nres)
     {
       if (lin_ptr[nres]->where_in_list == geo.reverb_line[i])
       {                         //Line identified using its position in nres as unique ID
-        if (wind->line_paths[i]->i_num > 0)
+        if (wpaths->line_paths[i]->i_num > 0)
         {                       //If there photons recorded in this histogram
-          pp->path = r_draw_from_path_histogram (wind->line_paths[i]);
+          pp->path = r_draw_from_path_histogram (wpaths->line_paths[i]);
         }
         else
         {                       //If there are no photons in this histogram, log and default
           //to using the wind path histogram.
           //Error("line_paths_gen_phot: No path data for line %d in cell %d at r=%g, z=%g\n",
           // wind->nwind, nres, sqrt(wind->x[0]*wind->x[0] + wind->x[1]*wind->x[1]), wind->x[2]);
-          pp->path = r_draw_from_path_histogram (wind->paths);
+          pp->path = r_draw_from_path_histogram (wpaths->paths);
         }
         return (0);
       }
     }
     //If the line isn't being tracked, default to wind
-    pp->path = r_draw_from_path_histogram (wind->paths);
+    pp->path = r_draw_from_path_histogram (wpaths->paths);
   }
   return (0);
 }
@@ -546,10 +550,10 @@ wind_paths_evaluate (WindPtr wind)
   {                             //For each cell in the wind
     if (wind[i].inwind >= 0)
     {                           //If this is a wind cel;, evaluate each of the path histograms
-      wind_paths_evaluate_single (wind[i].paths);
+      wind_paths_evaluate_single (wind_paths_main[i].paths);
       for (j = 0; j < geo.reverb_lines; j++)
       {
-        wind_paths_evaluate_single (wind[i].line_paths[j]);
+        wind_paths_evaluate_single (wind_paths_main[i].line_paths[j]);
       }
     }
   }
@@ -590,9 +594,10 @@ wind_paths_evaluate (WindPtr wind)
 int
 wind_paths_dump (WindPtr wind, int rank_global)
 {
-  FILE *fopen (), *fptr;
+  FILE *fptr;
   char c_file[LINELENGTH];
   int j, k;
+  wind_paths_store *wpaths = &wind_paths_main[wind - wmain];
 
   //Setup file name and open the file
   sprintf (c_file, "%.100s.wind_paths_%d.%d.csv", files.root, wind->nwind, rank_global);
@@ -614,15 +619,15 @@ wind_paths_dump (WindPtr wind, int rank_global)
   for (k = 0; k < geo.reverb_path_bins; k++)
   {                             //For each path bin, print the 'wind' weight 
     fprintf (fptr, "%g, %g, %g, %g, %g", reverb_path_bin[k],
-             wind->paths->ad_path_flux[k],
-             wind->paths->ad_path_flux_cent[k], wind->paths->ad_path_flux_disk[k], wind->paths->ad_path_flux_wind[k]);
+             wpaths->paths->ad_path_flux[k],
+             wpaths->paths->ad_path_flux_cent[k], wpaths->paths->ad_path_flux_disk[k], wpaths->paths->ad_path_flux_wind[k]);
 
     for (j = 0; j < geo.reverb_lines; j++)
     {                           //For each tracked line, print the weight in this bin
       fprintf (fptr, ", %g, %g, %g, %g",
-               wind->line_paths[j]->ad_path_flux[k],
-               wind->line_paths[j]->ad_path_flux_cent[k],
-               wind->line_paths[j]->ad_path_flux_disk[k], wind->line_paths[j]->ad_path_flux_wind[k]);
+               wpaths->line_paths[j]->ad_path_flux[k],
+               wpaths->line_paths[j]->ad_path_flux_cent[k],
+               wpaths->line_paths[j]->ad_path_flux_disk[k], wpaths->line_paths[j]->ad_path_flux_wind[k]);
     }
     fprintf (fptr, "\n");
   }
@@ -736,7 +741,7 @@ wind_paths_sphere_point_index (int i, int j, int k)
 int
 wind_paths_output_vtk (WindPtr wind, int ndom)
 {
-  FILE *fopen (), *fptr;
+  FILE *fptr;
   char c_file[LINELENGTH];
   int i, j, k, n, i_obs, i_cells, i_points;
   double r_azi, r_inc, r_x, r_y, r_z, r_err;
@@ -897,7 +902,7 @@ wind_paths_output_vtk (WindPtr wind, int ndom)
       {
         for (k = 0; k < geo.reverb_angle_bins; k++)
         {
-          fprintf (fptr, "%d\n", wind[n].paths->i_num);
+          fprintf (fptr, "%d\n", wind_paths_main[n].paths->i_num);
         }
       }
     }
@@ -911,8 +916,8 @@ wind_paths_output_vtk (WindPtr wind, int ndom)
         wind_ij_to_n (ndom, i, j, &n);
         for (k = 0; k < geo.reverb_angle_bins; k++)
         {
-          fprintf (fptr, "%d\n", wind[n].paths->i_num);
-          fprintf (fptr, "%d\n", wind[n].paths->i_num);
+          fprintf (fptr, "%d\n", wind_paths_main[n].paths->i_num);
+          fprintf (fptr, "%d\n", wind_paths_main[n].paths->i_num);
         }
       }
     }
@@ -930,9 +935,9 @@ wind_paths_output_vtk (WindPtr wind, int ndom)
       {
         for (k = 0; k < geo.reverb_angle_bins; k++)
         {
-          if (wind[n].paths->i_num > 0)
+          if (wind_paths_main[n].paths->i_num > 0)
           {
-            r_err = sqrt ((double) wind[n].paths->i_num) / (double) wind[n].paths->i_num;
+            r_err = sqrt ((double) wind_paths_main[n].paths->i_num) / (double) wind_paths_main[n].paths->i_num;
             fprintf (fptr, "%g\n", r_err);
           }
           else
@@ -952,9 +957,9 @@ wind_paths_output_vtk (WindPtr wind, int ndom)
         wind_ij_to_n (ndom, i, j, &n);
         for (k = 0; k < geo.reverb_angle_bins; k++)
         {
-          if (wind[n].paths->i_num > 0)
+          if (wind_paths_main[n].paths->i_num > 0)
           {
-            r_err = sqrt ((double) wind[n].paths->i_num) / (double) wind[n].paths->i_num;
+            r_err = sqrt ((double) wind_paths_main[n].paths->i_num) / (double) wind_paths_main[n].paths->i_num;
             fprintf (fptr, "%g\n", r_err);
             fprintf (fptr, "%g\n", r_err);
           }
@@ -980,14 +985,14 @@ wind_paths_output_vtk (WindPtr wind, int ndom)
       {
         for (k = 0; k < geo.reverb_angle_bins; k++)
         {
-          if (wind[n].paths->i_num > 0)
+          if (wind_paths_main[n].paths->i_num > 0)
           {
             double f_diff;
-            f_diff = wind[n].paths->d_path;
+            f_diff = wind_paths_main[n].paths->d_path;
             f_diff -= (sqrt (wind[n].xcen[0] * wind[n].xcen[0] +
                              wind[n].xcen[1] * wind[n].xcen[1] + wind[n].xcen[2] * wind[n].xcen[2]) - geo.rstar);
             f_diff = fabs (f_diff);
-            f_diff /= wind[n].paths->d_path;
+            f_diff /= wind_paths_main[n].paths->d_path;
 
             fprintf (fptr, "%g\n", f_diff);
           }
@@ -1008,14 +1013,14 @@ wind_paths_output_vtk (WindPtr wind, int ndom)
         wind_ij_to_n (ndom, i, j, &n);
         for (k = 0; k < geo.reverb_angle_bins; k++)
         {
-          if (wind[n].paths->i_num > 0)
+          if (wind_paths_main[n].paths->i_num > 0)
           {
             double f_diff;
-            f_diff = wind[n].paths->d_path;
+            f_diff = wind_paths_main[n].paths->d_path;
             f_diff -= (sqrt (wind[n].xcen[0] * wind[n].xcen[0] +
                              wind[n].xcen[1] * wind[n].xcen[1] + wind[n].xcen[2] * wind[n].xcen[2]) - geo.rstar);
             f_diff = fabs (f_diff);
-            f_diff /= wind[n].paths->d_path;
+            f_diff /= wind_paths_main[n].paths->d_path;
 
             fprintf (fptr, "%g\n", f_diff);
             fprintf (fptr, "%g\n", f_diff);
@@ -1041,9 +1046,9 @@ wind_paths_output_vtk (WindPtr wind, int ndom)
       {
         for (k = 0; k < geo.reverb_angle_bins; k++)
         {
-          if (wind[n].paths->i_num > 0)
+          if (wind_paths_main[n].paths->i_num > 0)
           {
-            fprintf (fptr, "%g\n", wind[n].paths->d_path);
+            fprintf (fptr, "%g\n", wind_paths_main[n].paths->d_path);
           }
           else
           {
@@ -1062,10 +1067,10 @@ wind_paths_output_vtk (WindPtr wind, int ndom)
         wind_ij_to_n (ndom, i, j, &n);
         for (k = 0; k < geo.reverb_angle_bins; k++)
         {
-          if (wind[n].paths->i_num > 0)
+          if (wind_paths_main[n].paths->i_num > 0)
           {
-            fprintf (fptr, "%g\n", wind[n].paths->d_path);
-            fprintf (fptr, "%g\n", wind[n].paths->d_path);
+            fprintf (fptr, "%g\n", wind_paths_main[n].paths->d_path);
+            fprintf (fptr, "%g\n", wind_paths_main[n].paths->d_path);
           }
           else
           {
@@ -1095,13 +1100,13 @@ wind_paths_output_vtk (WindPtr wind, int ndom)
 
           for (k = 0; k < geo.reverb_angle_bins; k++)
           {
-            if (wind[n].paths->i_num > 0)
+            if (wind_paths_main[n].paths->i_num > 0)
             {
               r_azi = ((double) k + 0.5) * (PI / (double) geo.reverb_angle_bins);
               p_test->x[0] = wind[n].xcen[0] * sin (r_inc) * cos (r_azi);
               p_test->x[1] = wind[n].xcen[0] * sin (r_inc) * sin (r_azi);
               p_test->x[2] = wind[n].xcen[0] * cos (r_inc);
-              fprintf (fptr, "%g\n", wind[n].paths->d_path + delay_to_observer (p_test));
+              fprintf (fptr, "%g\n", wind_paths_main[n].paths->d_path + delay_to_observer (p_test));
             }
             else
             {
@@ -1120,15 +1125,15 @@ wind_paths_output_vtk (WindPtr wind, int ndom)
           wind_ij_to_n (ndom, i, j, &n);
           for (k = 0; k < geo.reverb_angle_bins; k++)
           {
-            if (wind[n].paths->i_num > 0)
+            if (wind_paths_main[n].paths->i_num > 0)
             {
               r_azi = ((double) k + 0.5) * (PI / (double) geo.reverb_angle_bins);
               p_test->x[0] = wind[n].xcen[0] * cos (r_azi);
               p_test->x[1] = wind[n].xcen[0] * sin (r_azi);
               p_test->x[2] = wind[n].xcen[2];
-              fprintf (fptr, "%g\n", wind[n].paths->d_path + delay_to_observer (p_test));
+              fprintf (fptr, "%g\n", wind_paths_main[n].paths->d_path + delay_to_observer (p_test));
               p_test->x[2] = -wind[n].xcen[2];
-              fprintf (fptr, "%g\n", wind[n].paths->d_path + delay_to_observer (p_test));
+              fprintf (fptr, "%g\n", wind_paths_main[n].paths->d_path + delay_to_observer (p_test));
             }
             else
             {

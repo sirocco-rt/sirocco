@@ -457,7 +457,7 @@ trans_phot_single (WindPtr w, PhotPtr p, int iextract)
         if (modes.track_resonant_scatters)
           track_scatters (&pp, wmain[n_grid].nplasma, "Resonant");
 
-        plasmamain[wmain[n_grid].nplasma].scatters[line[current_nres].nion] += 1;
+        plasmamain[wmain[n_grid].nplasma].derived.scatters[line[current_nres].nion] += 1;
 
         if (geo.rt_mode == RT_MODE_2LEVEL)
         {

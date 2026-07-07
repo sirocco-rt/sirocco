@@ -56,9 +56,7 @@ double wig_x, wig_y, wig_z;
  **********************************************************/
 
 int
-where_in_grid (ndom, x)
-     int ndom;
-     double x[];
+where_in_grid (int ndom, double x[])
 {
   int n;
   double fx, fz;
@@ -160,10 +158,7 @@ struct vwind
 } xvwind[NVWIND];
 
 int
-vwind_xyz (ndom, p, v)
-     int ndom;
-     PhotPtr p;
-     double v[];
+vwind_xyz (int ndom, PhotPtr p, double v[])
 {
   int i;
   double rho, r;
@@ -321,9 +316,7 @@ wind_div_v (int ndom, WindPtr cell)
  **********************************************************/
 
 double
-rho (w, x)
-     WindPtr w;
-     double x[];
+rho (WindPtr w, double x[])
 {
   int n;
   double dd;
@@ -354,7 +347,7 @@ rho (w, x)
     for (nn = 0; nn < nelem; nn++)
     {
       nplasma = w[nnn[nn]].nplasma;
-      dd += plasmamain[nplasma].rho * frac[nn];
+      dd += plasmamain[nplasma].state.rho * frac[nn];
     }
 
   }
@@ -391,17 +384,14 @@ rho (w, x)
  **********************************************************/
 
 int
-mdot_wind (w, z, rmax)
-     WindPtr w;
-     double z;                  // The height (usually small) above the disk at which mdot will be calculated
-     double rmax;               // The radius at which mdot will be calculated
+mdot_wind (WindPtr w, double z, double rmax)
 {
   struct photon p;
   double r, dr, rmin;
   double theta, dtheta;
-  double den, rho ();
+  double den;
   double mdot, mplane, msphere;
-  double x[3], v[3], q[3], dot ();
+  double x[3], v[3], q[3];
   int ndom;
 
   ndom = 0;
@@ -475,9 +465,7 @@ mdot_wind (w, z, rmax)
  **********************************************************/
 
 int
-get_random_location (n, x)
-     int n;                     // Cell in which to create position
-     double x[];                // Returned position
+get_random_location (int n, double x[])
 {
   int ndom;
 
@@ -536,7 +524,7 @@ zero_scatters ()
   {
     for (j = 0; j < nions; j++)
     {
-      plasmamain[n].scatters[j] = 0;
+      plasmamain[n].derived.scatters[j] = 0;
     }
   }
 
@@ -569,8 +557,7 @@ zero_scatters ()
  **********************************************************/
 
 int
-check_corners_inwind (n)
-     int n;
+check_corners_inwind (int n)
 {
   int n_inwind;
   int i, j;
@@ -653,10 +640,10 @@ check_grid ()
     ndom = one->ndom;
 
     /* Hydrogen density, ne should be roughly this */
-    nh = xplasma->rho * rho2nh;
+    nh = xplasma->state.rho * rho2nh;
 
     /* thermal speed */
-//OLD    vth = sqrt (1.5 * BOLTZMANN * xplasma->t_e / MPROT);
+//OLD    vth = sqrt (1.5 * BOLTZMANN * xplasma->state.t_e / MPROT);
 
     /* sobolev length -- this could be used for a check but isn't yet */
 //OLD    l_sob = vth / one->dvds_ave;

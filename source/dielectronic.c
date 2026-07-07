@@ -36,8 +36,7 @@
  **********************************************************/
 
 int
-compute_dr_coeffs (temp)
-     double temp;
+compute_dr_coeffs (double temp)
 {
   int n, n1, n2;
   double Adi, Bdi, T0, T1;
@@ -103,9 +102,7 @@ compute_dr_coeffs (temp)
  **********************************************************/
 
 double
-total_dr (one, t_e)
-     WindPtr one;               // Pointer to the current wind cell - we need the cell volume, this is not in the plasma structure
-     double t_e;                //Current electron temperature of the cell
+total_dr (WindPtr one, double t_e)
 {
   double x;                     //The returned variable
 //OLD  double meanv, meanke;         //The mean velocity and kinetic energy of electrons in the cell
@@ -139,9 +136,9 @@ total_dr (one, t_e)
 /* One possibility is to use the mean k.e. of electrons this is based on the idea that an eleectron
 		is absorbed, so a guess would be to just say its energy is re-radiated. This is clearly an over estimate
 		since some of the enegy is lost to binding energy 	*/
-//              x += xplasma->vol * xplasma->ne * xplasma->density[n + 1] * dr_coeffs[n] * meanke;
+//              x += xplasma->state.vol * xplasma->state.ne * xplasma->state.density[n + 1] * dr_coeffs[n] * meanke;
 /* A different estimate is to use the ionization potential of the ion - this is order of magnitude at best */
-//              x += xplasma->vol * xplasma->ne * xplasma->density[n + 1] * dr_coeffs[n] * ion[n].ip;
+//              x += xplasma->state.vol * xplasma->state.ne * xplasma->state.density[n + 1] * dr_coeffs[n] * ion[n].ip;
       x += 0.0;                 //At present, we just set it to zero - obviously an underestimate!
     }
   }

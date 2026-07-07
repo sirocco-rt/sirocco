@@ -29,9 +29,7 @@ char inroot[LINELENGTH];
 #define LUM_TEST 0
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
 
 //  FILE *fptr, *fopen ();
@@ -45,6 +43,11 @@ main (argc, argv)
   MPI_Init (&argc, &argv);
   MPI_Comm_rank (MPI_COMM_WORLD, &my_rank);
   MPI_Comm_size (MPI_COMM_WORLD, &np_mpi);
+  MPI_Comm_split_type (MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, my_rank, MPI_INFO_NULL, &node_comm);
+  MPI_Comm_rank (node_comm, &node_rank);
+  MPI_Comm_size (node_comm, &node_size);
+  MPI_Comm_split (MPI_COMM_WORLD, (node_rank == 0) ? 0 : MPI_UNDEFINED, my_rank, &leader_comm);
+  num_nodes = 1;
 #else
   my_rank = 0;
   np_mpi = 1;
@@ -203,7 +206,6 @@ main (argc, argv)
 
   char infile[LINELENGTH];
   double lum_one;
-  int zparse ();
 
   double f1 = 1e12;
   double f2 = 1e18;
@@ -235,7 +237,6 @@ main (argc, argv)
 
 
 
-  double par_wind_luminosity ();
 
   xsignal ("unit_test", "%-20s before new wind luminosity %s\n", "NOK", "unit_test");
 
@@ -251,6 +252,13 @@ main (argc, argv)
 
   printf ("Finished unit test\n");
 
+#ifdef MPI_ON
+  MPI_Barrier (MPI_COMM_WORLD);
+  MPI_Comm_free (&node_comm);
+  if (leader_comm != MPI_COMM_NULL)
+    MPI_Comm_free (&leader_comm);
+  MPI_Finalize ();
+#endif
 
   return (0);
 
@@ -258,16 +266,14 @@ main (argc, argv)
 
 
 int
-zparse (argc, argv)
-     int argc;
-     char *argv[];
+zparse (int argc, char *argv[])
 {
   char dummy[LINELENGTH];
 
   if (argc != 2)
   {
     printf ("usage: unit_test root\n");
-    exit (1);
+    Exit (1);
   }
 
 
@@ -283,9 +289,7 @@ zparse (argc, argv)
 
 
 double
-par_wind_luminosity (f1, f2, mode)
-     double f1, f2;
-     int mode;
+par_wind_luminosity (double f1, double f2, int mode)
 {
   double lum, lum_lines, lum_rr, lum_ff, factor;
   int nplasma;
@@ -378,9 +382,9 @@ par_wind_luminosity (f1, f2, mode)
         MPI_Pack (&n, 1, MPI_INT, commbuffer, size_of_commbuffer, &position, MPI_COMM_WORLD);
         //   Log ("Position2 %d %d\n", n, position);
         // Now transimit the values we want (8)
-        MPI_Pack (&plasmamain[n].lum_lines, 1, MPI_DOUBLE, commbuffer, size_of_commbuffer, &position, MPI_COMM_WORLD);
-        MPI_Pack (&plasmamain[n].lum_rr, 1, MPI_DOUBLE, commbuffer, size_of_commbuffer, &position, MPI_COMM_WORLD);
-        MPI_Pack (&plasmamain[n].lum_ff, 1, MPI_DOUBLE, commbuffer, size_of_commbuffer, &position, MPI_COMM_WORLD);
+        MPI_Pack (&plasmamain[n].derived.lum_lines, 1, MPI_DOUBLE, commbuffer, size_of_commbuffer, &position, MPI_COMM_WORLD);
+        MPI_Pack (&plasmamain[n].derived.lum_rr, 1, MPI_DOUBLE, commbuffer, size_of_commbuffer, &position, MPI_COMM_WORLD);
+        MPI_Pack (&plasmamain[n].derived.lum_ff, 1, MPI_DOUBLE, commbuffer, size_of_commbuffer, &position, MPI_COMM_WORLD);
 
         //    Log ("Position3 %d %d\n", n, position);
       }
@@ -400,9 +404,9 @@ par_wind_luminosity (f1, f2, mode)
       for (n_mpi2 = 0; n_mpi2 < num_comm; n_mpi2++)
       {
         MPI_Unpack (commbuffer, size_of_commbuffer, &position, &n, 1, MPI_INT, MPI_COMM_WORLD);
-        MPI_Unpack (commbuffer, size_of_commbuffer, &position, &plasmamain[n].lum_lines, 1, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (commbuffer, size_of_commbuffer, &position, &plasmamain[n].lum_rr, 1, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (commbuffer, size_of_commbuffer, &position, &plasmamain[n].lum_ff, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (commbuffer, size_of_commbuffer, &position, &plasmamain[n].derived.lum_lines, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (commbuffer, size_of_commbuffer, &position, &plasmamain[n].derived.lum_rr, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (commbuffer, size_of_commbuffer, &position, &plasmamain[n].derived.lum_ff, 1, MPI_DOUBLE, MPI_COMM_WORLD);
 
       }
     }
@@ -418,13 +422,13 @@ par_wind_luminosity (f1, f2, mode)
   {
 
     if (mode == MODE_OBSERVER_FRAME_TIME)
-      factor = 1.0 / plasmamain[nplasma].xgamma;        /* this is dt_cmf */
+      factor = 1.0 / plasmamain[nplasma].state.xgamma;  /* this is dt_cmf */
     else if (mode == MODE_CMF_TIME)
       factor = 1.0;
 
-    lum_lines += plasmamain[nplasma].lum_lines * factor;
-    lum_rr += plasmamain[nplasma].lum_rr * factor;
-    lum_ff += plasmamain[nplasma].lum_ff * factor;
+    lum_lines += plasmamain[nplasma].derived.lum_lines * factor;
+    lum_rr += plasmamain[nplasma].derived.lum_rr * factor;
+    lum_ff += plasmamain[nplasma].derived.lum_ff * factor;
   }
 
   lum = lum_lines + lum_rr + lum_ff;

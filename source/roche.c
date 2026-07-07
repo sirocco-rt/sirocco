@@ -187,8 +187,7 @@ binary_basics ()
  **********************************************************/
 
 int
-hit_secondary (p)
-     PhotPtr p;
+hit_secondary (PhotPtr p)
 {
   double smin, smax, smid, s;
   double potential;
@@ -277,9 +276,7 @@ hit_secondary (p)
  **********************************************************/
 
 double
-pillbox (p, smin, smax)
-     PhotPtr p;
-     double *smin, *smax;
+pillbox (PhotPtr p, double *smin, double *smax)
 {
   double x1, x2;
   double a, b, c;
@@ -428,7 +425,6 @@ phi (double s, void *params)
 {
   struct photon pp;
   double x1, x2, z, z1, z2, z3;
-  double length ();
 
   if (phi_init == 0)
   {
@@ -490,7 +486,7 @@ phi (double s, void *params)
 double
 dphi_ds (double s, void *params)
 {
-  double phi (), x1, x2;
+  double x1, x2;
   void *dummy_par = NULL;
   double dx, z;
   if ((dx = 0.001 * geo.a) < EPS)
@@ -580,7 +576,6 @@ roche2_half_width ()
 {
   double xmin, xmax, xmid, xbest;
   double rmin;
-  double roche_width ();
 
   xmin = geo.l1 + 1.e5;
   xmax = geo.r2_far + geo.a - 1.e5;

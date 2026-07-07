@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <sys/stat.h>
 
 #include "atomic.h"
 #include "sirocco.h"
@@ -47,14 +48,11 @@
  **********************************************************/
 
 int
-parse_command_line (argc, argv)
-     int argc;
-     char *argv[];
+parse_command_line (int argc, char *argv[])
 {
   int restart_stat, verbosity, max_errors, i;
   int j = 0;
   char dummy[LINELENGTH];
-  int mkdir ();
   double time_max;
   char *fgets_rc;
   double x;
@@ -245,6 +243,22 @@ parse_command_line (argc, argv)
         modes.quit_after_inputs = 1;
         j = i;
       }
+      else if (strcmp (argv[i], "-cell_spec_dim") == 0)
+      {
+        if (sscanf (argv[i + 1], "%d", &geo.nbins_in_cell_spec) != 1)
+        {
+          Error ("parse_command_line: could not parse cell_spec_dim\n");
+          exit (1);
+        }
+        if (geo.nbins_in_cell_spec < 1 || geo.nbins_in_cell_spec > NBINS_IN_CELL_SPEC)
+        {
+          Error ("parse_command_line: cell_spec_dim must be 1-%d\n", NBINS_IN_CELL_SPEC);
+          exit (1);
+        }
+        Log ("parse_command_line: setting cell_spec_dim to %d\n", geo.nbins_in_cell_spec);
+        i++;
+        j = i;
+      }
       else if (strcmp (argv[i], "-p") == 0)
       {
         Log ("Logarithmic photon stepping enabled\n");
@@ -316,7 +330,7 @@ parse_command_line (argc, argv)
 
     sprintf (dummy, "_%02d.ext.txt", rank_global);
 
-    sprintf (files.extra, "%.100s%.100s", files.root, dummy);
+    sprintf (files.extra, "%.100s%.100s%.100s", files.diagfolder, files.root, dummy);
 
 
 

@@ -102,11 +102,11 @@ wind_update (WindPtr w)
       continue;
     }
 
-    if (plasmamain[n_plasma].ntot < 100)
+    if (plasmamain[n_plasma].est.ntot < 100)
     {
       Log
         ("!!wind_update: Cell %4d Dom %d  Vol. %8.2e r %8.2e theta %8.2e has only %4d photons\n",
-         n_plasma, w[nwind].ndom, volume, w[nwind].rcen, w[nwind].thetacen, plasmamain[n_plasma].ntot);
+         n_plasma, w[nwind].ndom, volume, w[nwind].rcen, w[nwind].thetacen, plasmamain[n_plasma].est.ntot);
     }
 
     /* Start with a call to the routine which normalises all the macro atom
@@ -135,20 +135,20 @@ wind_update (WindPtr w)
 
     if (geo.adiabatic)
     {
-      plasmamain[n_plasma].cool_adiabatic = adiabatic_cooling (&w[nwind], plasmamain[n_plasma].t_e);
+      plasmamain[n_plasma].derived.cool_adiabatic = adiabatic_cooling (&w[nwind], plasmamain[n_plasma].state.t_e);
     }
     else
     {
-      plasmamain[n_plasma].cool_adiabatic = 0.0;
+      plasmamain[n_plasma].derived.cool_adiabatic = 0.0;
     }
 
     if (geo.nonthermal)
     {
-      plasmamain[n_plasma].heat_shock = shock_heating (&w[nwind]);
+      plasmamain[n_plasma].derived.heat_shock = shock_heating (&w[nwind]);
     }
     else
     {
-      plasmamain[n_plasma].heat_shock = 0.0;
+      plasmamain[n_plasma].derived.heat_shock = 0.0;
     }
 
     /* Calculate the densities in various ways depending on the ioniz_mode */
@@ -232,59 +232,59 @@ wind_update (WindPtr w)
   {
     /* First we want to find the maximum change in temperature, which we will
      * use for reporting and to calculate the convergence */
-    if ((fabs (plasmamain[n_plasma].t_r_old - plasmamain[n_plasma].t_r)) > fabs (dt_r))
+    if ((fabs (plasmamain[n_plasma].state.t_r_old - plasmamain[n_plasma].state.t_r)) > fabs (dt_r))
     {
-      dt_r = plasmamain[n_plasma].t_r - plasmamain[n_plasma].t_r_old;
+      dt_r = plasmamain[n_plasma].state.t_r - plasmamain[n_plasma].state.t_r_old;
       nmax_r = n_plasma;
     }
-    if ((fabs (plasmamain[n_plasma].t_e_old - plasmamain[n_plasma].t_e)) > fabs (dt_e))
+    if ((fabs (plasmamain[n_plasma].state.t_e_old - plasmamain[n_plasma].state.t_e)) > fabs (dt_e))
     {
-      dt_e = plasmamain[n_plasma].t_e - plasmamain[n_plasma].t_e_old;
+      dt_e = plasmamain[n_plasma].state.t_e - plasmamain[n_plasma].state.t_e_old;
       nmax_e = n_plasma;
     }
 
-    t_r_ave += plasmamain[n_plasma].t_r;
-    t_e_ave += plasmamain[n_plasma].t_e;
-    t_r_ave_old += plasmamain[n_plasma].t_r_old;
-    t_e_ave_old += plasmamain[n_plasma].t_e_old;
+    t_r_ave += plasmamain[n_plasma].state.t_r;
+    t_e_ave += plasmamain[n_plasma].state.t_e;
+    t_r_ave_old += plasmamain[n_plasma].state.t_r_old;
+    t_e_ave_old += plasmamain[n_plasma].state.t_e_old;
 
     check_heating_rates_for_plasma_cell (n_plasma);
 
-    plasmamain[n_plasma].cool_tot_ioniz = plasmamain[n_plasma].cool_tot;
-    plasmamain[n_plasma].lum_ff_ioniz = plasmamain[n_plasma].lum_ff;
-    plasmamain[n_plasma].cool_rr_ioniz = plasmamain[n_plasma].cool_rr;
-    plasmamain[n_plasma].lum_rr_ioniz = plasmamain[n_plasma].lum_rr;
-    plasmamain[n_plasma].cool_rr_metals_ioniz = plasmamain[n_plasma].cool_rr_metals;
-    plasmamain[n_plasma].lum_lines_ioniz = plasmamain[n_plasma].lum_lines;
-    plasmamain[n_plasma].cool_comp_ioniz = plasmamain[n_plasma].cool_comp;
-    plasmamain[n_plasma].cool_dr_ioniz = plasmamain[n_plasma].cool_dr;
-    plasmamain[n_plasma].cool_di_ioniz = plasmamain[n_plasma].cool_di;
-    plasmamain[n_plasma].lum_tot_ioniz = plasmamain[n_plasma].lum_tot;
-    plasmamain[n_plasma].cool_adiabatic_ioniz = plasmamain[n_plasma].cool_adiabatic;
+    plasmamain[n_plasma].derived.cool_tot_ioniz = plasmamain[n_plasma].est.cool_tot;
+    plasmamain[n_plasma].derived.lum_ff_ioniz = plasmamain[n_plasma].derived.lum_ff;
+    plasmamain[n_plasma].derived.cool_rr_ioniz = plasmamain[n_plasma].derived.cool_rr;
+    plasmamain[n_plasma].derived.lum_rr_ioniz = plasmamain[n_plasma].derived.lum_rr;
+    plasmamain[n_plasma].derived.cool_rr_metals_ioniz = plasmamain[n_plasma].derived.cool_rr_metals;
+    plasmamain[n_plasma].derived.lum_lines_ioniz = plasmamain[n_plasma].derived.lum_lines;
+    plasmamain[n_plasma].derived.cool_comp_ioniz = plasmamain[n_plasma].derived.cool_comp;
+    plasmamain[n_plasma].derived.cool_dr_ioniz = plasmamain[n_plasma].derived.cool_dr;
+    plasmamain[n_plasma].derived.cool_di_ioniz = plasmamain[n_plasma].derived.cool_di;
+    plasmamain[n_plasma].derived.lum_tot_ioniz = plasmamain[n_plasma].derived.lum_tot;
+    plasmamain[n_plasma].derived.cool_adiabatic_ioniz = plasmamain[n_plasma].derived.cool_adiabatic;
 
-    abstot += plasmamain[n_plasma].abs_tot;
-    xsum += plasmamain[n_plasma].heat_tot;
-    psum += plasmamain[n_plasma].heat_photo;
-    ausum += plasmamain[n_plasma].heat_auger;
-    fsum += plasmamain[n_plasma].heat_ff;
-    lsum += plasmamain[n_plasma].heat_lines;
-    csum += plasmamain[n_plasma].heat_comp;
-    icsum += plasmamain[n_plasma].heat_ind_comp;
-    apsum += plasmamain[n_plasma].abs_photo;
-    aausum += plasmamain[n_plasma].abs_auger;
-    chexsum += plasmamain[n_plasma].heat_ch_ex;
+    abstot += plasmamain[n_plasma].derived.abs_tot;
+    xsum += plasmamain[n_plasma].est.heat_tot;
+    psum += plasmamain[n_plasma].est.heat_photo;
+    ausum += plasmamain[n_plasma].est.heat_auger;
+    fsum += plasmamain[n_plasma].est.heat_ff;
+    lsum += plasmamain[n_plasma].est.heat_lines;
+    csum += plasmamain[n_plasma].est.heat_comp;
+    icsum += plasmamain[n_plasma].est.heat_ind_comp;
+    apsum += plasmamain[n_plasma].derived.abs_photo;
+    aausum += plasmamain[n_plasma].derived.abs_auger;
+    chexsum += plasmamain[n_plasma].est.heat_ch_ex;
 
-    heat_macro_photo_sum += plasmamain[n_plasma].heat_photo_macro;
-    heat_macro_qrecomb_sum += plasmamain[n_plasma].heat_qrecomb_macro;
-    heat_macro_lines_sum += plasmamain[n_plasma].heat_lines_macro;
-    cool_macro_photo_sum += plasmamain[n_plasma].cool_bf_macro;
-    cool_macro_lines_sum += plasmamain[n_plasma].cool_lines_macro;
-    cool_macro_di_sum += plasmamain[n_plasma].cool_di_macro;
+    heat_macro_photo_sum += plasmamain[n_plasma].est.heat_photo_macro;
+    heat_macro_qrecomb_sum += plasmamain[n_plasma].est.heat_qrecomb_macro;
+    heat_macro_lines_sum += plasmamain[n_plasma].est.heat_lines_macro;
+    cool_macro_photo_sum += plasmamain[n_plasma].derived.cool_bf_macro;
+    cool_macro_lines_sum += plasmamain[n_plasma].derived.cool_lines_macro;
+    cool_macro_di_sum += plasmamain[n_plasma].derived.cool_di_macro;
 
     if (geo.rt_mode == RT_MODE_MACRO)
     {
-      macro_energy_in += macromain[n_plasma].energy_flow_in;
-      macro_energy_out += macromain[n_plasma].energy_flow_out;
+      macro_energy_in += macromain[n_plasma].est.energy_flow_in;
+      macro_energy_out += macromain[n_plasma].est.energy_flow_out;
     }
   }
 
@@ -436,13 +436,13 @@ report_bf_simple_ionpool (void)
 
   for (n = 0; n < NPLASMA; n++)
   {
-    total_in += plasmamain[n].bf_simple_ionpool_in;
-    total_out += plasmamain[n].bf_simple_ionpool_out;
+    total_in += plasmamain[n].derived.bf_simple_ionpool_in;
+    total_out += plasmamain[n].derived.bf_simple_ionpool_out;
 
-    if (plasmamain[n].bf_simple_ionpool_out > plasmamain[n].bf_simple_ionpool_in)
+    if (plasmamain[n].derived.bf_simple_ionpool_out > plasmamain[n].derived.bf_simple_ionpool_in)
     {
       Error ("The net flow out of simple ion pool (%8.4e) > than the net flow in (%8.4e) in cell %d\n",
-             plasmamain[n].bf_simple_ionpool_out, plasmamain[n].bf_simple_ionpool_in, n);
+             plasmamain[n].derived.bf_simple_ionpool_out, plasmamain[n].derived.bf_simple_ionpool_in, n);
     }
   }
 
@@ -454,8 +454,8 @@ report_bf_simple_ionpool (void)
     in_tot = out_tot = 0;
     for (n = 0; n < NPLASMA; n++)
     {
-      in_tot += plasmamain[n].n_bf_in[m];
-      out_tot += plasmamain[n].n_bf_out[m];
+      in_tot += plasmamain[n].derived.n_bf_in[m];
+      out_tot += plasmamain[n].derived.n_bf_out[m];
     }
 
     Log ("!! report_bf:  %3d   %3d %3d %7d  %7d\n", m, phot_top[m].z, phot_top[m].istate, in_tot, out_tot);
@@ -513,37 +513,37 @@ wind_rad_init ()
 void
 check_heating_rates_for_plasma_cell (const int n_plasma)
 {
-  if (sane_check (plasmamain[n_plasma].heat_tot))
+  if (sane_check (plasmamain[n_plasma].est.heat_tot))
   {
-    Error ("wind_update:sane_check w(%d).heat_tot is %e\n", n_plasma, plasmamain[n_plasma].heat_tot);
+    Error ("wind_update:sane_check w(%d).heat_tot is %e\n", n_plasma, plasmamain[n_plasma].est.heat_tot);
   }
-  if (sane_check (plasmamain[n_plasma].heat_photo))
+  if (sane_check (plasmamain[n_plasma].est.heat_photo))
   {
-    Error ("wind_update:sane_check w(%d).heat_photo is %e\n", n_plasma, plasmamain[n_plasma].heat_photo);
+    Error ("wind_update:sane_check w(%d).heat_photo is %e\n", n_plasma, plasmamain[n_plasma].est.heat_photo);
   }
-  if (sane_check (plasmamain[n_plasma].heat_auger))
+  if (sane_check (plasmamain[n_plasma].est.heat_auger))
   {
-    Error ("wind_update:sane_check w(%d).heat_auger is %e\n", n_plasma, plasmamain[n_plasma].heat_auger);
+    Error ("wind_update:sane_check w(%d).heat_auger is %e\n", n_plasma, plasmamain[n_plasma].est.heat_auger);
   }
-  if (sane_check (plasmamain[n_plasma].heat_photo_macro))
+  if (sane_check (plasmamain[n_plasma].est.heat_photo_macro))
   {
-    Error ("wind_update:sane_check w(%d).heat_photo_macro is %e\n", n_plasma, plasmamain[n_plasma].heat_photo_macro);
+    Error ("wind_update:sane_check w(%d).heat_photo_macro is %e\n", n_plasma, plasmamain[n_plasma].est.heat_photo_macro);
   }
-  if (sane_check (plasmamain[n_plasma].heat_ff))
+  if (sane_check (plasmamain[n_plasma].est.heat_ff))
   {
-    Error ("wind_update:sane_check w(%d).heat_ff is %e\n", n_plasma, plasmamain[n_plasma].heat_ff);
+    Error ("wind_update:sane_check w(%d).heat_ff is %e\n", n_plasma, plasmamain[n_plasma].est.heat_ff);
   }
-  if (sane_check (plasmamain[n_plasma].heat_lines))
+  if (sane_check (plasmamain[n_plasma].est.heat_lines))
   {
-    Error ("wind_update:sane_check w(%d).heat_lines is %e\n", n_plasma, plasmamain[n_plasma].heat_lines);
+    Error ("wind_update:sane_check w(%d).heat_lines is %e\n", n_plasma, plasmamain[n_plasma].est.heat_lines);
   }
-  if (sane_check (plasmamain[n_plasma].heat_lines_macro))
+  if (sane_check (plasmamain[n_plasma].est.heat_lines_macro))
   {
-    Error ("wind_update:sane_check w(%d).heat_lines_macro is %e\n", n_plasma, plasmamain[n_plasma].heat_lines_macro);
+    Error ("wind_update:sane_check w(%d).heat_lines_macro is %e\n", n_plasma, plasmamain[n_plasma].est.heat_lines_macro);
   }
-  if (sane_check (plasmamain[n_plasma].heat_comp))
+  if (sane_check (plasmamain[n_plasma].est.heat_comp))
   {
-    Error ("wind_update:sane_check w(%d).heat_comp is %e\n", n_plasma, plasmamain[n_plasma].heat_comp);
+    Error ("wind_update:sane_check w(%d).heat_comp is %e\n", n_plasma, plasmamain[n_plasma].est.heat_comp);
   }
 }
 
@@ -569,131 +569,131 @@ init_plasma_rad_properties (void)
   for (i = 0; i < NPLASMA; ++i)
   {
     /* Start by initialising integer fields */
-    plasmamain[i].j = 0;
-    plasmamain[i].ave_freq = 0;
-    plasmamain[i].ntot = 0;
-    plasmamain[i].n_ds = 0;
-    plasmamain[i].ntot_disk = 0;
-    plasmamain[i].ntot_agn = 0;
-    plasmamain[i].ntot_star = 0;
-    plasmamain[i].ntot_bl = 0;
-    plasmamain[i].nscat_es = 0;
-    plasmamain[i].nscat_res = 0;
-    plasmamain[i].nscat_bf = 0;
-    plasmamain[i].nscat_ff = 0;
-    plasmamain[i].ntot_wind = 0;
-    plasmamain[i].nrad = 0;
-    plasmamain[i].nioniz = 0;
+    plasmamain[i].est.j = 0;
+    plasmamain[i].est.ave_freq = 0;
+    plasmamain[i].est.ntot = 0;
+    plasmamain[i].est.n_ds = 0;
+    plasmamain[i].est.ntot_disk = 0;
+    plasmamain[i].est.ntot_agn = 0;
+    plasmamain[i].est.ntot_star = 0;
+    plasmamain[i].est.ntot_bl = 0;
+    plasmamain[i].derived.nscat_es = 0;
+    plasmamain[i].derived.nscat_res = 0;
+    plasmamain[i].derived.nscat_bf = 0;
+    plasmamain[i].derived.nscat_ff = 0;
+    plasmamain[i].est.ntot_wind = 0;
+    plasmamain[i].derived.nrad = 0;
+    plasmamain[i].est.nioniz = 0;
     for (j = 0; j < nphot_total; j++)
     {
-      plasmamain[i].n_bf_in[j] = 0;
-      plasmamain[i].n_bf_out[j] = 0;
+      plasmamain[i].derived.n_bf_in[j] = 0;
+      plasmamain[i].derived.n_bf_out[j] = 0;
     }
 
     /* Next we'll initialise the rest of the fields, which are doubles */
-    plasmamain[i].j_direct = 0.0;
-    plasmamain[i].j_scatt = 0.0;
-    plasmamain[i].ip = 0.0;
-    plasmamain[i].xi = 0.0;
-    plasmamain[i].ip_direct = 0.0;
-    plasmamain[i].ip_scatt = 0.0;
-    plasmamain[i].mean_ds = 0.0;
-    plasmamain[i].heat_tot = 0.0;
-    plasmamain[i].heat_ff = 0.0;
-    plasmamain[i].heat_photo = 0.0;
-    plasmamain[i].heat_lines = 0.0;
-    plasmamain[i].abs_tot = 0.0;
-    plasmamain[i].abs_auger = 0.0;
-    plasmamain[i].abs_photo = 0.0;
-    plasmamain[i].heat_z = 0.0;
-    plasmamain[i].max_freq = 0.0;
-    plasmamain[i].cool_tot = 0.0;
-    plasmamain[i].lum_tot = 0.0;
-    plasmamain[i].lum_lines = 0.0;
-    plasmamain[i].lum_ff = 0.0;
-    plasmamain[i].cool_rr = 0.0;
-    plasmamain[i].cool_rr_metals = 0.0;
-    plasmamain[i].lum_rr = 0.0;
-    plasmamain[i].comp_nujnu = -1e99;
-    plasmamain[i].cool_comp = 0.0;
-    plasmamain[i].heat_comp = 0.0;
-    plasmamain[i].heat_ind_comp = 0.0;
-    plasmamain[i].heat_auger = 0.0;
-    plasmamain[i].heat_ch_ex = 0.0;
-    plasmamain[i].bf_simple_ionpool_out = 0.0;
-    plasmamain[i].bf_simple_ionpool_in = 0.0;
+    plasmamain[i].est.j_direct = 0.0;
+    plasmamain[i].est.j_scatt = 0.0;
+    plasmamain[i].est.ip = 0.0;
+    plasmamain[i].derived.xi = 0.0;
+    plasmamain[i].est.ip_direct = 0.0;
+    plasmamain[i].est.ip_scatt = 0.0;
+    plasmamain[i].est.mean_ds = 0.0;
+    plasmamain[i].est.heat_tot = 0.0;
+    plasmamain[i].est.heat_ff = 0.0;
+    plasmamain[i].est.heat_photo = 0.0;
+    plasmamain[i].est.heat_lines = 0.0;
+    plasmamain[i].derived.abs_tot = 0.0;
+    plasmamain[i].derived.abs_auger = 0.0;
+    plasmamain[i].derived.abs_photo = 0.0;
+    plasmamain[i].est.heat_z = 0.0;
+    plasmamain[i].est.max_freq = 0.0;
+    plasmamain[i].est.cool_tot = 0.0;
+    plasmamain[i].derived.lum_tot = 0.0;
+    plasmamain[i].derived.lum_lines = 0.0;
+    plasmamain[i].derived.lum_ff = 0.0;
+    plasmamain[i].derived.cool_rr = 0.0;
+    plasmamain[i].derived.cool_rr_metals = 0.0;
+    plasmamain[i].derived.lum_rr = 0.0;
+    plasmamain[i].derived.comp_nujnu = -1e99;
+    plasmamain[i].derived.cool_comp = 0.0;
+    plasmamain[i].est.heat_comp = 0.0;
+    plasmamain[i].est.heat_ind_comp = 0.0;
+    plasmamain[i].est.heat_auger = 0.0;
+    plasmamain[i].est.heat_ch_ex = 0.0;
+    plasmamain[i].derived.bf_simple_ionpool_out = 0.0;
+    plasmamain[i].derived.bf_simple_ionpool_in = 0.0;
 
     for (j = 0; j < N_DMO_DT_DIRECTIONS; j++)
     {
-      plasmamain[i].dmo_dt[j] = 0.0;
+      plasmamain[i].derived.dmo_dt[j] = 0.0;
     }
     for (j = 0; j < NFORCE_DIRECTIONS; j++)
     {
-      plasmamain[i].rad_force_es[j] = 0.0;
-      plasmamain[i].rad_force_ff[j] = 0.0;
-      plasmamain[i].rad_force_bf[j] = 0.0;
-      plasmamain[i].F_vis[j] = 0.0;
-      plasmamain[i].F_UV[j] = 0.0;
-      plasmamain[i].F_Xray[j] = 0.0;
+      plasmamain[i].est.rad_force_es[j] = 0.0;
+      plasmamain[i].est.rad_force_ff[j] = 0.0;
+      plasmamain[i].est.rad_force_bf[j] = 0.0;
+      plasmamain[i].est.F_vis[j] = 0.0;
+      plasmamain[i].est.F_UV[j] = 0.0;
+      plasmamain[i].est.F_Xray[j] = 0.0;
       if (geo.wcycle == 0)      // Persistent values, so only initialise for first ionisation cycle
       {
-        plasmamain[i].F_vis_persistent[j] = 0.0;
-        plasmamain[i].F_UV_persistent[j] = 0.0;
-        plasmamain[i].F_Xray_persistent[j] = 0.0;
-        plasmamain[i].rad_force_bf_persist[j] = 0.0;
+        plasmamain[i].derived.F_vis_persistent[j] = 0.0;
+        plasmamain[i].derived.F_UV_persistent[j] = 0.0;
+        plasmamain[i].derived.F_Xray_persistent[j] = 0.0;
+        plasmamain[i].derived.rad_force_bf_persist[j] = 0.0;
       }
     }
     for (j = 0; j < NFLUX_ANGLES; j++)
     {
       if (geo.wcycle == 0)      // Persistent values, so only initialise for first ionisation cycle
       {
-        plasmamain[i].F_UV_ang_theta_persist[j] = 0.0;
-        plasmamain[i].F_UV_ang_phi_persist[j] = 0.0;
-        plasmamain[i].F_UV_ang_r_persist[j] = 0.0;
+        plasmamain[i].derived.F_UV_ang_theta_persist[j] = 0.0;
+        plasmamain[i].derived.F_UV_ang_phi_persist[j] = 0.0;
+        plasmamain[i].derived.F_UV_ang_r_persist[j] = 0.0;
       }
-      plasmamain[i].F_UV_ang_theta[j] = 0.0;
-      plasmamain[i].F_UV_ang_phi[j] = 0.0;
-      plasmamain[i].F_UV_ang_r[j] = 0.0;
+      plasmamain[i].est.F_UV_ang_theta[j] = 0.0;
+      plasmamain[i].est.F_UV_ang_phi[j] = 0.0;
+      plasmamain[i].est.F_UV_ang_r[j] = 0.0;
     }
 
     /* Initialise  the frequency banded radiation estimators used for estimating the coarse spectra in each i */
-    for (j = 0; j < plasmamain[i].nbands; j++)
+    for (j = 0; j < plasmamain[i].state.nbands; j++)
     {
-      plasmamain[i].nxtot[j] = 0;
-      plasmamain[i].xj[j] = 0.0;
-      plasmamain[i].xave_freq[j] = 0.0;
-      plasmamain[i].xsd_freq[j] = 0.0;
-      plasmamain[i].fmin[j] = plasmamain[i].f2[j];      /* Set the minium frequency to the max frequency in the band */
-      plasmamain[i].fmax[j] = plasmamain[i].f1[j];      /* Set the maximum frequency to the min frequency in the band */
+      plasmamain[i].est.nxtot[j] = 0;
+      plasmamain[i].est.xj[j] = 0.0;
+      plasmamain[i].est.xave_freq[j] = 0.0;
+      plasmamain[i].est.xsd_freq[j] = 0.0;
+      plasmamain[i].est.fmin[j] = plasmamain[i].state.f2[j];    /* Set the minium frequency to the max frequency in the band */
+      plasmamain[i].est.fmax[j] = plasmamain[i].state.f1[j];    /* Set the maximum frequency to the min frequency in the band */
     }
     /* Initialize unused band elements to safe values for MPI communication */
-    for (j = plasmamain[i].nbands; j < NXBANDS; j++)
+    for (j = plasmamain[i].state.nbands; j < NXBANDS; j++)
     {
-      plasmamain[i].nxtot[j] = 0;
-      plasmamain[i].xj[j] = 0.0;
-      plasmamain[i].xave_freq[j] = 0.0;
-      plasmamain[i].xsd_freq[j] = 0.0;
-      plasmamain[i].fmin[j] = 0.0;
-      plasmamain[i].fmax[j] = 0.0;
+      plasmamain[i].est.nxtot[j] = 0;
+      plasmamain[i].est.xj[j] = 0.0;
+      plasmamain[i].est.xave_freq[j] = 0.0;
+      plasmamain[i].est.xsd_freq[j] = 0.0;
+      plasmamain[i].est.fmin[j] = 0.0;
+      plasmamain[i].est.fmax[j] = 0.0;
     }
-    for (j = 0; j < NBINS_IN_CELL_SPEC; ++j)
+    for (j = 0; j < geo.nbins_in_cell_spec; ++j)
     {
-      plasmamain[i].cell_spec_flux[j] = 0.0;
+      plasmamain[i].est.cell_spec_flux[j] = 0.0;
     }
 
     for (j = 0; j < nions; j++)
     {
-      plasmamain[i].ioniz[j] = 0.0;
-      plasmamain[i].recomb[j] = 0.0;
-      plasmamain[i].heat_ion[j] = 0.0;
-      plasmamain[i].cool_rr_ion[j] = 0.0;
-      plasmamain[i].lum_rr_ion[j] = 0.0;
-      plasmamain[i].heat_inner_ion[j] = 0.0;
+      plasmamain[i].est.ioniz[j] = 0.0;
+      plasmamain[i].derived.recomb[j] = 0.0;
+      plasmamain[i].est.heat_ion[j] = 0.0;
+      plasmamain[i].derived.cool_rr_ion[j] = 0.0;
+      plasmamain[i].derived.lum_rr_ion[j] = 0.0;
+      plasmamain[i].est.heat_inner_ion[j] = 0.0;
 
     }
     for (j = 0; j < n_inner_tot; j++)
     {
-      plasmamain[i].inner_ioniz[j] = 0.0;
+      plasmamain[i].est.inner_ioniz[j] = 0.0;
     }
   }
 }
@@ -732,34 +732,34 @@ init_macro_rad_properties (void)
   {
     if (geo.rt_mode == RT_MODE_MACRO)
     {
-      macromain[n_plasma].kpkt_rates_known = FALSE;
+      macromain[n_plasma].derived.kpkt_rates_known = FALSE;
     }
 
-    plasmamain[n_plasma].kpkt_emiss = 0.0;
-    plasmamain[n_plasma].kpkt_abs = 0.0;
+    plasmamain[n_plasma].derived.kpkt_emiss = 0.0;
+    plasmamain[n_plasma].est.kpkt_abs = 0.0;
 
 
     if (geo.rt_mode == RT_MODE_MACRO)   /* macromain is only allocated if geo.rt_mode == RT_MODE_MACRO */
     {
-      macromain[n_plasma].energy_flow_out = 0.0;
-      macromain[n_plasma].energy_flow_in = 0.0;
+      macromain[n_plasma].est.energy_flow_out = 0.0;
+      macromain[n_plasma].est.energy_flow_in = 0.0;
     }
 
     for (macro_level = 0; macro_level < nlevels_macro; ++macro_level)
     {
-      macromain[n_plasma].matom_abs[macro_level] = 0.0;
-      macromain[n_plasma].matom_emiss[macro_level] = 0.0;
+      macromain[n_plasma].est.matom_abs[macro_level] = 0.0;
+      macromain[n_plasma].derived.matom_emiss[macro_level] = 0.0;
 
       for (k = 0; k < xconfig[macro_level].n_bbu_jump; ++k)
       {
-        macromain[n_plasma].jbar[xconfig[macro_level].bbu_indx_first + k] = 0.0;
+        macromain[n_plasma].est.jbar[xconfig[macro_level].bbu_indx_first + k] = 0.0;
       }
       for (k = 0; k < xconfig[macro_level].n_bfu_jump; ++k)
       {
-        macromain[n_plasma].gamma[xconfig[macro_level].bfu_indx_first + k] = 0.0;
-        macromain[n_plasma].gamma_e[xconfig[macro_level].bfu_indx_first + k] = 0.0;
-        macromain[n_plasma].alpha_st[xconfig[macro_level].bfd_indx_first + k] = 0.0;
-        macromain[n_plasma].alpha_st_e[xconfig[macro_level].bfd_indx_first + k] = 0.0;
+        macromain[n_plasma].est.gamma[xconfig[macro_level].bfu_indx_first + k] = 0.0;
+        macromain[n_plasma].est.gamma_e[xconfig[macro_level].bfu_indx_first + k] = 0.0;
+        macromain[n_plasma].est.alpha_st[xconfig[macro_level].bfd_indx_first + k] = 0.0;
+        macromain[n_plasma].est.alpha_st_e[xconfig[macro_level].bfd_indx_first + k] = 0.0;
       }
     }
   }
@@ -780,17 +780,17 @@ init_macro_rad_properties (void)
     {
       for (k = 0; k < xconfig[macro_level].n_bfd_jump; ++k)
       {
-        if (plasmamain[n_plasma].t_e > 1.0)
+        if (plasmamain[n_plasma].state.t_e > 1.0)
         {
-          macromain[n_plasma].recomb_sp[xconfig[macro_level].bfd_indx_first + k] =
+          macromain[n_plasma].est.recomb_sp[xconfig[macro_level].bfd_indx_first + k] =
             alpha_sp (&phot_top[xconfig[macro_level].bfd_jump[k]], &plasmamain[n_plasma], 0);
-          macromain[n_plasma].recomb_sp_e[xconfig[macro_level].bfd_indx_first + k] =
+          macromain[n_plasma].est.recomb_sp_e[xconfig[macro_level].bfd_indx_first + k] =
             alpha_sp (&phot_top[xconfig[macro_level].bfd_jump[k]], &plasmamain[n_plasma], 2);
         }
         else
         {
-          macromain[n_plasma].recomb_sp[xconfig[macro_level].bfd_indx_first + k] = 0.0;
-          macromain[n_plasma].recomb_sp_e[xconfig[macro_level].bfd_indx_first + k] = 0.0;
+          macromain[n_plasma].est.recomb_sp[xconfig[macro_level].bfd_indx_first + k] = 0.0;
+          macromain[n_plasma].est.recomb_sp_e[xconfig[macro_level].bfd_indx_first + k] = 0.0;
         }
       }
     }
@@ -798,14 +798,14 @@ init_macro_rad_properties (void)
     {
       if ((geo.macro_simple == FALSE && phot_top[macro_level].macro_info == TRUE) || geo.rt_mode == RT_MODE_2LEVEL)
       {
-        plasmamain[n_plasma].recomb_simple[macro_level] = 0.0;
-        plasmamain[n_plasma].recomb_simple_upweight[macro_level] = 1.0;
+        plasmamain[n_plasma].state.recomb_simple[macro_level] = 0.0;
+        plasmamain[n_plasma].state.recomb_simple_upweight[macro_level] = 1.0;
       }
       else                      // we want a macro approach, but not for this ion so need recomb_simple instead
       {
-        const double alpha_store = plasmamain[n_plasma].recomb_simple[macro_level] =
+        const double alpha_store = plasmamain[n_plasma].state.recomb_simple[macro_level] =
           alpha_sp (&phot_top[macro_level], &plasmamain[n_plasma], 2);
-        plasmamain[n_plasma].recomb_simple_upweight[macro_level] =
+        plasmamain[n_plasma].state.recomb_simple_upweight[macro_level] =
           alpha_sp (&phot_top[macro_level], &plasmamain[n_plasma], 1) / alpha_store;
       }
     }
@@ -857,13 +857,14 @@ shell_output_wind_update_diagnostics (double xsum, double psum, double fsum, dou
       nshell = wmain[zdom[ndom].nstart + 1].nplasma;
       n = plasmamain[nshell].nwind;
       WindPtr w = &wmain[n];
-      for (i = 0; i < plasmamain[nshell].nbands; i++)
+      for (i = 0; i < plasmamain[nshell].state.nbands; i++)
       {                         /*loop over number of bands */
         Log
           ("Band %i f1 %e f2 %e model %i pl_alpha %f pl_log_w %e exp_t %e exp_w %e\n",
-           i, plasmamain[nshell].f1[i], plasmamain[nshell].f2[i],
-           plasmamain[nshell].spec_mod_type[i],
-           plasmamain[nshell].pl_alpha[i], plasmamain[nshell].pl_log_w[i], plasmamain[nshell].exp_temp[i], plasmamain[nshell].exp_w[i]);
+           i, plasmamain[nshell].state.f1[i], plasmamain[nshell].state.f2[i],
+           plasmamain[nshell].state.spec_mod_type[i],
+           plasmamain[nshell].state.pl_alpha[i], plasmamain[nshell].state.pl_log_w[i], plasmamain[nshell].state.exp_temp[i],
+           plasmamain[nshell].state.exp_w[i]);
       }
       /* Get some line diagnostics */
 
@@ -891,14 +892,14 @@ shell_output_wind_update_diagnostics (double xsum, double psum, double fsum, dou
       }
       agn_ip = geo.const_agn * (((pow (50000 / HEV, geo.alpha_agn + 1.0)) - pow (100 / HEV, geo.alpha_agn + 1.0)) / (geo.alpha_agn + 1.0));
       agn_ip /= (w[n].r * w[n].r);
-      agn_ip /= plasmamain[nshell].rho * rho2nh;
+      agn_ip /= plasmamain[nshell].state.rho * rho2nh;
       /* Report luminosities, IP and other diagnositic quantities */
       Log
         ("OUTPUT Lum_agn= %e T_e= %e N_h= %e N_e= %e alpha= %f IP(sim_2010)= %e Measured_IP(cloudy)= %e Measured_Xi= %e distance= %e volume= %e mean_ds=%e\n",
-         geo.lum_agn, plasmamain[nshell].t_e,
-         plasmamain[nshell].rho * rho2nh, plasmamain[nshell].ne,
-         geo.alpha_agn, agn_ip, plasmamain[nshell].ip,
-         plasmamain[nshell].xi, w[n].r, w[n].vol, plasmamain[nshell].mean_ds / plasmamain[nshell].n_ds);
+         geo.lum_agn, plasmamain[nshell].state.t_e,
+         plasmamain[nshell].state.rho * rho2nh, plasmamain[nshell].state.ne,
+         geo.alpha_agn, agn_ip, plasmamain[nshell].est.ip,
+         plasmamain[nshell].derived.xi, w[n].r, w[n].vol, plasmamain[nshell].est.mean_ds / plasmamain[nshell].est.n_ds);
       Log
         ("OUTPUT Absorbed_flux(ergs-1cm-3)    %8.2e  (photo %8.2e ff %8.2e compton %8.2e induced_compton %8.2e lines %8.2e auger %8.2e charge_ex %8.2e )\n",
          xsum / w[n].vol, psum / w[n].vol, fsum / w[n].vol, csum / w[n].vol, icsum / w[n].vol, lsum / w[n].vol, ausum / w[n].vol,
@@ -931,49 +932,51 @@ shell_output_wind_update_diagnostics (double xsum, double psum, double fsum, dou
       {
         if (ion[nn].z == 6)
         {
-          c_dr = c_dr + plasmamain[nshell].cool_dr_ion[nn];
-          c_rec = c_rec + plasmamain[nshell].cool_rr_ion[nn];
-          c_lum = c_lum + plasmamain[nshell].lum_rr_ion[nn];
+          c_dr = c_dr + plasmamain[nshell].derived.cool_dr_ion[nn];
+          c_rec = c_rec + plasmamain[nshell].derived.cool_rr_ion[nn];
+          c_lum = c_lum + plasmamain[nshell].derived.lum_rr_ion[nn];
         }
         if (ion[nn].z == 7)
         {
-          n_dr = n_dr + plasmamain[nshell].cool_dr_ion[nn];
-          n_rec = n_rec + plasmamain[nshell].cool_rr_ion[nn];
-          n_lum = n_lum + plasmamain[nshell].lum_rr_ion[nn];
+          n_dr = n_dr + plasmamain[nshell].derived.cool_dr_ion[nn];
+          n_rec = n_rec + plasmamain[nshell].derived.cool_rr_ion[nn];
+          n_lum = n_lum + plasmamain[nshell].derived.lum_rr_ion[nn];
         }
         if (ion[nn].z == 8)
         {
-          o_dr = o_dr + plasmamain[nshell].cool_dr_ion[nn];
-          o_rec = o_rec + plasmamain[nshell].cool_rr_ion[nn];
-          o_lum = o_lum + plasmamain[nshell].lum_rr_ion[nn];
+          o_dr = o_dr + plasmamain[nshell].derived.cool_dr_ion[nn];
+          o_rec = o_rec + plasmamain[nshell].derived.cool_rr_ion[nn];
+          o_lum = o_lum + plasmamain[nshell].derived.lum_rr_ion[nn];
         }
         if (ion[nn].z == 26)
         {
-          fe_dr = fe_dr + plasmamain[nshell].cool_dr_ion[nn];
-          fe_rec = fe_rec + plasmamain[nshell].cool_rr_ion[nn];
-          fe_lum = fe_lum + plasmamain[nshell].lum_rr_ion[nn];
+          fe_dr = fe_dr + plasmamain[nshell].derived.cool_dr_ion[nn];
+          fe_rec = fe_rec + plasmamain[nshell].derived.cool_rr_ion[nn];
+          fe_lum = fe_lum + plasmamain[nshell].derived.lum_rr_ion[nn];
         }
         if (ion[nn].z > 2)
         {
-          cool_dr_metals = cool_dr_metals + plasmamain[nshell].cool_dr_ion[nn];
+          cool_dr_metals = cool_dr_metals + plasmamain[nshell].derived.cool_dr_ion[nn];
         }
       }
 
       Log ("Wind_line_cooling(ergs-1cm-3)  H %8.2e He %8.2e C %8.2e N %8.2e O %8.2e Fe %8.2e Metals %8.2e\n", lum_h_line / w[n].vol,
            lum_he_line / w[n].vol, lum_c_line / w[n].vol, lum_n_line / w[n].vol, lum_o_line / w[n].vol, lum_fe_line / w[n].vol);
       Log ("Wind_recomb_cooling(ergs-1cm-3)  H %8.2e He %8.2e C %8.2e N %8.2e O %8.2e Fe %8.2e Metals %8.2e\n",
-           plasmamain[nshell].cool_rr_ion[0] / w[n].vol,
-           (plasmamain[nshell].cool_rr_ion[2] + plasmamain[nshell].cool_rr_ion[3]) / w[n].vol, c_rec / w[n].vol, n_rec / w[n].vol,
-           o_rec / w[n].vol, fe_rec / w[n].vol, plasmamain[nshell].cool_rr_metals / w[n].vol);
+           plasmamain[nshell].derived.cool_rr_ion[0] / w[n].vol,
+           (plasmamain[nshell].derived.cool_rr_ion[2] + plasmamain[nshell].derived.cool_rr_ion[3]) / w[n].vol, c_rec / w[n].vol,
+           n_rec / w[n].vol, o_rec / w[n].vol, fe_rec / w[n].vol, plasmamain[nshell].derived.cool_rr_metals / w[n].vol);
       Log ("Wind_recomb_lum(ergs-1cm-3)  H %8.2e He %8.2e C %8.2e N %8.2e O %8.2e Fe %8.2e Metals %8.2e\n",
-           plasmamain[nshell].lum_rr_ion[0] / w[n].vol, (plasmamain[nshell].lum_rr_ion[2] + plasmamain[nshell].lum_rr_ion[3]) / w[n].vol,
-           c_lum / w[n].vol, n_lum / w[n].vol, o_lum / w[n].vol, fe_lum / w[n].vol, plasmamain[nshell].lum_rr_metals / w[n].vol);
+           plasmamain[nshell].derived.lum_rr_ion[0] / w[n].vol,
+           (plasmamain[nshell].derived.lum_rr_ion[2] + plasmamain[nshell].derived.lum_rr_ion[3]) / w[n].vol, c_lum / w[n].vol,
+           n_lum / w[n].vol, o_lum / w[n].vol, fe_lum / w[n].vol, plasmamain[nshell].derived.lum_rr_metals / w[n].vol);
       Log ("Wind_dr_cooling(ergs-1cm-3)  H %8.2e He %8.2e C %8.2e N %8.2e O %8.2e Fe %8.2e Metals %8.2e\n",
-           plasmamain[nshell].cool_dr_ion[0] / w[n].vol,
-           (plasmamain[nshell].cool_dr_ion[2] + plasmamain[nshell].cool_dr_ion[3]) / w[n].vol, c_dr / w[n].vol, n_dr / w[n].vol,
-           o_dr / w[n].vol, fe_dr / w[n].vol, cool_dr_metals / w[n].vol);
+           plasmamain[nshell].derived.cool_dr_ion[0] / w[n].vol,
+           (plasmamain[nshell].derived.cool_dr_ion[2] + plasmamain[nshell].derived.cool_dr_ion[3]) / w[n].vol, c_dr / w[n].vol,
+           n_dr / w[n].vol, o_dr / w[n].vol, fe_dr / w[n].vol, cool_dr_metals / w[n].vol);
       /* 1110 NSH Added this line to report all cooling mechanisms, including those that do not generate photons. */
-      Log ("Balance      Cooling=%8.2e Heating=%8.2e Lum=%8.2e T_e=%e after update\n", cool_sum, xsum, lum_sum, plasmamain[nshell].t_e);
+      Log ("Balance      Cooling=%8.2e Heating=%8.2e Lum=%8.2e T_e=%e after update\n", cool_sum, xsum, lum_sum,
+           plasmamain[nshell].state.t_e);
 
       for (n = 0; n < nelements; n++)
       {
@@ -983,21 +986,22 @@ shell_output_wind_update_diagnostics (double xsum, double psum, double fsum, dou
         total_density = 0;
         for (m = first_ion_index; m < last_ion_index; m++)
         {
-          total_density += plasmamain[nshell].density[m];
+          total_density += plasmamain[nshell].state.density[m];
         }
         for (m = first_ion_index; m < last_ion_index; m++)
         {
-          Log (" %8.2e", plasmamain[nshell].density[m] / total_density);
+          Log (" %8.2e", plasmamain[nshell].state.density[m] / total_density);
         }
         Log ("\n");
       }
-      Log ("radial F_es %i %e \n", nshell, plasmamain[nshell].rad_force_es[0]);
-      Log ("radial F_bf %i %e \n", nshell, plasmamain[nshell].rad_force_bf[0]);
-      Log ("radial F_ff %i %e \n", nshell, plasmamain[nshell].rad_force_ff[0]);
-      Log ("Radial Visible flux %e \n", plasmamain[nshell].F_vis[0]);
-      Log ("Radial UV      flux %e \n", plasmamain[nshell].F_UV[0]);
-      Log ("Radial Xray    flux %e \n", plasmamain[nshell].F_Xray[0]);
-      Log ("Total Radial   flux %e \n", plasmamain[nshell].F_vis[0] + plasmamain[nshell].F_UV[0] + plasmamain[nshell].F_Xray[0]);
+      Log ("radial F_es %i %e \n", nshell, plasmamain[nshell].est.rad_force_es[0]);
+      Log ("radial F_bf %i %e \n", nshell, plasmamain[nshell].est.rad_force_bf[0]);
+      Log ("radial F_ff %i %e \n", nshell, plasmamain[nshell].est.rad_force_ff[0]);
+      Log ("Radial Visible flux %e \n", plasmamain[nshell].est.F_vis[0]);
+      Log ("Radial UV      flux %e \n", plasmamain[nshell].est.F_UV[0]);
+      Log ("Radial Xray    flux %e \n", plasmamain[nshell].est.F_Xray[0]);
+      Log ("Total Radial   flux %e \n",
+           plasmamain[nshell].est.F_vis[0] + plasmamain[nshell].est.F_UV[0] + plasmamain[nshell].est.F_Xray[0]);
     }
   }
 }

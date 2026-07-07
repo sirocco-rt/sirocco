@@ -43,10 +43,7 @@
  **********************************************************/
 
 double
-get_ion_density (ndom, x, nion)
-     int ndom;
-     double x[];
-     int nion;
+get_ion_density (int ndom, double x[], int nion)
 {
   double dd;
   int nn, nnn[4], nelem;
@@ -66,7 +63,7 @@ in the plasma structure*/
     for (nn = 0; nn < nelem; nn++)
     {
       nplasma = wmain[nnn[nn]].nplasma;
-      dd += plasmamain[nplasma].density[nion] * frac[nn];
+      dd += plasmamain[nplasma].state.density[nion] * frac[nn];
     }
   }
   else

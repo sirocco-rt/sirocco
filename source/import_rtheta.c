@@ -70,9 +70,7 @@
  **********************************************************/
 
 int
-import_rtheta (ndom, filename)
-     int ndom;
-     char *filename;
+import_rtheta (int ndom, char *filename)
 {
   FILE *fptr;
   char line[LINELENGTH];
@@ -357,9 +355,7 @@ import_rtheta_setup_boundaries (int ndom)
  **********************************************************/
 
 int
-rtheta_make_grid_import (w, ndom)
-     WindPtr w;
-     int ndom;
+rtheta_make_grid_import (WindPtr w, int ndom)
 {
   int n, nn;
   double theta;
@@ -463,9 +459,7 @@ rtheta_make_grid_import (w, ndom)
  **********************************************************/
 
 double
-velocity_rtheta (ndom, x, v)
-     int ndom;
-     double *x, *v;
+velocity_rtheta (int ndom, double *x, double *v)
 {
   int j;
   int nn;
@@ -519,9 +513,7 @@ velocity_rtheta (ndom, x, v)
  **********************************************************/
 
 double
-rho_rtheta (ndom, x)
-     int ndom;
-     double *x;
+rho_rtheta (int ndom, double *x)
 {
   double rho = 0;
   double r, z;

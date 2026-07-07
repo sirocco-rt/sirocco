@@ -26,9 +26,9 @@
 char *SIROCCO_ENV;
 char TEST_CWD[LINELENGTH];
 char ATOMIC_DATA_TARGET[LINELENGTH];
-char ATOMIC_DATA_DEST[LINELENGTH];
+char ATOMIC_DATA_DEST[2 * LINELENGTH];
 char ATOMIC_DATA_TARGET_DEVELOPER[LINELENGTH];
-char ATOMIC_DATA_DEST_DEVELOPER[LINELENGTH];
+char ATOMIC_DATA_DEST_DEVELOPER[2 * LINELENGTH];
 
 #define TEST_DATA_LENGTH 2056
 
@@ -144,16 +144,16 @@ test_sv_agn_macro_wind (void)
     CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xgamma, gamma, TEST_TOLERANCE);
 
     /* Some things (plasma properties) are stored in plasma cells */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->rho, rho, TEST_TOLERANCE);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->ne, ne, TEST_TOLERANCE);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->t_e, t_e, TEST_TOLERANCE);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->t_r, t_r, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.rho, rho, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.ne, ne, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.t_e, t_e, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.t_r, t_r, TEST_TOLERANCE);
 
     /* Ion abundances are tested in their number density relative to Hydrogen.
      * This is the default output option in windsave2table */
-    const double n_h = rho2nh * plasma_cell->rho;
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->density[0] / (n_h * ele[0].abun), h1, TEST_TOLERANCE);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->density[8] / (n_h * ele[2].abun), c4, TEST_TOLERANCE);
+    const double n_h = rho2nh * plasma_cell->state.rho;
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.density[0] / (n_h * ele[0].abun), h1, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.density[8] / (n_h * ele[2].abun), c4, TEST_TOLERANCE);
   }
 
   fclose (fp);
@@ -276,16 +276,16 @@ test_sv_cv_wind (void)
     CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xgamma, gamma, TEST_TOLERANCE);
 
     /* Some things (plasma properties) are stored in plasma cells */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->rho, rho, TEST_TOLERANCE);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->ne, ne, TEST_TOLERANCE);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->t_e, t_e, TEST_TOLERANCE);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->t_r, t_r, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.rho, rho, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.ne, ne, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.t_e, t_e, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.t_r, t_r, TEST_TOLERANCE);
 
     /* Ion abundances are tested in their number density relative to Hydrogen.
      * This is the default output option in windsave2table */
-    const double n_h = rho2nh * plasma_cell->rho;
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->density[0] / (n_h * ele[0].abun), h1, TEST_TOLERANCE);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->density[8] / (n_h * ele[2].abun), c4, TEST_TOLERANCE);
+    const double n_h = rho2nh * plasma_cell->state.rho;
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.density[0] / (n_h * ele[0].abun), h1, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.density[8] / (n_h * ele[2].abun), c4, TEST_TOLERANCE);
   }
 
   /* For the CV model, we want to save the wind_save to use in another test */
@@ -410,15 +410,15 @@ test_shell_wind (void)
     CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xgamma, gamma, TEST_TOLERANCE);
 
     /* Some things (plasma properties) are stored in plasma cells */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->rho, rho, TEST_TOLERANCE);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->ne, ne, TEST_TOLERANCE);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->t_e, t_e, TEST_TOLERANCE);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->t_r, t_r, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.rho, rho, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.ne, ne, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.t_e, t_e, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.t_r, t_r, TEST_TOLERANCE);
 
     /* Ion abundances are tested in their number density relative to Hydrogen.
      * This is the default output option in windsave2table */
-    const double n_h = rho2nh * plasma_cell->rho;
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->density[0] / (n_h * ele[0].abun), h1, TEST_TOLERANCE);
+    const double n_h = rho2nh * plasma_cell->state.rho;
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.density[0] / (n_h * ele[0].abun), h1, TEST_TOLERANCE);
   }
 
   fclose (fp);
@@ -534,16 +534,16 @@ test_spherical_star_wind (void)
     CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (wind_cell->xgamma, gamma, TEST_TOLERANCE);
 
     /* Some things (plasma properties) are stored in plasma cells */
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->rho, rho, TEST_TOLERANCE);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->ne, ne, TEST_TOLERANCE);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->t_e, t_e, TEST_TOLERANCE);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->t_r, t_r, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.rho, rho, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.ne, ne, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.t_e, t_e, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.t_r, t_r, TEST_TOLERANCE);
 
     /* Ion abundances are tested in their number density relative to Hydrogen.
      * This is the default output option in windsave2table */
-    const double n_h = rho2nh * plasma_cell->rho;
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->density[0] / (n_h * ele[0].abun), h1, TEST_TOLERANCE);
-    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->density[8] / (n_h * ele[2].abun), c4, TEST_TOLERANCE);
+    const double n_h = rho2nh * plasma_cell->state.rho;
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.density[0] / (n_h * ele[0].abun), h1, TEST_TOLERANCE);
+    CU_ASSERT_DOUBLE_FRACTIONAL_EQUAL_FATAL (plasma_cell->state.density[8] / (n_h * ele[2].abun), c4, TEST_TOLERANCE);
   }
 
   fclose (fp);
@@ -616,7 +616,7 @@ suite_init (void)
     return EXIT_FAILURE;
   }
 
-  snprintf (ATOMIC_DATA_DEST, LINELENGTH, "%s/data", TEST_CWD);
+  snprintf (ATOMIC_DATA_DEST, 2 * LINELENGTH, "%s/data", TEST_CWD);
   if (symlink (ATOMIC_DATA_TARGET, ATOMIC_DATA_DEST) != EXIT_SUCCESS)
   {
     /* If the symlink exists, we'll try not worry about it as if something is
@@ -636,7 +636,7 @@ suite_init (void)
     return EXIT_FAILURE;
   }
 
-  snprintf (ATOMIC_DATA_DEST_DEVELOPER, LINELENGTH, "%s/zdata", TEST_CWD);
+  snprintf (ATOMIC_DATA_DEST_DEVELOPER, 2 * LINELENGTH, "%s/zdata", TEST_CWD);
   if (symlink (ATOMIC_DATA_TARGET_DEVELOPER, ATOMIC_DATA_DEST_DEVELOPER) != EXIT_SUCCESS)
   {
     /* If the symlink exists, we'll try not worry about it as if something is

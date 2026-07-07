@@ -49,19 +49,16 @@ float aout[ODIM][ODIM];
  **********************************************************/
 
 int
-write_array (filename, choice)
-     char filename[];
-     int choice;
+write_array (char filename[], int choice)
 {
   //Dynamical allocation is allowed, although I generally avoid it -- 05apr ksl
   float r, z;
   float rmin, rmax, zmin, zmax;
   int ii, jj;
-  FILE *fopen (), *fptr;
+  FILE *fptr;
   char outfile[LINELENGTH];
   char extra[LINELENGTH];
 
-  double length ();
   double xx[3];
   int i;
   int nn, nnn[4], nelem;
@@ -253,8 +250,7 @@ are linear, and x otherwise.  This is not particularly transparent ?? ksl */
  **********************************************************/
 
 int
-display (name)
-     char name[];
+display (char name[])
 {
   int i, j, n;
 //OLD  int ndom, ndim, mdim, nstart;

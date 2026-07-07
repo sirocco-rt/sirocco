@@ -78,12 +78,8 @@ free_and_null (void **ptr)
 int
 cleanup_model (const char *root_name)
 {
-  int n_plasma;
   char *SIROCCO_ENV;
-  char parameter_filepath[LINELENGTH];
-
-  PlasmaPtr plasma_cell;
-  MacroPtr macro_cell;
+  char parameter_filepath[2 * LINELENGTH];
 
   (void) root_name;
 
@@ -94,101 +90,21 @@ cleanup_model (const char *root_name)
     return EXIT_FAILURE;
   }
 
-  snprintf (parameter_filepath, LINELENGTH, "%s/source/tests/test_data/define_wind/%s.pf", SIROCCO_ENV, files.root);
+  snprintf (parameter_filepath, 2 * LINELENGTH, "%s/source/tests/test_data/define_wind/%s.pf", SIROCCO_ENV, files.root);
   if (cpar (parameter_filepath) != 1)   /* cpar returns 1 when something is "normal" */
   {
     return EXIT_FAILURE;
   }
 
-  /* free domains */
-  for (int n_dom = 0; n_dom < geo.ndomain; ++n_dom)
-  {
-    free_and_null ((void **) &zdom[n_dom].wind_x);
-    free_and_null ((void **) &zdom[n_dom].wind_midx);
-    free_and_null ((void **) &zdom[n_dom].wind_z);
-    free_and_null ((void **) &zdom[n_dom].wind_midz);
-
-    if (zdom[n_dom].coord_type == RTHETA)
-    {
-      free_and_null ((void **) &zdom[n_dom].cones_rtheta);
-    }
-    else if (zdom[n_dom].coord_type == CYLVAR)
-    {
-      free ((void **) &zdom[n_dom].wind_z_var[0]);
-      free ((void **) &zdom[n_dom].wind_z_var);
-      free ((void **) &zdom[n_dom].wind_midz_var[0]);
-      free ((void **) &zdom[n_dom].wind_midz_var);
-    }
-  }
-  free_and_null ((void **) &zdom);
-
-  /* free dynamic grid properties */
-
-  for (int n_wind = 0; n_wind < NDIM2; ++n_wind)
-  {
-    free_and_null ((void **) &wmain[n_wind].paths);
-    free_and_null ((void **) &wmain[n_wind].line_paths);
-  }
-
-  free_and_null ((void **) &wmain);
-
-  /* NPLASMA + 1 is the dummy plasma cell */
-  for (n_plasma = 0; n_plasma < NPLASMA + 1; ++n_plasma)
-  {
-    plasma_cell = &plasmamain[n_plasma];
-    free (plasma_cell->density);
-    free (plasma_cell->partition);
-    free (plasma_cell->ioniz);
-    free (plasma_cell->recomb);
-    free (plasma_cell->scatters);
-    free (plasma_cell->xscatters);
-    free (plasma_cell->heat_ion);
-    free (plasma_cell->heat_inner_ion);
-    free (plasma_cell->cool_rr_ion);
-    free (plasma_cell->lum_rr_ion);
-    free (plasma_cell->inner_recomb);
-    free (plasma_cell->inner_ioniz);
-    free (plasma_cell->cool_dr_ion);
-    free (plasma_cell->levden);
-    free (plasma_cell->recomb_simple);
-    free (plasma_cell->recomb_simple_upweight);
-    free (plasma_cell->kbf_use);
-  }
-
-  free_and_null ((void **) &plasmamain);
+  free_domains ();
+  free_wind_grid ();
+  free_plasma_grid ();
   free_and_null ((void **) &photstoremain);
-  free_and_null ((void **) &matomphotstoremain);        /* This one doesn't care about if macro atoms are used or not */
+  free_and_null ((void **) &matomphotstoremain);
 
   if (nlevels_macro > 0)
   {
-    for (n_plasma = 0; n_plasma < NPLASMA + 1; n_plasma++)
-    {
-      macro_cell = &macromain[n_plasma];
-      free (macro_cell->jbar);
-      free (macro_cell->jbar_old);
-      free (macro_cell->gamma);
-      free (macro_cell->gamma_old);
-      free (macro_cell->gamma_e);
-      free (macro_cell->gamma_e_old);
-      free (macro_cell->alpha_st);
-      free (macro_cell->alpha_st_old);
-      free (macro_cell->alpha_st_e);
-      free (macro_cell->alpha_st_e_old);
-      free (macro_cell->recomb_sp);
-      free (macro_cell->recomb_sp_e);
-      free (macro_cell->matom_emiss);
-      free (macro_cell->matom_abs);
-      free (macro_cell->cooling_bf);
-      free (macro_cell->cooling_bf_col);
-      free (macro_cell->cooling_bb);
-
-      if (macro_cell->store_matom_matrix == TRUE)
-      {
-        free_and_null ((void **) &macro_cell->matom_matrix);
-      }
-    }
-
-    free_and_null ((void **) &macromain);
+    free_macro_grid ();
   }
 
   NDIM2 = 0;
@@ -287,7 +203,7 @@ setup_model_grid (const char *root_name, const char *atomic_data_location)
   char *SIROCCO_ENV;
   char rdchoice_answer[LINELENGTH];
   char rdchoice_choices[LINELENGTH];
-  char parameter_filepath[LINELENGTH];
+  char parameter_filepath[2 * LINELENGTH];
 
   SIROCCO_ENV = getenv ("SIROCCO");
   if (SIROCCO_ENV == NULL)
@@ -301,7 +217,7 @@ setup_model_grid (const char *root_name, const char *atomic_data_location)
   /* Set up parameter file, that way we can get all the parameters from that
    * instead of defining them manually */
   strcpy (files.root, root_name);
-  snprintf (parameter_filepath, LINELENGTH, "%s/source/tests/test_data/define_wind/%s.pf", SIROCCO_ENV, files.root);
+  snprintf (parameter_filepath, 2 * LINELENGTH, "%s/source/tests/test_data/define_wind/%s.pf", SIROCCO_ENV, files.root);
   if (opar (parameter_filepath) != 2)   /* opar returns 2 when reading for the parameter file */
   {
     fprintf (stderr, "Unable to read from parameter file %s.pf", files.root);

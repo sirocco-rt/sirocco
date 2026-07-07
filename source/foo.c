@@ -47,6 +47,10 @@
 int
 calculate_ionization (int restart_stat)
 {
+  int nn;
+  double zz, z_abs_all, z_abs_all_orig, z_orig[N_ISTAT], z_abs[N_ISTAT], z_else, z_else_orig;
+  double radiated[20], radiated_orig[20];
+  int nphot_istat[N_ISTAT];
   WindPtr w;
   PhotPtr p;
 
@@ -54,14 +58,11 @@ calculate_ionization (int restart_stat)
   double freqmin, freqmax, x;
   long nphot_to_define, nphot_min;
   int iwind;
-  int cycle_start;
 
 
   /* Save the the windfile before the first ionization cycle in order to
    * allow investigation of issues that may have arisen at the very beginning
    */
-
-  print_memory_usage ("Before Begining of Ionization Cycles (and Photon Generatio)");
 
 #ifdef MPI_ON
   if (rank_global == 0)
@@ -72,49 +73,9 @@ calculate_ionization (int restart_stat)
   }
 #endif
 
-#ifdef MPI_ON
-  Log ("Photons per cycle per MPI task will be %d\n", NPHOT / np_mpi_global);
-  NPHOT /= np_mpi_global;
-#endif
-
-  NPHOT_MAX = NPHOT;
-
-  /* Allocate the memory for the photon structure now that NPHOT is established */
-  /* What is here is just a test, that we can allocate and then deallocate photmain.
-     With a little more logic, this could  be put inside the ioniation loop. */
-
-  photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT + 1);
-  photmain_allocated = TRUE;
-  Log ("CCC - Allocated photmain for memory check with NPHOT set to %d\n", NPHOT);
-
-  /* If the number of photons per cycle is changed, NPHOT can be less, so we define NPHOT_MAX
-   * to the maximum number of photons that one can create.  NPHOT is used extensively with
-   * Sirocco.  It is the NPHOT in a particular cycle, in a given thread.
-   */
 
 
-  if (p == NULL)
-  {
-    Error ("init_photons: There is a problem in allocating memory for the photon structure\n");
-    Exit (0);
-  }
-  else
-  {
-    /* large photon numbers can cause problems / runs to crash. Report to use (see #209) */
-    Log
-      ("Allocated %10d bytes for each of %5d elements of photon structure totaling %10.1f Mb \n",
-       sizeof (p_dummy), NPHOT, 1.e-6 * NPHOT * sizeof (p_dummy));
-    if ((NPHOT * sizeof (p_dummy)) > 1e9)
-      Error ("Over 1 GIGABYTE of photon structure allocated. Could cause serious problems.\n");
-  }
-
-  free (photmain);
-  photmain_allocated = FALSE;
-  Log ("CCC - Freed  photmain after memory check\n");
-  /* End of the test */
-
-
-
+  p = photmain;
   w = wmain;
 
   freqmin = xband.f1[0];
@@ -153,41 +114,8 @@ calculate_ionization (int restart_stat)
     modes.load_rng = FALSE;
   }
 
-  cycle_start = geo.wcycle;
-  /* Initialise convergence history buffer */
-  {
-    int k;
-    for (k = 0; k < CONVERGENCE_HISTORY_MAX; k++)
-      geo.convergence_history[k] = 0.0;
-  }
   while (geo.wcycle < geo.wcycles)
   {                             /* This allows you to build up photons in bunches */
-
-    /* If we are using photon speed up mode then the number of photons varies by cycle in the
-     * ionization phase.  We set this up here
-     */
-
-    if (modes.photon_speedup)
-    {
-      nphot_min = NPHOT_MAX / pow (10., PHOT_RANGE);
-
-      x = log10 (NPHOT_MAX / nphot_min) / (geo.wcycles - 1);
-      NPHOT = nphot_min * pow (10., (x * geo.wcycle));
-      if (NPHOT > NPHOT_MAX)
-      {
-        NPHOT = NPHOT_MAX;
-      }
-    }
-
-
-    photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT + 1);
-    photmain_allocated = TRUE;
-    Log ("CCC - Allocated photmain for wcycle %d with NPHOT of %d\n", geo.wcycle, NPHOT);
-
-    if (geo.wcycle == cycle_start)
-    {
-      print_memory_usage ("Beging of the first Ionization Cycles (after Photon Generatio)");
-    }
 
     xsignal (files.root, "%-20s Starting %3d of %3d ionization cycles \n", "NOK", geo.wcycle + 1, geo.wcycles);
 
@@ -237,6 +165,23 @@ calculate_ionization (int restart_stat)
     else
       iwind = 1;                /* Create wind photons and force a reinitialization of wind parms */
 
+
+    /* If we are using photon speed up mode then the number of photons varies by cycle in the
+     * ionization phase.  We set this up here
+     */
+
+    if (modes.photon_speedup)
+    {
+      nphot_min = NPHOT_MAX / pow (10., PHOT_RANGE);
+
+      x = log10 (NPHOT_MAX / nphot_min) / (geo.wcycles - 1);
+      NPHOT = nphot_min * pow (10., (x * geo.wcycle));
+      if (NPHOT > NPHOT_MAX)
+      {
+        NPHOT = NPHOT_MAX;
+      }
+    }
+
     Log ("!!Sirocco: %1.2e photons will be transported for cycle %i\n", (double) NPHOT, geo.wcycle + 1);
 
     /* Create the photons that need to be transported through the wind
@@ -253,8 +198,16 @@ calculate_ionization (int restart_stat)
 
     /* Prepare qdisk for recording photon pages; recoords where photons were created on disk */
     qdisk_reinit (p);
-    stats_phot_pre (p, NPHOT);
 
+
+
+    zz = 0.0;
+    for (nn = 0; nn < NPHOT; nn++)
+    {
+      zz += p[nn].w;
+    }
+
+    Log ("!!sirocco: Total photon luminosity before transphot %18.12e\n", zz);
     Log_flush ();
 
     /* Transport the photons through the wind */
@@ -264,16 +217,88 @@ calculate_ionization (int restart_stat)
     spectrum_create (p, geo.nangles, geo.select_extract);
     Log ("!!sirocco: Number of ionizing photons %g lum of ionizing photons %g\n", geo.n_ioniz, geo.cool_tot_ioniz);
 
-    stats_phot_post (p, NPHOT);
+stats_phot_post(p,NPHOT);
 
-    free (photmain);
-    photmain_allocated = FALSE;
-    Log ("CCC - freed photmain at end of of %d cycles\n", geo.wcycle);
-
-    if (geo.wcycle == cycle_start)
+    /* Determine how much energy was absorbed in the wind. first zero counters. 
+       There are counters for total energy absorbed and for each entry in the istat enum,
+       The second loop is for the energy radiated (i.e. that actually escapes) */
+    z_abs_all = z_else = z_abs_all_orig = z_else_orig = 0.0;
+    for (nn = 0; nn < N_ISTAT; nn++)
     {
-      print_memory_usage ("First Ionization Cycles (after freeing Photons)");
+      z_abs[nn] = 0.0;
+      z_orig[nn] = 0.0;
+      nphot_istat[nn] = 0;
     }
+    for (nn = 0; nn < 20; nn++)
+    {
+      radiated[nn] = 0.0;
+      radiated_orig[nn] = 0.0;
+    }
+
+    /* loop over the different photon istats to determine where the luminosity went */
+    for (nn = 0; nn < NPHOT; nn++)
+    {
+
+      z_abs_all += p[nn].w;
+      z_abs_all_orig += p[nn].w_orig;
+
+      /* we want the istat to be >1 (not P_SCAT or P_INWIND) */
+      if (p[nn].istat < N_ISTAT)
+      {
+        z_abs[p[nn].istat] += p[nn].w;
+        z_orig[p[nn].istat] += p[nn].w_orig;
+        nphot_istat[p[nn].istat]++;
+      }
+      if (p[nn].istat == P_ESCAPE)
+      {
+        radiated[p[nn].origin] += p[nn].w;
+        radiated_orig[p[nn].origin] += p[nn].w_orig;
+      }
+      else
+      {
+        z_else += p[nn].w;
+        z_else_orig += p[nn].w_orig;
+      }
+    }
+
+    for (nn = 0; nn < N_ISTAT; nn++)
+    {
+      Log ("XXX stat %8d     %8d      %12.3e    %12.3e\n", nn, nphot_istat[nn], z_abs[nn], z_orig[nn]);
+    }
+    for (nn = 0; nn < 20; nn++)
+    {
+      Log ("XXX rad %8d     %12.3e    %12.3e\n", nn, radiated[nn], radiated_orig[nn]);
+    }
+    Log ("XXX  rad  abs_all  %12.3e    %12.3e\n", z_abs_all, z_abs_all_orig);
+    Log ("XXX  rad  else  l  %12.3e    %12.3e\n", z_else, z_else_orig);
+
+    Log
+      ("!!sirocco: luminosity (radiated or lost) after transphot %18.12e (absorbed or lost  %18.12e  %18.12e). \n",
+       z_abs_all, z_abs_all - zz, z_abs_all - z_abs_all_orig);
+    Log ("\n");
+    Log ("!!sirocco:  luminosity escaping                          %18.12e\n", z_abs[P_ESCAPE]);
+    Log ("!!sirocco: stellar photon luminosity escaping            %18.12e \n", radiated[PTYPE_STAR] + radiated[PTYPE_STAR_MATOM]);
+    Log ("!!sirocco: boundary layer photon luminosity escaping     %18.12e \n", radiated[PTYPE_BL] + radiated[PTYPE_BL_MATOM]);
+    Log ("!!sirocco: disk photon luminosity escaping               %18.12e \n", radiated[PTYPE_DISK] + radiated[PTYPE_DISK_MATOM]);
+    Log ("!!sirocco: wind photon luminosity escaping               %18.12e \n", radiated[PTYPE_WIND] + radiated[PTYPE_WIND_MATOM]);
+    Log ("!!sirocco: agn photon luminosity escaping                %18.12e \n", radiated[PTYPE_AGN] + radiated[PTYPE_AGN_MATOM]);
+    Log ("!!sirocco: luminosity lost by any process                %18.12e \n", z_else);
+    Log ("\n");
+    Log ("!!sirocco: luminosity lost by being completely absorbed  %18.12e \n", z_abs[P_ABSORB]);
+    Log ("!!sirocco: luminosity lost by too many scatters          %18.12e \n", z_abs[P_TOO_MANY_SCATTERS]);
+    Log ("!!sirocco: luminosity lost by hitting the central object %18.12e \n", z_abs[P_HIT_STAR]);
+    Log ("!!sirocco: luminosity lost by hitting the disk           %18.12e \n", z_abs[P_HIT_DISK]);
+    if (geo.rt_mode == RT_MODE_MACRO)
+    {
+      Log ("!!sirocco: luminosity lost by adiabatic kpkt destruction %18.12e number of packets %d\n", z_abs[P_ADIABATIC],
+           nphot_istat[P_ADIABATIC]);
+      Log ("!!sirocco: luminosity lost to low-frequency free-free    %18.12e number of packets %d\n", z_abs[P_LOFREQ_FF],
+           nphot_istat[P_LOFREQ_FF]);
+    }
+    Log ("!!sirocco: luminosity lost by errors                     %18.12e \n",
+         z_abs[P_ERROR] + z_abs[P_ERROR_MATOM] + z_abs[P_REPOSITION_ERROR]);
+    if (geo.binary == TRUE)
+      Log ("!!sirocco: luminosity lost by hitting the secondary %18.12e \n", z_abs[P_SEC]);
 
 
 #ifdef MPI_ON
@@ -307,10 +332,6 @@ calculate_ionization (int restart_stat)
 
     wind_update (w);
     Log ("Completed ionization cycle %d :  The elapsed TIME was %f\n", geo.wcycle + 1, timer ());
-    if (geo.wcycle == cycle_start)
-    {
-      print_memory_usage ("First Ionization Cycles (after wind_update)");
-    }
 
 #ifdef MPI_ON
     /* Do an MPI reduce to get the spectra all gathered to the master thread */
@@ -391,41 +412,7 @@ calculate_ionization (int restart_stat)
     }
 
     check_time (files.root);
-
-    /* Early stopping check: if convergence fraction has stabilised, break.
-     * We use MAX(cycle_start, min_ionization_cycles) for the lookback guard so that
-     * on restarts the history buffer has enough real entries before we check it,
-     * and we also respect the user's minimum cycle requirement. */
-    if (modes.early_stopping && geo.wcycle >= geo.min_ionization_cycles)
-    {
-      geo.convergence_history[geo.wcycle % CONVERGENCE_HISTORY_MAX] = geo.fraction_converged;
-      int lookback_start = (cycle_start > geo.min_ionization_cycles) ? cycle_start : geo.min_ionization_cycles;
-      if (geo.wcycle >= lookback_start + geo.convergence_lookback)
-      {
-        double avg_change = 0;
-        int k;
-        for (k = 0; k < geo.convergence_lookback - 1; k++)
-        {
-          int idx = (geo.wcycle - k) % CONVERGENCE_HISTORY_MAX;
-          int idx_prev = (geo.wcycle - k - 1) % CONVERGENCE_HISTORY_MAX;
-          avg_change += fabs (geo.convergence_history[idx] - geo.convergence_history[idx_prev]);
-        }
-        avg_change /= (geo.convergence_lookback - 1);
-        Log ("!!Early_stop check: cycle %d, fraction_converged=%.1f%%, avg_change=%.4f%% over last %d cycles (floor=%.1f%%)\n",
-             geo.wcycle, geo.fraction_converged * 100.0, avg_change * 100.0, geo.convergence_lookback, geo.convergence_fraction);
-        if (geo.fraction_converged >= geo.convergence_fraction / 100.0 && avg_change < geo.convergence_tolerance / 100.0)
-        {
-          Log
-            ("!!Early_stop: Convergence stabilised at cycle %d of %d (converged=%.1f%% >= floor %.1f%%, avg_change=%.4f%% < tolerance=%.1f%%)\n",
-             geo.wcycle, geo.wcycles, geo.fraction_converged * 100.0, geo.convergence_fraction, avg_change * 100.0, geo.convergence_tolerance);
-          xsignal (files.root, "%-20s Ionization converged early at cycle %3d of %3d\n", "OK", geo.wcycle, geo.wcycles);
-          Log_flush ();
-          break;
-        }
-      }
-    }
     Log_flush ();               /*Flush the logfile */
-//OLD    free (photmain);
 
   }                             // End of Cycle loop
 
@@ -436,10 +423,8 @@ calculate_ionization (int restart_stat)
   /* SWM - Evaluate wind paths for last iteration */
   if (geo.reverb == REV_WIND || geo.reverb == REV_MATOM)
   {
-//OLD    wind_paths_evaluate (w, rank_global);
-    wind_paths_evaluate (w);
+    wind_paths_evaluate (w, rank_global);
   }
-
 
   return (0);
 }
@@ -527,16 +512,7 @@ make_spectra (int restart_stat)
    * standard one where one is calulating the spectrum for the first time
    * and in the somewhat abnormal case where additional ionization cycles
    * were calculated for the wind
-   *
-   * Note: We must allocate using NPHOT_MAX, not NPHOT, because NPHOT may
-   * still hold a reduced value from the last photon_speedup ionization cycle.
-   * Inside the spectral cycle loop, NPHOT is set to NPHOT_MAX before photon
-   * generation, so the array must be large enough to hold NPHOT_MAX photons.
    */
-  NPHOT = NPHOT_MAX;
-  photmain = p = (PhotPtr) calloc (sizeof (p_dummy), NPHOT + 1);
-  photmain_allocated = TRUE;
-  Log ("CCC - Allocated photmain at beginning of detailed spectrum, with NPHOt %d\n", NPHOT);
 
   if (geo.pcycle == 0)
   {
@@ -693,168 +669,23 @@ make_spectra (int restart_stat)
     delay_dump_combine (np_mpi_global); // Combine results if necessary
 #endif
 
-
-
-  Log ("CCC - ready to free  photmain at end of of %d spectral cycles\n", geo.pcycle);
-  Log_flush ();
-
-  free (photmain);
-  photmain_allocated = FALSE;
-
-  Log ("CCC - freed photmain at end of of %d spectral cycles\n", geo.pcycle);
-  Log_flush ();
-
-
   return EXIT_SUCCESS;
 }
 
 
-
-
-/**********************************************************/
-/**
- * @brief      calculates some statistics about 
- * the original photons
- *
- * @param [in] PhotPtr p                                                     
- * @param [in] nphot   
- * @return     Always returns EXIT_SUCCESS
- *
- * @details
- *
- * ### Notes ###
- *
- **********************************************************/
-
-int
-stats_phot_pre (PhotPtr p, int nphot)
+int stats_phot_post(p,nphot)
+    PhotPtr p;
+    int nphot;
 {
-  int nn;
-  double zz;
-
-  zz = 0.0;
-  for (nn = 0; nn < NPHOT; nn++)
-  {
-    zz += p[nn].w;
-  }
-  Log ("!!sirocco: Total photon luminosity before transphot %18.12e\n", zz);
-
-  return (0);
-
-}
-
-/**********************************************************/
-/**
- * @brief      calculates some statistics about what 
- *  happened during trasport to the original photons
- *
- * @param [in] PhotPtr p                                                     
- * @param [in] nphot   
- * @return     Always returns EXIT_SUCCESS
- *
- * @details
- *
- * ### Notes ###
- *
- **********************************************************/
-
-int
-stats_phot_post (PhotPtr p, int nphot)
-{
-  int nn;
   double zz, z_abs_all, z_abs_all_orig, z_orig[N_ISTAT], z_abs[N_ISTAT], z_else, z_else_orig;
   double radiated[20], radiated_orig[20];
-  int nphot_istat[N_ISTAT];
-
-  zz = 0.0;
-  for (nn = 0; nn < nphot; nn++)
-  {
-    zz += p[nn].w;
-  }
-
-  Log ("!!sirocco: Total photon luminosity after transphot %18.12e\n", zz);
-
-  /* Determine how much energy was absorbed in the wind. first zero counters. 
-     There are counters for total energy absorbed and for each entry in the istat enum,
-     The second loop is for the energy radiated (i.e. that actually escapes) */
-  z_abs_all = z_else = z_abs_all_orig = z_else_orig = 0.0;
-  for (nn = 0; nn < N_ISTAT; nn++)
-  {
-    z_abs[nn] = 0.0;
-    z_orig[nn] = 0.0;
-    nphot_istat[nn] = 0;
-  }
-  for (nn = 0; nn < 20; nn++)
-  {
-    radiated[nn] = 0.0;
-    radiated_orig[nn] = 0.0;
-  }
-
-  /* loop over the different photon istats to determine where the luminosity went */
-  for (nn = 0; nn < NPHOT; nn++)
-  {
-
-    z_abs_all += p[nn].w;
-    z_abs_all_orig += p[nn].w_orig;
-
-    /* we want the istat to be >1 (not P_SCAT or P_INWIND) */
-    if (p[nn].istat < N_ISTAT)
+    zz = 0.0;
+    for (nn = 0; nn < NPHOT; nn++)
     {
-      z_abs[p[nn].istat] += p[nn].w;
-      z_orig[p[nn].istat] += p[nn].w_orig;
-      nphot_istat[p[nn].istat]++;
+      zz += p[nn].w;
     }
-    if (p[nn].istat == P_ESCAPE)
-    {
-      radiated[p[nn].origin] += p[nn].w;
-      radiated_orig[p[nn].origin] += p[nn].w_orig;
-    }
-    else
-    {
-      z_else += p[nn].w;
-      z_else_orig += p[nn].w_orig;
-    }
-  }
 
-  for (nn = 0; nn < N_ISTAT; nn++)
-  {
-    Log ("XXX stat %8d     %8d      %12.3e    %12.3e\n", nn, nphot_istat[nn], z_abs[nn], z_orig[nn]);
-  }
-  for (nn = 0; nn < 20; nn++)
-  {
-    Log ("XXX rad %8d     %12.3e    %12.3e\n", nn, radiated[nn], radiated_orig[nn]);
-  }
-  Log ("XXX  rad  abs_all  %12.3e    %12.3e\n", z_abs_all, z_abs_all_orig);
-  Log ("XXX  rad  else  l  %12.3e    %12.3e\n", z_else, z_else_orig);
+    Log ("!!sirocco: Total photon luminosity after transphot %18.12e\n", zz);
 
-  Log
-    ("!!sirocco: luminosity (radiated or lost) after transphot %18.12e (absorbed or lost  %18.12e  %18.12e). \n",
-     z_abs_all, z_abs_all - zz, z_abs_all - z_abs_all_orig);
-  Log ("\n");
-  Log ("!!sirocco:  luminosity escaping                          %18.12e\n", z_abs[P_ESCAPE]);
-  Log ("!!sirocco: stellar photon luminosity escaping            %18.12e \n", radiated[PTYPE_STAR] + radiated[PTYPE_STAR_MATOM]);
-  Log ("!!sirocco: boundary layer photon luminosity escaping     %18.12e \n", radiated[PTYPE_BL] + radiated[PTYPE_BL_MATOM]);
-  Log ("!!sirocco: disk photon luminosity escaping               %18.12e \n", radiated[PTYPE_DISK] + radiated[PTYPE_DISK_MATOM]);
-  Log ("!!sirocco: wind photon luminosity escaping               %18.12e \n", radiated[PTYPE_WIND] + radiated[PTYPE_WIND_MATOM]);
-  Log ("!!sirocco: agn photon luminosity escaping                %18.12e \n", radiated[PTYPE_AGN] + radiated[PTYPE_AGN_MATOM]);
-  Log ("!!sirocco: luminosity lost by any process                %18.12e \n", z_else);
-  Log ("\n");
-  Log ("!!sirocco: luminosity lost by being completely absorbed  %18.12e \n", z_abs[P_ABSORB]);
-  Log ("!!sirocco: luminosity lost by too many scatters          %18.12e \n", z_abs[P_TOO_MANY_SCATTERS]);
-  Log ("!!sirocco: luminosity lost by hitting the central object %18.12e \n", z_abs[P_HIT_STAR]);
-  Log ("!!sirocco: luminosity lost by hitting the disk           %18.12e \n", z_abs[P_HIT_DISK]);
-  if (geo.rt_mode == RT_MODE_MACRO)
-  {
-    Log ("!!sirocco: luminosity lost by adiabatic kpkt destruction %18.12e number of packets %d\n", z_abs[P_ADIABATIC],
-         nphot_istat[P_ADIABATIC]);
-    Log ("!!sirocco: luminosity lost to low-frequency free-free    %18.12e number of packets %d\n", z_abs[P_LOFREQ_FF],
-         nphot_istat[P_LOFREQ_FF]);
-  }
-  Log ("!!sirocco: luminosity lost by errors                     %18.12e \n",
-       z_abs[P_ERROR] + z_abs[P_ERROR_MATOM] + z_abs[P_REPOSITION_ERROR]);
-  if (geo.binary == TRUE)
-    Log ("!!sirocco: luminosity lost by hitting the secondary %18.12e \n", z_abs[P_SEC]);
-
-
-  return (0);
 }
+

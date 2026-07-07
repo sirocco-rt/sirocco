@@ -109,7 +109,7 @@ get_stellar_params ()
     strcpy (answer, "yes");
     geo.star_radiation = rdchoice ("Central_object.radiation(yes,no)", "1,0", answer);
     get_spectype (geo.star_radiation, "Central_object.rad_type_to_make_wind(bb,models)", &geo.star_ion_spectype);
-    
+
     if (geo.star_ion_spectype == SPECTYPE_BB_FCOL)
     {
       Error ("Colour corrected BB not implemented for star at this stage. Exiting.");
@@ -182,8 +182,7 @@ get_stellar_params ()
  **********************************************************/
 
 int
-get_bl_and_agn_params (lstar)
-     double lstar;
+get_bl_and_agn_params (double lstar)
 {
   double xbl;
   double temp_const_agn;
@@ -215,7 +214,7 @@ get_bl_and_agn_params (lstar)
 
     if (geo.bl_radiation)
       get_spectype (geo.bl_radiation, "Boundary_layer.rad_type_to_make_wind(bb,models,power)", &geo.bl_ion_spectype);
-  
+
     if (geo.bl_ion_spectype == SPECTYPE_BB_FCOL)
     {
       Error ("Colour corrected BB not implemented for boundary layer. Exiting.");
@@ -352,7 +351,7 @@ get_bl_and_agn_params (lstar)
       geo.bubble_size *= GRAV * geo.mstar / VLIGHT / VLIGHT;    //get it in CGS units
       Log ("bubble size  in cm is %g\n", geo.bubble_size);
     }
-    else if (geo.pl_geometry != PL_GEOMETRY_SPHERE && geo.pl_geometry != PL_GEOMETRY_ISO)     // only four options at the moment
+    else if (geo.pl_geometry != PL_GEOMETRY_SPHERE && geo.pl_geometry != PL_GEOMETRY_ISO)       // only four options at the moment
     {
       Error ("Did not understand power law geometry %i. Fatal.\n", geo.pl_geometry);
       Exit (0);

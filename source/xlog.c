@@ -146,8 +146,7 @@ int log_verbosity = 5;          // A parameter which can be used to suppress wha
  **********************************************************/
 
 int
-Log_init (filename)
-     char *filename;
+Log_init (char *filename)
 {
   if ((diagptr = fopen (filename, "w")) == NULL)
   {
@@ -189,8 +188,7 @@ Log_init (filename)
  **********************************************************/
 
 int
-Log_append (filename)
-     char *filename;
+Log_append (char *filename)
 {
   if ((diagptr = fopen (filename, "a")) == NULL)
   {
@@ -263,8 +261,7 @@ Log_close ()
  **********************************************************/
 
 int
-Log_set_verbosity (vlevel)
-     int vlevel;
+Log_set_verbosity (int vlevel)
 {
   log_verbosity = vlevel;
   rdpar_set_verbose (vlevel);
@@ -293,8 +290,7 @@ Log_set_verbosity (vlevel)
  **********************************************************/
 
 int
-Log_print_max (print_max)
-     int print_max;
+Log_print_max (int print_max)
 {
   log_print_max = print_max;
   return (0);
@@ -321,8 +317,7 @@ Log_print_max (print_max)
  **********************************************************/
 
 int
-Log_quit_after_n_errors (n)
-     int n;
+Log_quit_after_n_errors (int n)
 {
   max_errors = n;
   return (0);
@@ -549,8 +544,7 @@ Shout (char *format, ...)
  **********************************************************/
 
 int
-sane_check (x)
-     double x;
+sane_check (double x)
 {
   int i;
   if ((i = isfinite (x)) == 0)
@@ -651,8 +645,7 @@ error_count (char *format)
  **********************************************************/
 
 int
-error_summary (message)
-     char *message;
+error_summary (char *message)
 {
   int n;
 
@@ -756,8 +749,7 @@ Log_flush ()
  **********************************************************/
 
 int
-Log_set_mpi_rank (rank, n_mpi)
-     int rank, n_mpi;
+Log_set_mpi_rank (int rank, int n_mpi)
 {
   my_rank = rank;
   n_mpi_procs = n_mpi;

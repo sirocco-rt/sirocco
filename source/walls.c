@@ -82,9 +82,7 @@ double xsouth[] = {
  *
  **********************************************************/
 int
-walls (p, pold, normal)
-     PhotPtr p, pold;
-     double *normal;
+walls (PhotPtr p, PhotPtr pold, double *normal)
 {
   double r, rho, rho_sq;
   double r_hit_disk;

@@ -51,8 +51,7 @@
  **********************************************************/
 
 int
-wind_save (filename)
-     char filename[];
+wind_save (char filename[])
 {
   FILE *fptr;
   char header[LINELENGTH];
@@ -102,21 +101,44 @@ in the plasma structure */
 
   for (m = 0; m < NPLASMA; m++)
   {
-    n += fwrite (plasmamain[m].density, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].partition, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].ioniz, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].recomb, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].inner_recomb, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].scatters, sizeof (int), nions, fptr);
-    n += fwrite (plasmamain[m].xscatters, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].heat_ion, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].cool_rr_ion, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].cool_dr_ion, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].lum_rr_ion, sizeof (double), nions, fptr);
-    n += fwrite (plasmamain[m].levden, sizeof (double), nlte_levels, fptr);
-    n += fwrite (plasmamain[m].recomb_simple, sizeof (double), nphot_total, fptr);
-    n += fwrite (plasmamain[m].recomb_simple_upweight, sizeof (double), nphot_total, fptr);
-    n += fwrite (plasmamain[m].kbf_use, sizeof (double), nphot_total, fptr);
+    n += fwrite (plasmamain[m].state.density, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].state.partition, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].est.ioniz, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].derived.recomb, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].derived.inner_recomb, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].derived.scatters, sizeof (int), nions, fptr);
+    n += fwrite (plasmamain[m].derived.xscatters, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].est.heat_ion, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].derived.cool_rr_ion, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].derived.cool_dr_ion, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].derived.lum_rr_ion, sizeof (double), nions, fptr);
+    n += fwrite (plasmamain[m].state.levden, sizeof (double), nlte_levels, fptr);
+    n += fwrite (plasmamain[m].state.recomb_simple, sizeof (double), nphot_total, fptr);
+    n += fwrite (plasmamain[m].state.recomb_simple_upweight, sizeof (double), nphot_total, fptr);
+    n += fwrite (plasmamain[m].state.kbf_use, sizeof (double), nphot_total, fptr);
+
+    /* Fixed-size arrays now in contiguous blocks */
+    n += fwrite (plasmamain[m].state.f1, sizeof (double), NXBANDS + 1, fptr);
+    n += fwrite (plasmamain[m].state.f2, sizeof (double), NXBANDS + 1, fptr);
+    n += fwrite (plasmamain[m].state.spec_mod_type, sizeof (int), NXBANDS, fptr);
+    n += fwrite (plasmamain[m].state.pl_alpha, sizeof (double), NXBANDS, fptr);
+    n += fwrite (plasmamain[m].state.pl_log_w, sizeof (double), NXBANDS, fptr);
+    n += fwrite (plasmamain[m].state.exp_temp, sizeof (double), NXBANDS, fptr);
+    n += fwrite (plasmamain[m].state.exp_w, sizeof (double), NXBANDS, fptr);
+    n += fwrite (plasmamain[m].state.fmin_mod, sizeof (double), NXBANDS, fptr);
+    n += fwrite (plasmamain[m].state.fmax_mod, sizeof (double), NXBANDS, fptr);
+    n += fwrite (plasmamain[m].derived.F_vis_persistent, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fwrite (plasmamain[m].derived.F_UV_persistent, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fwrite (plasmamain[m].derived.F_Xray_persistent, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fwrite (plasmamain[m].derived.rad_force_es_persist, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fwrite (plasmamain[m].derived.rad_force_ff_persist, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fwrite (plasmamain[m].derived.rad_force_bf_persist, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fwrite (plasmamain[m].derived.F_UV_ang_theta_persist, sizeof (double), NFLUX_ANGLES, fptr);
+    n += fwrite (plasmamain[m].derived.F_UV_ang_phi_persist, sizeof (double), NFLUX_ANGLES, fptr);
+    n += fwrite (plasmamain[m].derived.F_UV_ang_r_persist, sizeof (double), NFLUX_ANGLES, fptr);
+    n += fwrite (plasmamain[m].derived.n_bf_in, sizeof (int), nphot_total, fptr);
+    n += fwrite (plasmamain[m].derived.n_bf_out, sizeof (int), nphot_total, fptr);
+    n += fwrite (plasmamain[m].est.cell_spec_flux, sizeof (double), geo.nbins_in_cell_spec, fptr);
   }
 
 /* Now write out the macro atom info */
@@ -126,20 +148,20 @@ in the plasma structure */
     n += fwrite (macromain, sizeof (macro_dummy), NPLASMA, fptr);
     for (m = 0; m < NPLASMA; m++)
     {
-      n += fwrite (macromain[m].jbar, sizeof (double), size_Jbar_est, fptr);
-      n += fwrite (macromain[m].jbar_old, sizeof (double), size_Jbar_est, fptr);
-      n += fwrite (macromain[m].gamma, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].gamma_old, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].gamma_e, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].gamma_e_old, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].alpha_st, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].alpha_st_old, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].alpha_st_e, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].alpha_st_e_old, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].recomb_sp, sizeof (double), size_alpha_est, fptr);
-      n += fwrite (macromain[m].recomb_sp_e, sizeof (double), size_alpha_est, fptr);
-      n += fwrite (macromain[m].matom_emiss, sizeof (double), nlevels_macro, fptr);
-      n += fwrite (macromain[m].matom_abs, sizeof (double), nlevels_macro, fptr);
+      n += fwrite (macromain[m].est.jbar, sizeof (double), size_Jbar_est, fptr);
+      n += fwrite (macromain[m].state.jbar_old, sizeof (double), size_Jbar_est, fptr);
+      n += fwrite (macromain[m].est.gamma, sizeof (double), size_gamma_est, fptr);
+      n += fwrite (macromain[m].state.gamma_old, sizeof (double), size_gamma_est, fptr);
+      n += fwrite (macromain[m].est.gamma_e, sizeof (double), size_gamma_est, fptr);
+      n += fwrite (macromain[m].state.gamma_e_old, sizeof (double), size_gamma_est, fptr);
+      n += fwrite (macromain[m].est.alpha_st, sizeof (double), size_gamma_est, fptr);
+      n += fwrite (macromain[m].state.alpha_st_old, sizeof (double), size_gamma_est, fptr);
+      n += fwrite (macromain[m].est.alpha_st_e, sizeof (double), size_gamma_est, fptr);
+      n += fwrite (macromain[m].state.alpha_st_e_old, sizeof (double), size_gamma_est, fptr);
+      n += fwrite (macromain[m].est.recomb_sp, sizeof (double), size_alpha_est, fptr);
+      n += fwrite (macromain[m].est.recomb_sp_e, sizeof (double), size_alpha_est, fptr);
+      n += fwrite (macromain[m].derived.matom_emiss, sizeof (double), nlevels_macro, fptr);
+      n += fwrite (macromain[m].est.matom_abs, sizeof (double), nlevels_macro, fptr);
     }
   }
 
@@ -192,8 +214,7 @@ in the plasma structure */
  **********************************************************/
 
 int
-wind_read (filename)
-     char filename[];
+wind_read (char filename[])
 {
   FILE *fptr;
   int ndom;
@@ -214,6 +235,11 @@ wind_read (filename)
   /* Now read in the geo structure */
 
   n += fread (&geo, sizeof (geo), 1, fptr);
+
+  /* Null out pointer fields that were serialized as raw bytes — they will be
+   * re-allocated when bands_init() runs.  Without this, the stale pointer
+   * from the previous process could cause a double-free or corruption. */
+  geo.cell_freq = NULL;
 
   /* Read the atomic data file.  This is necessary to do here in order to establish the 
    * values for the dimensionality of some of the variable length structures, associated 
@@ -253,7 +279,28 @@ wind_read (filename)
   }
 
   calloc_wind (NDIM2);
-  n += fread (wmain, sizeof (wind_dummy), NDIM2, fptr);
+#if defined(MPI_ON) && !defined(__APPLE__)
+  if (np_mpi_global > 1)
+  {
+    /* Linux: wmain is in MPI shared memory; only the node leader reads from
+     * disk — all other ranks on the node see the same physical memory. */
+    if (node_rank == 0)
+    {
+      n += fread (wmain, sizeof (wind_dummy), NDIM2, fptr);
+    }
+    else
+    {
+      fseek (fptr, (long) NDIM2 * sizeof (wind_dummy), SEEK_CUR);
+    }
+    MPI_Barrier (node_comm);
+  }
+  else
+#endif
+  {
+    /* Serial, or macOS where wmain is private per-rank: every rank reads
+     * its own copy directly from the file. */
+    n += fread (wmain, sizeof (wind_dummy), NDIM2, fptr);
+  }
 
   /* Read the disk and qdisk structures */
 
@@ -273,25 +320,48 @@ wind_read (filename)
   for (m = 0; m < NPLASMA; m++)
   {
 
-    n += fread (plasmamain[m].density, sizeof (double), nions, fptr);
-    n += fread (plasmamain[m].partition, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].state.density, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].state.partition, sizeof (double), nions, fptr);
 
-    n += fread (plasmamain[m].ioniz, sizeof (double), nions, fptr);
-    n += fread (plasmamain[m].recomb, sizeof (double), nions, fptr);
-    n += fread (plasmamain[m].inner_recomb, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].est.ioniz, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].derived.recomb, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].derived.inner_recomb, sizeof (double), nions, fptr);
 
-    n += fread (plasmamain[m].scatters, sizeof (int), nions, fptr);
-    n += fread (plasmamain[m].xscatters, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].derived.scatters, sizeof (int), nions, fptr);
+    n += fread (plasmamain[m].derived.xscatters, sizeof (double), nions, fptr);
 
-    n += fread (plasmamain[m].heat_ion, sizeof (double), nions, fptr);
-    n += fread (plasmamain[m].cool_rr_ion, sizeof (double), nions, fptr);
-    n += fread (plasmamain[m].cool_dr_ion, sizeof (double), nions, fptr);
-    n += fread (plasmamain[m].lum_rr_ion, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].est.heat_ion, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].derived.cool_rr_ion, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].derived.cool_dr_ion, sizeof (double), nions, fptr);
+    n += fread (plasmamain[m].derived.lum_rr_ion, sizeof (double), nions, fptr);
 
-    n += fread (plasmamain[m].levden, sizeof (double), nlte_levels, fptr);
-    n += fread (plasmamain[m].recomb_simple, sizeof (double), nphot_total, fptr);
-    n += fread (plasmamain[m].recomb_simple_upweight, sizeof (double), nphot_total, fptr);
-    n += fread (plasmamain[m].kbf_use, sizeof (double), nphot_total, fptr);
+    n += fread (plasmamain[m].state.levden, sizeof (double), nlte_levels, fptr);
+    n += fread (plasmamain[m].state.recomb_simple, sizeof (double), nphot_total, fptr);
+    n += fread (plasmamain[m].state.recomb_simple_upweight, sizeof (double), nphot_total, fptr);
+    n += fread (plasmamain[m].state.kbf_use, sizeof (double), nphot_total, fptr);
+
+    /* Fixed-size arrays now in contiguous blocks */
+    n += fread (plasmamain[m].state.f1, sizeof (double), NXBANDS + 1, fptr);
+    n += fread (plasmamain[m].state.f2, sizeof (double), NXBANDS + 1, fptr);
+    n += fread (plasmamain[m].state.spec_mod_type, sizeof (int), NXBANDS, fptr);
+    n += fread (plasmamain[m].state.pl_alpha, sizeof (double), NXBANDS, fptr);
+    n += fread (plasmamain[m].state.pl_log_w, sizeof (double), NXBANDS, fptr);
+    n += fread (plasmamain[m].state.exp_temp, sizeof (double), NXBANDS, fptr);
+    n += fread (plasmamain[m].state.exp_w, sizeof (double), NXBANDS, fptr);
+    n += fread (plasmamain[m].state.fmin_mod, sizeof (double), NXBANDS, fptr);
+    n += fread (plasmamain[m].state.fmax_mod, sizeof (double), NXBANDS, fptr);
+    n += fread (plasmamain[m].derived.F_vis_persistent, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fread (plasmamain[m].derived.F_UV_persistent, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fread (plasmamain[m].derived.F_Xray_persistent, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fread (plasmamain[m].derived.rad_force_es_persist, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fread (plasmamain[m].derived.rad_force_ff_persist, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fread (plasmamain[m].derived.rad_force_bf_persist, sizeof (double), NFORCE_DIRECTIONS, fptr);
+    n += fread (plasmamain[m].derived.F_UV_ang_theta_persist, sizeof (double), NFLUX_ANGLES, fptr);
+    n += fread (plasmamain[m].derived.F_UV_ang_phi_persist, sizeof (double), NFLUX_ANGLES, fptr);
+    n += fread (plasmamain[m].derived.F_UV_ang_r_persist, sizeof (double), NFLUX_ANGLES, fptr);
+    n += fread (plasmamain[m].derived.n_bf_in, sizeof (int), nphot_total, fptr);
+    n += fread (plasmamain[m].derived.n_bf_out, sizeof (int), nphot_total, fptr);
+    n += fread (plasmamain[m].est.cell_spec_flux, sizeof (double), geo.nbins_in_cell_spec, fptr);
   }
 
 
@@ -306,25 +376,25 @@ wind_read (filename)
 
     for (m = 0; m < NPLASMA; m++)
     {
-      n += fread (macromain[m].jbar, sizeof (double), size_Jbar_est, fptr);
-      n += fread (macromain[m].jbar_old, sizeof (double), size_Jbar_est, fptr);
-      n += fread (macromain[m].gamma, sizeof (double), size_gamma_est, fptr);
-      n += fread (macromain[m].gamma_old, sizeof (double), size_gamma_est, fptr);
-      n += fread (macromain[m].gamma_e, sizeof (double), size_gamma_est, fptr);
-      n += fread (macromain[m].gamma_e_old, sizeof (double), size_gamma_est, fptr);
-      n += fread (macromain[m].alpha_st, sizeof (double), size_gamma_est, fptr);
-      n += fread (macromain[m].alpha_st_old, sizeof (double), size_gamma_est, fptr);
-      n += fread (macromain[m].alpha_st_e, sizeof (double), size_gamma_est, fptr);
-      n += fread (macromain[m].alpha_st_e_old, sizeof (double), size_gamma_est, fptr);
-      n += fread (macromain[m].recomb_sp, sizeof (double), size_alpha_est, fptr);
-      n += fread (macromain[m].recomb_sp_e, sizeof (double), size_alpha_est, fptr);
-      n += fread (macromain[m].matom_emiss, sizeof (double), nlevels_macro, fptr);
-      n += fread (macromain[m].matom_abs, sizeof (double), nlevels_macro, fptr);
+      n += fread (macromain[m].est.jbar, sizeof (double), size_Jbar_est, fptr);
+      n += fread (macromain[m].state.jbar_old, sizeof (double), size_Jbar_est, fptr);
+      n += fread (macromain[m].est.gamma, sizeof (double), size_gamma_est, fptr);
+      n += fread (macromain[m].state.gamma_old, sizeof (double), size_gamma_est, fptr);
+      n += fread (macromain[m].est.gamma_e, sizeof (double), size_gamma_est, fptr);
+      n += fread (macromain[m].state.gamma_e_old, sizeof (double), size_gamma_est, fptr);
+      n += fread (macromain[m].est.alpha_st, sizeof (double), size_gamma_est, fptr);
+      n += fread (macromain[m].state.alpha_st_old, sizeof (double), size_gamma_est, fptr);
+      n += fread (macromain[m].est.alpha_st_e, sizeof (double), size_gamma_est, fptr);
+      n += fread (macromain[m].state.alpha_st_e_old, sizeof (double), size_gamma_est, fptr);
+      n += fread (macromain[m].est.recomb_sp, sizeof (double), size_alpha_est, fptr);
+      n += fread (macromain[m].est.recomb_sp_e, sizeof (double), size_alpha_est, fptr);
+      n += fread (macromain[m].derived.matom_emiss, sizeof (double), nlevels_macro, fptr);
+      n += fread (macromain[m].est.matom_abs, sizeof (double), nlevels_macro, fptr);
 
       /* Force recalculation of kpkt_rates and matrix rates */
 
-      macromain[m].kpkt_rates_known = FALSE;
-      macromain[m].matrix_rates_known = FALSE;
+      macromain[m].derived.kpkt_rates_known = FALSE;
+      macromain[m].derived.matrix_rates_known = FALSE;
     }
 
   }
@@ -416,8 +486,7 @@ wind_complete ()
  **********************************************************/
 
 int
-spec_save (filename)
-     char filename[];
+spec_save (char filename[])
 {
 
   FILE *fptr;
@@ -474,8 +543,7 @@ spec_save (filename)
  **********************************************************/
 
 int
-spec_read (filename)
-     char filename[];
+spec_read (char filename[])
 {
   FILE *fptr;
   int nhead, nwave_ioniz_check;

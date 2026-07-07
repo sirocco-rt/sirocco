@@ -67,9 +67,7 @@
 
 
 int
-randwind_thermal_trapping (p, nnscat)
-     PhotPtr p;
-     int *nnscat;
+randwind_thermal_trapping (PhotPtr p, int *nnscat)
 {
   double tau_norm, p_norm;
   double tau, dvds, z, ztest;

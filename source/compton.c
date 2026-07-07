@@ -36,8 +36,7 @@ PlasmaPtr xplasma;              /// Pointer to current plasma cell
 
 
 int
-compton_scatter (p)
-     PhotPtr p;                 // Pointer to the current photon
+compton_scatter (PhotPtr p)
 {
   double t_e;
   double vel[3];
@@ -52,7 +51,7 @@ compton_scatter (p)
 
 
 
-  t_e = xplasma->t_e;
+  t_e = xplasma->state.t_e;
 
   compton_get_thermal_velocity (t_e, velocity_electron);
 
@@ -158,9 +157,7 @@ compton_scatter (p)
  **********************************************************/
 
 double
-kappa_comp (xplasma, freq)
-     PlasmaPtr xplasma;
-     double freq;
+kappa_comp (PlasmaPtr xplasma, double freq)
 {
   double x;
   double sigma;                 /*The cross section, thompson, or KN if hnu/mec2 > 0.01 */
@@ -170,7 +167,7 @@ kappa_comp (xplasma, freq)
   sigma = compton_alpha (freq) * THOMPSON;      //the energy exchange cross section
 
   x = (sigma * PLANCK) / (MELEC * VLIGHT * VLIGHT);
-  x *= xplasma->ne * freq;
+  x *= xplasma->state.ne * freq;
 
   ndom = wmain[xplasma->nwind].ndom;
   x *= zdom[ndom].fill;         // multiply by the filling factor-
@@ -201,9 +198,7 @@ kappa_comp (xplasma, freq)
  **********************************************************/
 
 double
-kappa_ind_comp (xplasma, freq)
-     PlasmaPtr xplasma;
-     double freq;
+kappa_ind_comp (PlasmaPtr xplasma, double freq)
 {
   double x;
   double sigma;                 /*The cross section, thompson, or KN if hnu/mec2 > 0.01 */
@@ -219,7 +214,7 @@ kappa_ind_comp (xplasma, freq)
 
   sigma = THOMPSON * compton_alpha (freq);      //the energy exchange cross section
 
-  x = (xplasma->ne) / (MELEC);
+  x = (xplasma->state.ne) / (MELEC);
   x *= sigma * J;
   x *= 1 / (2 * freq * freq);
 
@@ -277,9 +272,7 @@ kappa_ind_comp (xplasma, freq)
  **********************************************************/
 
 double
-total_comp (one, t_e)
-     WindPtr one;
-     double t_e;
+total_comp (WindPtr one, double t_e)
 {
   double x, f1, f2;
   int nplasma, j;
@@ -291,36 +284,36 @@ total_comp (one, t_e)
   x = 0.0;
 
   //Since J_nu is constant for a given cycle - we only need to compute the integral once when searching for a thermal balance
-  if (xplasma->comp_nujnu < 0.0)
+  if (xplasma->derived.comp_nujnu < 0.0)
   {
     if (geo.spec_mod)           //Check to see if we have generated a spectral model
     {
       for (j = 0; j < geo.nxfreq; j++)
       {
-        if (xplasma->spec_mod_type[j] != SPEC_MOD_FAIL) //Only bother doing the integrals if we have a model in this band
+        if (xplasma->state.spec_mod_type[j] != SPEC_MOD_FAIL)   //Only bother doing the integrals if we have a model in this band
         {
-          f1 = xplasma->fmin_mod[j];
-          f2 = xplasma->fmax_mod[j];
+          f1 = xplasma->state.fmin_mod[j];
+          f2 = xplasma->state.fmax_mod[j];
           if (f1 > 1e18)
             x += num_int (comp_cool_integrand, f1, f2, 1e-6);
 
           else
-            x += THOMPSON * xplasma->xj[j];     //If in the Thompson limit, we just multiply the band limited frequency integrated mean intensity by the Thompson cross section
+            x += THOMPSON * xplasma->est.xj[j]; //If in the Thompson limit, we just multiply the band limited frequency integrated mean intensity by the Thompson cross section
         }
       }
     }
 
     else                        //If no spectral model - we do the best we can, and multply the mean intensity by the Thompson cross section.
     {
-      x = THOMPSON * xplasma->j;
+      x = THOMPSON * xplasma->est.j;
     }
-    xplasma->comp_nujnu = x;
+    xplasma->derived.comp_nujnu = x;
   }
   else
-    x = xplasma->comp_nujnu;
+    x = xplasma->derived.comp_nujnu;
 
   //Multply by the other terms - including temperature - this gives the temperature dependance of this cooling term.
-  x *= (16. * PI * BOLTZMANN * t_e * xplasma->ne) / (MELEC * VLIGHT * VLIGHT) * xplasma->vol;
+  x *= (16. * PI * BOLTZMANN * t_e * xplasma->state.ne) / (MELEC * VLIGHT * VLIGHT) * xplasma->state.vol;
 
 
   return (x);
@@ -350,8 +343,7 @@ total_comp (one, t_e)
  **********************************************************/
 
 double
-klein_nishina (nu)
-     double nu;                 //The frequency of the photon packet
+klein_nishina (double nu)
 {
   double x;                     //h nu / kt
   double x1, x2, x3, x4;        //variables to store intermediate results.
@@ -451,9 +443,7 @@ set_comp_func_values (double rand_cs, double max_cs, double energy_ratio)
  **********************************************************/
 
 int
-compton_dir (p)
-     PhotPtr p;                 // Pointer to the current photon
-
+compton_dir (PhotPtr p)
 {
   double f_min, f_max, f;       //Fractional energy changes - E_old/E_new - minimum possible, maximum possible, actual as implied by random cross section
   double n, l, m, phi, len;     //The direction cosines of the new photon direction in the frame of reference with q along the photon path
@@ -566,8 +556,7 @@ pdf_thermal (double x, void *params)
 
 
 int
-compton_get_thermal_velocity (t, v)
-     double t, *v;
+compton_get_thermal_velocity (double t, double *v)
 {
   double vel;
 
@@ -650,9 +639,7 @@ compton_func (double f, void *params)
  **********************************************************/
 
 double
-sigma_compton_partial (f, x)
-     double f;                  //This is the fractional energy change, nu/nu'
-     double x;                  //h nu/mec**2 - the energy of the photon divided by the rest energy of an electron
+sigma_compton_partial (double f, double x)
 {
   double term1, term2, term3, tot;
 
@@ -687,8 +674,7 @@ sigma_compton_partial (f, x)
  **********************************************************/
 
 double
-compton_alpha (nu)
-     double nu;
+compton_alpha (double nu)
 {
   double alpha;
   if (nu < 1e17)
@@ -719,8 +705,7 @@ compton_alpha (nu)
  **********************************************************/
 
 double
-compton_beta (nu)
-     double nu;
+compton_beta (double nu)
 {
   double alp, beta;
   if (nu < 1e17)
@@ -790,8 +775,7 @@ comp_cool_integrand (double nu, void *params)
 
 
 double
-compton_reweight_norm (nu)
-     double nu;
+compton_reweight_norm (double nu)
 {
   double v;
   double x1, x2, x3, x4, x5, xx;
@@ -840,10 +824,7 @@ compton_reweight_norm (nu)
 
 
 int
-compton_reweight (p_in, p_out)
-     PhotPtr p_in, p_out;
-
-
+compton_reweight (PhotPtr p_in, PhotPtr p_out)
 {
   double nu_in, nu_out, xr, reweight;
   double theta, ctheta;

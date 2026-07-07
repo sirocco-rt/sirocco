@@ -80,13 +80,7 @@ int ierr_coord_fraction = 0;
  **********************************************************/
 
 int
-coord_fraction (ndom, ichoice, x, ii, frac, nelem)
-     int ndom;
-     int ichoice;
-     double x[];
-     int ii[];
-     double frac[];
-     int *nelem;
+coord_fraction (int ndom, int ichoice, double x[], int ii[], double frac[], int *nelem)
 {
   double r, z;
   double *xx, *zz;
@@ -246,11 +240,7 @@ int ierr_where_in_2dcell = 0;
  **********************************************************/
 
 int
-where_in_2dcell (ichoice, x, n, fx, fz)
-     int ichoice;
-     double x[];
-     int n;                     // A known wind cell
-     double *fx, *fz;
+where_in_2dcell (int ichoice, double x[], int n, double *fx, double *fz)
 {
   double *x00, *x01, *x10, *x11;
   double z[3];
@@ -342,8 +332,7 @@ where_in_2dcell (ichoice, x, n, fx, fz)
  **********************************************************/
 
 int
-wind_n_to_ij (ndom, n, i, j)
-     int n, *i, *j, ndom;
+wind_n_to_ij (int ndom, int n, int *i, int *j)
 {
   int n_use;
   if (zdom[ndom].coord_type == SPHERICAL)
@@ -383,8 +372,7 @@ wind_n_to_ij (ndom, n, i, j)
  **********************************************************/
 
 int
-wind_ij_to_n (ndom, i, j, n)
-     int *n, i, j, ndom;
+wind_ij_to_n (int ndom, int i, int j, int *n)
 {
   int ierror = 0;
   int ii, jj;

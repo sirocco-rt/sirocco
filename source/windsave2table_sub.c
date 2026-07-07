@@ -49,10 +49,7 @@ int xedge = FALSE;
  **********************************************************/
 
 int
-do_windsave2table (root, ion_switch, edge_switch)
-     char *root;
-     int ion_switch;
-     int edge_switch;
+do_windsave2table (char *root, int ion_switch, int edge_switch)
 {
   int ndom, i;
   char rootname[LINELENGTH];
@@ -148,9 +145,7 @@ do_windsave2table (root, ion_switch, edge_switch)
  **********************************************************/
 
 int
-create_master_table (ndom, rootname)
-     int ndom;
-     char rootname[];
+create_master_table (int ndom, char rootname[])
 {
   char filename[132];
   double *c[51], *converge;
@@ -413,9 +408,7 @@ create_master_table (ndom, rootname)
  **********************************************************/
 
 int
-create_heat_table (ndom, rootname)
-     int ndom;
-     char rootname[];
+create_heat_table (int ndom, char rootname[])
 {
   char filename[132];
   double *c[50], *converge;
@@ -660,9 +653,7 @@ create_heat_table (ndom, rootname)
  **********************************************************/
 
 int
-create_convergence_table (ndom, rootname)
-     int ndom;
-     char rootname[];
+create_convergence_table (int ndom, char rootname[])
 {
   char filename[132];
   double *c[50], *converge;
@@ -860,9 +851,7 @@ create_convergence_table (ndom, rootname)
  **********************************************************/
 
 int
-create_velocity_gradient_table (ndom, rootname)
-     int ndom;
-     char rootname[];
+create_velocity_gradient_table (int ndom, char rootname[])
 {
   char filename[132];
   double *c[50], *converge;
@@ -1042,11 +1031,7 @@ create_velocity_gradient_table (ndom, rootname)
  **********************************************************/
 
 int
-create_ion_table (ndom, rootname, iz, ion_switch)
-     int ndom;
-     char rootname[];
-     int iz;
-     int ion_switch;
+create_ion_table (int ndom, char rootname[], int iz, int ion_switch)
 {
   char filename[132];
   double *c[100];
@@ -1208,9 +1193,7 @@ create_ion_table (ndom, rootname, iz, ion_switch)
  **********************************************************/
 
 double *
-get_ion (ndom, element, istate, iswitch, name)
-     int ndom, element, istate, iswitch;
-     char *name;
+get_ion (int ndom, int element, int istate, int iswitch, char *name)
 {
   int nion, nelem;
   int n;
@@ -1246,58 +1229,58 @@ get_ion (ndom, element, istate, iswitch, name)
   {
     x[n] = 0;
     nplasma = wmain[nstart + n].nplasma;
-    if (wmain[nstart + n].inwind >= 0 && plasmamain[nplasma].rho > 0.0)
+    if (wmain[nstart + n].inwind >= 0 && plasmamain[nplasma].state.rho > 0.0)
     {
       if (iswitch == 0)
       {
-        x[n] = plasmamain[nplasma].density[nion];
-        nh = rho2nh * plasmamain[nplasma].rho;
+        x[n] = plasmamain[nplasma].state.density[nion];
+        nh = rho2nh * plasmamain[nplasma].state.rho;
         x[n] /= (nh * ele[nelem].abun);
         strcpy (name, "frac");
       }
       else if (iswitch == 1)
       {
-        x[n] = plasmamain[nplasma].density[nion];
+        x[n] = plasmamain[nplasma].state.density[nion];
         strcpy (name, "den");
       }
       else if (iswitch == 2)
       {
-        x[n] = (double) plasmamain[nplasma].scatters[nion] / plasmamain[nplasma].vol;
+        x[n] = (double) plasmamain[nplasma].derived.scatters[nion] / plasmamain[nplasma].state.vol;
         strcpy (name, "scat");
       }
       else if (iswitch == 3)
       {
-        x[n] = plasmamain[nplasma].xscatters[nion];
+        x[n] = plasmamain[nplasma].derived.xscatters[nion];
         strcpy (name, "ion_frac");
       }
       else if (iswitch == 4)
       {
-        x[n] = plasmamain[nplasma].ioniz[nion];
+        x[n] = plasmamain[nplasma].est.ioniz[nion];
         strcpy (name, "ioniz");
       }
       else if (iswitch == 5)
       {
-        x[n] = plasmamain[nplasma].recomb[nion];
+        x[n] = plasmamain[nplasma].derived.recomb[nion];
         strcpy (name, "recomb");
       }
       else if (iswitch == 6)
       {
-        x[n] = plasmamain[nplasma].heat_ion[nion];
+        x[n] = plasmamain[nplasma].est.heat_ion[nion];
         strcpy (name, "heat");
       }
       else if (iswitch == 7)
       {
-        x[n] = plasmamain[nplasma].cool_rr_ion[nion];
+        x[n] = plasmamain[nplasma].derived.cool_rr_ion[nion];
         strcpy (name, "cool_rr");
       }
       else if (iswitch == 8)
       {
-        x[n] = plasmamain[nplasma].lum_rr_ion[nion];
+        x[n] = plasmamain[nplasma].derived.lum_rr_ion[nion];
         strcpy (name, "lum_rr");
       }
       else if (iswitch == 9)
       {
-        x[n] = plasmamain[nplasma].cool_dr_ion[nion];
+        x[n] = plasmamain[nplasma].derived.cool_dr_ion[nion];
         strcpy (name, "cool_dr");
       }
       else
@@ -1340,9 +1323,7 @@ get_ion (ndom, element, istate, iswitch, name)
  **********************************************************/
 
 double *
-get_one (ndom, variable_name)
-     int ndom;
-     char variable_name[];
+get_one (int ndom, char variable_name[])
 {
   int n;
   int nplasma;
@@ -1365,223 +1346,223 @@ get_one (ndom, variable_name)
 
       if (strcmp (variable_name, "ne") == 0)
       {
-        x[n] = plasmamain[nplasma].ne;
+        x[n] = plasmamain[nplasma].state.ne;
       }
       else if (strcmp (variable_name, "rho") == 0)
       {
-        x[n] = plasmamain[nplasma].rho;
+        x[n] = plasmamain[nplasma].state.rho;
       }
       else if (strcmp (variable_name, "vol") == 0)
       {
-        x[n] = plasmamain[nplasma].vol;
+        x[n] = plasmamain[nplasma].state.vol;
       }
       else if (strcmp (variable_name, "t_e") == 0)
       {
-        x[n] = plasmamain[nplasma].t_e;
+        x[n] = plasmamain[nplasma].state.t_e;
       }
       else if (strcmp (variable_name, "t_r") == 0)
       {
-        x[n] = plasmamain[nplasma].t_r;
+        x[n] = plasmamain[nplasma].state.t_r;
       }
       else if (strcmp (variable_name, "t_e_old") == 0)
       {
-        x[n] = plasmamain[nplasma].t_e_old;
+        x[n] = plasmamain[nplasma].state.t_e_old;
       }
       else if (strcmp (variable_name, "t_r_old") == 0)
       {
-        x[n] = plasmamain[nplasma].t_r_old;
+        x[n] = plasmamain[nplasma].state.t_r_old;
       }
       else if (strcmp (variable_name, "dt_e") == 0)
       {
-        x[n] = plasmamain[nplasma].dt_e;
+        x[n] = plasmamain[nplasma].derived.dt_e;
       }
       else if (strcmp (variable_name, "dt_e_old") == 0)
       {
-        x[n] = plasmamain[nplasma].dt_e_old;
+        x[n] = plasmamain[nplasma].derived.dt_e_old;
       }
       else if (strcmp (variable_name, "J") == 0)
       {
-        x[n] = plasmamain[nplasma].j;
+        x[n] = plasmamain[nplasma].est.j;
       }
       else if (strcmp (variable_name, "J_direct") == 0)
       {
-        x[n] = plasmamain[nplasma].j_direct;
+        x[n] = plasmamain[nplasma].est.j_direct;
       }
       else if (strcmp (variable_name, "J_scatt") == 0)
       {
-        x[n] = plasmamain[nplasma].j_scatt;
+        x[n] = plasmamain[nplasma].est.j_scatt;
       }
       else if (strcmp (variable_name, "ave_freq") == 0)
       {
-        x[n] = plasmamain[nplasma].ave_freq;
+        x[n] = plasmamain[nplasma].est.ave_freq;
       }
       else if (strcmp (variable_name, "converge") == 0)
       {
-        x[n] = plasmamain[nplasma].converge_whole;
+        x[n] = plasmamain[nplasma].derived.converge_whole;
       }
       else if (strcmp (variable_name, "dmo_dt_x") == 0)
       {
-        x[n] = plasmamain[nplasma].dmo_dt[0];
+        x[n] = plasmamain[nplasma].derived.dmo_dt[0];
       }
       else if (strcmp (variable_name, "dmo_dt_y") == 0)
       {
-        x[n] = plasmamain[nplasma].dmo_dt[1];
+        x[n] = plasmamain[nplasma].derived.dmo_dt[1];
       }
       else if (strcmp (variable_name, "dmo_dt_z") == 0)
       {
-        x[n] = plasmamain[nplasma].dmo_dt[2];
+        x[n] = plasmamain[nplasma].derived.dmo_dt[2];
       }
       else if (strcmp (variable_name, "ntot") == 0)
       {
-        x[n] = plasmamain[nplasma].ntot;
+        x[n] = plasmamain[nplasma].est.ntot;
       }
       else if (strcmp (variable_name, "ip") == 0)
       {
-        x[n] = plasmamain[nplasma].ip;
+        x[n] = plasmamain[nplasma].est.ip;
       }
       else if (strcmp (variable_name, "xi") == 0)
       {
-        x[n] = plasmamain[nplasma].xi;
+        x[n] = plasmamain[nplasma].derived.xi;
       }
       else if (strcmp (variable_name, "heat_tot") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_tot;
+        x[n] = plasmamain[nplasma].est.heat_tot;
       }
       else if (strcmp (variable_name, "heat_tot_old") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_tot_old;
+        x[n] = plasmamain[nplasma].derived.heat_tot_old;
       }
       else if (strcmp (variable_name, "heat_comp") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_comp;
+        x[n] = plasmamain[nplasma].est.heat_comp;
       }
       else if (strcmp (variable_name, "heat_lines") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_lines;
+        x[n] = plasmamain[nplasma].est.heat_lines;
       }
       else if (strcmp (variable_name, "heat_ff") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_ff;
+        x[n] = plasmamain[nplasma].est.heat_ff;
       }
       else if (strcmp (variable_name, "heat_photo") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_photo;
+        x[n] = plasmamain[nplasma].est.heat_photo;
       }
       else if (strcmp (variable_name, "heat_auger") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_auger;
+        x[n] = plasmamain[nplasma].est.heat_auger;
       }
       else if (strcmp (variable_name, "cool_comp") == 0)
       {
-        x[n] = plasmamain[nplasma].cool_comp;
+        x[n] = plasmamain[nplasma].derived.cool_comp;
       }
       else if (strcmp (variable_name, "lum_tot") == 0)
       {
-        x[n] = plasmamain[nplasma].lum_tot;
+        x[n] = plasmamain[nplasma].derived.lum_tot;
       }
       else if (strcmp (variable_name, "lum_lines") == 0)
       {
-        x[n] = plasmamain[nplasma].lum_lines;
+        x[n] = plasmamain[nplasma].derived.lum_lines;
       }
       else if (strcmp (variable_name, "lum_ff") == 0)
       {
-        x[n] = plasmamain[nplasma].lum_ff;
+        x[n] = plasmamain[nplasma].derived.lum_ff;
       }
       else if (strcmp (variable_name, "lum_rr") == 0)
       {
-        x[n] = plasmamain[nplasma].lum_rr;
+        x[n] = plasmamain[nplasma].derived.lum_rr;
       }
       else if (strcmp (variable_name, "cool_rr") == 0)
       {
-        x[n] = plasmamain[nplasma].cool_rr;
+        x[n] = plasmamain[nplasma].derived.cool_rr;
       }
       else if (strcmp (variable_name, "cool_dr") == 0)
       {
-        x[n] = plasmamain[nplasma].cool_dr;
+        x[n] = plasmamain[nplasma].derived.cool_dr;
       }
       else if (strcmp (variable_name, "cool_tot") == 0)
       {
-        x[n] = plasmamain[nplasma].cool_tot;
+        x[n] = plasmamain[nplasma].est.cool_tot;
       }
       else if (strcmp (variable_name, "w") == 0)
       {
-        x[n] = plasmamain[nplasma].w;
+        x[n] = plasmamain[nplasma].state.w;
       }
       else if (strcmp (variable_name, "nrad") == 0)
       {
-        x[n] = plasmamain[nplasma].nrad;
+        x[n] = plasmamain[nplasma].derived.nrad;
       }
       else if (strcmp (variable_name, "nioniz") == 0)
       {
-        x[n] = plasmamain[nplasma].nioniz;
+        x[n] = plasmamain[nplasma].est.nioniz;
       }
       else if (strcmp (variable_name, "nscat_es") == 0)
       {
-        x[n] = plasmamain[nplasma].nscat_es;
+        x[n] = plasmamain[nplasma].derived.nscat_es;
       }
       else if (strcmp (variable_name, "nscat_res") == 0)
       {
-        x[n] = plasmamain[nplasma].nscat_res;
+        x[n] = plasmamain[nplasma].derived.nscat_res;
       }
       else if (strcmp (variable_name, "nscat_bf") == 0)
       {
-        x[n] = plasmamain[nplasma].nscat_bf;
+        x[n] = plasmamain[nplasma].derived.nscat_bf;
       }
       else if (strcmp (variable_name, "nscat_ff") == 0)
       {
-        x[n] = plasmamain[nplasma].nscat_ff;
+        x[n] = plasmamain[nplasma].derived.nscat_ff;
       }
       else if (strcmp (variable_name, "heat_shock") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_shock;
+        x[n] = plasmamain[nplasma].derived.heat_shock;
       }
       else if (strcmp (variable_name, "cool_adiab") == 0)
       {
-        x[n] = plasmamain[nplasma].cool_adiabatic;
+        x[n] = plasmamain[nplasma].derived.cool_adiabatic;
       }
       else if (strcmp (variable_name, "heat_lines_macro") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_lines_macro;
+        x[n] = plasmamain[nplasma].est.heat_lines_macro;
       }
       else if (strcmp (variable_name, "heat_photo_macro") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_photo_macro;
+        x[n] = plasmamain[nplasma].est.heat_photo_macro;
       }
       else if (strcmp (variable_name, "heat_qrecomb_macro") == 0)
       {
-        x[n] = plasmamain[nplasma].heat_qrecomb_macro;
+        x[n] = plasmamain[nplasma].est.heat_qrecomb_macro;
       }
       else if (strcmp (variable_name, "cool_lines_macro") == 0)
       {
-        x[n] = plasmamain[nplasma].cool_lines_macro;
+        x[n] = plasmamain[nplasma].derived.cool_lines_macro;
       }
       else if (strcmp (variable_name, "cool_bf_macro") == 0)
       {
-        x[n] = plasmamain[nplasma].cool_bf_macro;
+        x[n] = plasmamain[nplasma].derived.cool_bf_macro;
       }
       else if (strcmp (variable_name, "cool_di_macro") == 0)
       {
-        x[n] = plasmamain[nplasma].cool_di_macro;
+        x[n] = plasmamain[nplasma].derived.cool_di_macro;
       }
       else if (strcmp (variable_name, "energy_in_macro") == 0)
       {
-        x[n] = macromain[nplasma].energy_flow_in;
+        x[n] = macromain[nplasma].est.energy_flow_in;
       }
       else if (strcmp (variable_name, "energy_out_macro") == 0)
       {
-        x[n] = macromain[nplasma].energy_flow_out;
+        x[n] = macromain[nplasma].est.energy_flow_out;
       }
       else if (strcmp (variable_name, "gain") == 0)
       {
-        x[n] = plasmamain[nplasma].gain;
+        x[n] = plasmamain[nplasma].derived.gain;
       }
       else if (strcmp (variable_name, "macro_bf_in") == 0)
       {
-        x[n] = plasmamain[nplasma].bf_simple_ionpool_in;
+        x[n] = plasmamain[nplasma].derived.bf_simple_ionpool_in;
       }
       else if (strcmp (variable_name, "macro_bf_out") == 0)
       {
-        x[n] = plasmamain[nplasma].bf_simple_ionpool_out;
+        x[n] = plasmamain[nplasma].derived.bf_simple_ionpool_out;
       }
       else if (strcmp (variable_name, "dv_x_dx") == 0)
       {
@@ -1636,7 +1617,7 @@ get_one (ndom, variable_name)
         x[n] = wmain[n].dfudge;
       }
       else if (strcmp (variable_name, "nh") == 0)
-        x[n] = rho2nh * plasmamain[nplasma].rho;
+        x[n] = rho2nh * plasmamain[nplasma].state.rho;
       else
       {
         Error ("get_one: Unknown variable %s\n", variable_name);
@@ -1690,11 +1671,7 @@ get_one (ndom, variable_name)
  **********************************************************/
 
 int
-get_one_array_element (ndom, variable_name, array_dim, xval)
-     int ndom;
-     char variable_name[];
-     int array_dim;
-     double xval[];
+get_one_array_element (int ndom, char variable_name[], int array_dim, double xval[])
 {
   int j, n;
   int nplasma;
@@ -1723,55 +1700,55 @@ get_one_array_element (ndom, variable_name, array_dim, xval)
 
         if (strcmp (variable_name, "xj") == 0)
         {
-          xval[m] = plasmamain[nplasma].xj[j];
+          xval[m] = plasmamain[nplasma].est.xj[j];
         }
         else if (strcmp (variable_name, "xave_freq") == 0)
         {
-          xval[m] = plasmamain[nplasma].xave_freq[j];
+          xval[m] = plasmamain[nplasma].est.xave_freq[j];
         }
         else if (strcmp (variable_name, "fmin") == 0)
         {
-          xval[m] = plasmamain[nplasma].fmin[j];
+          xval[m] = plasmamain[nplasma].est.fmin[j];
         }
         else if (strcmp (variable_name, "fmax") == 0)
         {
-          xval[m] = plasmamain[nplasma].fmax[j];
+          xval[m] = plasmamain[nplasma].est.fmax[j];
         }
         else if (strcmp (variable_name, "fmin_mod") == 0)
         {
-          xval[m] = plasmamain[nplasma].fmin_mod[j];
+          xval[m] = plasmamain[nplasma].state.fmin_mod[j];
         }
         else if (strcmp (variable_name, "fmax_mod") == 0)
         {
-          xval[m] = plasmamain[nplasma].fmax_mod[j];
+          xval[m] = plasmamain[nplasma].state.fmax_mod[j];
         }
         else if (strcmp (variable_name, "xsd_freq") == 0)
         {
-          xval[m] = plasmamain[nplasma].xsd_freq[j];
+          xval[m] = plasmamain[nplasma].est.xsd_freq[j];
         }
         else if (strcmp (variable_name, "nxtot") == 0)
         {
-          xval[m] = plasmamain[nplasma].nxtot[j];
+          xval[m] = plasmamain[nplasma].est.nxtot[j];
         }
         else if (strcmp (variable_name, "spec_mod_type") == 0)
         {
-          xval[m] = plasmamain[nplasma].spec_mod_type[j];
+          xval[m] = plasmamain[nplasma].state.spec_mod_type[j];
         }
         else if (strcmp (variable_name, "pl_alpha") == 0)
         {
-          xval[m] = plasmamain[nplasma].pl_alpha[j];
+          xval[m] = plasmamain[nplasma].state.pl_alpha[j];
         }
         else if (strcmp (variable_name, "pl_log_w") == 0)
         {
-          xval[m] = plasmamain[nplasma].pl_log_w[j];
+          xval[m] = plasmamain[nplasma].state.pl_log_w[j];
         }
         else if (strcmp (variable_name, "exp_temp") == 0)
         {
-          xval[m] = plasmamain[nplasma].exp_temp[j];
+          xval[m] = plasmamain[nplasma].state.exp_temp[j];
         }
         else if (strcmp (variable_name, "exp_w") == 0)
         {
-          xval[m] = plasmamain[nplasma].exp_w[j];
+          xval[m] = plasmamain[nplasma].state.exp_w[j];
         }
         else
         {
@@ -1825,9 +1802,7 @@ get_one_array_element (ndom, variable_name, array_dim, xval)
  **********************************************************/
 
 int
-create_spec_table (ndom, rootname)
-     int ndom;
-     char rootname[];
+create_spec_table (int ndom, char rootname[])
 {
   char filename[132];
   double *c[50], *converge;
@@ -2070,41 +2045,27 @@ create_spec_table (ndom, rootname)
  **********************************************************/
 
 int
-create_detailed_cell_spec_table (ncell, rootname)
-     int ncell;
-     char rootname[];
+create_detailed_cell_spec_table (int ncell, char rootname[])
 {
   FILE *fptr;
   char filename[132];
 
-  double freq[NBINS_IN_CELL_SPEC];
-  double flux[NBINS_IN_CELL_SPEC];
   int i, nplasma;
 
   printf ("%e %e\n", geo.cell_log_freq_min, geo.cell_delta_lfreq);
 
   sprintf (filename, "%s.xspec.%d.txt", rootname, ncell);
 
-  for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
-  {
-    freq[i] = pow (10., geo.cell_log_freq_min + i * geo.cell_delta_lfreq);
-  }
-
   nplasma = wmain[ncell].nplasma;
-
-  for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
-  {
-    flux[i] = plasmamain[nplasma].cell_spec_flux[i];
-  }
-
 
   fptr = fopen (filename, "w");
 
   fprintf (fptr, "Freq.          Flux\n");
 
-  for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
+  for (i = 0; i < geo.nbins_in_cell_spec; i++)
   {
-    fprintf (fptr, "%10.3e  %10.3e\n", freq[i], flux[i]);
+    double freq = pow (10., geo.cell_log_freq_min + i * geo.cell_delta_lfreq);
+    fprintf (fptr, "%10.3e  %10.3e\n", freq, plasmamain[nplasma].est.cell_spec_flux[i]);
   }
 
 
@@ -2146,9 +2107,7 @@ create_detailed_cell_spec_table (ncell, rootname)
  **********************************************************/
 
 int
-create_big_detailed_spec_table (ndom, rootname)
-     int ndom;
-     char *rootname;
+create_big_detailed_spec_table (int ndom, char *rootname)
 {
   char column_name[MAX_COLUMNS][20];
   int nplasma[MAX_COLUMNS], ii, jj, ncols;
@@ -2156,7 +2115,7 @@ create_big_detailed_spec_table (ndom, rootname)
 
   FILE *fptr;
   char filename[132];
-  double freq[NBINS_IN_CELL_SPEC];
+  double *freq;
   int nstart, nstop;
 
   /* Identify the range of wind cells for this domain */
@@ -2199,7 +2158,8 @@ create_big_detailed_spec_table (ndom, rootname)
 
 
   /* Calculate the frequencies */
-  for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
+  freq = calloc (geo.nbins_in_cell_spec, sizeof (double));
+  for (i = 0; i < geo.nbins_in_cell_spec; i++)
   {
     freq[i] = pow (10., geo.cell_log_freq_min + i * geo.cell_delta_lfreq);
   }
@@ -2231,13 +2191,13 @@ create_big_detailed_spec_table (ndom, rootname)
     }
     fprintf (fptr, "\n");
 
-    for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
+    for (i = 0; i < geo.nbins_in_cell_spec; i++)
     {
       fprintf (fptr, "%10.3e ", freq[i]);
 
       for (n = nstart; n < nstop; n++)
       {
-        fprintf (fptr, "%10.3e ", plasmamain[nplasma[n]].cell_spec_flux[i]);
+        fprintf (fptr, "%10.3e ", plasmamain[nplasma[n]].est.cell_spec_flux[i]);
       }
 
       fprintf (fptr, "\n");
@@ -2250,11 +2210,7 @@ create_big_detailed_spec_table (ndom, rootname)
     nstop = nstart + MAX_IN_TABLE;
   }
 
+  free (freq);
+
   return (0);
-
-
-
-
-
-
 }

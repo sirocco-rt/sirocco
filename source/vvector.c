@@ -75,8 +75,7 @@ History:
  **********************************************************/
 
 double
-dot (a, b)
-     double a[], b[];
+dot (double a[], double b[])
 {
   double x;
 
@@ -105,11 +104,9 @@ dot (a, b)
  **********************************************************/
 
 double
-length (a)
-     double a[];
+length (double a[])
 {
   double x, y;
-  double sqrt ();
   y = (a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
   if (sane_check (y))
     Error ("length:sane_check of y: a %f %f %f \n", a[0], a[1], a[2]);
@@ -137,8 +134,7 @@ length (a)
  **********************************************************/
 
 int
-renorm (a, scalar)
-     double a[], scalar;
+renorm (double a[], double scalar)
 {
   double x;
 
@@ -176,8 +172,7 @@ renorm (a, scalar)
  **********************************************************/
 
 int
-rescale (a, scalar, b)
-     double a[], scalar, b[];
+rescale (double a[], double scalar, double b[])
 {
 
   b[0] = a[0] * scalar;
@@ -203,8 +198,7 @@ rescale (a, scalar, b)
  **********************************************************/
 
 int
-cross (a, b, c)
-     double a[], b[], c[];
+cross (double a[], double b[], double c[])
 {
   c[0] = a[1] * b[2] - a[2] * b[1];
   c[1] = a[2] * b[0] - a[0] * b[2];
@@ -235,8 +229,7 @@ cross (a, b, c)
  **********************************************************/
 
 int
-vmove (u, lmn, s, result)
-     double u[], lmn[], s, result[];
+vmove (double u[], double lmn[], double s, double result[])
 {
   result[0] = lmn[0] * s + u[0];
   result[1] = lmn[1] * s + u[1];
@@ -261,8 +254,7 @@ vmove (u, lmn, s, result)
  **********************************************************/
 
 int
-vsub (u, v, result)
-     double u[], v[], result[];
+vsub (double u[], double v[], double result[])
 {
   result[0] = u[0] - v[0];
   result[1] = u[1] - v[1];
@@ -288,8 +280,7 @@ vsub (u, v, result)
  **********************************************************/
 
 int
-vadd (u, v, result)
-     double u[], v[], result[];
+vadd (double u[], double v[], double result[])
 {
   result[0] = u[0] + v[0];
   result[1] = u[1] + v[1];
@@ -315,8 +306,7 @@ vadd (u, v, result)
  **********************************************************/
 
 int
-stuff_v (vin, vout)
-     double vin[], vout[];
+stuff_v (double vin[], double vout[])
 {
   vout[0] = vin[0];
   vout[1] = vin[1];
@@ -350,10 +340,8 @@ stuff_v (vin, vout)
  **********************************************************/
 
 double
-dot_tensor_vec (tensor, vin, vout)
-     double tensor[3][3], vin[3], vout[3];
+dot_tensor_vec (double tensor[3][3], double vin[3], double vout[3])
 {
-  double dot ();
   vout[0] = dot (tensor[0], vin);
   vout[1] = dot (tensor[1], vin);
   vout[2] = dot (tensor[2], vin);
@@ -382,8 +370,7 @@ dot_tensor_vec (tensor, vin, vout)
  **********************************************************/
 
 int
-project_from_xyz_cyl (a, b, result)
-     double a[], b[], result[];
+project_from_xyz_cyl (double a[], double b[], double result[])
 {
 
   double n_rho[3], n_phi[3], n_z[3];
@@ -440,8 +427,7 @@ project_from_xyz_cyl (a, b, result)
  **********************************************************/
 
 int
-project_from_cyl_xyz (a, b, result)
-     double a[], b[], result[];
+project_from_cyl_xyz (double a[], double b[], double result[])
 {
   double x, ctheta, stheta;
 
@@ -487,14 +473,11 @@ project_from_cyl_xyz (a, b, result)
  **********************************************************/
 
 int
-create_basis (u, v, basis_new)
-     double u[], v[];
-     struct basis *basis_new;
+create_basis (double u[], double v[], struct basis *basis_new)
 {
   int i;
   double x[3], y[3], z[3];
   double mu_x;
-  double dot ();
 
   for (i = 0; i < 3; i++)
   {
@@ -572,10 +555,7 @@ create_basis (u, v, basis_new)
  **********************************************************/
 
 int
-project_from (basis_from, v_in, v_out)
-     struct basis *basis_from;  /* direction cosines to go from rotated to unrotated frame */
-     double v_in[], v_out[];    /*v_in here is in rotated frame, v_out in unrotated frame */
-
+project_from (struct basis *basis_from, double v_in[], double v_out[])
 {
   int i, j;
   for (i = 0; i < 3; i++)
@@ -607,10 +587,7 @@ project_from (basis_from, v_in, v_out)
  **********************************************************/
 
 int
-project_to (basis_from, v_in, v_out)
-     struct basis *basis_from;  /* direction cosines to go from rotated to unrotated frame */
-     double v_in[], v_out[];    /*v_in here is in unrotated frame, v_out in rotated frame */
-
+project_to (struct basis *basis_from, double v_in[], double v_out[])
 {
   int i, j;
   for (i = 0; i < 3; i++)
@@ -648,9 +625,7 @@ project_to (basis_from, v_in, v_out)
  **********************************************************/
 
 int
-reorient (basis_from, basis_to, v_from, v_to)
-     struct basis *basis_from, *basis_to;
-     double v_from[], v_to[];
+reorient (struct basis *basis_from, struct basis *basis_to, double v_from[], double v_to[])
 {
   double a[3][3];
   int i, j, k;

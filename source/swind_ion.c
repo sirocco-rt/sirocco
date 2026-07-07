@@ -48,12 +48,7 @@
  *
  **********************************************************/
 int
-ion_summary (w, element, istate, iswitch, rootname, ochoice)
-     WindPtr w;
-     int element, istate;
-     int iswitch;
-     char rootname[];
-     int ochoice;
+ion_summary (WindPtr w, int element, int istate, int iswitch, char rootname[], int ochoice)
 {
   int nion, nelem;
   int n;
@@ -90,24 +85,24 @@ ion_summary (w, element, istate, iswitch, rootname, ochoice)
       if (iswitch == 0)
       {
         sprintf (name, "Element %d (%s) ion %d fractions\n", element, ele[nelem].name, istate);
-        aaa[n] = plasmamain[nplasma].density[nion];
-        nh = rho2nh * plasmamain[nplasma].rho;
+        aaa[n] = plasmamain[nplasma].state.density[nion];
+        nh = rho2nh * plasmamain[nplasma].state.rho;
         aaa[n] /= (nh * ele[nelem].abun);
       }
       else if (iswitch == 1)
       {
         sprintf (name, "Element %d (%s) ion %d density\n", element, ele[nelem].name, istate);
-        aaa[n] = plasmamain[nplasma].density[nion];
+        aaa[n] = plasmamain[nplasma].state.density[nion];
       }
       else if (iswitch == 2)
       {
         sprintf (name, "Element %d (%s) ion %d  #scatters\n", element, ele[nelem].name, istate);
-        aaa[n] = plasmamain[nplasma].scatters[nion];
+        aaa[n] = plasmamain[nplasma].derived.scatters[nion];
       }
       else if (iswitch == 3)
       {
         sprintf (name, "Element %d (%s) ion %d scattered flux\n", element, ele[nelem].name, istate);
-        aaa[n] = plasmamain[nplasma].xscatters[nion];
+        aaa[n] = plasmamain[nplasma].derived.xscatters[nion];
       }
       else
       {
@@ -131,19 +126,19 @@ ion_summary (w, element, istate, iswitch, rootname, ochoice)
       if (w[n].inwind >= 0)
       {
         if (iswitch == 0)
-          x /= ((plasmamain[nplasma].density[0] + plasmamain[nplasma].density[1]) * ele[nelem].abun);
+          x /= ((plasmamain[nplasma].state.density[0] + plasmamain[nplasma].state.density[1]) * ele[nelem].abun);
         else if (iswitch == 1)
         {
-          x = plasmamain[nplasma].density[nion];
+          x = plasmamain[nplasma].state.density[nion];
           x = log10 (x);
         }
         else if (iswitch == 2)
         {
-          x = plasmamain[nplasma].scatters[nion];
+          x = plasmamain[nplasma].derived.scatters[nion];
         }
         else if (iswitch == 3)
         {
-          x = plasmamain[nplasma].xscatters[nion];
+          x = plasmamain[nplasma].derived.xscatters[nion];
         }
         else
         {
@@ -210,12 +205,7 @@ ion_summary (w, element, istate, iswitch, rootname, ochoice)
  *
  **********************************************************/
 int
-tau_ave_summary (w, element, istate, freq, rootname, ochoice)
-     WindPtr w;
-     int element, istate;
-     double freq;
-     char rootname[];
-     int ochoice;
+tau_ave_summary (WindPtr w, int element, int istate, double freq, char rootname[], int ochoice)
 {
   int nion, nelem;
   int n;
@@ -248,7 +238,7 @@ tau_ave_summary (w, element, istate, freq, rootname, ochoice)
     if (w[n].inwind >= 0)
     {
       nplasma = w[n].nplasma;
-      aaa[n] = PI_E2_OVER_M * plasmamain[nplasma].density[nion] / freq / w[n].dvds_ave;
+      aaa[n] = PI_E2_OVER_M * plasmamain[nplasma].state.density[nion] / freq / w[n].dvds_ave;
     }
   }
 
@@ -262,7 +252,7 @@ tau_ave_summary (w, element, istate, freq, rootname, ochoice)
       if (w[n].inwind >= 0)
       {
         nplasma = w[n].nplasma;
-        w[n].x[1] = plasmamain[nplasma].density[nion] / (0.87 * plasmamain[nplasma].ne * ele[nelem].abun);
+        w[n].x[1] = plasmamain[nplasma].state.density[nion] / (0.87 * plasmamain[nplasma].state.ne * ele[nelem].abun);
       }
       else
         w[n].x[1] = 0;
@@ -311,10 +301,7 @@ tau_ave_summary (w, element, istate, freq, rootname, ochoice)
  *
  **********************************************************/
 int
-line_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+line_summary (WindPtr w, char rootname[], int ochoice)
 {
   int nion, nelem;
   int element, istate, iline, levu, levl, i_matom_search;
@@ -484,7 +471,7 @@ line_summary (w, rootname, ochoice)
       else
       {
         /* If this is not a matom line */
-        two_level_atom (lin_ptr[nline], &plasmamain[nplasma], &d1, &d2);
+        two_level_atom (lin_ptr[nline], &plasmamain[nplasma], &d1, &d2, -1.0);
       }
 
 
@@ -497,10 +484,10 @@ line_summary (w, rootname, ochoice)
       {
         /* the below code is essentially duplicated from lum_lines() in lines.c, see #643 */
         x = lin_ptr[nline]->gu / lin_ptr[nline]->gl * d1 - d2;
-        z = exp (-H_OVER_K * lin_ptr[nline]->freq / plasmamain[nplasma].t_e);
+        z = exp (-H_OVER_K * lin_ptr[nline]->freq / plasmamain[nplasma].state.t_e);
         q = 1. - scattering_fraction (lin_ptr[nline], &plasmamain[nplasma]);
         x *= q * a21 (lin_ptr[nline]) * z / (1. - z);
-        x *= PLANCK * lin_ptr[nline]->freq * plasmamain[nplasma].vol;
+        x *= PLANCK * lin_ptr[nline]->freq * plasmamain[nplasma].state.vol;
 
         /* Include effects of line trapping */
         if (geo.line_mode == LINE_MODE_ESC_PROB)
@@ -527,9 +514,9 @@ line_summary (w, rootname, ochoice)
       if (w[n].inwind >= 0)
       {
         nplasma = w[n].nplasma;
-        omega = 5.13 * pow (plasmamain[nplasma].t_e / 1.e5, 0.18);
-        rb = 8.629e-6 * exp (-energy / (BOLTZMANN * plasmamain[nplasma].t_e)) / sqrt (plasmamain[nplasma].t_e) * omega;
-        w[n].x[1] = plasmamain[nplasma].density[nion] * plasmamain[nplasma].ne * rb * energy * w[n].vol;
+        omega = 5.13 * pow (plasmamain[nplasma].state.t_e / 1.e5, 0.18);
+        rb = 8.629e-6 * exp (-energy / (BOLTZMANN * plasmamain[nplasma].state.t_e)) / sqrt (plasmamain[nplasma].state.t_e) * omega;
+        w[n].x[1] = plasmamain[nplasma].state.density[nion] * plasmamain[nplasma].state.ne * rb * energy * w[n].vol;
       }
       else
         w[n].x[1] = 0;
@@ -574,9 +561,7 @@ line_summary (w, rootname, ochoice)
  *
  **********************************************************/
 int
-total_emission_summary (rootname, ochoice)
-     char rootname[];
-     int ochoice;
+total_emission_summary (char rootname[], int ochoice)
 {
   double tot;
   int n;
@@ -626,14 +611,11 @@ total_emission_summary (rootname, ochoice)
  *
  **********************************************************/
 int
-modify_te (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+modify_te (WindPtr w, char rootname[], int ochoice)
 {
   int n;
   double x;
-  double t_e, calc_te ();
+  double t_e;
   char filename[LINELENGTH];
   int nplasma;
 
@@ -642,9 +624,9 @@ modify_te (w, rootname, ochoice)
   {
     nplasma = w[n].nplasma;
     aaa[n] = 0;
-    if (w[n].inwind >= 0 && (x = plasmamain[nplasma].heat_tot) > 1.0)
+    if (w[n].inwind >= 0 && (x = plasmamain[nplasma].est.heat_tot) > 1.0)
     {
-      aaa[n] = t_e = calc_te (&plasmamain[nplasma], MIN_TEMP, 1.2 * plasmamain[nplasma].t_r);
+      aaa[n] = t_e = calc_te (&plasmamain[nplasma], MIN_TEMP, 1.2 * plasmamain[nplasma].state.t_r);
     }
   }
 
@@ -683,11 +665,7 @@ modify_te (w, rootname, ochoice)
  **********************************************************/
 
 int
-partial_measure_summary (w, element, istate, rootname, ochoice)
-     WindPtr w;
-     int element, istate;
-     char rootname[];
-     int ochoice;
+partial_measure_summary (WindPtr w, int element, int istate, char rootname[], int ochoice)
 {
   int nion, nelem;
   int n;
@@ -719,9 +697,9 @@ partial_measure_summary (w, element, istate, rootname, ochoice)
   {
     aaa[n] = 0;
     nplasma = w[n].nplasma;
-    if (plasmamain[nplasma].ne > 1.0 && w[n].inwind >= 0)
+    if (plasmamain[nplasma].state.ne > 1.0 && w[n].inwind >= 0)
     {
-      total += aaa[n] = plasmamain[nplasma].density[nion] * plasmamain[nplasma].ne * w[n].vol;
+      total += aaa[n] = plasmamain[nplasma].state.density[nion] * plasmamain[nplasma].state.ne * w[n].vol;
     }
   }
 
@@ -735,8 +713,8 @@ partial_measure_summary (w, element, istate, rootname, ochoice)
     for (n = 0; n < NDIM2; n++)
     {
       nplasma = w[n].nplasma;
-      if (plasmamain[nplasma].ne > 1.0 && w[n].inwind >= 0)
-        w[n].x[1] = plasmamain[nplasma].density[nion] / (0.87 * plasmamain[nplasma].ne * ele[nelem].abun);
+      if (plasmamain[nplasma].state.ne > 1.0 && w[n].inwind >= 0)
+        w[n].x[1] = plasmamain[nplasma].state.density[nion] / (0.87 * plasmamain[nplasma].state.ne * ele[nelem].abun);
       else
         w[n].x[1] = 0;
     }
@@ -774,15 +752,12 @@ partial_measure_summary (w, element, istate, rootname, ochoice)
  **********************************************************/
 
 int
-collision_summary (w, rootname, ochoice)
-     WindPtr w;
-     char rootname[];
-     int ochoice;
+collision_summary (WindPtr w, char rootname[], int ochoice)
 {
   int nline, int_te;
   double t_e, qup, qdown, A, wavelength;
   char filename[LINELENGTH], suffix[LINELENGTH];
-  FILE *fopen (), *fptr = NULL;
+  FILE *fptr = NULL;
 
   t_e = 10000.0;
 

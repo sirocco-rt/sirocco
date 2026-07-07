@@ -365,9 +365,8 @@ init_extra_diagnostics ()
   FILE *cellfile;               /*File that may or may not exist, pointing to cells we want to write out photon stats for */
   int cell;                     /*Temporary storage of cell to use */
 
-  if (eplinit == 0 && modes.extra_diagnostics)
+  if (eplinit == 0 && (modes.save_extract_photons || modes.track_resonant_scatters))
   {
-    //OLD sprintf (files.extra, "%.50s.ext.txt", files.root);
     epltptr = fopen (files.extra, "w");
     eplinit = 1;
   }
@@ -429,10 +428,7 @@ init_extra_diagnostics ()
  **********************************************************/
 
 int
-save_photon_stats (one, p, ds, w_ave)
-     WindPtr one;
-     PhotPtr p;
-     double ds, w_ave;
+save_photon_stats (WindPtr one, PhotPtr p, double ds, double w_ave)
 {
   int i;
 
@@ -475,9 +471,7 @@ int save_photon_number = 0;
  **********************************************************/
 
 int
-save_photons (p, comment)
-     PhotPtr p;
-     char comment[];
+save_photons (PhotPtr p, char comment[])
 {
   save_photon_number += 1;
 
@@ -513,10 +507,7 @@ save_photons (p, comment)
  **********************************************************/
 
 int
-track_scatters (p, nplasma, comment)
-     PhotPtr p;
-     int nplasma;
-     char *comment;
+track_scatters (PhotPtr p, int nplasma, char *comment)
 {
 
   fprintf (epltptr, "Scattter %i %.2e %.2e %.2e  %i %e %e %i %s\n", p->np,

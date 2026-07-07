@@ -65,8 +65,9 @@ broadcast_macro_atom_emissivities (const int n_start, const int n_stop, const in
       for (n_plasma = n_start; n_plasma < n_stop; ++n_plasma)
       {
         MPI_Pack (&n_plasma, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (&plasmamain[n_plasma].kpkt_emiss, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].matom_emiss, nlevels_macro, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (&plasmamain[n_plasma].derived.kpkt_emiss, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].derived.matom_emiss, nlevels_macro, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+                  MPI_COMM_WORLD);
       }
     }
 
@@ -80,13 +81,18 @@ broadcast_macro_atom_emissivities (const int n_start, const int n_stop, const in
       for (i = 0; i < num_comm; i++)
       {
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &n_plasma, 1, MPI_INT, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &plasmamain[n_plasma].kpkt_emiss, 1, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].matom_emiss, nlevels_macro, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &plasmamain[n_plasma].derived.kpkt_emiss, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].derived.matom_emiss, nlevels_macro, MPI_DOUBLE,
+                    MPI_COMM_WORLD);
       }
     }
   }
 
   free (comm_buffer);
+
+  /* Barrier to ensure shared memory writes are visible to all node-local ranks */
+  MPI_Barrier (node_comm);
+
   d_xsignal (files.root, "%-20s Finished macro atom emissivity communication\n", "OK");
 #endif
 }
@@ -143,14 +149,17 @@ broadcast_macro_atom_recomb (const int n_start, const int n_stop, const int n_ce
         MPI_Pack (&n_plasma, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);     // which cell we're working on
         if (nlevels_macro > 0)
         {
-          MPI_Pack (macromain[n_plasma].recomb_sp, size_alpha_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-          MPI_Pack (macromain[n_plasma].recomb_sp_e, size_alpha_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+          MPI_Pack (macromain[n_plasma].est.recomb_sp, size_alpha_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+                    MPI_COMM_WORLD);
+          MPI_Pack (macromain[n_plasma].est.recomb_sp_e, size_alpha_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+                    MPI_COMM_WORLD);
         }
         if (nphot_total > 0)
         {
-          MPI_Pack (plasmamain[n_plasma].recomb_simple, nphot_total, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-          MPI_Pack (plasmamain[n_plasma].recomb_simple_upweight, nphot_total, MPI_DOUBLE, comm_buffer, comm_buffer_size,
-                    &position, MPI_COMM_WORLD);
+          MPI_Pack (plasmamain[n_plasma].state.recomb_simple, nphot_total, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+                    MPI_COMM_WORLD);
+          MPI_Pack (plasmamain[n_plasma].state.recomb_simple_upweight, nphot_total, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+                    MPI_COMM_WORLD);
         }
       }
     }
@@ -168,15 +177,16 @@ broadcast_macro_atom_recomb (const int n_start, const int n_stop, const int n_ce
 
         if (nlevels_macro > 0)
         {
-          MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].recomb_sp, size_alpha_est, MPI_DOUBLE, MPI_COMM_WORLD);
-          MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].recomb_sp_e,
-                      size_alpha_est, MPI_DOUBLE, MPI_COMM_WORLD);
+          MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].est.recomb_sp, size_alpha_est, MPI_DOUBLE,
+                      MPI_COMM_WORLD);
+          MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].est.recomb_sp_e, size_alpha_est, MPI_DOUBLE,
+                      MPI_COMM_WORLD);
         }
         if (nphot_total > 0)
         {
-          MPI_Unpack (comm_buffer, comm_buffer_size, &position, plasmamain[n_plasma].recomb_simple,
+          MPI_Unpack (comm_buffer, comm_buffer_size, &position, plasmamain[n_plasma].state.recomb_simple,
                       nphot_total, MPI_DOUBLE, MPI_COMM_WORLD);
-          MPI_Unpack (comm_buffer, comm_buffer_size, &position, plasmamain[n_plasma].recomb_simple_upweight,
+          MPI_Unpack (comm_buffer, comm_buffer_size, &position, plasmamain[n_plasma].state.recomb_simple_upweight,
                       nphot_total, MPI_DOUBLE, MPI_COMM_WORLD);
         }
       }
@@ -184,6 +194,10 @@ broadcast_macro_atom_recomb (const int n_start, const int n_stop, const int n_ce
   }
 
   free (comm_buffer);
+
+  /* Barrier to ensure shared memory writes are visible to all node-local ranks */
+  MPI_Barrier (node_comm);
+
   d_xsignal (files.root, "%-20s Finished macro atom recombination communication\n", "OK");
 #endif
 }
@@ -238,17 +252,20 @@ broadcast_updated_macro_atom_properties (const int n_start, const int n_stop, co
       for (n_plasma = n_start; n_plasma < n_stop; ++n_plasma)
       {
         MPI_Pack (&n_plasma, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].jbar, size_Jbar_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].jbar_old, size_Jbar_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].gamma, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].gamma_old, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].gamma_e, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].gamma_e_old, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].alpha_st, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (macromain[n_plasma].alpha_st_old, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (&macromain[n_plasma].kpkt_rates_known, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (&macromain[n_plasma].matrix_rates_known, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
-        MPI_Pack (&macromain[n_plasma].energy_flow_in, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].est.jbar, size_Jbar_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].state.jbar_old, size_Jbar_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].est.gamma, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].state.gamma_old, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+                  MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].est.gamma_e, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].state.gamma_e_old, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+                  MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].est.alpha_st, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (macromain[n_plasma].state.alpha_st_old, size_gamma_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+                  MPI_COMM_WORLD);
+        MPI_Pack (&macromain[n_plasma].derived.kpkt_rates_known, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (&macromain[n_plasma].derived.matrix_rates_known, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (&macromain[n_plasma].est.energy_flow_in, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
       }
     }
 
@@ -262,22 +279,30 @@ broadcast_updated_macro_atom_properties (const int n_start, const int n_stop, co
       for (i = 0; i < num_comm; ++i)
       {
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &n_plasma, 1, MPI_INT, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].jbar, size_Jbar_est, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].jbar_old, size_Jbar_est, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].gamma, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].gamma_old, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].gamma_e, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].gamma_e_old, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].alpha_st, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].alpha_st_old, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &macromain[n_plasma].kpkt_rates_known, 1, MPI_INT, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &macromain[n_plasma].matrix_rates_known, 1, MPI_INT, MPI_COMM_WORLD);
-        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &macromain[n_plasma].energy_flow_in, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].est.jbar, size_Jbar_est, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].state.jbar_old, size_Jbar_est, MPI_DOUBLE,
+                    MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].est.gamma, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].state.gamma_old, size_gamma_est, MPI_DOUBLE,
+                    MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].est.gamma_e, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].state.gamma_e_old, size_gamma_est, MPI_DOUBLE,
+                    MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].est.alpha_st, size_gamma_est, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].state.alpha_st_old, size_gamma_est, MPI_DOUBLE,
+                    MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &macromain[n_plasma].derived.kpkt_rates_known, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &macromain[n_plasma].derived.matrix_rates_known, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &macromain[n_plasma].est.energy_flow_in, 1, MPI_DOUBLE, MPI_COMM_WORLD);
       }
     }
   }
 
   free (comm_buffer);
+
+  /* Barrier to ensure shared memory writes are visible to all node-local ranks */
+  MPI_Barrier (node_comm);
+
   d_xsignal (files.root, "%-20s Finished macro atom updated properties communication\n", "OK");
 #endif
   return EXIT_SUCCESS;
@@ -310,6 +335,17 @@ broadcast_macro_atom_state_matrix (int n_start, int n_stop, int n_cells_rank)
   int n, position;
 
   d_xsignal (files.root, "%-20s Begin macro atom state matrix communication\n", "NOK");
+
+  /* matom_matrix lives in shared memory on each node, so for a single-node run
+   * the writing rank's data is already visible to all node-local ranks.
+   * A barrier is sufficient; no cross-rank data transfer is needed. */
+  if (num_nodes == 1)
+  {
+    MPI_Barrier (node_comm);
+    d_xsignal (files.root, "%-20s Finished macro atom state matrix communication\n", "OK");
+    return (0);
+  }
+
   const int matrix_size = nlevels_macro + 1;
   const int n_cells_max = get_max_cells_per_rank (NPLASMA);
   const int comm_buffer_size = calculate_comm_buffer_size (1 + n_cells_max, n_cells_max * (matrix_size * matrix_size));
@@ -333,9 +369,9 @@ broadcast_macro_atom_state_matrix (int n_start, int n_stop, int n_cells_rank)
         MPI_Pack (&n, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
 
         /* we only communicate the matrix if it is being stored in this cell */
-        if (macromain[n].store_matom_matrix == TRUE)
+        if (macromain[n].state.store_matom_matrix == TRUE)
         {
-          MPI_Pack (macromain[n].matom_matrix[0], matrix_size * matrix_size, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
+          MPI_Pack (macromain[n].derived.matom_matrix[0], matrix_size * matrix_size, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
                     MPI_COMM_WORLD);
         }
       }
@@ -353,9 +389,9 @@ broadcast_macro_atom_state_matrix (int n_start, int n_stop, int n_cells_rank)
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &n, 1, MPI_INT, MPI_COMM_WORLD);
 
         /* we only communicate the matrix if it is being stored in this cell */
-        if (macromain[n].store_matom_matrix == TRUE)
+        if (macromain[n].state.store_matom_matrix == TRUE)
         {
-          MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n].matom_matrix[0], matrix_size * matrix_size, MPI_DOUBLE,
+          MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n].derived.matom_matrix[0], matrix_size * matrix_size, MPI_DOUBLE,
                       MPI_COMM_WORLD);
         }
       }
@@ -363,6 +399,10 @@ broadcast_macro_atom_state_matrix (int n_start, int n_stop, int n_cells_rank)
   }
 
   free (comm_buffer);
+
+  /* Barrier to ensure shared memory writes are visible to all node-local ranks */
+  MPI_Barrier (node_comm);
+
   d_xsignal (files.root, "%-20s Finished macro atom state matrix communication\n", "OK");
 #endif
   return (0);
@@ -390,8 +430,8 @@ reduce_macro_atom_estimators (void)
   double *level_helper, *cell_helper, *jbar_helper;
   double *gamma_helper2, *alpha_helper2;
   double *level_helper2, *cell_helper2, *jbar_helper2;
-  double *cooling_bf_helper, *cooling_bb_helper;
-  double *cooling_bf_helper2, *cooling_bb_helper2;
+  double *cooling_bf_helper;
+  double *cooling_bf_helper2;
 
   d_xsignal (files.root, "%-20s Begin reduction of macro atom estimators\n", "NOK");
 
@@ -413,7 +453,6 @@ reduce_macro_atom_estimators (void)
   level_helper = calloc (sizeof (double), NPLASMA * nlevels_macro);
   cell_helper = calloc (sizeof (double), 9 * NPLASMA);
   cooling_bf_helper = calloc (sizeof (double), NPLASMA * 2 * nphot_total);
-  cooling_bb_helper = calloc (sizeof (double), NPLASMA * nlines);
 
   jbar_helper2 = calloc (sizeof (double), NPLASMA * size_Jbar_est);
   gamma_helper2 = calloc (sizeof (double), NPLASMA * 4 * size_gamma_est);
@@ -421,60 +460,55 @@ reduce_macro_atom_estimators (void)
   level_helper2 = calloc (sizeof (double), NPLASMA * nlevels_macro);
   cell_helper2 = calloc (sizeof (double), 9 * NPLASMA);
   cooling_bf_helper2 = calloc (sizeof (double), NPLASMA * 2 * nphot_total);
-  cooling_bb_helper2 = calloc (sizeof (double), NPLASMA * nlines);
 
   /* now we loop through each cell and copy the values of our variables
      into our helper arrays */
   for (mpi_i = 0; mpi_i < NPLASMA; mpi_i++)
   {
     /* one kpkt_abs quantity per cell */
-    cell_helper[mpi_i] = plasmamain[mpi_i].kpkt_abs / np_mpi_global;
+    cell_helper[mpi_i] = plasmamain[mpi_i].est.kpkt_abs / np_mpi_global;
 
     /* each of the cooling sums and normalisations also have one quantity per cell */
-    cell_helper[mpi_i + NPLASMA] = macromain[mpi_i].cooling_normalisation / np_mpi_global;
-    cell_helper[mpi_i + 2 * NPLASMA] = macromain[mpi_i].cooling_bftot / np_mpi_global;
-    cell_helper[mpi_i + 3 * NPLASMA] = macromain[mpi_i].cooling_bf_coltot / np_mpi_global;
-    cell_helper[mpi_i + 4 * NPLASMA] = macromain[mpi_i].cooling_bbtot / np_mpi_global;
-    cell_helper[mpi_i + 5 * NPLASMA] = macromain[mpi_i].cooling_ff / np_mpi_global;
-    cell_helper[mpi_i + 6 * NPLASMA] = macromain[mpi_i].cooling_ff_lofreq / np_mpi_global;
-    cell_helper[mpi_i + 7 * NPLASMA] = macromain[mpi_i].cooling_adiabatic / np_mpi_global;
-    cell_helper[mpi_i + 8 * NPLASMA] = macromain[mpi_i].energy_flow_out / np_mpi_global;
+    cell_helper[mpi_i + NPLASMA] = macromain[mpi_i].est.cooling_normalisation / np_mpi_global;
+    cell_helper[mpi_i + 2 * NPLASMA] = macromain[mpi_i].est.cooling_bftot / np_mpi_global;
+    cell_helper[mpi_i + 3 * NPLASMA] = macromain[mpi_i].est.cooling_bf_coltot / np_mpi_global;
+    cell_helper[mpi_i + 4 * NPLASMA] = macromain[mpi_i].est.cooling_bbtot / np_mpi_global;
+    cell_helper[mpi_i + 5 * NPLASMA] = macromain[mpi_i].est.cooling_ff / np_mpi_global;
+    cell_helper[mpi_i + 6 * NPLASMA] = macromain[mpi_i].est.cooling_ff_lofreq / np_mpi_global;
+    cell_helper[mpi_i + 7 * NPLASMA] = macromain[mpi_i].est.cooling_adiabatic / np_mpi_global;
+    cell_helper[mpi_i + 8 * NPLASMA] = macromain[mpi_i].est.energy_flow_out / np_mpi_global;
 
 
     for (n = 0; n < nlevels_macro; n++)
     {
-      level_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].matom_abs[n] / np_mpi_global;
+      level_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].est.matom_abs[n] / np_mpi_global;
     }
 
     for (n = 0; n < size_Jbar_est; n++)
     {
-      jbar_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].jbar[n] / np_mpi_global;
+      jbar_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].est.jbar[n] / np_mpi_global;
     }
 
     for (n = 0; n < size_gamma_est; n++)
     {
-      gamma_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].alpha_st[n] / np_mpi_global;
-      gamma_helper[mpi_i + ((n + size_gamma_est) * NPLASMA)] = macromain[mpi_i].alpha_st_e[n] / np_mpi_global;
-      gamma_helper[mpi_i + ((n + 2 * size_gamma_est) * NPLASMA)] = macromain[mpi_i].gamma[n] / np_mpi_global;
-      gamma_helper[mpi_i + ((n + 3 * size_gamma_est) * NPLASMA)] = macromain[mpi_i].gamma_e[n] / np_mpi_global;
+      gamma_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].est.alpha_st[n] / np_mpi_global;
+      gamma_helper[mpi_i + ((n + size_gamma_est) * NPLASMA)] = macromain[mpi_i].est.alpha_st_e[n] / np_mpi_global;
+      gamma_helper[mpi_i + ((n + 2 * size_gamma_est) * NPLASMA)] = macromain[mpi_i].est.gamma[n] / np_mpi_global;
+      gamma_helper[mpi_i + ((n + 3 * size_gamma_est) * NPLASMA)] = macromain[mpi_i].est.gamma_e[n] / np_mpi_global;
     }
 
     for (n = 0; n < size_alpha_est; n++)
     {
-      alpha_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].recomb_sp[n] / np_mpi_global;
-      alpha_helper[mpi_i + ((n + size_alpha_est) * NPLASMA)] = macromain[mpi_i].recomb_sp_e[n] / np_mpi_global;
+      alpha_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].est.recomb_sp[n] / np_mpi_global;
+      alpha_helper[mpi_i + ((n + size_alpha_est) * NPLASMA)] = macromain[mpi_i].est.recomb_sp_e[n] / np_mpi_global;
     }
 
     for (n = 0; n < nphot_total; n++)
     {
-      cooling_bf_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].cooling_bf[n] / np_mpi_global;
-      cooling_bf_helper[mpi_i + ((n + nphot_total) * NPLASMA)] = macromain[mpi_i].cooling_bf_col[n] / np_mpi_global;
+      cooling_bf_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].est.cooling_bf[n] / np_mpi_global;
+      cooling_bf_helper[mpi_i + ((n + nphot_total) * NPLASMA)] = macromain[mpi_i].est.cooling_bf_col[n] / np_mpi_global;
     }
 
-    for (n = 0; n < nlines; n++)
-    {
-      cooling_bb_helper[mpi_i + (n * NPLASMA)] = macromain[mpi_i].cooling_bb[n] / np_mpi_global;
-    }
   }
 
   /* because in the above loop we have already divided by number of processes, we can now do a sum
@@ -485,7 +519,44 @@ reduce_macro_atom_estimators (void)
   MPI_Allreduce (gamma_helper, gamma_helper2, NPLASMA * 4 * size_gamma_est, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (alpha_helper, alpha_helper2, NPLASMA * 2 * size_alpha_est, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (cooling_bf_helper, cooling_bf_helper2, NPLASMA * 2 * nphot_total, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-  MPI_Allreduce (cooling_bb_helper, cooling_bb_helper2, NPLASMA * nlines, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+  /* cooling_bb: chunked MPI_IN_PLACE Allreduce to avoid a 2x peak allocation of
+   * NPLASMA*nlines doubles (~2x585 MB for big.pf). Target ~50 MB per chunk. */
+  {
+    int chunk_size = (int) ((long) 50 * 1024 * 1024 / ((long) nlines * sizeof (double)));
+    if (chunk_size < 1)
+      chunk_size = 1;
+    double *cooling_bb_chunk = malloc ((long) chunk_size * nlines * sizeof (double));
+    if (cooling_bb_chunk == NULL)
+    {
+      Error ("reduce_macro_atom_estimators: Error allocating cooling_bb_chunk\n");
+      Exit (EXIT_FAILURE);
+    }
+    int chunk_start, chunk_end, chunk_cells, ci;
+    for (chunk_start = 0; chunk_start < NPLASMA; chunk_start += chunk_size)
+    {
+      chunk_end = chunk_start + chunk_size;
+      if (chunk_end > NPLASMA)
+        chunk_end = NPLASMA;
+      chunk_cells = chunk_end - chunk_start;
+      for (ci = 0; ci < chunk_cells; ci++)
+      {
+        for (n = 0; n < nlines; n++)
+        {
+          cooling_bb_chunk[ci + (long) n * chunk_cells] = macromain[chunk_start + ci].est.cooling_bb[n] / np_mpi_global;
+        }
+      }
+      MPI_Allreduce (MPI_IN_PLACE, cooling_bb_chunk, chunk_cells * nlines, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      for (ci = 0; ci < chunk_cells; ci++)
+      {
+        for (n = 0; n < nlines; n++)
+        {
+          macromain[chunk_start + ci].est.cooling_bb[n] = cooling_bb_chunk[ci + (long) n * chunk_cells];
+        }
+      }
+    }
+    free (cooling_bb_chunk);
+  }
 
   /* We now need to copy these reduced variables to the plasma structure in each thread */
 
@@ -493,53 +564,49 @@ reduce_macro_atom_estimators (void)
   for (mpi_i = 0; mpi_i < NPLASMA; mpi_i++)
   {
     /* one kpkt_abs quantity per cell */
-    plasmamain[mpi_i].kpkt_abs = cell_helper2[mpi_i];
+    plasmamain[mpi_i].est.kpkt_abs = cell_helper2[mpi_i];
 
     /* each of the cooling sums and normalisations also have one quantity per cell */
-    macromain[mpi_i].cooling_normalisation = cell_helper2[mpi_i + NPLASMA];
-    macromain[mpi_i].cooling_bftot = cell_helper2[mpi_i + 2 * NPLASMA];
-    macromain[mpi_i].cooling_bf_coltot = cell_helper2[mpi_i + 3 * NPLASMA];
-    macromain[mpi_i].cooling_bbtot = cell_helper2[mpi_i + 4 * NPLASMA];
-    macromain[mpi_i].cooling_ff = cell_helper2[mpi_i + 5 * NPLASMA];
-    macromain[mpi_i].cooling_ff_lofreq = cell_helper2[mpi_i + 6 * NPLASMA];
-    macromain[mpi_i].cooling_adiabatic = cell_helper2[mpi_i + 7 * NPLASMA];
-    macromain[mpi_i].energy_flow_out = cell_helper2[mpi_i + 8 * NPLASMA];
+    macromain[mpi_i].est.cooling_normalisation = cell_helper2[mpi_i + NPLASMA];
+    macromain[mpi_i].est.cooling_bftot = cell_helper2[mpi_i + 2 * NPLASMA];
+    macromain[mpi_i].est.cooling_bf_coltot = cell_helper2[mpi_i + 3 * NPLASMA];
+    macromain[mpi_i].est.cooling_bbtot = cell_helper2[mpi_i + 4 * NPLASMA];
+    macromain[mpi_i].est.cooling_ff = cell_helper2[mpi_i + 5 * NPLASMA];
+    macromain[mpi_i].est.cooling_ff_lofreq = cell_helper2[mpi_i + 6 * NPLASMA];
+    macromain[mpi_i].est.cooling_adiabatic = cell_helper2[mpi_i + 7 * NPLASMA];
+    macromain[mpi_i].est.energy_flow_out = cell_helper2[mpi_i + 8 * NPLASMA];
 
 
     for (n = 0; n < nlevels_macro; n++)
     {
-      macromain[mpi_i].matom_abs[n] = level_helper2[mpi_i + (n * NPLASMA)];
+      macromain[mpi_i].est.matom_abs[n] = level_helper2[mpi_i + (n * NPLASMA)];
     }
 
     for (n = 0; n < size_Jbar_est; n++)
     {
-      macromain[mpi_i].jbar[n] = jbar_helper2[mpi_i + (n * NPLASMA)];
+      macromain[mpi_i].est.jbar[n] = jbar_helper2[mpi_i + (n * NPLASMA)];
     }
 
     for (n = 0; n < size_gamma_est; n++)
     {
-      macromain[mpi_i].alpha_st[n] = gamma_helper2[mpi_i + (n * NPLASMA)];
-      macromain[mpi_i].alpha_st_e[n] = gamma_helper2[mpi_i + ((n + size_gamma_est) * NPLASMA)] / np_mpi_global;
-      macromain[mpi_i].gamma[n] = gamma_helper2[mpi_i + ((n + 2 * size_gamma_est) * NPLASMA)];
-      macromain[mpi_i].gamma_e[n] = gamma_helper2[mpi_i + ((n + 3 * size_gamma_est) * NPLASMA)];
+      macromain[mpi_i].est.alpha_st[n] = gamma_helper2[mpi_i + (n * NPLASMA)];
+      macromain[mpi_i].est.alpha_st_e[n] = gamma_helper2[mpi_i + ((n + size_gamma_est) * NPLASMA)] / np_mpi_global;
+      macromain[mpi_i].est.gamma[n] = gamma_helper2[mpi_i + ((n + 2 * size_gamma_est) * NPLASMA)];
+      macromain[mpi_i].est.gamma_e[n] = gamma_helper2[mpi_i + ((n + 3 * size_gamma_est) * NPLASMA)];
     }
 
     for (n = 0; n < size_alpha_est; n++)
     {
-      macromain[mpi_i].recomb_sp[n] = alpha_helper2[mpi_i + (n * NPLASMA)];
-      macromain[mpi_i].recomb_sp_e[n] = alpha_helper2[mpi_i + ((n + size_alpha_est) * NPLASMA)];
+      macromain[mpi_i].est.recomb_sp[n] = alpha_helper2[mpi_i + (n * NPLASMA)];
+      macromain[mpi_i].est.recomb_sp_e[n] = alpha_helper2[mpi_i + ((n + size_alpha_est) * NPLASMA)];
     }
 
     for (n = 0; n < nphot_total; n++)
     {
-      macromain[mpi_i].cooling_bf[n] = cooling_bf_helper2[mpi_i + (n * NPLASMA)];
-      macromain[mpi_i].cooling_bf_col[n] = cooling_bf_helper2[mpi_i + ((n + nphot_total) * NPLASMA)];
+      macromain[mpi_i].est.cooling_bf[n] = cooling_bf_helper2[mpi_i + (n * NPLASMA)];
+      macromain[mpi_i].est.cooling_bf_col[n] = cooling_bf_helper2[mpi_i + ((n + nphot_total) * NPLASMA)];
     }
 
-    for (n = 0; n < nlines; n++)
-    {
-      macromain[mpi_i].cooling_bb[n] = cooling_bb_helper2[mpi_i + (n * NPLASMA)];
-    }
   }
 
   free (cell_helper);
@@ -548,7 +615,6 @@ reduce_macro_atom_estimators (void)
   free (gamma_helper);
   free (alpha_helper);
   free (cooling_bf_helper);
-  free (cooling_bb_helper);
 
   free (cell_helper2);
   free (level_helper2);
@@ -556,7 +622,6 @@ reduce_macro_atom_estimators (void)
   free (gamma_helper2);
   free (alpha_helper2);
   free (cooling_bf_helper2);
-  free (cooling_bb_helper2);
 
   d_xsignal (files.root, "%-20s Finished reduction of macro atom estimators\n", "OK");
 #endif
