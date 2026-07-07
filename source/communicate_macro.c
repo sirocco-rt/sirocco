@@ -233,7 +233,7 @@ broadcast_updated_macro_atom_properties (const int n_start, const int n_stop, co
 
   d_xsignal (files.root, "%-20s Begin macro atom updated properties communication\n", "NOK");
   const int n_cells_max = get_max_cells_per_rank (NPLASMA);
-  const int comm_buffer_size = calculate_comm_buffer_size (1 + 3 * n_cells_max, n_cells_max * (6 * size_gamma_est + 2 * size_Jbar_est));
+  const int comm_buffer_size = calculate_comm_buffer_size (1 + 3 * n_cells_max, n_cells_max * (6 * size_gamma_est + 2 * size_Jbar_est + 1));
 
   char *const comm_buffer = malloc (comm_buffer_size);
   if (comm_buffer == NULL)
@@ -265,6 +265,7 @@ broadcast_updated_macro_atom_properties (const int n_start, const int n_stop, co
                   MPI_COMM_WORLD);
         MPI_Pack (&macromain[n_plasma].derived.kpkt_rates_known, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
         MPI_Pack (&macromain[n_plasma].derived.matrix_rates_known, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
+        MPI_Pack (&macromain[n_plasma].est.energy_flow_in, 1, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);
       }
     }
 
@@ -292,6 +293,7 @@ broadcast_updated_macro_atom_properties (const int n_start, const int n_stop, co
                     MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &macromain[n_plasma].derived.kpkt_rates_known, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &macromain[n_plasma].derived.matrix_rates_known, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack (comm_buffer, comm_buffer_size, &position, &macromain[n_plasma].est.energy_flow_in, 1, MPI_DOUBLE, MPI_COMM_WORLD);
       }
     }
   }
@@ -449,14 +451,14 @@ reduce_macro_atom_estimators (void)
   gamma_helper = calloc (sizeof (double), NPLASMA * 4 * size_gamma_est);
   alpha_helper = calloc (sizeof (double), NPLASMA * 2 * size_alpha_est);
   level_helper = calloc (sizeof (double), NPLASMA * nlevels_macro);
-  cell_helper = calloc (sizeof (double), 8 * NPLASMA);
+  cell_helper = calloc (sizeof (double), 9 * NPLASMA);
   cooling_bf_helper = calloc (sizeof (double), NPLASMA * 2 * nphot_total);
 
   jbar_helper2 = calloc (sizeof (double), NPLASMA * size_Jbar_est);
   gamma_helper2 = calloc (sizeof (double), NPLASMA * 4 * size_gamma_est);
   alpha_helper2 = calloc (sizeof (double), NPLASMA * 2 * size_alpha_est);
   level_helper2 = calloc (sizeof (double), NPLASMA * nlevels_macro);
-  cell_helper2 = calloc (sizeof (double), 8 * NPLASMA);
+  cell_helper2 = calloc (sizeof (double), 9 * NPLASMA);
   cooling_bf_helper2 = calloc (sizeof (double), NPLASMA * 2 * nphot_total);
 
   /* now we loop through each cell and copy the values of our variables
@@ -474,7 +476,7 @@ reduce_macro_atom_estimators (void)
     cell_helper[mpi_i + 5 * NPLASMA] = macromain[mpi_i].est.cooling_ff / np_mpi_global;
     cell_helper[mpi_i + 6 * NPLASMA] = macromain[mpi_i].est.cooling_ff_lofreq / np_mpi_global;
     cell_helper[mpi_i + 7 * NPLASMA] = macromain[mpi_i].est.cooling_adiabatic / np_mpi_global;
-
+    cell_helper[mpi_i + 8 * NPLASMA] = macromain[mpi_i].est.energy_flow_out / np_mpi_global;
 
 
     for (n = 0; n < nlevels_macro; n++)
@@ -511,7 +513,7 @@ reduce_macro_atom_estimators (void)
 
   /* because in the above loop we have already divided by number of processes, we can now do a sum
      with MPI_Reduce, passing it MPI_SUM as an argument. This will give us the mean across threads */
-  MPI_Allreduce (cell_helper, cell_helper2, NPLASMA * 8, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce (cell_helper, cell_helper2, NPLASMA * 9, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (level_helper, level_helper2, NPLASMA * nlevels_macro, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (jbar_helper, jbar_helper2, NPLASMA * size_Jbar_est, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce (gamma_helper, gamma_helper2, NPLASMA * 4 * size_gamma_est, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -572,6 +574,7 @@ reduce_macro_atom_estimators (void)
     macromain[mpi_i].est.cooling_ff = cell_helper2[mpi_i + 5 * NPLASMA];
     macromain[mpi_i].est.cooling_ff_lofreq = cell_helper2[mpi_i + 6 * NPLASMA];
     macromain[mpi_i].est.cooling_adiabatic = cell_helper2[mpi_i + 7 * NPLASMA];
+    macromain[mpi_i].est.energy_flow_out = cell_helper2[mpi_i + 8 * NPLASMA];
 
 
     for (n = 0; n < nlevels_macro; n++)

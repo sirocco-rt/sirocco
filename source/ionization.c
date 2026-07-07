@@ -476,6 +476,7 @@ static double lte_heat_photo_orig, lte_heat_ff_orig;
 static double lte_heat_comp_orig, lte_heat_ind_comp_orig;
 static double lte_heat_lines_orig, lte_heat_auger_orig;
 static double lte_heat_lines_macro_orig, lte_heat_photo_macro_orig;
+static double lte_heat_qrecomb_macro_orig;
 static double lte_heat_ch_ex_orig;
 
 
@@ -644,15 +645,21 @@ calc_te (PlasmaPtr xplasma, double tmin, double tmax)
   xplasma->est.heat_tot += xplasma->est.heat_lines_macro;
   xplasma->est.heat_lines += xplasma->est.heat_lines_macro;
 
-  /* Similaryly for macro_atom_bf_heating */
+  /* Similarly for macro_atom_bf_heating, for both photoionization 
+     and three body recombination components */
 
   xplasma->est.heat_tot -= xplasma->est.heat_photo_macro;
   xplasma->est.heat_photo -= xplasma->est.heat_photo_macro;
+  xplasma->est.heat_tot -= xplasma->est.heat_qrecomb_macro;
+  xplasma->est.heat_photo -= xplasma->est.heat_qrecomb_macro;
 
-  xplasma->est.heat_photo_macro = macro_bf_heating (xplasma, xplasma->state.t_e);
+  xplasma->est.heat_photo_macro = macro_photo_heating (xplasma, xplasma->state.t_e);
+  xplasma->est.heat_qrecomb_macro = macro_qrecomb_heating (xplasma, xplasma->state.t_e);
 
   xplasma->est.heat_tot += xplasma->est.heat_photo_macro;
   xplasma->est.heat_photo += xplasma->est.heat_photo_macro;
+  xplasma->est.heat_tot += xplasma->est.heat_qrecomb_macro;
+  xplasma->est.heat_photo += xplasma->est.heat_qrecomb_macro;
 
 
   return (xplasma->state.t_e);
@@ -705,7 +712,7 @@ zero_emit (double t)
 {
   double difference;
 
-  /*Original method */
+  /* Original method */
   xxxplasma->state.t_e = t;
 
 
@@ -718,22 +725,28 @@ zero_emit (double t)
   xxxplasma->est.heat_tot += xxxplasma->est.heat_lines_macro;
   xxxplasma->est.heat_lines += xxxplasma->est.heat_lines_macro;
 
+  /* Similarly for macro_atom_bf_heating, recompute for both photoionization
+     and three body recombination components */
+
   xxxplasma->est.heat_tot -= xxxplasma->est.heat_photo_macro;
   xxxplasma->est.heat_photo -= xxxplasma->est.heat_photo_macro;
+  xxxplasma->est.heat_tot -= xxxplasma->est.heat_qrecomb_macro;
+  xxxplasma->est.heat_photo -= xxxplasma->est.heat_qrecomb_macro;
 
-  xxxplasma->est.heat_photo_macro = macro_bf_heating (xxxplasma, t);
+  xxxplasma->est.heat_photo_macro = macro_photo_heating (xxxplasma, t);
+  xxxplasma->est.heat_qrecomb_macro = macro_qrecomb_heating (xxxplasma, t);
 
   xxxplasma->est.heat_tot += xxxplasma->est.heat_photo_macro;
   xxxplasma->est.heat_photo += xxxplasma->est.heat_photo_macro;
+  xxxplasma->est.heat_tot += xxxplasma->est.heat_qrecomb_macro;
+  xxxplasma->est.heat_photo += xxxplasma->est.heat_qrecomb_macro;
 
-  /* Finished macro atom corrections */
 
+  /* Finished macro atom corrections. Now compute the total cooling and heating - cooling */
 
   cooling (xxxplasma, t);
 
   difference = xxxplasma->est.heat_tot + xxxplasma->derived.heat_shock - xxxplasma->est.cool_tot;
-
-
 
   return (difference);
 }
@@ -851,11 +864,15 @@ zero_emit_lte (double t)
   /* Now subtract the original macro contributions (which are included
      in the scaled heat_photo and heat_lines above) and replace with
      freshly computed macro heating at the new temperature and densities */
+  /* note that we have to include collisional recombination (qrecomb) */
   xxxplasma->est.heat_photo -= lte_heat_photo_macro_orig;
+  xxxplasma->est.heat_photo -= lte_heat_qrecomb_macro_orig;
 
-  xxxplasma->est.heat_photo_macro = macro_bf_heating (xxxplasma, t);
-
+  xxxplasma->est.heat_photo_macro = macro_photo_heating (xxxplasma, t);
   xxxplasma->est.heat_photo += xxxplasma->est.heat_photo_macro;
+
+  xxxplasma->est.heat_qrecomb_macro = macro_qrecomb_heating (xxxplasma, t);
+  xxxplasma->est.heat_photo += xxxplasma->est.heat_qrecomb_macro;
 
   xxxplasma->est.heat_lines_macro = macro_bb_heating (xxxplasma, t);
 
@@ -942,6 +959,7 @@ calc_te_lte (PlasmaPtr xplasma, double tmin, double tmax)
   lte_heat_auger_orig = xplasma->est.heat_auger;
   lte_heat_lines_macro_orig = xplasma->est.heat_lines_macro;
   lte_heat_photo_macro_orig = xplasma->est.heat_photo_macro;
+  lte_heat_qrecomb_macro_orig = xplasma->est.heat_qrecomb_macro;
   lte_heat_ch_ex_orig = xplasma->est.heat_ch_ex;
 
   /* Evaluate heating-cooling difference at bracket endpoints */

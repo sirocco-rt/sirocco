@@ -514,15 +514,26 @@ create_heat_table (int ndom, char rootname[])
   c[27] = get_one (ndom, "heat_photo_macro");
   strcpy (column_name[27], "ht_ph_macro");
 
+  c[28] = get_one (ndom, "heat_qrecomb_macro");
+  strcpy (column_name[28], "ht_qr_macro");
 
-  c[28] = get_one (ndom, "cool_lines_macro");
-  strcpy (column_name[28], "cl_ln_macro");
+  c[29] = get_one (ndom, "cool_lines_macro");
+  strcpy (column_name[29], "cl_ln_macro");
 
-  c[29] = get_one (ndom, "cool_bf_macro");
-  strcpy (column_name[29], "cl_ph_macro");
+  c[30] = get_one (ndom, "cool_bf_macro");
+  strcpy (column_name[30], "cl_ph_macro");
+
+  c[31] = get_one (ndom, "cool_di_macro");
+  strcpy (column_name[31], "cl_di_macro");
+
+  c[32] = get_one (ndom, "energy_in_macro");
+  strcpy (column_name[32], "e_in_macro");
+
+  c[33] = get_one (ndom, "energy_out_macro");
+  strcpy (column_name[33], "e_out_macro");
 
   /* This should be the maximum number above +1 */
-  ncols = 30;
+  ncols = 34;
 
 
   converge = get_one (ndom, "converge");
@@ -1517,6 +1528,10 @@ get_one (int ndom, char variable_name[])
       {
         x[n] = plasmamain[nplasma].est.heat_photo_macro;
       }
+      else if (strcmp (variable_name, "heat_qrecomb_macro") == 0)
+      {
+        x[n] = plasmamain[nplasma].est.heat_qrecomb_macro;
+      }
       else if (strcmp (variable_name, "cool_lines_macro") == 0)
       {
         x[n] = plasmamain[nplasma].derived.cool_lines_macro;
@@ -1525,7 +1540,18 @@ get_one (int ndom, char variable_name[])
       {
         x[n] = plasmamain[nplasma].derived.cool_bf_macro;
       }
-
+      else if (strcmp (variable_name, "cool_di_macro") == 0)
+      {
+        x[n] = plasmamain[nplasma].derived.cool_di_macro;
+      }
+      else if (strcmp (variable_name, "energy_in_macro") == 0)
+      {
+        x[n] = macromain[nplasma].est.energy_flow_in;
+      }
+      else if (strcmp (variable_name, "energy_out_macro") == 0)
+      {
+        x[n] = macromain[nplasma].est.energy_flow_out;
+      }
       else if (strcmp (variable_name, "gain") == 0)
       {
         x[n] = plasmamain[nplasma].derived.gain;
