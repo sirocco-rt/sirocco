@@ -97,14 +97,14 @@ compton_scatter (p)
     if (v > 0)
     {
       velocity_electron[0] = (-velocity_electron[0]);
-      velocity_electron[2] = (-velocity_electron[1]);
+      velocity_electron[1] = (-velocity_electron[1]);
       velocity_electron[2] = (-velocity_electron[2]);
     }
   }
   else if (v < 0)
   {
     velocity_electron[0] = (-velocity_electron[0]);
-    velocity_electron[2] = (-velocity_electron[1]);
+    velocity_electron[1] = (-velocity_electron[1]);
     velocity_electron[2] = (-velocity_electron[2]);
   }
 
