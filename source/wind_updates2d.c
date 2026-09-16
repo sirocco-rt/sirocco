@@ -152,6 +152,7 @@ wind_update (WindPtr w)
     }
 
     /* Calculate the densities in various ways depending on the ioniz_mode */
+    Debug ("XXX -- matrix_multishot -- updating cycle %3d cell %3d\n", geo.wcycle, n_plasma);
     ion_abundances (&plasmamain[n_plasma], geo.ioniz_mode);
   }
 
