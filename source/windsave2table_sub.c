@@ -283,14 +283,14 @@ create_master_table (ndom, rootname)
     for (i = 0; i < ndim2; i++)
     {
       //This line is different from the two d case
-      sprintf (start, "%9.3e %9.3e %4d %5d %7d %6d %8.0f %9.2e %9.2e %9.2e ",
+      sprintf (start, "%9.6e %9.6e %4d %5d %7d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].r, wmain[nstart + i].rcen, i, wmain[nstart + i].nwind, wmain[nstart + i].nplasma, wmain[nstart + i].inwind,
                converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -322,7 +322,7 @@ create_master_table (ndom, rootname)
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
       sprintf (start,
-               "%8.2e %8.2e %8.2e %8.2e %4d %4d %8d %6d %6d %8.0f %9.2e %9.2e %9.2e ",
+               "%8.6e %8.6e %8.6e %8.6e %4d %4d %8d %6d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                jj, wmain[nstart + i].nwind, wmain[nstart + i].nplasma, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0],
                wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
@@ -330,7 +330,7 @@ create_master_table (ndom, rootname)
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -362,7 +362,7 @@ create_master_table (ndom, rootname)
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
       sprintf (start,
-               "%9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %4d %4d %7d %7d %7d %8.0f %9.2e %9.2e %9.2e ",
+               "%9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %4d %4d %7d %7d %7d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].r, wmain[nstart + i].theta, wmain[nstart + i].rcen, wmain[nstart + i].thetacen,
                wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                jj, wmain[nstart + i].nwind, wmain[nstart + i].nplasma, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0],
@@ -371,7 +371,7 @@ create_master_table (ndom, rootname)
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -578,14 +578,14 @@ create_heat_table (ndom, rootname)
     for (i = 0; i < ndim2; i++)
     {
       //This line is different from the two d case
-      sprintf (start, "%9.3e %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+      sprintf (start, "%9.6e %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].r, i, wmain[nstart + i].inwind,
                converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -616,14 +616,14 @@ create_heat_table (ndom, rootname)
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
       sprintf (start,
-               "%8.2e %8.2e %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+               "%8.6e %8.6e %4d %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                jj, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -779,14 +779,14 @@ create_convergence_table (ndom, rootname)
     for (i = 0; i < ndim2; i++)
     {
       //This line is different from the two d case
-      sprintf (start, "%9.3e %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+      sprintf (start, "%9.6e %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].r, i, wmain[nstart + i].inwind,
                converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -817,14 +817,14 @@ create_convergence_table (ndom, rootname)
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
       sprintf (start,
-               "%8.2e %8.2e %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+               "%8.6e %8.6e %4d %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                jj, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -962,14 +962,14 @@ create_velocity_gradient_table (ndom, rootname)
     for (i = 0; i < ndim2; i++)
     {
       //This line is different from the two d case
-      sprintf (start, "%9.3e %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+      sprintf (start, "%9.6e %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].r, i, wmain[nstart + i].inwind,
                converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -1000,14 +1000,14 @@ create_velocity_gradient_table (ndom, rootname)
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
       sprintf (start,
-               "%8.2e %8.2e %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+               "%8.6e %8.6e %4d %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                jj, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -1131,13 +1131,13 @@ create_ion_table (ndom, rootname, iz, ion_switch)
     for (i = 0; i < ndim2; i++)
     {
       //This line is different from the two d case
-      sprintf (start, "%8.2e %4d %6d ", wmain[nstart + i].r, i, wmain[nstart + i].inwind);
+      sprintf (start, "%8.6e %4d %6d ", wmain[nstart + i].r, i, wmain[nstart + i].inwind);
       strcpy (one_line, start);
 
       n = 0;
       while (n < number_ions)
       {
-        sprintf (one_value, "%8.2e ", c[n][i]);
+        sprintf (one_value, "%8.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -1170,12 +1170,12 @@ create_ion_table (ndom, rootname, iz, ion_switch)
     for (i = 0; i < ndim2; i++)
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
-      sprintf (start, "%8.2e %8.2e %4d %4d %6d ", wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii, jj, wmain[nstart + i].inwind);
+      sprintf (start, "%8.6e %8.6e %4d %4d %6d ", wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii, jj, wmain[nstart + i].inwind);
       strcpy (one_line, start);
       n = 0;
       while (n < number_ions)
       {
-        sprintf (one_value, "%8.2e ", c[n][i]);
+        sprintf (one_value, "%8.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -1941,13 +1941,13 @@ create_spec_table (ndom, rootname)
       for (i = 0; i < ndim2; i++)
       {
         //This line is different from the two d case
-        sprintf (start, "%9.3e %9.3e %4d %6d %8.0f %6d ",
+        sprintf (start, "%9.6e %9.6e %4d %6d %8.0f %6d ",
                  wmain[nstart + i].r, wmain[nstart + i].rcen, i, wmain[nstart + i].inwind, converge[i], nx);
         strcpy (one_line, start);
         n = 0;
         while (n < ncols)
         {
-          sprintf (one_value, "%9.2e ", c[n][j]);
+          sprintf (one_value, "%9.4e ", c[n][j]);
           strcat (one_line, one_value);
           n++;
         }
@@ -1983,14 +1983,14 @@ create_spec_table (ndom, rootname)
       {
         wind_n_to_ij (ndom, nstart + i, &ii, &jj);
         sprintf (start,
-                 "%8.2e %8.2e %8.2e %8.2e %4d %4d %6d %8.0f %6d  ",
+                 "%8.6e %8.6e %8.6e %8.6e %4d %4d %6d %8.0f %6d  ",
                  wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                  jj, wmain[nstart + i].inwind, converge[i], nx);
         strcpy (one_line, start);
         n = 0;
         while (n < ncols)
         {
-          sprintf (one_value, "%9.2e ", c[n][j]);
+          sprintf (one_value, "%9.4e ", c[n][j]);
           strcat (one_line, one_value);
           n++;
         }
@@ -2027,7 +2027,7 @@ create_spec_table (ndom, rootname)
       {
         wind_n_to_ij (ndom, nstart + i, &ii, &jj);
         sprintf (start,
-                 "%9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %4d %4d %6d %8.0f %6d ",
+                 "%9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %4d %4d %6d %8.0f %6d ",
                  wmain[nstart + i].r, wmain[nstart + i].theta, wmain[nstart + i].rcen, wmain[nstart + i].thetacen,
                  wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                  jj, wmain[nstart + i].inwind, converge[i], nx);
@@ -2035,7 +2035,7 @@ create_spec_table (ndom, rootname)
         n = 0;
         while (n < ncols)
         {
-          sprintf (one_value, "%9.2e ", c[n][j]);
+          sprintf (one_value, "%9.4e ", c[n][j]);
           strcat (one_line, one_value);
           n++;
         }
