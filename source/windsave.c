@@ -279,10 +279,10 @@ wind_read (char filename[])
   }
 
   calloc_wind (NDIM2);
-#if defined(MPI_ON) && !defined(__APPLE__)
+#ifdef MPI_ON
   if (np_mpi_global > 1)
   {
-    /* Linux: wmain is in MPI shared memory; only the node leader reads from
+    /* wmain is in MPI shared memory; only the node leader reads from
      * disk — all other ranks on the node see the same physical memory. */
     if (node_rank == 0)
     {
@@ -297,8 +297,7 @@ wind_read (char filename[])
   else
 #endif
   {
-    /* Serial, or macOS where wmain is private per-rank: every rank reads
-     * its own copy directly from the file. */
+    /* Serial: read wmain directly from the file. */
     n += fread (wmain, sizeof (wind_dummy), NDIM2, fptr);
   }
 
