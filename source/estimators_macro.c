@@ -1010,7 +1010,7 @@ check_stimulated_recomb (xplasma)
       cont_ptr = &phot_top[xconfig[i].bfu_jump[j]];
       gamma = mplasma->gamma_old[xconfig[i].bfu_indx_first + j];
       st_recomb = mplasma->alpha_st_old[xconfig[i].bfu_indx_first + j];
-      st_recomb *= xplasma->ne * den_config (xplasma, cont_ptr->uplev) / den_config (xplasma, cont_ptr->nlev);
+      st_recomb *= stim_recomb_factor (xplasma, cont_ptr);
       coll_ioniz = q_ioniz (cont_ptr, xplasma->t_e) * xplasma->ne;
 
       if (st_recomb > (gamma + coll_ioniz))

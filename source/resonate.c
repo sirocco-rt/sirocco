@@ -897,7 +897,7 @@ scatter (p, nres, nnscat)
   WindPtr one;
   double prob_kpkt, kpkt_choice, freq_comoving;
   double gamma_twiddle, gamma_twiddle_e, stim_fact;
-  int m, llvl, ulvl;
+  int m, llvl;
   PlasmaPtr xplasma;
   MacroPtr mplasma;
   int ndom;
@@ -998,7 +998,6 @@ scatter (p, nres, nnscat)
          */
 
         llvl = phot_top[*nres - NLINES - 1].nlev;       //lower level
-        ulvl = phot_top[*nres - NLINES - 1].uplev;      //upper level
 
         for (m = 0; m < xconfig[llvl].n_bfu_jump; m++)
         {
@@ -1019,8 +1018,8 @@ scatter (p, nres, nnscat)
 
         /* Need to compute the factor needed for the stimulated term. */
 
-        /* stimulated recombination per lower-level ion, n_e n_u alpha_st / n_l, as in matom.c */
-        stim_fact = den_config (xplasma, ulvl) / den_config (xplasma, llvl) * xplasma->ne;
+        /* stimulated recombination per lower-level ion is alpha_st * stim_fact, as in matom.c */
+        stim_fact = stim_recomb_factor (xplasma, &phot_top[*nres - NLINES - 1]);
 
         gamma_twiddle =
           mplasma->gamma_old[xconfig[llvl].bfu_indx_first + m] - (mplasma->alpha_st_old[xconfig[llvl].bfu_indx_first + m] * stim_fact);
