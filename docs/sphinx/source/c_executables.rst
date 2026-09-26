@@ -184,6 +184,8 @@ compared with the actual cell spectra recorded during transport.
 
 ----
 
+.. _rad_hydro_files:
+
 rad_hydro_files
 ===============
 
@@ -195,7 +197,8 @@ driving forces, and ionization state of the wind to a hydrodynamics code.
 The outputs are used by the `PLUTO–Sirocco
 <https://github.com/sirocco-rt/pluto-sirocco>`_ coupled rad-hydro framework,
 in which PLUTO advances the hydrodynamics and Sirocco provides the
-radiative-transfer physics at each exchange step.
+radiative-transfer physics at each exchange step.  The whole sequence of runs
+is described in :ref:`hydro_coupling`.
 
 Usage::
 
@@ -263,21 +266,55 @@ modify_wind
 ===========
 
 ``modify_wind`` is a **developer/diagnostic tool** for modifying the contents
-of a wind save file without rerunning Sirocco.  Its primary current use is
-overwriting ion densities in selected cells with prescribed values, making it
-useful for constructing controlled test cases.
+of a wind save file without rerunning Sirocco, for example to construct
+controlled test cases.
 
 .. note::
-   ``modify_wind`` is a prototype.  The modifications to be applied must be
+   ``modify_wind`` is a prototype.  Modifications of ion densities must be
    hard-coded in the source file ``source/modify_wind.c`` before recompiling.
    It is not intended for routine use.
 
 Usage::
 
-    modify_wind root
+    modify_wind [-ksl] [-cmf|-obs] [-out_root new] root
 
-The program reads the wind save ``root.wind_save``, applies the coded
-modifications, and writes the result to a new wind save file.
+The program reads the wind save ``root.wind_save``, applies the requested
+modifications, and writes the result to ``new.wind_save`` (or
+``out_root.wind_save``):
+
+``-ksl``
+    Apply the hard-coded modification of ion densities.
+``-cmf``, ``-obs``
+    Convert the wind save from the observer frame to the co-moving frame, or
+    back.
+
+.. note::
+   ``modify_wind`` used to update a wind save from a hydrodynamics snapshot
+   with the ``-model_file`` switch.  That has moved to ``hydro2sirocco``
+   (below), which follows Sirocco's conventions for clumped winds; see
+   issue #1190.
+
+----
+
+hydro2sirocco
+=============
+
+``hydro2sirocco`` updates a wind save file with the density, velocity and
+temperature of a new snapshot from a hydrodynamics code, keeping the
+ionization state as the starting point for further ionization cycles.  It is
+one step of the coupled sequence described in :ref:`hydro_coupling`, which
+also lists exactly which quantities it updates and why.
+
+Usage::
+
+    hydro2sirocco -model_file snapshot.txt [-out_root new] [-nonrel|-sr_doppler_only] root
+
+The program reads ``root.wind_save``, applies the snapshot to the domain with
+an imported wind, and writes ``new.wind_save`` (or ``out_root.wind_save``),
+which can then be used with ``sirocco -r``.  The snapshot must be in the
+imported-model format (:doc:`wind_models/importing_models`) and have the same
+grid and ``inwind`` values as the wind save.  The relativity switches must be
+the same as those used for the ``sirocco`` runs.
 
 ----
 

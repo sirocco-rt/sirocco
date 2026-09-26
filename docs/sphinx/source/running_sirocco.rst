@@ -97,8 +97,10 @@ which may be useful in certain special cases.  These include:
   are maintained as to the number of times the error occurred, but it is not printed
   to the diagnostic file. The default is 100 (per process)
 
--f                    
-  Invoke a fixed temperature mode
+-f
+  Invoke a fixed temperature mode.  The electron temperature is not updated; the
+  ionization balance is found at the temperature supplied by the model.  This is
+  used when SIROCCO is coupled to a hydrodynamics code (see :ref:`hydro_coupling`).
 
 -nonrel
   Reverts to using v/c corrections for special relativity and eliminates work done to treat
