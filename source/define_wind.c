@@ -574,6 +574,76 @@ complete_wind_grid_creation (void)
 
 /**********************************************************/
 /**
+ * @brief Set the velocity and velocity gradient of a wind cell
+ *
+ * @param [in, out] WindPtr cell  The wind cell
+ *
+ * @details
+ *
+ * Sets the velocity at the cell vertex (except for imported models,
+ * where it has already been set from the model), and the velocity
+ * gradient and divergence.
+ *
+ * This is used both when the wind is created and when an existing
+ * wind is updated from a new model (see update_wind_from_model).
+ *
+ **********************************************************/
+
+void
+set_cell_velocity_gradient (WindPtr cell)
+{
+  if (zdom[cell->ndom].wind_type != IMPORT)
+  {
+    model_velocity (cell->ndom, cell->x, cell->v);
+  }
+
+  model_vgrad (cell->ndom, cell->x, cell->v_grad);
+  wind_div_v (cell->ndom, cell);
+}
+
+/**********************************************************/
+/**
+ * @brief Set dv/ds and the gamma factors of a wind cell
+ *
+ * @param [in, out] WindPtr cell  The wind cell
+ *
+ * @details
+ *
+ * Sets the average and maximum dv/ds, and the gamma factors at the
+ * vertex and centre of the cell.  It does not change the cell volume.
+ *
+ * In 2d grids dv/ds is found by interpolating the velocity gradients
+ * of neighbouring cells, so these should be set (with
+ * set_cell_velocity_gradient) first.
+ *
+ **********************************************************/
+
+void
+set_cell_dvds_and_gamma (WindPtr cell)
+{
+  double v_cen[3];
+
+  /* Now we do two expensive calculations to figure out the direction of
+   * the largest velocity gradient in the cell as well as the angle average
+   * velocity gradient of the cell */
+  calculate_cell_dvds_ave (cell->ndom, cell);   /* Defined at cell center */
+  calculate_cell_dvds_max (cell->ndom, cell);   /* Defined at cell vertex */
+
+  if (rel_mode == REL_MODE_FULL)
+  {
+    cell->xgamma = calculate_gamma_factor (cell->v);
+    model_velocity (cell->ndom, cell->xcen, v_cen);
+    cell->xgamma_cen = calculate_gamma_factor (v_cen);
+  }
+  else
+  {
+    cell->xgamma = 1.0;
+    cell->xgamma_cen = 1.0;
+  }
+}
+
+/**********************************************************/
+/**
  * @brief Initialise the properties of the wind grid
  *
  * @details
@@ -600,7 +670,6 @@ create_wind_grid (void)
   int n_start;
   int n_stop;
   int n_cells_rank;
-  double v_cen[3];
   WindPtr cell;
 
   /* Set up indices for starting and ending positions of each wind
@@ -621,7 +690,6 @@ create_wind_grid (void)
   calloc_wind (NDIM2);
 
   /* Assign the domain for each cell in the wind grid */
-  int offset = 0;
   for (ndom = 0; ndom < geo.ndomain; ++ndom)
   {
     for (n = zdom[ndom].nstart; n < zdom[ndom].nstop; ++n)
@@ -629,10 +697,9 @@ create_wind_grid (void)
       wmain[n].ndom = ndom;
       wmain[n].inwind = W_NOT_ASSIGNED;
       wmain[n].dfudge = DFUDGE;
-      wmain[n].nwind = n + offset;
+      wmain[n].nwind = n;
       wmain[n].nwind_dom = n;
     }
-    offset += zdom[ndom].ndim;
   }
 
   /* Barrier: ensure all ranks have finished initialising wmain fields above
@@ -685,32 +752,12 @@ create_wind_grid (void)
   {
     cell = &wmain[n];
     calculate_cell_volume (cell);
-
-    if (zdom[cell->ndom].wind_type != IMPORT)
-    {
-      model_velocity (cell->ndom, cell->x, cell->v);
-    }
-
-    model_vgrad (cell->ndom, cell->x, cell->v_grad);
-    wind_div_v (cell->ndom, cell);
-
-    /* Now we do two expensive calculations to figure out the direction of
-     * the largest velocity gradient in the cell as well as the angle average
-     * velocity gradient of the cell */
-    calculate_cell_dvds_ave (cell->ndom, cell); /* Defined at cell center */
-    calculate_cell_dvds_max (cell->ndom, cell); /* Defined at cell vertex */
+    set_cell_velocity_gradient (cell);
+    set_cell_dvds_and_gamma (cell);
 
     if (rel_mode == REL_MODE_FULL)
     {
-      cell->xgamma = calculate_gamma_factor (cell->v);
-      model_velocity (cell->ndom, cell->xcen, v_cen);
-      cell->xgamma_cen = calculate_gamma_factor (v_cen);
       cell->vol *= cell->xgamma_cen;
-    }
-    else
-    {
-      cell->xgamma = 1.0;
-      cell->xgamma_cen = 1.0;
     }
   }
 
