@@ -46,8 +46,8 @@ matom_emiss_report ()
     abs_sum = 0.0;
     for (n = 0; n < NPLASMA; n++)
     {
-      emiss_sum += macromain[n].matom_emiss[m];
-      abs_sum += macromain[n].matom_abs[m];
+      emiss_sum += macromain[n].derived.matom_emiss[m];
+      abs_sum += macromain[n].est.matom_abs[m];
     }
 
     Log ("Macro Atom level emissivities (summed): z %2d i %2d macro %2d n %2d matom_abs %8.4e matom_emiss %8.4e\n",
@@ -62,8 +62,8 @@ matom_emiss_report ()
 
   for (n = 0; n < NPLASMA; n++)
   {
-    emiss_sum += plasmamain[n].kpkt_emiss;
-    abs_sum += plasmamain[n].kpkt_abs;
+    emiss_sum += plasmamain[n].derived.kpkt_emiss;
+    abs_sum += plasmamain[n].est.kpkt_abs;
 
   }
 

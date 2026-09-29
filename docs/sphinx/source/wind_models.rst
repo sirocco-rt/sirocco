@@ -15,3 +15,4 @@ Subsequently, a complete list of each wind model's possible parameters can be fo
    wind_models/homologous
    wind_models/stellar
    wind_models/importing_models
+   wind_models/hydro_coupling

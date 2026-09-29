@@ -43,10 +43,7 @@
  **********************************************************/
 
 int
-check_frame (p, desired_frame, msg)
-     PhotPtr p;
-     enum frame desired_frame;
-     char *msg;
+check_frame (PhotPtr p, enum frame desired_frame, char *msg)
 {
   if (p->frame == desired_frame)
   {
@@ -109,8 +106,7 @@ calculate_gamma_factor (double vel[3])
  **********************************************************/
 
 int
-observer_to_local_frame (p_in, p_out)
-     PhotPtr p_in, p_out;
+observer_to_local_frame (PhotPtr p_in, PhotPtr p_out)
 {
   WindPtr one;
   int ndom;
@@ -168,8 +164,7 @@ observer_to_local_frame (p_in, p_out)
 
 
 int
-local_to_observer_frame (p_in, p_out)
-     PhotPtr p_in, p_out;
+local_to_observer_frame (PhotPtr p_in, PhotPtr p_out)
 {
   WindPtr one;
   int ndom;
@@ -230,8 +225,7 @@ local_to_observer_frame (p_in, p_out)
 
 
 int
-observer_to_local_frame_disk (p_in, p_out)
-     PhotPtr p_in, p_out;
+observer_to_local_frame_disk (PhotPtr p_in, PhotPtr p_out)
 {
 //  WindPtr one;
 //int ndom;
@@ -292,8 +286,7 @@ observer_to_local_frame_disk (p_in, p_out)
 
 
 int
-local_to_observer_frame_disk (p_in, p_out)
-     PhotPtr p_in, p_out;
+local_to_observer_frame_disk (PhotPtr p_in, PhotPtr p_out)
 {
   double v[3];
   int ierr;
@@ -339,9 +332,7 @@ local_to_observer_frame_disk (p_in, p_out)
  **********************************************************/
 
 double
-observer_to_local_frame_ds (p_obs, ds_obs)
-     PhotPtr p_obs;
-     double ds_obs;
+observer_to_local_frame_ds (PhotPtr p_obs, double ds_obs)
 {
   WindPtr one;
   int ndom;
@@ -397,9 +388,7 @@ observer_to_local_frame_ds (p_obs, ds_obs)
  **********************************************************/
 
 double
-local_to_observer_frame_ds (p_obs, ds_cmf)
-     PhotPtr p_obs;
-     double ds_cmf;
+local_to_observer_frame_ds (PhotPtr p_obs, double ds_cmf)
 {
   WindPtr one;
   int ndom;
@@ -454,10 +443,7 @@ local_to_observer_frame_ds (p_obs, ds_cmf)
  **********************************************************/
 
 double
-observer_to_local_frame_velocity (v_obs, v, v_cmf)
-     double *v_obs;
-     double *v;
-     double *v_cmf;
+observer_to_local_frame_velocity (double *v_obs, double *v, double *v_cmf)
 {
   double gamma, c1, c2;
   double a[3], b[3];
@@ -517,10 +503,7 @@ observer_to_local_frame_velocity (v_obs, v, v_cmf)
  **********************************************************/
 
 double
-local_to_observer_frame_velocity (v_cmf, v, v_obs)
-     double *v_cmf;
-     double *v;
-     double *v_obs;
+local_to_observer_frame_velocity (double *v_cmf, double *v, double *v_obs)
 {
   double gamma, c1, c2;
   double a[3], b[3];
@@ -579,8 +562,7 @@ local_to_observer_frame_velocity (v_cmf, v, v_obs)
  **********************************************************/
 
 int
-local_to_observer_frame_ruler_transform (v, dx_cmf, dx_obs)
-     double v[], dx_cmf[], dx_obs[];
+local_to_observer_frame_ruler_transform (double v[], double dx_cmf[], double dx_obs[])
 {
 
   double beta, gamma, speed;
@@ -642,8 +624,7 @@ local_to_observer_frame_ruler_transform (v, dx_cmf, dx_obs)
 
 
 int
-observer_to_local_frame_ruler_transform (v, dx_obs, dx_cmf)
-     double v[], dx_obs[], dx_cmf[];
+observer_to_local_frame_ruler_transform (double v[], double dx_obs[], double dx_cmf[])
 {
 
   double beta, gamma, speed;
@@ -710,9 +691,7 @@ observer_to_local_frame_ruler_transform (v, dx_obs, dx_cmf)
 
 
 int
-lorentz_transform (p_in, p_out, v)
-     PhotPtr p_in, p_out;
-     double v[];
+lorentz_transform (PhotPtr p_in, PhotPtr p_out, double v[])
 {
   double f_out, f_in;
   double x;

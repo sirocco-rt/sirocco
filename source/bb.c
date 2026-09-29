@@ -107,8 +107,7 @@ int error_bb_lo = 0;
  **********************************************************/
 
 double
-planck (t, freqmin, freqmax)
-     double t, freqmin, freqmax;
+planck (double t, double freqmin, double freqmax)
 {
   double freq, alpha, y;
   int echeck;
@@ -266,8 +265,7 @@ planck (t, freqmin, freqmax)
  **********************************************************/
 
 double
-get_rand_pow (x1, x2, alpha)
-     double x1, x2, alpha;
+get_rand_pow (double x1, double x2, double alpha)
 {
   double r;
   double a;
@@ -326,8 +324,7 @@ get_rand_pow (x1, x2, alpha)
  **********************************************************/
 
 double
-get_rand_exp (alpha_min, alpha_max)
-     double alpha_min, alpha_max;
+get_rand_exp (double alpha_min, double alpha_max)
 {
   double r;
   double x;
@@ -390,13 +387,11 @@ int i_integ_planck_d = 0;
  **********************************************************/
 
 double
-integ_planck_d (alphamin, alphamax)
-     double alphamin, alphamax;
+integ_planck_d (double alphamin, double alphamax)
 {
 
   double x, z1, z2;
   int n;
-  int init_integ_planck_d ();
 
   /* If this is the first time, integ_plank_d is called, initilaize the integ_planck array */
   if (i_integ_planck_d == 0)
@@ -496,7 +491,6 @@ int
 init_integ_planck_d ()
 {
   double x;
-  double planck_d (), qromb ();
   int n;
   for (n = 0; n < NMAX + 1; n++)
   {
@@ -570,11 +564,9 @@ planck_d_2 (double alpha, void *params)
  **********************************************************/
 
 double
-emittance_bb (freqmin, freqmax, t)
-     double freqmin, freqmax, t;
+emittance_bb (double freqmin, double freqmax, double t)
 {
   double alphamin, alphamax, q1;
-  double integ_planck_d ();
   q1 = 2. * PI * (BOLTZMANN * BOLTZMANN * BOLTZMANN * BOLTZMANN) / (PLANCK * PLANCK * PLANCK * VLIGHT * VLIGHT);
 
   alphamin = PLANCK * freqmin / (BOLTZMANN * t);
@@ -631,8 +623,7 @@ emittance_bb (freqmin, freqmax, t)
  **********************************************************/
 
 double
-check_freq_max (freq_max, temp)
-     double freq_max, temp;
+check_freq_max (double freq_max, double temp)
 {
   double bblim;
 

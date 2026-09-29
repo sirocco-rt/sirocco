@@ -131,8 +131,7 @@ int synonyms_validated = 0;
  *   and answer strings e.g. "xyz(cm/s) 10.7e3"
  **********************************************************/
 int
-get_question_name_length (question)
-     char question[];
+get_question_name_length (char question[])
 {
   char *found_location;
 
@@ -233,9 +232,7 @@ are_synonym_lists_valid ()
  **********************************************************/
 
 int
-is_input_line_synonym_for_question (question, input_line)
-     char question[];
-     char input_line[];
+is_input_line_synonym_for_question (char question[], char input_line[])
 {
   int synonym_index;
   int question_name_length = get_question_name_length (question);

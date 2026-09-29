@@ -45,6 +45,12 @@ main (int argc, char **argv)
   }
   MPI_Comm_rank (MPI_COMM_WORLD, &rank_global);
   MPI_Comm_size (MPI_COMM_WORLD, &np_mpi_global);
+
+  MPI_Comm_split_type (MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rank_global, MPI_INFO_NULL, &node_comm);
+  MPI_Comm_rank (node_comm, &node_rank);
+  MPI_Comm_size (node_comm, &node_size);
+  MPI_Comm_split (MPI_COMM_WORLD, (node_rank == 0) ? 0 : MPI_UNDEFINED, rank_global, &leader_comm);
+  num_nodes = 1;
 #else
   rank_global = 0;
   np_mpi_global = 1;
@@ -101,6 +107,9 @@ main (int argc, char **argv)
   Log_close ();
 
 #ifdef MPI_ON
+  MPI_Comm_free (&node_comm);
+  if (leader_comm != MPI_COMM_NULL)
+    MPI_Comm_free (&leader_comm);
   MPI_Finalize ();
 #endif
 

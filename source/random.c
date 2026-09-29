@@ -64,8 +64,7 @@ char rngsave_file[LINELENGTH];
 
 
 int
-randvec (a, r)
-     double a[], r;
+randvec (double a[], double r)
 {
 
   double costheta, sintheta, phi, sinphi, cosphi;
@@ -122,8 +121,7 @@ int init_vcos = 0;
  **********************************************************/
 
 int
-randvcos (lmn, north)
-     double lmn[], north[];
+randvcos (double lmn[], double north[])
 {
   double x[3];                  /* the photon direction in the rotated frame */
   double l, m, n;               /* the individual direction cosines in the rotated frame */
@@ -272,8 +270,7 @@ int init_vdipole = 0;
  **********************************************************/
 
 int
-randvdipole (lmn, north)
-     double lmn[], north[];
+randvdipole (double lmn[], double north[])
 {
   double x[3];                  /* the photon direction in the rotated frame */
   double l, m, n;               /* the individual direction cosines in the rotated frame */
@@ -419,8 +416,7 @@ vdipole (double cos_theta, void *params)
 
 
 int
-init_rand (seed)
-     int seed;
+init_rand (int seed)
 {
   rng = gsl_rng_alloc (gsl_rng_mt19937);
   gsl_rng_set (rng, seed);
@@ -439,9 +435,7 @@ init_rand (seed)
  **********************************************************/
 
 void
-init_rng_directory (root, rank)
-     char *root;
-     int rank;
+init_rng_directory (char *root, int rank)
 {
   int err;
   char dir_name[LINELENGTH];

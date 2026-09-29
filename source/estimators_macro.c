@@ -66,11 +66,7 @@ double temp_ext_rad;            //radiation temperature passed externally
  **********************************************************/
 
 int
-bf_estimators_increment (one, p, ds)
-     WindPtr one;
-     PhotPtr p;
-     double ds;
-
+bf_estimators_increment (WindPtr one, PhotPtr p, double ds)
 {
   double freq_av;
   double weight_of_packet;
@@ -94,8 +90,8 @@ bf_estimators_increment (one, p, ds)
 
   freq_av = p->freq;
 
-  if (p->freq > xplasma->max_freq)
-    xplasma->max_freq = p->freq;
+  if (p->freq > xplasma->est.max_freq)
+    xplasma->est.max_freq = p->freq;
 
   if (modes.save_cell_stats && ncstat > 0)
   {
@@ -108,16 +104,16 @@ bf_estimators_increment (one, p, ds)
 
 
   /* check that j and ave freq give sensible numbers */
-  if (sane_check (xplasma->j) || sane_check (xplasma->ave_freq))
+  if (sane_check (xplasma->est.j) || sane_check (xplasma->est.ave_freq))
   {
-    Error ("bf_estimators_increment:sane_check Problem with j %g or ave_freq %g\n", xplasma->j, xplasma->ave_freq);
+    Error ("bf_estimators_increment:sane_check Problem with j %g or ave_freq %g\n", xplasma->est.j, xplasma->est.ave_freq);
   }
 
 
 
-  for (nn = 0; nn < xplasma->kbf_nuse; nn++)
+  for (nn = 0; nn < xplasma->state.kbf_nuse; nn++)
   {
-    n = xplasma->kbf_use[nn];
+    n = xplasma->state.kbf_use[nn];
     ft = phot_top[n].freq[0];   //This is the edge frequency (SS)
 
     if (ion[phot_top[n].nion].phot_info > 0)    //topbase or hybrid
@@ -127,7 +123,7 @@ bf_estimators_increment (one, p, ds)
     }
     else if (ion[phot_top[n].nion].phot_info == 0)      //vfky
     {
-      density = xplasma->density[phot_top[n].nion];
+      density = xplasma->state.density[phot_top[n].nion];
       llvl = 0;                 // shouldn't ever be used 
     }
 
@@ -158,26 +154,26 @@ bf_estimators_increment (one, p, ds)
         weight_of_packet = p->w;
         y = weight_of_packet * x * ds;
 
-        exponential = y * exp (-(freq_av - ft) / BOLTZMANN / xplasma->t_e);
+        exponential = y * exp (-(freq_av - ft) / BOLTZMANN / xplasma->state.t_e);
 
         /* Increment the photoionization rate estimator */
 
-        mplasma->gamma[xconfig[llvl].bfu_indx_first + m] += y / freq_av;
+        mplasma->est.gamma[xconfig[llvl].bfu_indx_first + m] += y / freq_av;
 
-        mplasma->alpha_st[xconfig[llvl].bfu_indx_first + m] += exponential / freq_av;
+        mplasma->est.alpha_st[xconfig[llvl].bfu_indx_first + m] += exponential / freq_av;
 
-        mplasma->gamma_e[xconfig[llvl].bfu_indx_first + m] += y / ft;
+        mplasma->est.gamma_e[xconfig[llvl].bfu_indx_first + m] += y / ft;
 
-        mplasma->alpha_st_e[xconfig[llvl].bfu_indx_first + m] += exponential / ft;
+        mplasma->est.alpha_st_e[xconfig[llvl].bfu_indx_first + m] += exponential / ft;
 
         /* Now record the contribution to the energy absorbed by macro atoms allowing
            for the filling factor. */
 
         yy = y * den_config (xplasma, llvl) * zdom[ndom].fill;
 
-        mplasma->matom_abs[phot_top[n].uplev] += abs_cont = yy * ft / freq_av;
+        mplasma->est.matom_abs[phot_top[n].uplev] += abs_cont = yy * ft / freq_av;
 
-        xplasma->kpkt_abs += yy - abs_cont;
+        xplasma->est.kpkt_abs += yy - abs_cont;
 
         /* Check for packets that appear to travelling  
            suspiciously large optical depth in the continuum */
@@ -203,12 +199,12 @@ bf_estimators_increment (one, p, ds)
 
 
           /* JM1411 -- added filling factor - density enhancement cancels with zdom[ndom].fill */
-          xplasma->heat_photo += heat_contribution = y * density * (1.0 - (ft / freq_av)) * zdom[ndom].fill;
+          xplasma->est.heat_photo += heat_contribution = y * density * (1.0 - (ft / freq_av)) * zdom[ndom].fill;
 
-          xplasma->heat_tot += heat_contribution;
+          xplasma->est.heat_tot += heat_contribution;
           /* This heat contribution is also the contibution to making k-packets in this volume. So we record it. */
 
-          xplasma->kpkt_abs += heat_contribution;
+          xplasma->est.kpkt_abs += heat_contribution;
         }
       }
     }
@@ -229,12 +225,12 @@ bf_estimators_increment (one, p, ds)
 
   y = weight_of_packet * kappa_ff (xplasma, freq_av) * ds;
 
-  xplasma->heat_ff += heat_contribution = y;    // record ff hea   
+  xplasma->est.heat_ff += heat_contribution = y;        // record ff hea   
 
   /* This heat contribution is also the contibution to making k-packets in this volume. So we record it. */
   /* JM 2402 note that previously we incorrectly included Compton processes in kpkt_abs, which could lead to large 
      amounts of radiation coming out incorrectly in other k->r channels in spectral cycles */
-  xplasma->kpkt_abs += heat_contribution;
+  xplasma->est.kpkt_abs += heat_contribution;
 
 
 
@@ -242,7 +238,7 @@ bf_estimators_increment (one, p, ds)
 
   y = weight_of_packet * kappa_comp (xplasma, freq_av) * ds;
 
-  xplasma->heat_comp += y;      // record the compton heating
+  xplasma->est.heat_comp += y;  // record the compton heating
   heat_contribution += y;       // add compton to the heat contribution
 
 
@@ -250,12 +246,12 @@ bf_estimators_increment (one, p, ds)
 
   y = weight_of_packet * kappa_ind_comp (xplasma, freq_av) * ds;
 
-  xplasma->heat_ind_comp += y;  // record the induced compton heating
+  xplasma->est.heat_ind_comp += y;      // record the induced compton heating
   heat_contribution += y;       // add induced compton to the heat contribution
 
 
 
-  xplasma->heat_tot += heat_contribution;       // heat contribution is the contribution from compton, ind comp and ff processes
+  xplasma->est.heat_tot += heat_contribution;   // heat contribution is the contribution from compton, ind comp and ff processes
 
   return (0);
 }
@@ -286,13 +282,7 @@ bf_estimators_increment (one, p, ds)
  **********************************************************/
 
 int
-bb_estimators_increment (one, p, tau_sobolev, dvds, nn)
-     WindPtr one;
-     PhotPtr p;
-     double tau_sobolev;
-     double dvds;
-     int nn;
-
+bb_estimators_increment (WindPtr one, PhotPtr p, double tau_sobolev, double dvds, int nn)
 {
   int llvl;
   int n;
@@ -348,7 +338,7 @@ bb_estimators_increment (one, p, tau_sobolev, dvds, nn)
 
   if (y >= 0)
   {
-    mplasma->jbar[xconfig[llvl].bbu_indx_first + n] += y;
+    mplasma->est.jbar[xconfig[llvl].bbu_indx_first + n] += y;
   }
   else
   {
@@ -358,7 +348,7 @@ bb_estimators_increment (one, p, tau_sobolev, dvds, nn)
 
   /* Record contribution to energy absorbed by macro atoms. */
 
-  mplasma->matom_abs[line_ptr->nconfigu] += weight_of_packet * (1. - exp (-tau_sobolev));
+  mplasma->est.matom_abs[line_ptr->nconfigu] += weight_of_packet * (1. - exp (-tau_sobolev));
 
   return (0);
 }
@@ -434,19 +424,19 @@ normalise_macro_estimators (PlasmaPtr xplasma)
      the LTE population ratio. The multiplicative factor
      is given by: */
 
-  stimfac = 0.5 * pow (PLANCK * PLANCK / 2. / PI / MELEC / BOLTZMANN / xplasma->t_e, 3. / 2.);
+  stimfac = 0.5 * pow (PLANCK * PLANCK / 2. / PI / MELEC / BOLTZMANN / xplasma->state.t_e, 3. / 2.);
 
   for (i = 0; i < nlte_levels; i++)
   {
     for (j = 0; j < xconfig[i].n_bfu_jump; j++)
     {
-      mplasma->gamma_old[xconfig[i].bfu_indx_first + j] = mplasma->gamma[xconfig[i].bfu_indx_first + j] / PLANCK / invariant_volume_time;       // normalize by invariant_volume_time
+      mplasma->state.gamma_old[xconfig[i].bfu_indx_first + j] = mplasma->est.gamma[xconfig[i].bfu_indx_first + j] / PLANCK / invariant_volume_time;     // normalize by invariant_volume_time
 
-      mplasma->gamma_e_old[xconfig[i].bfu_indx_first + j] =
-        mplasma->gamma_e[xconfig[i].bfu_indx_first + j] / PLANCK / invariant_volume_time;
+      mplasma->state.gamma_e_old[xconfig[i].bfu_indx_first + j] =
+        mplasma->est.gamma_e[xconfig[i].bfu_indx_first + j] / PLANCK / invariant_volume_time;
 
-      mplasma->gamma[xconfig[i].bfu_indx_first + j] = 0.0;      //re-initialise for next iteration
-      mplasma->gamma_e[xconfig[i].bfu_indx_first + j] = 0.0;
+      mplasma->est.gamma[xconfig[i].bfu_indx_first + j] = 0.0;  //re-initialise for next iteration
+      mplasma->est.gamma_e[xconfig[i].bfu_indx_first + j] = 0.0;
 
       /* For the stimulated recombination parts we need the the
          ratio of statistical weights too. For free electron statistical
@@ -454,13 +444,13 @@ normalise_macro_estimators (PlasmaPtr xplasma)
 
       stat_weight_ratio = xconfig[phot_top[xconfig[i].bfu_jump[j]].uplev].g / xconfig[i].g;
 
-      mplasma->alpha_st_old[xconfig[i].bfu_indx_first + j] =
-        mplasma->alpha_st[xconfig[i].bfu_indx_first + j] * stimfac * stat_weight_ratio / PLANCK / invariant_volume_time;
-      mplasma->alpha_st[xconfig[i].bfu_indx_first + j] = 0.0;
+      mplasma->state.alpha_st_old[xconfig[i].bfu_indx_first + j] =
+        mplasma->est.alpha_st[xconfig[i].bfu_indx_first + j] * stimfac * stat_weight_ratio / PLANCK / invariant_volume_time;
+      mplasma->est.alpha_st[xconfig[i].bfu_indx_first + j] = 0.0;
 
-      mplasma->alpha_st_e_old[xconfig[i].bfu_indx_first + j] =
-        mplasma->alpha_st_e[xconfig[i].bfu_indx_first + j] * stimfac * stat_weight_ratio / PLANCK / invariant_volume_time;
-      mplasma->alpha_st_e[xconfig[i].bfu_indx_first + j] = 0.0;
+      mplasma->state.alpha_st_e_old[xconfig[i].bfu_indx_first + j] =
+        mplasma->est.alpha_st_e[xconfig[i].bfu_indx_first + j] * stimfac * stat_weight_ratio / PLANCK / invariant_volume_time;
+      mplasma->est.alpha_st_e[xconfig[i].bfu_indx_first + j] = 0.0;
 
       /* For continuua whose edges lie beyond freqmin assume that gamma
          is given by a black body. */
@@ -471,10 +461,10 @@ normalise_macro_estimators (PlasmaPtr xplasma)
 
       if (phot_top[xconfig[i].bfu_jump[j]].freq[0] < 7.5e12 || phot_top[xconfig[i].bfu_jump[j]].freq[0] > 5e18)
       {
-        mplasma->gamma_old[xconfig[i].bfu_indx_first + j] = get_gamma (&phot_top[xconfig[i].bfu_jump[j]], xplasma);
-        mplasma->gamma_e_old[xconfig[i].bfu_indx_first + j] = get_gamma_e (&phot_top[xconfig[i].bfu_jump[j]], xplasma);
-        mplasma->alpha_st_e_old[xconfig[i].bfu_indx_first + j] = get_alpha_st_e (&phot_top[xconfig[i].bfu_jump[j]], xplasma);
-        mplasma->alpha_st_old[xconfig[i].bfu_indx_first + j] = get_alpha_st (&phot_top[xconfig[i].bfu_jump[j]], xplasma);
+        mplasma->state.gamma_old[xconfig[i].bfu_indx_first + j] = get_gamma (&phot_top[xconfig[i].bfu_jump[j]], xplasma);
+        mplasma->state.gamma_e_old[xconfig[i].bfu_indx_first + j] = get_gamma_e (&phot_top[xconfig[i].bfu_jump[j]], xplasma);
+        mplasma->state.alpha_st_e_old[xconfig[i].bfu_indx_first + j] = get_alpha_st_e (&phot_top[xconfig[i].bfu_jump[j]], xplasma);
+        mplasma->state.alpha_st_old[xconfig[i].bfu_indx_first + j] = get_alpha_st (&phot_top[xconfig[i].bfu_jump[j]], xplasma);
       }
     }
 
@@ -506,14 +496,14 @@ normalise_macro_estimators (PlasmaPtr xplasma)
         stimfac = 1. - stimfac;
       }
       else if (upper_density > DENSITY_PHOT_MIN && lower_density > DENSITY_PHOT_MIN
-               && xplasma->levden[xconfig[nlev_upper].nden] > DENSITY_MIN)
+               && xplasma->state.levden[xconfig[nlev_upper].nden] > DENSITY_MIN)
       {
         /* check for population inversions. We don't worry about this if the densities are extremely low or if the
            upper level has hit the density floor - the lower level is still allowed to hit this floor because it
            should never cause an inversion */
         Error ("normalise_macro_estimators: bb stimulated correction factor is out of bounds, 0 <= stimfac < 1 but got %g\n", stimfac);
-        Error ("normalise_macro_estimators: upper_density %g lower_density %g xplasma->levden[config[nlev_upper].nden] %g\n",
-               upper_density, lower_density, xplasma->levden[xconfig[nlev_upper].nden]);
+        Error ("normalise_macro_estimators: upper_density %g lower_density %g xplasma->state.levden[config[nlev_upper].nden] %g\n",
+               upper_density, lower_density, xplasma->state.levden[xconfig[nlev_upper].nden]);
         stimfac = 0.0;
       }
       else
@@ -524,9 +514,9 @@ normalise_macro_estimators (PlasmaPtr xplasma)
       /* normalise jbar. Note that this uses the cell volume rather than the filled volume */
 
       line_freq = line[xconfig[i].bbu_jump[j]].freq;
-      mplasma->jbar_old[xconfig[i].bbu_indx_first + j] =
-        mplasma->jbar[xconfig[i].bbu_indx_first + j] * VLIGHT * stimfac / 4. / PI / invariant_volume_time / line_freq;
-      mplasma->jbar[xconfig[i].bbu_indx_first + j] = 0.0;
+      mplasma->state.jbar_old[xconfig[i].bbu_indx_first + j] =
+        mplasma->est.jbar[xconfig[i].bbu_indx_first + j] * VLIGHT * stimfac / 4. / PI / invariant_volume_time / line_freq;
+      mplasma->est.jbar[xconfig[i].bbu_indx_first + j] = 0.0;
     }
   }
 
@@ -534,21 +524,21 @@ normalise_macro_estimators (PlasmaPtr xplasma)
   /* Get the heating contribution from macro atom bb transitions (the
      line heating). */
 
-  xplasma->heat_lines += heat_contribution = macro_bb_heating (xplasma, xplasma->t_e);
-  xplasma->heat_lines_macro = heat_contribution;
+  xplasma->est.heat_lines += heat_contribution = macro_bb_heating (xplasma, xplasma->state.t_e);
+  xplasma->est.heat_lines_macro = heat_contribution;
 
   /* Get the bf heating contributions here too. (SS June 04) */
   /* JM Oct 2025 -- we now separate out three body recombination and photoionization heating */
   /* so that we can track them separately */
 
-  xplasma->heat_photo += heat_contribution = macro_photo_heating (xplasma, xplasma->t_e);
-  xplasma->heat_photo_macro = heat_contribution;
+  xplasma->est.heat_photo += heat_contribution = macro_photo_heating (xplasma, xplasma->state.t_e);
+  xplasma->est.heat_photo_macro = heat_contribution;
 
-  xplasma->heat_photo += heat_contribution = macro_qrecomb_heating (xplasma, xplasma->t_e);
-  xplasma->heat_qrecomb_macro = heat_contribution;
+  xplasma->est.heat_photo += heat_contribution = macro_qrecomb_heating (xplasma, xplasma->state.t_e);
+  xplasma->est.heat_qrecomb_macro = heat_contribution;
 
   /* ensure the total heating is incremented too, for line and bound-free */
-  xplasma->heat_tot += xplasma->heat_lines_macro + xplasma->heat_photo_macro + xplasma->heat_qrecomb_macro;
+  xplasma->est.heat_tot += xplasma->est.heat_lines_macro + xplasma->est.heat_photo_macro + xplasma->est.heat_qrecomb_macro;
 
   /* finally, check if we have any places where stimulated recombination wins over
      photoionization */
@@ -560,14 +550,14 @@ normalise_macro_estimators (PlasmaPtr xplasma)
   geo.macro_ioniz_mode = MACRO_IONIZ_MODE_ESTIMATORS;
 
   /* force recalculation of k-packet rates and matrices, if applicable */
-  mplasma->kpkt_rates_known = FALSE;
-  mplasma->matrix_rates_known = FALSE;
+  mplasma->derived.kpkt_rates_known = FALSE;
+  mplasma->derived.matrix_rates_known = FALSE;
 
   /* record a total energy flow into macro-atoms, by summing over all matom_abs contributions */
-  mplasma->energy_flow_in = 0.0;
+  mplasma->est.energy_flow_in = 0.0;
   for (i = 0; i < nlevels_macro; i++)
   {
-    mplasma->energy_flow_in += mplasma->matom_abs[i];
+    mplasma->est.energy_flow_in += mplasma->est.matom_abs[i];
   }
 
   return (0);
@@ -600,10 +590,7 @@ normalise_macro_estimators (PlasmaPtr xplasma)
  **********************************************************/
 
 double
-total_fb_matoms (xplasma, t_e, f1, f2)
-     PlasmaPtr xplasma;
-     double t_e;
-     double f1, f2;
+total_fb_matoms (PlasmaPtr xplasma, double t_e, double f1, double f2)
 {
   double cool_contribution;
   double t_e_store;
@@ -614,8 +601,8 @@ total_fb_matoms (xplasma, t_e, f1, f2)
 
   mplasma = &macromain[xplasma->nplasma];
 
-  t_e_store = xplasma->t_e;     //store the temperature - will put it back at the end
-  xplasma->t_e = t_e;           //for use in calls to alpha_sp below
+  t_e_store = xplasma->state.t_e;       //store the temperature - will put it back at the end
+  xplasma->state.t_e = t_e;     //for use in calls to alpha_sp below
 
   total = 0;
 
@@ -637,16 +624,18 @@ total_fb_matoms (xplasma, t_e, f1, f2)
            This is essentially equation (33) of Lucy (2003) */
 
         cool_contribution =
-          (mplasma->alpha_st_e_old[xconfig[i].bfu_indx_first + j] +
+          (mplasma->state.alpha_st_e_old[xconfig[i].bfu_indx_first + j] +
            alpha_sp (cont_ptr, xplasma, 1)
-           - mplasma->alpha_st_old[xconfig[i].bfu_indx_first + j]
-           - alpha_sp (cont_ptr, xplasma, 0)) * PLANCK * phot_top[xconfig[i].bfu_jump[j]].freq[0] * density * xplasma->ne * xplasma->vol;
+           - mplasma->state.alpha_st_old[xconfig[i].bfu_indx_first + j]
+           - alpha_sp (cont_ptr, xplasma,
+                       0)) * PLANCK * phot_top[xconfig[i].bfu_jump[j]].freq[0] * density * xplasma->state.ne * xplasma->state.vol;
 
+        /* That's the bf cooling contribution. */
         total += cool_contribution;
       }
     }
 
-    xplasma->t_e = t_e_store;   //restore the original value
+    xplasma->state.t_e = t_e_store;     //restore the original value
 
   }
 
@@ -694,7 +683,7 @@ cooling_di_matoms (xplasma, t_e, f1, f2)
         /* Now add the collisional ionization term. */
         density = den_config (xplasma, cont_ptr->nlev);
         cool_contribution =
-          q_ioniz (cont_ptr, t_e) * density * xplasma->ne * PLANCK * phot_top[xconfig[i].bfu_jump[j]].freq[0] * xplasma->vol;
+          q_ioniz (cont_ptr, t_e) * density * xplasma->state.ne * PLANCK * phot_top[xconfig[i].bfu_jump[j]].freq[0] * xplasma->state.vol;
 
         total += cool_contribution;
       }
@@ -725,9 +714,7 @@ cooling_di_matoms (xplasma, t_e, f1, f2)
  **********************************************************/
 
 double
-total_bb_cooling (xplasma, t_e)
-     PlasmaPtr xplasma;
-     double t_e;
+total_bb_cooling (PlasmaPtr xplasma, double t_e)
 {
   double cool_contribution;
   struct lines *line_ptr;
@@ -736,7 +723,7 @@ total_bb_cooling (xplasma, t_e)
   double coll_rate, rad_rate;
 
   total = 0;                    // initialise
-  xplasma->cool_lines_macro = 0;
+  xplasma->derived.cool_lines_macro = 0;
   for (i = 0; i < nlines; i++)
   {
     line_ptr = &line[i];
@@ -744,8 +731,8 @@ total_bb_cooling (xplasma, t_e)
     {                           //This is a line from a macro atom for which we know
       //the upper and lower level populations
       lower_density = den_config (xplasma, line_ptr->nconfigl);
-      cool_contribution = (lower_density * q12 (line_ptr, t_e)) * xplasma->ne * xplasma->vol * line_ptr->freq * PLANCK;
-      xplasma->cool_lines_macro += cool_contribution;
+      cool_contribution = (lower_density * q12 (line_ptr, t_e)) * xplasma->state.ne * xplasma->state.vol * line_ptr->freq * PLANCK;
+      xplasma->derived.cool_lines_macro += cool_contribution;
     }
     else
     {                           //It's a simple line - don't know the level populations
@@ -753,12 +740,12 @@ total_bb_cooling (xplasma, t_e)
 
       //The cooling rate is computed using the scattering probability formalism in KSL's notes on Sirocco.
 
-      two_level_atom (line_ptr, xplasma, &lower_density, &upper_density);
-      coll_rate = q21 (line_ptr, t_e) * xplasma->ne * (1. - exp (-H_OVER_K * line_ptr->freq / t_e));
+      two_level_atom (line_ptr, xplasma, &lower_density, &upper_density, -1.0);
+      coll_rate = q21 (line_ptr, t_e) * xplasma->state.ne * (1. - exp (-H_OVER_K * line_ptr->freq / t_e));
 
       cool_contribution =
         (lower_density * line_ptr->gu / line_ptr->gl -
-         upper_density) * coll_rate / (exp (H_OVER_K * line_ptr->freq / t_e) - 1.) * xplasma->vol * line_ptr->freq * PLANCK;
+         upper_density) * coll_rate / (exp (H_OVER_K * line_ptr->freq / t_e) - 1.) * xplasma->state.vol * line_ptr->freq * PLANCK;
 
 
       rad_rate = a21 (line_ptr) * p_escape (line_ptr, xplasma);
@@ -791,9 +778,7 @@ total_bb_cooling (xplasma, t_e)
  **********************************************************/
 
 double
-macro_bb_heating (xplasma, t_e)
-     PlasmaPtr xplasma;
-     double t_e;
+macro_bb_heating (PlasmaPtr xplasma, double t_e)
 {
   double heat_contribution;
   struct lines *line_ptr;
@@ -810,7 +795,7 @@ macro_bb_heating (xplasma, t_e)
     {                           //This is a line from a macro atom for which we know
       //the upper and lower level populations
       upper_density = den_config (xplasma, line_ptr->nconfigu);
-      heat_contribution = upper_density * q21 (line_ptr, t_e) * xplasma->ne * xplasma->vol * line_ptr->freq * PLANCK;
+      heat_contribution = upper_density * q21 (line_ptr, t_e) * xplasma->state.ne * xplasma->state.vol * line_ptr->freq * PLANCK;
       total += heat_contribution;
     }
   }
@@ -834,14 +819,11 @@ macro_bb_heating (xplasma, t_e)
  **********************************************************/
 
 double
-macro_photo_heating (xplasma, t_e)
-     PlasmaPtr xplasma;
-     double t_e;
+macro_photo_heating (PlasmaPtr xplasma, double t_e)
 {
   double heat_contribution;
   double total, lower_density;
   int i, j;
-  double q_recomb ();
   MacroPtr mplasma;
 
   mplasma = &macromain[xplasma->nplasma];
@@ -856,9 +838,9 @@ macro_photo_heating (xplasma, t_e)
       /* Photoionization part. */
       lower_density = den_config (xplasma, phot_top[xconfig[i].bfu_jump[j]].nlev);
       heat_contribution =
-        (mplasma->gamma_e_old[xconfig[i].bfu_indx_first + j] -
-         mplasma->gamma_old[xconfig[i].bfu_indx_first +
-                            j]) * PLANCK * phot_top[xconfig[i].bfu_jump[j]].freq[0] * lower_density * xplasma->vol;
+        (mplasma->state.gamma_e_old[xconfig[i].bfu_indx_first + j] -
+         mplasma->state.gamma_old[xconfig[i].bfu_indx_first +
+                                  j]) * PLANCK * phot_top[xconfig[i].bfu_jump[j]].freq[0] * lower_density * xplasma->state.vol;
 
       total += heat_contribution;
     }
@@ -902,7 +884,8 @@ macro_qrecomb_heating (xplasma, t_e)
       upper_density = den_config (xplasma, phot_top[xconfig[i].bfu_jump[j]].uplev);
       heat_contribution +=
         q_recomb (&phot_top[xconfig[i].bfu_jump[j]],
-                  t_e) * xplasma->ne * xplasma->ne * PLANCK * upper_density * xplasma->vol * phot_top[xconfig[i].bfu_jump[j]].freq[0];
+                  t_e) * xplasma->state.ne * xplasma->state.ne * PLANCK * upper_density * xplasma->state.vol *
+        phot_top[xconfig[i].bfu_jump[j]].freq[0];
 
       total += heat_contribution;
 
@@ -939,12 +922,7 @@ macro_qrecomb_heating (xplasma, t_e)
  **********************************************************/
 
 int
-bb_simple_heat (xplasma, p, tau_sobolev, nn)
-     PlasmaPtr xplasma;
-     PhotPtr p;
-     double tau_sobolev;
-     int nn;
-
+bb_simple_heat (PlasmaPtr xplasma, PhotPtr p, double tau_sobolev, int nn)
 {
   double heat_contribution;
   double weight_of_packet;
@@ -955,21 +933,21 @@ bb_simple_heat (xplasma, p, tau_sobolev, nn)
 
   weight_of_packet = p->w;
   line_ptr = lin_ptr[nn];
-  electron_temperature = xplasma->t_e;
+  electron_temperature = xplasma->state.t_e;
 
   rad_rate = a21 (line_ptr) * p_escape (line_ptr, xplasma);
 
-  coll_rate = q21 (line_ptr, electron_temperature) * xplasma->ne * (1. - exp (-H_OVER_K * line_ptr->freq / electron_temperature));
+  coll_rate = q21 (line_ptr, electron_temperature) * xplasma->state.ne * (1. - exp (-H_OVER_K * line_ptr->freq / electron_temperature));
 
   normalisation = rad_rate + coll_rate;
 
 
   /* Now add the heating contribution. */
 
-  xplasma->heat_lines += heat_contribution = weight_of_packet * (coll_rate / normalisation) * (1. - exp (-1. * tau_sobolev));
+  xplasma->est.heat_lines += heat_contribution = weight_of_packet * (coll_rate / normalisation) * (1. - exp (-1. * tau_sobolev));
 
-  xplasma->heat_tot += heat_contribution;
-  xplasma->kpkt_abs += heat_contribution;
+  xplasma->est.heat_tot += heat_contribution;
+  xplasma->est.kpkt_abs += heat_contribution;
 
   return (0);
 
@@ -991,8 +969,7 @@ bb_simple_heat (xplasma, p, tau_sobolev, nn)
  **********************************************************/
 
 int
-check_stimulated_recomb (xplasma)
-     PlasmaPtr xplasma;
+check_stimulated_recomb (PlasmaPtr xplasma)
 {
   int i, j;
   struct topbase_phot *cont_ptr;
@@ -1008,10 +985,10 @@ check_stimulated_recomb (xplasma)
     for (j = 0; j < xconfig[i].n_bfu_jump; j++)
     {
       cont_ptr = &phot_top[xconfig[i].bfu_jump[j]];
-      gamma = mplasma->gamma_old[xconfig[i].bfu_indx_first + j];
-      st_recomb = mplasma->alpha_st_old[xconfig[i].bfu_indx_first + j];
-      st_recomb *= xplasma->ne * den_config (xplasma, cont_ptr->uplev) / den_config (xplasma, cont_ptr->nlev);
-      coll_ioniz = q_ioniz (cont_ptr, xplasma->t_e) * xplasma->ne;
+      gamma = mplasma->state.gamma_old[xconfig[i].bfu_indx_first + j];
+      st_recomb = mplasma->state.alpha_st_old[xconfig[i].bfu_indx_first + j];
+      st_recomb *= xplasma->state.ne * den_config (xplasma, cont_ptr->uplev) / den_config (xplasma, cont_ptr->nlev);
+      coll_ioniz = q_ioniz (cont_ptr, xplasma->state.t_e) * xplasma->state.ne;
 
       if (st_recomb > (gamma + coll_ioniz))
         st_recomb_err += 1;
@@ -1040,8 +1017,7 @@ check_stimulated_recomb (xplasma)
  **********************************************************/
 
 int
-get_dilute_estimators (xplasma)
-     PlasmaPtr xplasma;
+get_dilute_estimators (PlasmaPtr xplasma)
 {
 
   int i, j;
@@ -1053,15 +1029,15 @@ get_dilute_estimators (xplasma)
   {
     for (j = 0; j < xconfig[i].n_bfu_jump; j++)
     {
-      mplasma->gamma_old[xconfig[i].bfu_indx_first + j] = get_gamma (&phot_top[xconfig[i].bfu_jump[j]], xplasma);
-      mplasma->gamma_e_old[xconfig[i].bfu_indx_first + j] = get_gamma_e (&phot_top[xconfig[i].bfu_jump[j]], xplasma);
-      mplasma->alpha_st_e_old[xconfig[i].bfu_indx_first + j] = get_alpha_st_e (&phot_top[xconfig[i].bfu_jump[j]], xplasma);
-      mplasma->alpha_st_old[xconfig[i].bfu_indx_first + j] = get_alpha_st (&phot_top[xconfig[i].bfu_jump[j]], xplasma);
+      mplasma->state.gamma_old[xconfig[i].bfu_indx_first + j] = get_gamma (&phot_top[xconfig[i].bfu_jump[j]], xplasma);
+      mplasma->state.gamma_e_old[xconfig[i].bfu_indx_first + j] = get_gamma_e (&phot_top[xconfig[i].bfu_jump[j]], xplasma);
+      mplasma->state.alpha_st_e_old[xconfig[i].bfu_indx_first + j] = get_alpha_st_e (&phot_top[xconfig[i].bfu_jump[j]], xplasma);
+      mplasma->state.alpha_st_old[xconfig[i].bfu_indx_first + j] = get_alpha_st (&phot_top[xconfig[i].bfu_jump[j]], xplasma);
     }
     for (j = 0; j < xconfig[i].n_bbu_jump; j++)
     {
       line_ptr = &line[xconfig[i].bbu_jump[j]];
-      mplasma->jbar_old[xconfig[i].bbu_indx_first + j] = mean_intensity (xplasma, line_ptr->freq, MEAN_INTENSITY_BB_MODEL);
+      mplasma->state.jbar_old[xconfig[i].bbu_indx_first + j] = mean_intensity (xplasma, line_ptr->freq, MEAN_INTENSITY_BB_MODEL);
     }
   }
 
@@ -1084,16 +1060,12 @@ get_dilute_estimators (xplasma)
  **********************************************************/
 
 double
-get_gamma (cont_ptr, xplasma)
-     struct topbase_phot *cont_ptr;
-     PlasmaPtr xplasma;
+get_gamma (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
 {
   double gamma_value;
   double fthresh, flast;
-  double qromb ();
-  double gamma_integrand ();
 
-  temp_ext2 = xplasma->t_r;     //external temperature
+  temp_ext2 = xplasma->state.t_r;       //external temperature
   cont_ext_ptr2 = cont_ptr;     //external cont pointer
   fthresh = cont_ptr->freq[0];  //first frequency in list
   flast = cont_ptr->freq[cont_ptr->np - 1];     //last frequency in list
@@ -1107,7 +1079,7 @@ get_gamma (cont_ptr, xplasma)
   // gamma_value = qromb (gamma_integrand, fthresh, flast, 1e-4);
   gamma_value = num_int (gamma_integrand, fthresh, flast, 1e-4);
 
-  gamma_value *= 8 * PI / VLIGHT / VLIGHT * xplasma->w;
+  gamma_value *= 8 * PI / VLIGHT / VLIGHT * xplasma->state.w;
 
   return (gamma_value);
 
@@ -1165,16 +1137,12 @@ gamma_integrand (double freq, void *params)
  **********************************************************/
 
 double
-get_gamma_e (cont_ptr, xplasma)
-     struct topbase_phot *cont_ptr;
-     PlasmaPtr xplasma;
+get_gamma_e (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
 {
   double gamma_e_value;
   double fthresh, flast;
-  double qromb ();
-  double gamma_e_integrand ();
 
-  temp_ext2 = xplasma->t_r;     //external temperature
+  temp_ext2 = xplasma->state.t_r;       //external temperature
   cont_ext_ptr2 = cont_ptr;     //external cont pointer
   fthresh = cont_ptr->freq[0];  //first frequency in list
   flast = cont_ptr->freq[cont_ptr->np - 1];     //last frequency in list
@@ -1188,7 +1156,7 @@ get_gamma_e (cont_ptr, xplasma)
 //  gamma_e_value = qromb (gamma_e_integrand, fthresh, flast, 1e-4);
   gamma_e_value = num_int (gamma_e_integrand, fthresh, flast, 1e-4);
 
-  gamma_e_value *= 8 * PI / VLIGHT / VLIGHT * xplasma->w;
+  gamma_e_value *= 8 * PI / VLIGHT / VLIGHT * xplasma->state.w;
 
   return (gamma_e_value);
 
@@ -1245,17 +1213,13 @@ gamma_e_integrand (double freq, void *params)
  **********************************************************/
 
 double
-get_alpha_st (cont_ptr, xplasma)
-     struct topbase_phot *cont_ptr;
-     PlasmaPtr xplasma;
+get_alpha_st (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
 {
   double alpha_st_value;
   double fthresh, flast;
-  double qromb ();
-  double alpha_st_integrand ();
 
-  temp_ext2 = xplasma->t_e;     //external for use in integrand
-  temp_ext_rad = xplasma->t_r;
+  temp_ext2 = xplasma->state.t_e;       //external for use in integrand
+  temp_ext_rad = xplasma->state.t_r;
   cont_ext_ptr2 = cont_ptr;     //"
   fthresh = cont_ptr->freq[0];  //first frequency in list
   flast = cont_ptr->freq[cont_ptr->np - 1];     //last frequency in list
@@ -1274,14 +1238,14 @@ get_alpha_st (cont_ptr, xplasma)
      through by the appropriate constant. */
   if (cont_ptr->macro_info == 1 && geo.macro_simple == FALSE)
   {
-    alpha_st_value = alpha_st_value * xconfig[cont_ptr->nlev].g / xconfig[cont_ptr->uplev].g * pow (xplasma->t_e, -1.5);
+    alpha_st_value = alpha_st_value * xconfig[cont_ptr->nlev].g / xconfig[cont_ptr->uplev].g * pow (xplasma->state.t_e, -1.5);
   }
   else                          //case for simple element
   {
-    alpha_st_value = alpha_st_value * xconfig[cont_ptr->nlev].g / ion[cont_ptr->nion + 1].g * pow (xplasma->t_e, -1.5); //g for next ion up used
+    alpha_st_value = alpha_st_value * xconfig[cont_ptr->nlev].g / ion[cont_ptr->nion + 1].g * pow (xplasma->state.t_e, -1.5);   //g for next ion up used
   }
 
-  alpha_st_value = alpha_st_value * ALPHA_SP_CONSTANT * xplasma->w;
+  alpha_st_value = alpha_st_value * ALPHA_SP_CONSTANT * xplasma->state.w;
 
   return (alpha_st_value);
 }
@@ -1342,17 +1306,13 @@ alpha_st_integrand (double freq, void *params)
  **********************************************************/
 
 double
-get_alpha_st_e (cont_ptr, xplasma)
-     struct topbase_phot *cont_ptr;
-     PlasmaPtr xplasma;
+get_alpha_st_e (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
 {
   double alpha_st_e_value;
   double fthresh, flast;
-  double qromb ();
-  double alpha_st_e_integrand ();
 
-  temp_ext2 = xplasma->t_e;     //external for use in integrand
-  temp_ext_rad = xplasma->t_r;  //"
+  temp_ext2 = xplasma->state.t_e;       //external for use in integrand
+  temp_ext_rad = xplasma->state.t_r;    //"
   cont_ext_ptr2 = cont_ptr;     //"
   fthresh = cont_ptr->freq[0];  //first frequency in list
   flast = cont_ptr->freq[cont_ptr->np - 1];     //last frequency in list
@@ -1371,14 +1331,14 @@ get_alpha_st_e (cont_ptr, xplasma)
      through by the appropriate constant. */
   if (cont_ptr->macro_info == TRUE && geo.macro_simple == FALSE)
   {
-    alpha_st_e_value = alpha_st_e_value * xconfig[cont_ptr->nlev].g / xconfig[cont_ptr->uplev].g * pow (xplasma->t_e, -1.5);
+    alpha_st_e_value = alpha_st_e_value * xconfig[cont_ptr->nlev].g / xconfig[cont_ptr->uplev].g * pow (xplasma->state.t_e, -1.5);
   }
   else                          //case for simple element
   {
-    alpha_st_e_value = alpha_st_e_value * xconfig[cont_ptr->nlev].g / ion[cont_ptr->nion + 1].g * pow (xplasma->t_e, -1.5);     //g for next ion up used
+    alpha_st_e_value = alpha_st_e_value * xconfig[cont_ptr->nlev].g / ion[cont_ptr->nion + 1].g * pow (xplasma->state.t_e, -1.5);       //g for next ion up used
   }
 
-  alpha_st_e_value = alpha_st_e_value * ALPHA_SP_CONSTANT * xplasma->w;
+  alpha_st_e_value = alpha_st_e_value * ALPHA_SP_CONSTANT * xplasma->state.w;
 
   return (alpha_st_e_value);
 }

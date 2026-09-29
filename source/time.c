@@ -86,8 +86,7 @@ timer ()
  **********************************************************/
 
 int
-get_time (curtime)
-     char curtime[];
+get_time (char curtime[])
 {
   time_t tloc;
   time (&tloc);

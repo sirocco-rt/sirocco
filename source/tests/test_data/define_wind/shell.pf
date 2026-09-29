@@ -14,7 +14,7 @@ Disk.type(none,flat,vertically.extended,rmin>central.obj.rad)                 no
 Boundary_layer.radiation(yes,no)                   no
 Wind.number_of_components                  1
 Wind.type(SV,star,hydro,corona,kwd,homologous,shell,imported)                shell
-Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,fixed,matrix_bb,matrix_pow,matrix_est)                 ml93
+Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,LTE_iterate,fixed,matrix_bb,matrix_pow,matrix_est,matrix_multishot)                 ml93
 Line_transfer(pure_abs,pure_scat,sing_scat,escape_prob,thermal_trapping,macro_atoms_escape_prob,macro_atoms_thermal_trapping) macro_atoms_thermal_trapping
 Matom_transition_mode(mc_jumps,matrix)               matrix
 Surface.reflection.or.absorption(reflect,absorb,thermalized.rerad)               absorb

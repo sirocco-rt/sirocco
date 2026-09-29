@@ -45,8 +45,7 @@
  **********************************************************/
 
 double
-get_matom_f (mode)
-     int mode;
+get_matom_f (int mode)
 {
   int n, m, mm;
   double lum;
@@ -89,15 +88,15 @@ get_matom_f (mode)
     {
       for (m = 0; m < nlevels_macro; m++)
       {
-        norm += macromain[n].matom_abs[m];
-        macromain[n].matom_emiss[m] = 0.0;
-        if (sane_check (macromain[n].matom_abs[m]))
-          Error ("matom_abs is %8.4e in matom %i level %i\n", macromain[n].matom_abs[m], n, m);
+        norm += macromain[n].est.matom_abs[m];
+        macromain[n].derived.matom_emiss[m] = 0.0;
+        if (sane_check (macromain[n].est.matom_abs[m]))
+          Error ("matom_abs is %8.4e in matom %i level %i\n", macromain[n].est.matom_abs[m], n, m);
       }
-      norm += plasmamain[n].kpkt_abs;
-      plasmamain[n].kpkt_emiss = 0.0;
-      if (sane_check (plasmamain[n].kpkt_abs))
-        Error ("kpkt_abs is %8.4e in matom %i\n", plasmamain[n].kpkt_abs, n);
+      norm += plasmamain[n].est.kpkt_abs;
+      plasmamain[n].derived.kpkt_emiss = 0.0;
+      if (sane_check (plasmamain[n].est.kpkt_abs))
+        Error ("kpkt_abs is %8.4e in matom %i\n", plasmamain[n].est.kpkt_abs, n);
     }
 
     /* For MPI parallelisation, the following loop will be distributed over multiple tasks.
@@ -139,13 +138,13 @@ get_matom_f (mode)
 
       for (m = 0; m < nlevels_macro + 1; m++)
       {
-        if ((m == nlevels_macro && plasmamain[n].kpkt_abs > 0) || (m < nlevels_macro && macromain[n].matom_abs[m] > 0))
+        if ((m == nlevels_macro && plasmamain[n].est.kpkt_abs > 0) || (m < nlevels_macro && macromain[n].est.matom_abs[m] > 0))
         {
           if (m < nlevels_macro)
           {
-            if (macromain[n].matom_abs[m] > 0)
+            if (macromain[n].est.matom_abs[m] > 0)
             {
-              n_tries_local = (n_tries * macromain[n].matom_abs[m] / norm) + 10;
+              n_tries_local = (n_tries * macromain[n].est.matom_abs[m] / norm) + 10;
             }
             else
             {
@@ -154,9 +153,9 @@ get_matom_f (mode)
           }
           else if (m == nlevels_macro)
           {
-            if (plasmamain[n].kpkt_abs > 0)
+            if (plasmamain[n].est.kpkt_abs > 0)
             {
-              n_tries_local = (n_tries * plasmamain[n].kpkt_abs / norm) + 10;
+              n_tries_local = (n_tries * plasmamain[n].est.kpkt_abs / norm) + 10;
             }
             else
             {
@@ -229,7 +228,7 @@ get_matom_f (mode)
                 if (nres > NLINES + nphot_total)
                 {
                   Error ("Problem in get_matom_f (1). Abort. nres is %d, NLINES %d, nphot_total %d m %d %8.4e\n",
-                         nres, NLINES, nphot_total, m, macromain[n].matom_abs[m]);
+                         nres, NLINES, nphot_total, m, macromain[n].est.matom_abs[m]);
                   Exit (0);
                 }
 
@@ -308,21 +307,21 @@ get_matom_f (mode)
               contribution = 0;
               if (m < nlevels_macro)
               {
-                macromain[n].matom_emiss[mm] += contribution = level_emit[mm] * macromain[n].matom_abs[m] / n_tries_local;
+                macromain[n].derived.matom_emiss[mm] += contribution = level_emit[mm] * macromain[n].est.matom_abs[m] / n_tries_local;
               }
               else if (m == nlevels_macro)
               {
-                macromain[n].matom_emiss[mm] += contribution = level_emit[mm] * plasmamain[n].kpkt_abs / n_tries_local;
+                macromain[n].derived.matom_emiss[mm] += contribution = level_emit[mm] * plasmamain[n].est.kpkt_abs / n_tries_local;
               }
             }
 
             if (m < nlevels_macro)
             {
-              plasmamain[n].kpkt_emiss += kpkt_emit * macromain[n].matom_abs[m] / n_tries_local;
+              plasmamain[n].derived.kpkt_emiss += kpkt_emit * macromain[n].est.matom_abs[m] / n_tries_local;
             }
             else if (m == nlevels_macro)
             {
-              plasmamain[n].kpkt_emiss += kpkt_emit * plasmamain[n].kpkt_abs / n_tries_local;
+              plasmamain[n].derived.kpkt_emiss += kpkt_emit * plasmamain[n].est.kpkt_abs / n_tries_local;
             }
           }
         }
@@ -346,7 +345,7 @@ get_matom_f (mode)
 
     for (mm = 0; mm < nlevels_macro; mm++)
     {
-      lum += macromain[n].matom_emiss[mm];
+      lum += macromain[n].derived.matom_emiss[mm];
     }
   }
 
@@ -388,8 +387,7 @@ get_matom_f (mode)
  **********************************************************/
 
 double
-get_matom_f_accelerate (mode)
-     int mode;
+get_matom_f_accelerate (int mode)
 {
   int n, m, mm;
   double lum;
@@ -428,13 +426,13 @@ get_matom_f_accelerate (mode)
     {
       for (m = 0; m < nlevels_macro; m++)
       {
-        macromain[n].matom_emiss[m] = 0.0;
-        if (sane_check (macromain[n].matom_abs[m]))
-          Error ("matom_abs is %8.4e in matom %i level %i\n", macromain[n].matom_abs[m], n, m);
+        macromain[n].derived.matom_emiss[m] = 0.0;
+        if (sane_check (macromain[n].est.matom_abs[m]))
+          Error ("matom_abs is %8.4e in matom %i level %i\n", macromain[n].est.matom_abs[m], n, m);
       }
-      plasmamain[n].kpkt_emiss = 0.0;
-      if (sane_check (plasmamain[n].kpkt_abs))
-        Error ("kpkt_abs is %8.4e in matom %i\n", plasmamain[n].kpkt_abs, n);
+      plasmamain[n].derived.kpkt_emiss = 0.0;
+      if (sane_check (plasmamain[n].est.kpkt_abs))
+        Error ("kpkt_abs is %8.4e in matom %i\n", plasmamain[n].est.kpkt_abs, n);
     }
 
 
@@ -493,19 +491,19 @@ get_matom_f_accelerate (mode)
       {
         for (j = 0; j < nlevels_macro; j++)
         {
-          macromain[n].matom_emiss[j] += macromain[n].matom_abs[i] * matom_matrix[i][j];
+          macromain[n].derived.matom_emiss[j] += macromain[n].est.matom_abs[i] * matom_matrix[i][j];
         }
-        plasmamain[n].kpkt_emiss += macromain[n].matom_abs[i] * matom_matrix[i][nlevels_macro];
+        plasmamain[n].derived.kpkt_emiss += macromain[n].est.matom_abs[i] * matom_matrix[i][nlevels_macro];
       }
 
       /* do the same for the thermal pool. we also normalise by banded_emiss_frac here */
       for (j = 0; j < nlevels_macro; j++)
       {
-        macromain[n].matom_emiss[j] += plasmamain[n].kpkt_abs * matom_matrix[nlevels_macro][j];
-        macromain[n].matom_emiss[j] *= (1.0 * level_emit_doub[j]);
+        macromain[n].derived.matom_emiss[j] += plasmamain[n].est.kpkt_abs * matom_matrix[nlevels_macro][j];
+        macromain[n].derived.matom_emiss[j] *= (1.0 * level_emit_doub[j]);
       }
-      plasmamain[n].kpkt_emiss += plasmamain[n].kpkt_abs * matom_matrix[nlevels_macro][nlevels_macro];
-      plasmamain[n].kpkt_emiss *= (1.0 * kpkt_emit_doub);
+      plasmamain[n].derived.kpkt_emiss += plasmamain[n].est.kpkt_abs * matom_matrix[nlevels_macro][nlevels_macro];
+      plasmamain[n].derived.kpkt_emiss *= (1.0 * kpkt_emit_doub);
     }
 
     /*This is the end of the update loop that is parallelised. We now need to exchange data between the tasks.
@@ -526,7 +524,7 @@ get_matom_f_accelerate (mode)
 
     for (mm = 0; mm < nlevels_macro; mm++)
     {
-      lum += macromain[n].matom_emiss[mm];
+      lum += macromain[n].derived.matom_emiss[mm];
     }
   }
 
