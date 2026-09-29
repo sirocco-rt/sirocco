@@ -229,7 +229,7 @@ ion_abundances (PlasmaPtr xplasma, int mode)
 
     for (jjj = 0; jjj < kkk; jjj++)
     {
-      Log ("XXXXX %5d %10.3e %8.3f\n", jjj, xte[jjj], delta[jjj]);
+      Debug ("XXX -- matrix_multishot -- iteration %5d new t_e %10.3e delta %8.3f\n", jjj, xte[jjj], delta[jjj]);
     }
 
     convergence (xplasma);
