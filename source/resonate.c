@@ -897,7 +897,7 @@ scatter (p, nres, nnscat)
   WindPtr one;
   double prob_kpkt, kpkt_choice, freq_comoving;
   double gamma_twiddle, gamma_twiddle_e, stim_fact;
-  int m, llvl, ulvl;
+  int m, llvl;
   PlasmaPtr xplasma;
   MacroPtr mplasma;
   int ndom;
@@ -998,7 +998,6 @@ scatter (p, nres, nnscat)
          */
 
         llvl = phot_top[*nres - NLINES - 1].nlev;       //lower level
-        ulvl = phot_top[*nres - NLINES - 1].uplev;      //upper level
 
         for (m = 0; m < xconfig[llvl].n_bfu_jump; m++)
         {
@@ -1019,32 +1018,29 @@ scatter (p, nres, nnscat)
 
         /* Need to compute the factor needed for the stimulated term. */
 
-        stim_fact = den_config (xplasma, ulvl) / den_config (xplasma, llvl) / xplasma->ne;
+        /* stimulated recombination per lower-level ion is alpha_st * stim_fact, as in matom.c */
+        stim_fact = stim_recomb_factor (xplasma, &phot_top[*nres - NLINES - 1]);
 
         gamma_twiddle =
           mplasma->gamma_old[xconfig[llvl].bfu_indx_first + m] - (mplasma->alpha_st_old[xconfig[llvl].bfu_indx_first + m] * stim_fact);
         gamma_twiddle_e =
           mplasma->gamma_e_old[xconfig[llvl].bfu_indx_first + m] - (mplasma->alpha_st_e_old[xconfig[llvl].bfu_indx_first + m] * stim_fact);
 
-        /* Both gamma_twiddles must be greater that zero if this is going to work. If they
-           are zero then it's probably because this is the first iteration and so the've not
-           been computed yet. For that first iteration k-packets will be ignored. If the
-           gamma_twiddles are negative then something has gone wrong.
-         */
+        /* Both gamma_twiddles are zero in the first iteration, before they have been computed; then
+           k-packets are ignored. Stimulated recombination can exceed photoionization in unconverged or
+           noisy cells (see check_stimulated_recomb); as in matom.c and macro_accelerate.c, a negative net
+           rate counts as zero. */
 
         prob_kpkt = 0.0;        // initialise value
-        if (gamma_twiddle > 0 && gamma_twiddle_e > 0)
+        if (gamma_twiddle < 0 || gamma_twiddle_e < 0)
         {
-          prob_kpkt = 1. - gamma_twiddle / gamma_twiddle_e;
+          Error ("scatter (resonate.c): negative net photoionization rate (stimulated recombination), set to zero\n");
+          gamma_twiddle = fmax (gamma_twiddle, 0.);
+          gamma_twiddle_e = fmax (gamma_twiddle_e, 0.);
         }
-        else if (gamma_twiddle == 0 && gamma_twiddle_e == 0)
+        if (gamma_twiddle_e > 0)
         {
-          prob_kpkt = 0.;
-        }
-        else
-        {
-          Error ("scatter (resonate.c): a gamma_twiddle is negative. Abort.\n");
-          Exit (0);
+          prob_kpkt = fmin (fmax (1. - gamma_twiddle / gamma_twiddle_e, 0.), 1.);
         }
 
         /* Having got here we have calculated the probability of a k-packet
