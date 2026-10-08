@@ -321,7 +321,12 @@ calloc_wind (int nelem)
 #ifdef MPI_ON
   if (wmain != NULL)
   {
-    MPI_Win_free (&wmain_win);
+    /* wmain is only in a shared window when running on more than one rank, 
+       so only use MPI_Win_free when np_mpi_global > 1. This mirrors free_wind_grid. */
+    if (np_mpi_global > 1)
+      MPI_Win_free (&wmain_win);
+    else
+      free (wmain);
     wmain = NULL;
   }
 
