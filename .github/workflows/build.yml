@@ -26,16 +26,34 @@ jobs:
     runs-on: ubuntu-latest
     needs: greeting
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     #- name: "Installing build dependencies"
     #  run: sudo apt update && apt install -y build-essential cmake
 
     - name: Configuring Sirocco
       run: ./configure
-    - name: Build GH Workflow version of Sirocco
+
+    - name: Cache GSL and CUnit
+      id: libcache
+      uses: actions/cache@v4
+      with:
+        path: |
+          lib
+          include/gsl
+          include/CUnit
+        key: libs-${{ runner.os }}-${{ hashFiles('Makefile.in') }}-gsl-2.6-cunit-3.2.7
+
+    - name: Build libraries and Sirocco (cache miss)
+      if: steps.libcache.outputs.cache-hit != 'true'
       run: make gh_workflow_install
 
-    - uses: actions/setup-python@v3
+    - name: Build Sirocco only (cache hit)
+      if: steps.libcache.outputs.cache-hit == 'true'
+      run: |
+        cd $SIROCCO/source
+        make CC=gcc INDENT=no all
+
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x' # Version range
     - name: Install python dependencies

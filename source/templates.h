@@ -354,6 +354,7 @@ void macro_pops_copy_to_xplasma(PlasmaPtr xplasma, int index_element, double *po
 int matom(PhotPtr p, int *nres, int *escape);
 double b12(struct lines *line_ptr);
 double xalpha_sp(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice);
+double stim_recomb_factor(PlasmaPtr xplasma, struct topbase_phot *cont_ptr);
 double alpha_sp(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice);
 double scaled_alpha_sp_integral_band_limited(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice, double freq_min, double freq_max);
 double alpha_sp_integrand(double freq, void *params);

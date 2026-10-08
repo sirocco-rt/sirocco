@@ -759,8 +759,8 @@ init_macro_rad_properties (void)
       {
         macromain[n_plasma].est.gamma[xconfig[macro_level].bfu_indx_first + k] = 0.0;
         macromain[n_plasma].est.gamma_e[xconfig[macro_level].bfu_indx_first + k] = 0.0;
-        macromain[n_plasma].est.alpha_st[xconfig[macro_level].bfd_indx_first + k] = 0.0;
-        macromain[n_plasma].est.alpha_st_e[xconfig[macro_level].bfd_indx_first + k] = 0.0;
+        macromain[n_plasma].est.alpha_st[xconfig[macro_level].bfu_indx_first + k] = 0.0;
+        macromain[n_plasma].est.alpha_st_e[xconfig[macro_level].bfu_indx_first + k] = 0.0;
       }
     }
   }

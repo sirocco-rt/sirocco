@@ -154,7 +154,7 @@ bf_estimators_increment (WindPtr one, PhotPtr p, double ds)
         weight_of_packet = p->w;
         y = weight_of_packet * x * ds;
 
-        exponential = y * exp (-(freq_av - ft) / BOLTZMANN / xplasma->state.t_e);
+        exponential = y * exp (-H_OVER_K * (freq_av - ft) / xplasma->state.t_e);
 
         /* Increment the photoionization rate estimator */
 
@@ -389,7 +389,7 @@ normalise_macro_estimators (PlasmaPtr xplasma)
 {
   double invariant_volume_time;
   int i, j, nlev_upper;
-  double stimfac, line_freq, stat_weight_ratio;
+  double stimfac, stim_correction, line_freq, stat_weight_ratio;
   double heat_contribution, lower_density, upper_density;
   WindPtr one;
   MacroPtr mplasma;
@@ -442,7 +442,7 @@ normalise_macro_estimators (PlasmaPtr xplasma)
          ratio of statistical weights too. For free electron statistical
          weight = 2 is included in stimfac above. */
 
-      stat_weight_ratio = xconfig[phot_top[xconfig[i].bfu_jump[j]].uplev].g / xconfig[i].g;
+      stat_weight_ratio = xconfig[i].g / xconfig[phot_top[xconfig[i].bfu_jump[j]].uplev].g;
 
       mplasma->state.alpha_st_old[xconfig[i].bfu_indx_first + j] =
         mplasma->est.alpha_st[xconfig[i].bfu_indx_first + j] * stimfac * stat_weight_ratio / PLANCK / invariant_volume_time;
@@ -488,12 +488,12 @@ normalise_macro_estimators (PlasmaPtr xplasma)
 
       /* The correction for stimulated emission is (1 - n_lower * g_upper / n_upper / g_lower) */
 
-      stimfac = upper_density / lower_density;
-      stimfac = stimfac * xconfig[i].g / xconfig[line[xconfig[i].bbu_jump[j]].nconfigu].g;
+      stim_correction = upper_density / lower_density;
+      stim_correction = stim_correction * xconfig[i].g / xconfig[line[xconfig[i].bbu_jump[j]].nconfigu].g;
 
-      if (stimfac < 1.0 && stimfac >= 0.0)
+      if (stim_correction < 1.0 && stim_correction >= 0.0)
       {
-        stimfac = 1. - stimfac;
+        stim_correction = 1. - stim_correction;
       }
       else if (upper_density > DENSITY_PHOT_MIN && lower_density > DENSITY_PHOT_MIN
                && xplasma->state.levden[xconfig[nlev_upper].nden] > DENSITY_MIN)
@@ -501,21 +501,22 @@ normalise_macro_estimators (PlasmaPtr xplasma)
         /* check for population inversions. We don't worry about this if the densities are extremely low or if the
            upper level has hit the density floor - the lower level is still allowed to hit this floor because it
            should never cause an inversion */
-        Error ("normalise_macro_estimators: bb stimulated correction factor is out of bounds, 0 <= stimfac < 1 but got %g\n", stimfac);
-        Error ("normalise_macro_estimators: upper_density %g lower_density %g xplasma->state.levden[config[nlev_upper].nden] %g\n",
-               upper_density, lower_density, xplasma->state.levden[xconfig[nlev_upper].nden]);
-        stimfac = 0.0;
+        Error ("normalise_macro_estimators: bb stimulated correction factor is out of bounds, 0 <= stim_correction < 1 but got %g\n",
+               stim_correction);
+        Error ("normalise_macro_estimators: upper_density %g lower_density %g xplasma->levden[config[nlev_upper].nden] %g\n", upper_density,
+               lower_density, xplasma->state.levden[xconfig[nlev_upper].nden]);
+        stim_correction = 0.0;
       }
       else
       {
-        stimfac = 0.0;
+        stim_correction = 0.0;
       }
 
       /* normalise jbar. Note that this uses the cell volume rather than the filled volume */
 
       line_freq = line[xconfig[i].bbu_jump[j]].freq;
       mplasma->state.jbar_old[xconfig[i].bbu_indx_first + j] =
-        mplasma->est.jbar[xconfig[i].bbu_indx_first + j] * VLIGHT * stimfac / 4. / PI / invariant_volume_time / line_freq;
+        mplasma->est.jbar[xconfig[i].bbu_indx_first + j] * VLIGHT * stim_correction / 4. / PI / invariant_volume_time / line_freq;
       mplasma->est.jbar[xconfig[i].bbu_indx_first + j] = 0.0;
     }
   }
@@ -985,9 +986,10 @@ check_stimulated_recomb (PlasmaPtr xplasma)
     for (j = 0; j < xconfig[i].n_bfu_jump; j++)
     {
       cont_ptr = &phot_top[xconfig[i].bfu_jump[j]];
+
       gamma = mplasma->state.gamma_old[xconfig[i].bfu_indx_first + j];
       st_recomb = mplasma->state.alpha_st_old[xconfig[i].bfu_indx_first + j];
-      st_recomb *= xplasma->state.ne * den_config (xplasma, cont_ptr->uplev) / den_config (xplasma, cont_ptr->nlev);
+      st_recomb *= stim_recomb_factor (xplasma, cont_ptr);
       coll_ioniz = q_ioniz (cont_ptr, xplasma->state.t_e) * xplasma->state.ne;
 
       if (st_recomb > (gamma + coll_ioniz))
