@@ -746,10 +746,9 @@ compton_beta (nu)
  * @details
  * This is is the integrand sigma x J_nu that is integrated
  * to obtain the Compton cooling rate in a cell. The sigma in question is the
- * effective energy exchange cross section, which for coolnig is /alpha/beta/sigma_T.
- * These alpha and beta terms are computed in ther subroutines, but here we only
- * need to use \beta, because the \alpha term is taken account of when we compute
- * J_nu during the photon transport phase of the code.
+ * effective energy exchange cross section, which for cooling is /alpha/beta/sigma_T.
+ * These alpha and beta terms are computed in ther subroutines. Previously the alpha
+ * was incorrectly omitted here (see #1202).
  * If we are calling this function, we know we have a model so there is no need to
  * protect against the problem of not having a model
  *
@@ -762,7 +761,7 @@ double
 comp_cool_integrand (double nu, void *params)
 {
   double value;
-  value = THOMPSON * compton_beta (nu) * mean_intensity (xplasma, nu, MEAN_INTENSITY_ESTIMATOR_MODEL);
+  value = THOMPSON * compton_alpha (nu) * compton_beta (nu) * mean_intensity (xplasma, nu, MEAN_INTENSITY_ESTIMATOR_MODEL);
   return (value);
 }
 
