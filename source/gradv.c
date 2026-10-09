@@ -408,8 +408,10 @@ calculate_cell_dvds_max (int ndom, WindPtr cell)
  * @return     Returns dvds_max at the position of the photon
  *
  * @details
- * The routine interpolates dvds_max given the position of
- * a photon in a cell
+ * The routine estimates dvds_max given the position of
+ * a photon in a cell. It uses the maximum of the surrounding corners
+ * because it is only used to normalise the escape probability of a photon
+ * in anisotropic scatterings, so can be a conservative overestimate.
  *
  * dvds_max at the vertex points of cells must have been
  * initialized using the routine dvds_max
@@ -421,6 +423,10 @@ calculate_cell_dvds_max (int ndom, WindPtr cell)
  * must be acurrate.
  **********************************************************/
 
+ /** Ad hoc safety factor applied to the maximum of the corner dvds_max values, 
+  * to avoid sampled dvds values exceeding the maximum. 
+ */
+#define DVDS_MAX_SAFETY 1.05
 
 double
 get_dvds_max (p)
@@ -438,7 +444,8 @@ get_dvds_max (p)
 
   for (nn = 0; nn < nelem; nn++)
   {
-    dvds += frac[nn] * wmain[nnn[nn]].dvds_max;
+    /* note we don't weight the maximum here, but take the maximum value of the surrounding corner values*/
+    dvds = fmax (dvds, wmain[nnn[nn]].dvds_max);
   }
 
   return dvds;
