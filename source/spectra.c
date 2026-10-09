@@ -124,13 +124,8 @@ spectrum_allocate (int nspec)
  *
  **********************************************************/
 int
-spectrum_init (f1, f2, nangle, angle, phase, scat_select, top_bot_select, select_extract, rho_select, z_select, az_select, r_select)
-     double f1, f2;
-     int nangle;
-     double angle[], phase[];
-     int scat_select[], top_bot_select[];
-     int select_extract;
-     double rho_select[], z_select[], az_select[], r_select[];
+spectrum_init (double f1, double f2, int nangle, double angle[], double phase[], int scat_select[], int top_bot_select[],
+               int select_extract, double rho_select[], double z_select[], double az_select[], double r_select[])
 {
   int i, n;
   int nspec;
@@ -388,11 +383,7 @@ spectrum_init (f1, f2, nangle, angle, phase, scat_select, top_bot_select, select
  **********************************************************/
 
 int
-spectrum_create (p, nangle, select_extract)
-     PhotPtr p;
-     int nangle;
-     int select_extract;
-
+spectrum_create (PhotPtr p, int nangle, int select_extract)
 {
   int nphot, istat, j, k, k1, n;
   int nspec, nwave, spectype;
@@ -747,9 +738,7 @@ spectrum_create (p, nangle, select_extract)
 
 
 int
-spec_add_one (p, spec_type)
-     PhotPtr p;
-     int spec_type;
+spec_add_one (PhotPtr p, int spec_type)
 {
   int k;
   int iwind;
@@ -850,16 +839,9 @@ spec_add_one (p, spec_type)
  **********************************************************/
 
 int
-spectrum_summary (filename, nspecmin, nspecmax, select_spectype, renorm, loglin, iwind)
-     char filename[];
-     int loglin;
-     int nspecmin, nspecmax;
-     int select_spectype;
-     double renorm;
-     int iwind;
-
+spectrum_summary (char filename[], int nspecmin, int nspecmax, int select_spectype, double renorm, int loglin, int iwind)
 {
-  FILE *fopen (), *fptr;
+  FILE *fptr;
   int i, n;
   int nwave;
   char string[LINELENGTH];
@@ -1053,8 +1035,7 @@ spectrum_summary (filename, nspecmin, nspecmax, select_spectype, renorm, loglin,
  **********************************************************/
 
 int
-spectrum_restart_renormalise (nangle)
-     int nangle;
+spectrum_restart_renormalise (int nangle)
 {
   double renorm_factor;
   int n, m, nspec;

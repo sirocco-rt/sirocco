@@ -66,9 +66,7 @@
  **********************************************************/
 
 int
-import_1d (ndom, filename)
-     int ndom;
-     char *filename;
+import_1d (int ndom, char *filename)
 {
   FILE *fptr;
   char line[LINELENGTH];
@@ -221,9 +219,7 @@ import_spherical_setup_boundaries (int ndom)
  **********************************************************/
 
 int
-spherical_make_grid_import (w, ndom)
-     WindPtr w;
-     int ndom;
+spherical_make_grid_import (WindPtr w, int ndom)
 {
 
   int j, n;
@@ -307,9 +303,7 @@ spherical_make_grid_import (w, ndom)
  **********************************************************/
 
 double
-velocity_1d (ndom, x, v)
-     int ndom;
-     double *x, *v;
+velocity_1d (int ndom, double *x, double *v)
 {
   double speed;
   double r;
@@ -365,9 +359,7 @@ velocity_1d (ndom, x, v)
  **********************************************************/
 
 double
-rho_1d (ndom, x)
-     int ndom;
-     double *x;
+rho_1d (int ndom, double *x)
 {
   double rho = 0;
   double r;

@@ -36,7 +36,6 @@ int model_flag, ksl_flag, cmf2obs_flag, obs2cmf_flag;
 
 double line_matom_lum_single (double lum[], PlasmaPtr xplasma, int uplvl);
 int line_matom_lum (int uplvl);
-int create_matom_level_map ();
 
 // Define a structure to hold spectral data
 typedef struct
@@ -271,13 +270,13 @@ write_spectra_model_table (fitsfile *fptr)
       iplasma[k] = i;
       iwind[k] = plasmamain[i].nwind;
       iband[k] = j;
-      ichoice[k] = plasmamain[i].spec_mod_type[j];
-      exp_w[k] = plasmamain[i].exp_w[j];
-      exp_temp[k] = plasmamain[i].exp_temp[j];
-      pl_log_w[k] = plasmamain[i].pl_log_w[j];
-      pl_alpha[k] = plasmamain[i].pl_alpha[j];
-      nxtot[k] = plasmamain[i].nxtot[j];
-      printf ("nxtot %d\n", plasmamain[i].nxtot[j]);
+      ichoice[k] = plasmamain[i].state.spec_mod_type[j];
+      exp_w[k] = plasmamain[i].state.exp_w[j];
+      exp_temp[k] = plasmamain[i].state.exp_temp[j];
+      pl_log_w[k] = plasmamain[i].state.pl_log_w[j];
+      pl_alpha[k] = plasmamain[i].state.pl_alpha[j];
+      nxtot[k] = plasmamain[i].est.nxtot[j];
+      printf ("nxtot %d\n", plasmamain[i].est.nxtot[j]);
       k++;
     }
   }
@@ -403,8 +402,7 @@ write_spectra_model_table (fitsfile *fptr)
 
 
 int
-make_spec (inroot)
-     char *inroot;
+make_spec (char *inroot)
 {
 
   fitsfile *fptr;               // Pointer to the FITS file
@@ -435,12 +433,12 @@ make_spec (inroot)
 
   printf ("Hello World %s \n", inroot);
   printf ("Plasma  %d \n", NPLASMA);
-  printf ("NBINS in spec %d \n", NBINS_IN_CELL_SPEC);
+  printf ("NBINS in spec %d \n", geo.nbins_in_cell_spec);
 
 
   Spectra spectra;
   spectra.num_spectra = NPLASMA;
-  spectra.num_wavelengths = NBINS_IN_CELL_SPEC;
+  spectra.num_wavelengths = geo.nbins_in_cell_spec;
   spectra.data = calloc (spectra.num_spectra, sizeof (float *));
 
   for (int i = 0; i < spectra.num_spectra; i++)
@@ -451,7 +449,7 @@ make_spec (inroot)
     for (int j = 0; j < spectra.num_wavelengths; j++)
     {
       // spectra.data[i][j] = (float) (i + j);
-      spectra.data[i][j] = (float) plasmamain[i].cell_spec_flux[j];
+      spectra.data[i][j] = (float) plasmamain[i].est.cell_spec_flux[j];
     }
   }
 
@@ -473,30 +471,30 @@ make_spec (inroot)
 
   Spectra freq;
   freq.num_spectra = 1;
-  freq.num_wavelengths = NBINS_IN_CELL_SPEC;
+  freq.num_wavelengths = geo.nbins_in_cell_spec;
   freq.data = calloc (freq.num_spectra, sizeof (float *));
   freq.data[0] = calloc (freq.num_wavelengths, sizeof (float));
 
-  for (int i = 0; i < NBINS_IN_CELL_SPEC; i++)
+  for (int i = 0; i < geo.nbins_in_cell_spec; i++)
   {
     freq.data[0][i] = (float) pow (10., geo.cell_log_freq_min + i * geo.cell_delta_lfreq);
   }
 
 
-  float *image_data2 = prepare_image_data (freq.data, NBINS_IN_CELL_SPEC, 1);
+  float *image_data2 = prepare_image_data (freq.data, geo.nbins_in_cell_spec, 1);
 /*
   double freq[2000][1];
   int i;
 
-  for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
+  for (i = 0; i < geo.nbins_in_cell_spec; i++)
   {
     freq[i][0] = (float) pow (10., geo.cell_log_freq_min + i * geo.cell_delta_lfreq);
   }
 
-  float *image_data2 = prepare_image_data (freq, NBINS_IN_CELL_SPEC, 1);
+  float *image_data2 = prepare_image_data (freq, geo.nbins_in_cell_spec, 1);
 */
-  // status = write_image_extension (fptr, image_data2, NBINS_IN_CELL_SPEC, 1, "nu");
-  status = write_1d_image_extension (fptr, image_data2, NBINS_IN_CELL_SPEC, "nu");
+  // status = write_image_extension (fptr, image_data2, geo.nbins_in_cell_spec, 1, "nu");
+  status = write_1d_image_extension (fptr, image_data2, geo.nbins_in_cell_spec, "nu");
 
   /* Elimainate this for now
 
@@ -558,14 +556,11 @@ make_spec (inroot)
  **********************************************************/
 
 int
-xparse_command_line (argc, argv)
-     int argc;
-     char *argv[];
+xparse_command_line (int argc, char *argv[])
 {
   int j = 0;
   int i;
   char dummy[LINELENGTH];
-  int mkdir ();
   char *fgets_rc;
 
 
@@ -678,14 +673,10 @@ xparse_command_line (argc, argv)
 
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
 
   char infile[LINELENGTH], outfile[LINELENGTH];
-  FILE *fopen ();
-  int mkdir ();
 
 
   xparse_command_line (argc, argv);

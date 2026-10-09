@@ -40,11 +40,7 @@
  **********************************************************/
 
 double
-rtheta_ds_in_cell (ndom, p)
-     int ndom;
-     PhotPtr p;
-
-
+rtheta_ds_in_cell (int ndom, PhotPtr p)
 {
 
   int n, ix, iz;
@@ -249,9 +245,7 @@ rtheta_make_grid (int ndom, WindPtr w)
  **********************************************************/
 
 int
-rtheta_make_cones (ndom, w)
-     int ndom;
-     WindPtr w;
+rtheta_make_cones (int ndom, WindPtr w)
 {
   int n;
   int mdim;
@@ -306,9 +300,7 @@ rtheta_make_cones (ndom, w)
  **********************************************************/
 
 int
-rtheta_wind_complete (ndom, w)
-     int ndom;
-     WindPtr w;
+rtheta_wind_complete (int ndom, WindPtr w)
 {
   int i, j;
   int ndim, mdim, nstart;
@@ -509,9 +501,7 @@ rtheta_cell_volume (WindPtr w)
  **********************************************************/
 
 int
-rtheta_where_in_grid (ndom, x)
-     int ndom;
-     double x[];
+rtheta_where_in_grid (int ndom, double x[])
 {
   int i, j, n;
   double r, theta;
@@ -570,9 +560,7 @@ rtheta_where_in_grid (ndom, x)
  **********************************************************/
 
 int
-rtheta_get_random_location (n, x)
-     int n;                     // Wind cell in which to create position
-     double x[];                // Returned position
+rtheta_get_random_location (int n, double x[])
 {
   int i, j;
   int inwind;
@@ -660,9 +648,7 @@ rtheta_get_random_location (n, x)
  **********************************************************/
 
 int
-rtheta_extend_density (ndom, w)
-     int ndom;
-     WindPtr w;
+rtheta_extend_density (int ndom, WindPtr w)
 {
   int i, j, n, m;
   int ndim, mdim;
@@ -735,8 +721,7 @@ rtheta_extend_density (ndom, w)
  **********************************************************/
 
 int
-rtheta_is_cell_in_wind (n)
-     int n;                     /* The wind cell number */
+rtheta_is_cell_in_wind (int n)
 {
   int i, j;
   double r, theta;

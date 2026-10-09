@@ -15,7 +15,11 @@ TARGET = sirocco_unit_test
 
 I_FLAGS = -I$(SIROCCO)/include
 L_FLAGS = -L$(SIROCCO)/lib
-C_FLAGS = -O3 -Wall -Wno-deprecated-non-prototype -DMATOM_VER=$(MATOM_VER)
+C_FLAGS = -O3 -Wall -Wno-unused-result -DMATOM_VER=$(MATOM_VER)
+UNAME := $(shell uname)
+ifeq ($(UNAME), Darwin)
+	C_FLAGS += -Wno-deprecated-non-prototype
+endif
 CU_FLAGS = -O3
 
 INCLUDES =

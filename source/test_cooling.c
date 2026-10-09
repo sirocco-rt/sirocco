@@ -34,7 +34,6 @@ int model_flag, ksl_flag, cmf2obs_flag, obs2cmf_flag;
 
 double line_matom_lum_single (double lum[], PlasmaPtr xplasma, int uplvl);
 int line_matom_lum (int uplvl);
-int create_matom_level_map ();
 
 /**********************************************************/
 /**
@@ -57,14 +56,11 @@ int create_matom_level_map ();
  **********************************************************/
 
 int
-xparse_command_line (argc, argv)
-     int argc;
-     char *argv[];
+xparse_command_line (int argc, char *argv[])
 {
   int j = 0;
   int i;
   char dummy[LINELENGTH];
-  int mkdir ();
   char *fgets_rc;
 
 
@@ -174,11 +170,11 @@ xcalc_te (PlasmaPtr xplasma, double tmin, double tmax)
 
   xxxplasma = xplasma;
 
-  xxxplasma->heat_tot += xxxplasma->heat_ch_ex;
+  xxxplasma->est.heat_tot += xxxplasma->est.heat_ch_ex;
 
-  xplasma->t_e = tmin;
+  xplasma->state.t_e = tmin;
   z1 = zero_emit (tmin);
-  xplasma->t_e = tmax;
+  xplasma->state.t_e = tmax;
   z2 = zero_emit (tmax);
 
   /* The way this works is that if we have a situation where the cooling
@@ -188,7 +184,7 @@ xcalc_te (PlasmaPtr xplasma, double tmin, double tmax)
 
   if ((z1 * z2 < 0.0))
   {                             // Then the interval is bracketed
-    xplasma->t_e = zero_find (zero_emit2, tmin, tmax, 50., &ierr);
+    xplasma->state.t_e = zero_find (zero_emit2, tmin, tmax, 50., &ierr);
     if (ierr)
     {
       Error ("calc_te: zero_find failed to find a temperature\n");
@@ -197,11 +193,11 @@ xcalc_te (PlasmaPtr xplasma, double tmin, double tmax)
   }
   else if (fabs (z1) < fabs (z2))
   {
-    xplasma->t_e = tmin;
+    xplasma->state.t_e = tmin;
   }
   else
   {
-    xplasma->t_e = tmax;
+    xplasma->state.t_e = tmax;
   }
   /* With the new temperature in place for the cell, get the correct value of heat_tot.
      SS June  04 */
@@ -215,31 +211,31 @@ xcalc_te (PlasmaPtr xplasma, double tmin, double tmax)
    * We subtract the current value and then compute at the new temperature and
    * add this back */
 
-  xplasma->heat_tot -= xplasma->heat_lines_macro;
-  xplasma->heat_lines -= xplasma->heat_lines_macro;
+  xplasma->est.heat_tot -= xplasma->est.heat_lines_macro;
+  xplasma->est.heat_lines -= xplasma->est.heat_lines_macro;
 
-  xplasma->heat_lines_macro = macro_bb_heating (xplasma, xplasma->t_e);
+  xplasma->est.heat_lines_macro = macro_bb_heating (xplasma, xplasma->state.t_e);
 
-  xplasma->heat_tot += xplasma->heat_lines_macro;
-  xplasma->heat_lines += xplasma->heat_lines_macro;
+  xplasma->est.heat_tot += xplasma->est.heat_lines_macro;
+  xplasma->est.heat_lines += xplasma->est.heat_lines_macro;
 
   /* Similaryly for macro_atom_bf_heating */
 
-  xplasma->heat_tot -= xplasma->heat_photo_macro;
-  xplasma->heat_photo -= xplasma->heat_photo_macro;
-  xplasma->heat_tot -= xplasma->heat_qrecomb_macro;
-  xplasma->heat_photo -= xplasma->heat_qrecomb_macro;
+  xplasma->est.heat_tot -= xplasma->est.heat_photo_macro;
+  xplasma->est.heat_photo -= xplasma->est.heat_photo_macro;
+  xplasma->est.heat_tot -= xplasma->est.heat_qrecomb_macro;
+  xplasma->est.heat_photo -= xplasma->est.heat_qrecomb_macro;
 
-  xplasma->heat_photo_macro = macro_photo_heating (xplasma, xplasma->t_e);
-  xplasma->heat_qrecomb_macro = macro_qrecomb_heating (xplasma, xplasma->t_e);
+  xplasma->est.heat_photo_macro = macro_photo_heating (xplasma, xplasma->state.t_e);
+  xplasma->est.heat_qrecomb_macro = macro_qrecomb_heating (xplasma, xplasma->state.t_e);
 
-  xplasma->heat_tot += xplasma->heat_photo_macro;
-  xplasma->heat_photo += xplasma->heat_photo_macro;
-  xplasma->heat_tot += xplasma->heat_qrecomb_macro;
-  xplasma->heat_photo += xplasma->heat_qrecomb_macro;
+  xplasma->est.heat_tot += xplasma->est.heat_photo_macro;
+  xplasma->est.heat_photo += xplasma->est.heat_photo_macro;
+  xplasma->est.heat_tot += xplasma->est.heat_qrecomb_macro;
+  xplasma->est.heat_photo += xplasma->est.heat_qrecomb_macro;
 
 
-  return (xplasma->t_e);
+  return (xplasma->state.t_e);
 
 }
 
@@ -266,16 +262,13 @@ xcalc_te (PlasmaPtr xplasma, double tmin, double tmax)
 
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
 
   char infile[LINELENGTH], outfile[LINELENGTH];
   int n, i;
-  FILE *fptr, *fopen ();
+  FILE *fptr;
   int ii, jj, ndom, nnwind;
-  int mkdir ();
 
 
   xparse_command_line (argc, argv);
@@ -307,11 +300,11 @@ main (argc, argv)
   fprintf (fptr, "# Results for %s\n", infile);
 
 
-  printf ("te %.3e\n", plasmamain[0].t_e);
-  fprintf (fptr, "te %.3e\n", plasmamain[0].t_e);
+  printf ("te %.3e\n", plasmamain[0].state.t_e);
+  fprintf (fptr, "te %.3e\n", plasmamain[0].state.t_e);
 
   double t, t_new;
-  t = plasmamain[0].t_e;
+  t = plasmamain[0].state.t_e;
 
   t_new = xcalc_te (&plasmamain[0], 0.7 * t, 1.3 * t);
   printf ("te_new %.3e\n", t_new);

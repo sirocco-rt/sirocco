@@ -38,8 +38,7 @@ int sv_zero_r_ndom;
  **********************************************************/
 
 int
-get_sv_wind_params (ndom)
-     int ndom;
+get_sv_wind_params (int ndom)
 {
   double windmin, windmax, theta_min, theta_max;
   char answer[LINELENGTH];
@@ -153,9 +152,7 @@ get_sv_wind_params (ndom)
  **********************************************************/
 
 double
-sv_velocity (x, v, ndom)
-     double x[], v[];
-     int ndom;
+sv_velocity (double x[], double v[], int ndom)
 {
   double r, rzero, theta, speed;
   double ldist, zzz, v_escape, vl = 0.0;
@@ -275,9 +272,7 @@ sv_velocity (x, v, ndom)
  **********************************************************/
 
 double
-sv_rho (ndom, x)
-     double x[];
-     int ndom;
+sv_rho (int ndom, double x[])
 {
   double r, rzero, theta;
   double ldist;
@@ -373,9 +368,7 @@ sv_rho (ndom, x)
  **********************************************************/
 
 double
-sv_find_wind_rzero (ndom, p)
-     int ndom;
-     double p[];                /* Note that p is a 3 vector and not a photon structure */
+sv_find_wind_rzero (int ndom, double p[])
 {
   double x, z;
   double rho_min, rho_max, rho;
@@ -462,8 +455,7 @@ double zero_p[3];
  **********************************************************/
 
 int
-sv_zero_init (p)
-     double p[];
+sv_zero_init (double p[])
 {
   stuff_v (p, zero_p);
   zero_p[2] = fabs (zero_p[2]); /* Required to get correct 
@@ -540,9 +532,7 @@ sv_zero_r (double r, void *params)
  **********************************************************/
 
 double
-sv_theta_wind (ndom, r)
-     int ndom;
-     double r;
+sv_theta_wind (int ndom, double r)
 {
   double theta;
 

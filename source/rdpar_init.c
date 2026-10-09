@@ -156,10 +156,7 @@ init_choices ()
  * 
 **********************************************************/
 int
-get_choices (question, choices, qstruct)
-     char *question;
-     char *choices;
-     struct rdpar_choices *qstruct;
+get_choices (char *question, char *choices, struct rdpar_choices *qstruct)
 {
   char cur_choices[MAX_RDPAR_CHOICES][LINELENGTH];
   int cur_values[MAX_RDPAR_CHOICES] = { -999 };

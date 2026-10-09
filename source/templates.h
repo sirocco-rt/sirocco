@@ -132,6 +132,8 @@ int cylind_get_random_location(int n, double x[]);
 int cylind_extend_density(int ndom, WindPtr w);
 int cylind_is_cell_in_wind(int n);
 /* define_wind.c */
+void set_cell_velocity_gradient(WindPtr cell);
+void set_cell_dvds_and_gamma(WindPtr cell);
 void define_wind(void);
 /* density.c */
 double get_ion_density(int ndom, double x[], int nion);
@@ -325,7 +327,7 @@ int levels(PlasmaPtr xplasma, int mode);
 /* lines.c */
 double total_line_emission(PlasmaPtr xplasma, double f1, double f2);
 double lum_lines(PlasmaPtr xplasma, int nmin, int nmax);
-double two_level_atom(struct lines *line_ptr, PlasmaPtr xplasma, double *d1, double *d2);
+double two_level_atom(struct lines *line_ptr, PlasmaPtr xplasma, double *d1, double *d2, double density_override);
 double line_nsigma(struct lines *line_ptr, PlasmaPtr xplasma);
 double scattering_fraction(struct lines *line_ptr, PlasmaPtr xplasma);
 double p_escape(struct lines *line_ptr, PlasmaPtr xplasma);
@@ -681,6 +683,8 @@ int check_corners_inwind(int n);
 int check_grid(void);
 /* wind_sum.c */
 int xtemp_rad(WindPtr w);
+/* wind_update_model.c */
+int update_wind_from_model(int ndom, char *filename);
 /* wind_updates2d.c */
 int wind_update(WindPtr w);
 int report_bf_simple_ionpool(void);

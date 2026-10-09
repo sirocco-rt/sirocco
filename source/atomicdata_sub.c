@@ -157,7 +157,6 @@ index_lines ()
   float *freqs, foo;
   int *index, ioo;
   int n;
-  void indexx ();
 
   /* Allocate memory for some modestly large arrays */
   freqs = calloc (sizeof (foo), NLINES + 2);
@@ -218,7 +217,6 @@ index_phot_top ()
   float *freqs, foo;
   int *index, ioo;
   int n;
-  void indexx ();
 
   /* Allocate memory for some modestly large arrays */
   freqs = calloc (sizeof (foo), ntop_phot + nxphot + 2);
@@ -272,7 +270,6 @@ index_inner_cross ()
   float *freqs, foo;
   int *index, ioo;
   int n;
-  void indexx ();
 
   /* Allocate memory for some modestly large arrays */
   freqs = calloc (sizeof (foo), n_inner_tot + 2);
@@ -328,9 +325,7 @@ index_inner_cross ()
  **********************************************************/
 
 void
-indexx (n, arrin, indx)
-     int n, indx[];
-     float arrin[];
+indexx (int n, float arrin[], int indx[])
 {
   int l, j, ir, indxt, i;
   float q;
@@ -423,8 +418,7 @@ indexx (n, arrin, indx)
  **********************************************************/
 
 int
-limit_lines (freqmin, freqmax)
-     double freqmin, freqmax;
+limit_lines (double freqmin, double freqmax)
 {
 
   int nmin, nmax, n;
@@ -571,14 +565,11 @@ double q21_a, q21_t_old;
 ************************************************************/
 
 double
-q21 (line_ptr, t)
-     struct lines *line_ptr;
-     double t;
+q21 (struct lines *line_ptr, double t)
 {
   double gaunt;
   double omega;
   double u0;
-  double upsilon ();
 
 
   if (q21_line_ptr != line_ptr || t != q21_t_old)
@@ -642,13 +633,9 @@ q21 (line_ptr, t)
  **********************************************************/
 
 double
-q12 (line_ptr, t)
-     struct lines *line_ptr;
-     double t;
+q12 (struct lines *line_ptr, double t)
 {
   double x;
-  double q21 ();
-  double exp ();
 
   x = line_ptr->gu / line_ptr->gl * q21 (line_ptr, t) * exp (-H_OVER_K * line_ptr->freq / t);
 
@@ -685,8 +672,7 @@ double a21_a;
  **********************************************************/
 
 double
-a21 (line_ptr)
-     struct lines *line_ptr;
+a21 (struct lines *line_ptr)
 {
   double freq;
 
@@ -723,14 +709,11 @@ a21 (line_ptr)
  **********************************************************/
 
 double
-upsilon (n_coll, u0)
-     int n_coll;
-     double u0;
+upsilon (int n_coll, double u0)
 {
   double x;                     //The scaled temperature
   double y;                     //The scaled collision strength
   double upsilon;               //The actual collision strength
-  int linterp ();
 
   /* first we compute x. This is the "reduced temperature" from
      Burgess & Tully 1992. */

@@ -15,6 +15,14 @@ extern int np_mpi_global;      /**< Global variable which holds the number of MP
 extern int rank_global;       /**<Global variable which holds the rank of the active MPI process
                                 */
 
+#ifdef MPI_ON
+extern MPI_Comm node_comm;             /**< Communicator for ranks on the same shared-memory node */
+extern MPI_Comm leader_comm;           /**< Communicator among node leaders (node_rank==0), MPI_COMM_NULL for non-leaders */
+extern int node_rank;                  /**< Rank of this process within its node */
+extern int node_size;                  /**< Number of MPI processes on this node */
+extern int num_nodes;                  /**< Number of distinct shared-memory nodes */
+#endif
+
 extern int verbosity;          /**< verbosity level for printing out information. 0 low, 10 is high
                                  */
 
@@ -589,11 +597,12 @@ struct geometry
   int nxfreq;                   /**<  the number of frequency intervals actually used */
   double xfreq[NXBANDS + 1];    /**<  the frequency boundaries for the coarse spectra  */
 
-#define NBINS_IN_CELL_SPEC   1000       /**< The number of bins in the cell spectra  */
+#define NBINS_IN_CELL_SPEC   1000       /**< The maximum number of bins in the cell spectra  */
 
+  int nbins_in_cell_spec;             /**< Runtime number of bins in cell spectra (default 100, max NBINS_IN_CELL_SPEC) */
   double cell_log_freq_min, cell_log_freq_max, cell_delta_lfreq;        /**< Parameters defining freqency intervals for cell spectra.
                                                                            These are defined as logarithmic frequency intervals */
-  double cell_freq[NBINS_IN_CELL_SPEC +1];  
+  double *cell_freq;                  /**< Frequency bin boundaries for cell spectra (nbins_in_cell_spec+1 elements) */  
 
 
   /* The next set pf variables assign a SPECTYPE (see above) for
@@ -880,250 +889,54 @@ typedef struct wind
   { W_IN_DISK = -5, W_IN_STAR = -4, W_IGNORE = -2, W_NOT_INWIND = -1,
     W_ALL_INWIND = 0, W_PART_INWIND = 1, W_NOT_ASSIGNED = -999
   } inwind;                     /**< Basic information on the nature of a particular cell. */
-  Wind_Paths_Ptr paths, *line_paths;    /**<  Path data struct for each cell */
 }
 wind_dummy, *WindPtr;
 
 extern WindPtr wmain;
 
+#ifdef MPI_ON
+extern MPI_Win wmain_win;             /**< MPI shared memory window for wmain */
+#endif
+
+/**
+ * Per-cell reverb path data, stored separately from wind_dummy so that
+ * wmain can be placed in MPI-3 shared memory (paths are written during
+ * transport and must remain private per rank).
+ */
+typedef struct wind_paths_store
+{
+  Wind_Paths_Ptr paths;              /**< Continuum path histogram */
+  Wind_Paths_Ptr *line_paths;        /**< Per-line path histograms */
+} wind_paths_store;
+
+extern wind_paths_store *wind_paths_main;
+
 /*****************************PLASMA STRUCTURE**************************/
 /** Plasma is a structure that contains information about the properties of the
- * plasma in regions of the geometry that are actually included in the wind
+ * plasma in regions of the geometry that are actually included in the wind.
+ *
+ * The plasma struct is split into three sub-structures to document the
+ * communication pattern of each field and to prepare for future MPI-3
+ * shared memory optimization:
+ *
+ *   state   - Read-only during photon transport. Set during initialization
+ *             or wind update phase. Future: shared across ranks on a node.
+ *   est     - Estimators accumulated (+=) during photon transport.
+ *             Reduced across MPI ranks after transport. Future: private per rank.
+ *   derived - Computed from estimators during wind update phase.
+ *             Broadcast to all ranks after computation.
+ *
  * Note that a number of the arrays are dynamically allocated.
  */
 
-typedef struct plasma
-{
-  int nwind;                    /**<  A cross reference to the corresponding cell in the  wind structure */
-  int nplasma;                  /**<  A self reference to this  in the plasma structure */
-  double ne;                    /**<  Electron density in the shell (CMF) */
-  double rho;                   /**<  Density at the center of the cell. (CMF) For clumped models, this is rho of the clump */
-  double vol;                   /**<  Volume of this cell in CMF frame (more specifically the volume  that is filled with material
-                                   which can differs from the valid volume of the cell due to clumping.) */
-  double xgamma;                /**<  1./sqrt(1-beta**2) at center of cell */
-  double *density;              /**<  The number density of a specific ion in the CMF.  The order of the ions is
-                                   the same as read in by the atomic data routines. */
-  double *partition;            /**<  The partition function for each  ion.  */
-  double *levden;               /* The number density (occupation number?) of a specific level */
-
-  double kappa_ff_factor;       /**<  Multiplicative factor for calculating the FF heating for a photon. */
-
-
-  double *recomb_simple;        /**<  "alpha_e - alpha" (in Leon's notation) for b-f processes in simple atoms. */
-  double *recomb_simple_upweight;       /* multiplicative factor to account for ratio of total to "cooling" energy for b-f processes in simple atoms. */
-
-/* Beginning of macro information */
-  double kpkt_emiss;            /**< This is the luminosity produced due to the conversion k-packet -> r-packet in the cell
-                                   in the frequency range that is required for the final spectral synthesis. (SS) */
-
-  double kpkt_abs;              /**<  k-packet equivalent of matom_abs. (SS) */
-
-  /* kbf_use and kbf_nuse are set by the routine kbf_need, and they provide indices into the photoinization processes
-   * that are "significant" in a plasma cell, based on the density of a particular ion in a cell and the x-section
-   * at the photoinization edge.  This process was introduced as a means to speed the program up by ignoring those
-   * bf processes that would contribute negligibly to the bf opacity
-   */
-
-  int *kbf_use;                 /**<  List of the indices of the photoionization processes to be used for kappa_bf.  */
-  int kbf_nuse;                 /**<  Total number of photoionization processes to be used for kappa_bf. (SS) */
-
-/* End of macro information */
-
-
-  double t_r, t_r_old;          /**< radiation temperature of cell */
-  double t_e, t_e_old;          /**< electron temperature of cell */
-  double dt_e, dt_e_old;        /**< How much t_e changed in the previous iteration */
-  double heat_tot, heat_tot_old;        /**<  heating from all sources */
-  double abs_tot;
-  double heat_lines, heat_ff;
-  double heat_comp;             /**<  The compton heating for the cell */
-  double heat_ind_comp;         /**<  The induced compton heatingfor the cell */
-  double heat_lines_macro, heat_photo_macro;    /**<  bb and bf heating due to macro atoms. Subset of heat_lines */
-
-  double cool_lines_macro, cool_bf_macro;    /* bb and bf cooling due to macro atoms. */
-  double heat_qrecomb_macro;    /**<  The heating due to macro atom 3-body recombinations, added Oct 2025 */ 
-  double cool_di_macro;         /**<  direct/collisional ionization cooling due to macro atoms */
-  double heat_photo, heat_z;    /**< photoionization heating total and of metals */
-  double heat_auger;            /**<  photoionization heating due to inner shell ionizations */
-  double heat_ch_ex;
-  double abs_photo, abs_auger;  /**<  this is the energy absorbed from the photon due to these processes - different from
-                                   the heating rate because of the binding energy */
-  double w;                     /**< The dilution factor of the wind */
-
-  int ntot;                     /**< Total number of photon passages */
-
-  /*  counters of the number of photon passages by origin */
-
-  int ntot_star;
-  int ntot_bl;
-  int ntot_disk;
-  int ntot_wind;
-  int ntot_agn;
-
-
-  int nscat_es;                 /**<  The number of electrons scatters in the cell */
-  int nscat_res;                /**<  The number of resonant line scatters in the cell */
-  int nscat_bf;                 /**< Number of bf scatters in the cell. (macro_only) */
-  int nscat_ff;                 /**< Number of ff scatters in the cell. (macro_only) */
-
-  double mean_ds;               /**<  Mean photon path length in a cell. */
-  int n_ds;                     /**<  Number of times a path lengyh was added; needed to compute mean_ds */
-  int nrad;                     /**<  Total number of photons created within the cell */
-  int nioniz;                   /**<  Total number of photon passages by photons capable of ionizing H */
-  double *ioniz, *recomb;       /**<  Number of ionizations and recombinations for each ion.
-                                   The sense is ionization from ion[n], and recombinations
-                                   to each ion[n].  */
-  double *inner_ioniz, *inner_recomb;
-  int *scatters;                /**<  The number of scatters in this cell for each ion. */
-  double *xscatters;            /**<  Diagnostic measure of energy scattered out of beam on extract. */
-  double *heat_ion;             /**<  The amount of energy being transferred to the electron pool
-                                   by this ion via photoionization. */
-  double *heat_inner_ion;       /**<  The amount of energy being transferred to the electron pool
-                                   by this ion via photoionization. */
-  double *cool_rr_ion;          /**<  The amount of energy being released from the electron pool
-                                   by this ion via recombination. */
-  double *lum_rr_ion;           /**<  The recombination luminosity
-                                   by this ion via recombination. */
-
+/* Constants used in plasma sub-structs (moved out of the struct body) */
+#define NFLUX_ANGLES 36 /**< The number of bins into which the directional flux is calculated */
+/* N_PHOT_PROC removed: n_bf_in/n_bf_out are now dynamically sized to nphot_total */
+#define N_DMO_DT_DIRECTIONS 3
+#define NFORCE_DIRECTIONS 4
 
 #define MEAN_INTENSITY_BB_MODEL  1
 #define MEAN_INTENSITY_ESTIMATOR_MODEL 2
-
-  double *cool_dr_ion;
-  double j, ave_freq;           /**<  Mean (angle-averaged) total intensity, intensity-averaged frequency */
-
-  /* Information related to spectral bands used for modelling */
-
-  double cell_spec_flux[NBINS_IN_CELL_SPEC];    /**< The array where the cell spectra are accumulated. */
-
-  /* ksl - for now this parallels the xband structure, but it is a bit unclear why two frequencies are needed */
-  int nbands;            /* The number of spectral bands for this cell */
-  double f1[NXBANDS+1]; /*Spectral band boundaries for this cell */
-  double f2[NXBANDS+1]; /*Spectral band boundaries for this cell */
-
-  /* The next section contains the results of chaacterizing the cell spectra, see spectral_estimators to see how this is used */
-
-  double xj[NXBANDS], xave_freq[NXBANDS];       /**<  Frequency limited versions of j and ave_freq */
-  double fmin[NXBANDS], fmax[NXBANDS];         /**<  Minimum (Maximum) frequency photon observed in a band -
-                                                 * this is incremented during photon flight */
-  double fmin_mod[NXBANDS], fmax_mod[NXBANDS];  /**<  Minimum (Maximum) frequency of the band-limited model
-                                                  *  after allowing possibility that the observed limit,
-                                                  *  is primarily due to photon statistics. */
-  double xsd_freq[NXBANDS];     /**<  The standard deviation of the frequency in the band */
-  int nxtot[NXBANDS];           /**<  The total number of photon passages in frequency bands */
-
-  enum spec_mod_type_enum
-  {
-    SPEC_MOD_PL = 1,
-    SPEC_MOD_EXP = 2,
-    SPEC_MOD_FAIL = -1
-  } spec_mod_type[NXBANDS];     /**<  A switch to say which type of representation we are using for this band in this cell.
-                                   Negative means we have no useful representation, 0 means power law, 1 means exponential */
-
-  double pl_alpha[NXBANDS];     /**< Computed spectral index for a power law spectrum representing this cell */
-  double pl_log_w[NXBANDS];     /**< This is the log version of the power law weight. It is in an attempt to allow very large
-                                   values of alpha to work with the PL spectral model to avoide NAN problems.
-                                   The pl_w version can be deleted once testing is complete */
-
-
-  double exp_temp[NXBANDS];     /**<  The effective temperature of an exponential representation of the radiation field in a cell */
-  double exp_w[NXBANDS];        /**<  The prefactor of an exponential representation of the radiation field in a cell */
-
-
-#define NFLUX_ANGLES 36 /**< The number of bins into which the directional flux is calculated */
-
-
-  /*Binned fluxes */
-  double F_UV_ang_theta[NFLUX_ANGLES];
-  double F_UV_ang_phi[NFLUX_ANGLES];
-  double F_UV_ang_r[NFLUX_ANGLES];
-
-
-  /*A version of the binned flux that is averaged over cycles */
-  double F_UV_ang_theta_persist[NFLUX_ANGLES];
-  double F_UV_ang_phi_persist[NFLUX_ANGLES];
-  double F_UV_ang_r_persist[NFLUX_ANGLES];
-
-  /* The term direct here means from photons which have not been scattered. These are photons which have been
-     created by the central object, or the disk, or in the simple case the wind, but which have not undergone
-     any kind of interaction which would change their direction
-   */
-  double j_direct, j_scatt;     /**<  Mean intensity due to direct photons and scattered photons.
-                                 Direct photons include photons created in the wind in simple mode. */
-  double ip_direct, ip_scatt;   /**<  Ionization parameter due  to direct photons and scattered photons. See ip */
-  double max_freq;              /**<   The maximum frequency photon seen in this cell */
-  double cool_tot;              /**< The total cooling in a cell */
-  /* The total luminosity of all processes in the cell, basically the emissivity of the cell times it volume. Not the same
-     as what escapes the cell, since photons can interact within the cell and lose weight or even be destroyed */
-  double lum_lines, lum_ff, cool_adiabatic;
-  double lum_rr, lum_rr_metals; /**<  the radiative recombination luminosity - not the same as the cooling rate */
-  double cool_comp;             /**<  The compton luminosity of the cell */
-  double cool_di;               /**<  The direct ionization luminosity */
-  double cool_dr;               /**<  The dielectronic recombination luminosity of the cell */
-  double cool_rr, cool_rr_metals;       /**< fb luminosity & fb of metals metals */
-  double lum_tot, lum_tot_old;  /**<  The specific radiative luminosity in frequencies defined by freqmin
-                                   and freqmax.  This will depend on the last call to total_emission */
-  double cool_tot_ioniz;
-  double lum_lines_ioniz, lum_ff_ioniz, cool_adiabatic_ioniz;
-  double lum_rr_ioniz;
-  double cool_comp_ioniz;       /**<  The compton luminosity of the cell */
-  double cool_di_ioniz;         /**<  The direct ionization luminosity */
-  double cool_dr_ioniz;         /**<  The dielectronic recombination luminosity of the cell */
-  double cool_rr_ioniz, cool_rr_metals_ioniz;   /**< fb luminosity & fb of metals metals */
-  double lum_tot_ioniz;         /**<  The specfic radiative luminosity in frequencies defined by freqmin
-                                   and freqmax.  This will depend on the last call to total_emission */
-  double heat_shock;            /**<  An extra heating term added to allow for shock heating of the plasma (Implementef for FU Ori Project */
-
-  double bf_simple_ionpool_in, bf_simple_ionpool_out; /**<Varibles to track net flow of energy
-                                                        into and from ionization pool
-                                                        in BF_SIMPLE_EMISSIVITY_APPROACH
-                                                        */
-#define N_PHOT_PROC 500
-  int n_bf_in[N_PHOT_PROC], n_bf_out[N_PHOT_PROC];
-                                                 /**<Counters to track bf excitations and de-exitations.
-                                                   */
-
-  double comp_nujnu;            /**<  The integral of alpha(nu)nuj(nu) used to
-                                   compute compton cooling-  only needs computing once per cycle
-                                 */
-
-#define N_DMO_DT_DIRECTIONS 3
-#define NFORCE_DIRECTIONS 4
-  /* directional fluxes (in observer frame) in 3 wavebands. - last element contains the  magnitude of flux) */
-  double F_vis[NFORCE_DIRECTIONS];
-  double F_UV[NFORCE_DIRECTIONS];
-  double F_Xray[NFORCE_DIRECTIONS];
-
-  double F_vis_persistent[NFORCE_DIRECTIONS];
-  double F_UV_persistent[NFORCE_DIRECTIONS];
-  double F_Xray_persistent[NFORCE_DIRECTIONS];
-
-  double dmo_dt[N_DMO_DT_DIRECTIONS];             /**< Radiative force of wind */
-  double rad_force_es[NFORCE_DIRECTIONS];       /**< Radiative force of wind - 4th element is sum of magnitudes */
-  double rad_force_ff[NFORCE_DIRECTIONS];       /**< Radiative force of wind - 4th element is sum of magnitudes */
-  double rad_force_bf[NFORCE_DIRECTIONS];       /**< Radiative force of wind - 4th element is sum of magnitudes */
-
-  double rad_force_es_persist[NFORCE_DIRECTIONS];       /**< Radiative force of wind - 4th element is sum of magnitudes */
-  double rad_force_ff_persist[NFORCE_DIRECTIONS];       /**< Radiative force of wind - 4th element is sum of magnitudes */
-  double rad_force_bf_persist[NFORCE_DIRECTIONS];       /**< Radiative force of wind - 4th element is sum of magnitudes */
-
-  double gain;                  /**<  The gain being used in iterations of the structure */
-  double converge_t_r, converge_t_e, converge_hc;
-  /**< Three measures of whether the program believes the grid is converged.  The first two
-     are the fractional changes in t_r, t_e between this and the last cycle.
-     The third number is the fraction between heating and cooling divided by the sum of the 2
-   */
-
-  int trcheck, techeck, hccheck;
-  /**< The individual convergence checks used to calculate converge_whole.
-     Each of these values is 0 if the fractional change or in the case of the last
-     check error is less than a value, currently set to 0.05.  This number is now
-     also used to say if the cell is over temperature - it is set to 2 in this case   */
-
-  int converge_whole, converging;
-  /**< converge_whole is the sum of the individual convergence checks.  It is 0 if all
-     of the convergence checks indicated convergence. converging is an indicator of whether
-     the program thought the cell is on the way to convergence 0 implies converging */
 
 #define CELL_CONVERGING 0       /*  converging - temperature is oscillating and decreasing */
 #define CELL_NOT_CONVERGING 1   /*  not converging (temperature is shooting off in one direction) */
@@ -1131,10 +944,242 @@ typedef struct plasma
 #define CONVERGENCE_CHECK_FAIL 1        /* Cell has failed a convergence check */
 #define CONVERGENCE_CHECK_OVER_TEMP 2   /* Cell has electron temperature is more than TMAX */
 
-  double ip;                    /**<  Ionization parameter calculated as number of photons over the lyman limit entering a cell, 
-                                  divided by the number density of hydrogen for the cell.  This is the definnition used in Cloudy */
-  double xi;                    /**<  Ionization parameter as defined by Tarter, Tucker, and Salpeter  1969 (ApJ 156, 943).  
-                                  It is the ionizing flux over the number of hydrogen atoms */
+/** Enum for spectral model type per band (moved out of struct body) */
+enum spec_mod_type_enum
+{
+  SPEC_MOD_PL = 1,
+  SPEC_MOD_EXP = 2,
+  SPEC_MOD_FAIL = -1
+};
+
+/**
+ * plasma_state: fields that are read-only during photon transport.
+ * Set during initialization or wind update phase.
+ */
+typedef struct plasma_state
+{
+  /* Thermodynamic state */
+  double ne;                    /**<  Electron density in the shell (CMF) */
+  double rho;                   /**<  Density at the center of the cell. (CMF) For clumped models, this is rho of the clump */
+  double vol;                   /**<  Volume of this cell in CMF frame (more specifically the volume  that is filled with material
+                                   which can differs from the valid volume of the cell due to clumping.) */
+  double xgamma;                /**<  1./sqrt(1-beta**2) at center of cell */
+  double t_r, t_r_old;          /**< radiation temperature of cell */
+  double t_e, t_e_old;          /**< electron temperature of cell */
+  double w;                     /**< The dilution factor of the wind */
+  double kappa_ff_factor;       /**<  Multiplicative factor for calculating the FF heating for a photon. */
+
+  /* Ion/level populations (dynamically allocated) */
+  double *density;              /**<  The number density of a specific ion in the CMF.  The order of the ions is
+                                   the same as read in by the atomic data routines. */
+  double *partition;            /**<  The partition function for each  ion.  */
+  double *levden;               /* The number density (occupation number?) of a specific level */
+
+  /* Bound-free process data (dynamically allocated) */
+  double *recomb_simple;        /**<  "alpha_e - alpha" (in Leon's notation) for b-f processes in simple atoms. */
+  double *recomb_simple_upweight;       /* multiplicative factor to account for ratio of total to "cooling" energy for b-f processes in simple atoms. */
+  int *kbf_use;                 /**<  List of the indices of the photoionization processes to be used for kappa_bf.  */
+  int kbf_nuse;                 /**<  Total number of photoionization processes to be used for kappa_bf. (SS) */
+
+  /* Spectral model parameters (set during wind update) */
+  int nbands;                   /* The number of spectral bands for this cell */
+  double *f1;                   /* Spectral band boundaries for this cell (NXBANDS+1, contiguous block) */
+  double *f2;                   /* Spectral band boundaries for this cell (NXBANDS+1, contiguous block) */
+  enum spec_mod_type_enum *spec_mod_type;     /**<  A switch to say which type of representation we are using for this band in this cell.
+                                   Negative means we have no useful representation, 0 means power law, 1 means exponential
+                                   (NXBANDS, contiguous block) */
+  double *pl_alpha;             /**< Computed spectral index for a power law spectrum representing this cell (NXBANDS, contiguous block) */
+  double *pl_log_w;             /**< This is the log version of the power law weight (NXBANDS, contiguous block) */
+  double *exp_temp;             /**<  The effective temperature of an exponential representation of the radiation field in a cell (NXBANDS, contiguous block) */
+  double *exp_w;                /**<  The prefactor of an exponential representation of the radiation field in a cell (NXBANDS, contiguous block) */
+  double *fmin_mod;             /**<  Minimum frequency of the band-limited model (NXBANDS, contiguous block) */
+  double *fmax_mod;             /**<  Maximum frequency of the band-limited model (NXBANDS, contiguous block) */
+} plasma_state;
+
+/**
+ * plasma_estimators: fields accumulated during photon transport.
+ * Reduced across MPI ranks via MPI_Allreduce after transport.
+ * In future shared-memory version, each rank has a private copy.
+ */
+typedef struct plasma_estimators
+{
+  /* Radiation field estimators */
+  double j;                     /**<  Mean (angle-averaged) total intensity */
+  double j_direct, j_scatt;    /**<  Mean intensity due to direct and scattered photons */
+  double ave_freq;              /**<  Intensity-averaged frequency */
+  double max_freq;              /**<  Maximum frequency photon seen in this cell */
+  double ip;                    /**<  Ionization parameter (Cloudy definition) */
+  double ip_direct, ip_scatt;  /**<  Ionization parameter due to direct and scattered photons */
+  double mean_ds;               /**<  Mean photon path length in a cell */
+  int n_ds;                     /**<  Number of times a path length was added; needed to compute mean_ds */
+
+  /* Heating estimators */
+  double heat_tot;              /**<  heating from all sources */
+  double heat_lines, heat_ff;
+  double heat_comp;             /**<  The compton heating for the cell */
+  double heat_ind_comp;         /**<  The induced compton heating for the cell */
+  double heat_photo, heat_z;   /**< photoionization heating total and of metals */
+  double heat_auger;            /**<  photoionization heating due to inner shell ionizations */
+  double heat_ch_ex;
+  double heat_lines_macro, heat_photo_macro;    /**<  bb and bf heating due to macro atoms. Subset of heat_lines
+                                                   and heat_photo. SS June 04. */
+  double heat_qrecomb_macro;    /**<  The heating due to macro atom 3-body recombinations, added Oct 2025 */
+
+  /* Cooling estimator */
+  double cool_tot;              /**< The total cooling in a cell */
+
+  /* Macro-atom heating (kpkt) */
+  double kpkt_abs;              /**<  k-packet equivalent of matom_abs. (SS) */
+
+  /* Banded estimators */
+  double xj[NXBANDS];          /**<  Frequency limited versions of j */
+  double xave_freq[NXBANDS];   /**<  Frequency limited versions of ave_freq */
+  double xsd_freq[NXBANDS];    /**<  The standard deviation of the frequency in the band */
+  double fmin[NXBANDS];        /**<  Minimum frequency photon observed in a band */
+  double fmax[NXBANDS];        /**<  Maximum frequency photon observed in a band */
+  int nxtot[NXBANDS];          /**<  The total number of photon passages in frequency bands */
+
+  /* Photon passage counters */
+  int ntot;                     /**< Total number of photon passages */
+  int ntot_star;
+  int ntot_bl;
+  int ntot_disk;
+  int ntot_wind;
+  int ntot_agn;
+  int nioniz;                   /**<  Total number of photon passages by photons capable of ionizing H */
+
+  /* Radiation force estimators */
+  double rad_force_es[NFORCE_DIRECTIONS];       /**< Radiative force - electron scattering */
+  double rad_force_bf[NFORCE_DIRECTIONS];       /**< Radiative force - bound-free */
+  double rad_force_ff[NFORCE_DIRECTIONS];       /**< Radiative force - free-free */
+
+  /* Flux estimators */
+  double F_vis[NFORCE_DIRECTIONS];
+  double F_UV[NFORCE_DIRECTIONS];
+  double F_Xray[NFORCE_DIRECTIONS];
+  double F_UV_ang_theta[NFLUX_ANGLES];
+  double F_UV_ang_phi[NFLUX_ANGLES];
+  double F_UV_ang_r[NFLUX_ANGLES];
+
+  /* Cell spectrum (accumulated during ionization cycles) */
+  double *cell_spec_flux;             /**< The array where the cell spectra are accumulated (nbins_in_cell_spec elements). */
+
+  /* Ionization estimators (dynamically allocated) */
+  double *ioniz;                /**<  Number of ionizations for each ion */
+  double *inner_ioniz;
+  double *heat_ion;             /**<  The amount of energy being transferred to the electron pool
+                                   by this ion via photoionization. */
+  double *heat_inner_ion;       /**<  The amount of energy being transferred to the electron pool
+                                   by this ion via inner shell photoionization. */
+} plasma_estimators;
+
+/**
+ * plasma_derived: fields computed from estimators during wind update phase.
+ * Broadcast to all ranks after computation.
+ */
+typedef struct plasma_derived
+{
+  /* Cooling rates (computed from estimators) */
+  double cool_comp;             /**<  The compton cooling of the cell */
+  double cool_di;               /**<  The direct ionization cooling */
+  double cool_dr;               /**<  The dielectronic recombination cooling */
+  double cool_adiabatic;
+  double cool_rr, cool_rr_metals;       /**< fb cooling & fb of metals */
+  double cool_lines_macro, cool_bf_macro;    /**<  bb and bf cooling due to macro atoms */
+  double cool_di_macro;         /**<  direct/collisional ionization cooling due to macro atoms */
+
+  /* Luminosities */
+  double lum_lines, lum_ff;
+  double lum_rr, lum_rr_metals; /**<  the radiative recombination luminosity - not the same as the cooling rate */
+  double lum_tot, lum_tot_old;  /**<  The specific radiative luminosity */
+
+  /* Ionization-band luminosities/cooling */
+  double cool_tot_ioniz;
+  double lum_lines_ioniz, lum_ff_ioniz, cool_adiabatic_ioniz;
+  double lum_rr_ioniz;
+  double cool_comp_ioniz;       /**<  The compton cooling of the cell (ioniz band) */
+  double cool_di_ioniz;         /**<  The direct ionization cooling (ioniz band) */
+  double cool_dr_ioniz;         /**<  The dielectronic recombination cooling (ioniz band) */
+  double cool_rr_ioniz, cool_rr_metals_ioniz;   /**< fb cooling (ioniz band) */
+  double lum_tot_ioniz;         /**<  The specific radiative luminosity (ioniz band) */
+
+  /* Absorption */
+  double abs_photo, abs_auger;  /**<  energy absorbed from the photon - different from
+                                   the heating rate because of the binding energy */
+  double abs_tot;
+
+  /* Temperature changes */
+  double dt_e, dt_e_old;        /**< How much t_e changed in the previous iteration */
+  double heat_tot_old;          /**<  previous cycle heating from all sources */
+
+  /* Convergence */
+  double gain;                  /**<  The gain being used in iterations of the structure */
+  double converge_t_r, converge_t_e, converge_hc;
+  /**< Three measures of whether the program believes the grid is converged. */
+  int trcheck, techeck, hccheck;
+  /**< Individual convergence checks */
+  int converge_whole, converging;
+  /**< converge_whole is the sum of the individual convergence checks. */
+
+  /* Per-ion derived quantities (dynamically allocated) */
+  int *scatters;                /**<  The number of scatters in this cell for each ion. */
+  double *xscatters;            /**<  Diagnostic measure of energy scattered out of beam on extract. */
+  double *cool_rr_ion;          /**<  Energy released from electron pool by this ion via recombination. */
+  double *lum_rr_ion;           /**<  The recombination luminosity by this ion. */
+  double *cool_dr_ion;
+  double *recomb;               /**<  Number of recombinations to each ion. */
+  double *inner_recomb;
+
+  /* Persistent/averaged radiation field */
+  double *F_vis_persistent;             /**< (NFORCE_DIRECTIONS, contiguous block) */
+  double *F_UV_persistent;              /**< (NFORCE_DIRECTIONS, contiguous block) */
+  double *F_Xray_persistent;            /**< (NFORCE_DIRECTIONS, contiguous block) */
+  double *rad_force_es_persist;          /**< (NFORCE_DIRECTIONS, contiguous block) */
+  double *rad_force_ff_persist;          /**< (NFORCE_DIRECTIONS, contiguous block) */
+  double *rad_force_bf_persist;          /**< (NFORCE_DIRECTIONS, contiguous block) */
+  double *F_UV_ang_theta_persist;        /**< (NFLUX_ANGLES, contiguous block) */
+  double *F_UV_ang_phi_persist;          /**< (NFLUX_ANGLES, contiguous block) */
+  double *F_UV_ang_r_persist;            /**< (NFLUX_ANGLES, contiguous block) */
+
+  /* Momentum/force */
+  double dmo_dt[N_DMO_DT_DIRECTIONS];             /**< Radiative force of wind */
+
+  /* BF diagnostics */
+  double bf_simple_ionpool_in, bf_simple_ionpool_out; /**< Track net flow of energy into/from ionization pool */
+  int *n_bf_in, *n_bf_out;      /**< Counters for bf excitations and de-excitations (nphot_total, contiguous block) */
+
+  /* Compton integral */
+  double comp_nujnu;            /**<  The integral of alpha(nu)nuj(nu) used to
+                                   compute compton cooling */
+
+  /* Shock heating */
+  double heat_shock;            /**<  Extra heating term for shock heating of the plasma */
+
+  /* Macro-atom emission */
+  double kpkt_emiss;            /**< Luminosity from k-packet -> r-packet conversion (SS) */
+
+  /* Scatter counters */
+  int nscat_es;                 /**<  The number of electron scatters in the cell */
+  int nscat_res;                /**<  The number of resonant line scatters in the cell */
+  int nscat_bf;                 /**< Number of bf scatters in the cell. (macro_only) */
+  int nscat_ff;                 /**< Number of ff scatters in the cell. (macro_only) */
+  int nrad;                     /**<  Total number of photons created within the cell */
+
+  /* Ionization parameter (final merged value) */
+  double xi;                    /**<  Ionization parameter as defined by Tarter, Tucker, and Salpeter 1969 */
+} plasma_derived;
+
+/**
+ * The top-level plasma structure, containing cross-references and three
+ * sub-structures that categorize fields by their communication pattern.
+ */
+typedef struct plasma
+{
+  int nwind;                    /**<  A cross reference to the corresponding cell in the wind structure */
+  int nplasma;                  /**<  A self reference to this in the plasma structure */
+  struct plasma_state state;            /**< Read-only during transport; shared in future */
+  struct plasma_estimators est;         /**< Accumulated during transport; private per rank */
+  struct plasma_derived derived;        /**< Computed during wind updates; broadcast */
 } plasma_dummy, *PlasmaPtr;
 
 extern PlasmaPtr plasmamain;
@@ -1170,72 +1215,84 @@ extern MatomPhotStorePtr matomphotstoremain;
 
 /*******************************MACRO STRUCTURE*****************************/
 /**
-  The stucture used for storing infomration for macro atoms
+  The structure used for storing information for macro atoms.
 
-  The various arrays created here are organized sequentially by macro level
-   and so the number of elements in each is the number of macro levels.
+  Split into three sub-structures following the same pattern as plasma:
+    state   - Normalized rate coefficients, read-only during transport
+    est     - Raw estimators accumulated during transport, reduced via MPI
+    derived - Quantities computed during wind updates, broadcast
+
+  The various arrays are organized sequentially by macro level
+  and so the number of elements in each is the number of macro levels.
 */
-typedef struct macro
-{
-  double *jbar; /**<  This will store the Sobolev mean intensity in transitions which is needed
-     for Macro Atom jumping probabilities. The indexing is by configuration (the
-     NLTE_LEVELS) and then by the upward bound-bound jumps from that level
-     (the NBBJUMPS) (SS) */
-
-  double *jbar_old;  /**<The normalized version of jbar; the _old is a misnomer */ 
-
-  double *gamma; /**< This is similar to the jbar but for bound-free transitions. It records the
-     appropriate photoionisation rate co-efficient. (SS) */
-
-  double *gamma_old; /**< The normalized version of gamma */
-
-  double *gamma_e; /**< This is Leon's gamma_e: very similar to gamma but energy weighted. Needed
-     for division of photoionisation energy into excitation and k-packets. (SS) */
-
-  double *gamma_e_old; /**<The normalized version of gamma_e */
-
-  double *alpha_st; /**< Same as gamma but for stimulated recombination rather than photoionisation. (SS) */
-
-  double *alpha_st_old;
-
-  double *alpha_st_e; /**< Same as gamma_e but for stimulated recombination rather than photoionisation. (SS) */
-
-  double *alpha_st_e_old;  /**< The normalized version of alpha_st_e */
-
-  double *recomb_sp; /**< Spontaneous recombination. (SS) */
-
-  double *recomb_sp_e; /**< "e" version of the spontaneous recombination coefficient. (SS) */
-
-  double *matom_emiss; /**< This is the luminosity due to the de-activation of macro atoms in the cell
-     in the frequency range that is required for the final spectral synthesis. (SS) */
-
-  double *matom_abs; /**< This is the energy absorbed by the macro atom levels - recorded during the ionization
-     cycles and used to get matom_emiss (SS) */
-  
-  double energy_flow_out, energy_flow_in; /**< Total energy flow in/out of macro atom levels in cell during ionization cycles */
-  
-
-  /* This portion of the macro structure  is not written out by windsave */
-  int kpkt_rates_known;
-
-  double *cooling_bf;
-  double *cooling_bf_col;
-  double *cooling_bb;
-
-  /* set of cooling rate stores, which are calculated for each macro atom each cycle,
-     and used to select destruction rates for kpkts */
-  double cooling_normalisation;
-  double cooling_bbtot, cooling_bftot, cooling_bf_coltot;
-  double cooling_bb_simple_tot;
-  double cooling_ff, cooling_ff_lofreq;
-  double cooling_adiabatic;     // this is just cool_adiabatic / vol / ne
 
 #define MATOM_MC_JUMPS 0
 #define MATOM_MATRIX   1
+
+/**
+ * macro_state: normalized rate coefficients set before photon transport.
+ * Read-only during transport.
+ */
+typedef struct macro_state
+{
+  double *jbar_old;  /**< The normalized version of jbar */
+  double *gamma_old; /**< The normalized version of gamma */
+  double *gamma_e_old; /**< The normalized version of gamma_e */
+  double *alpha_st_old;
+  double *alpha_st_e_old;  /**< The normalized version of alpha_st_e */
   int matom_transition_mode;    /**<  what mode to use for the macro-atom transition probabilities */
   int store_matom_matrix;
+} macro_state;
+
+/**
+ * macro_estimators: raw estimators accumulated during photon transport.
+ * Reduced across MPI ranks via MPI_Allreduce.
+ */
+typedef struct macro_estimators
+{
+  double *jbar; /**<  Sobolev mean intensity in transitions for Macro Atom jumping probabilities.
+     Indexing is by configuration (NLTE_LEVELS) then by upward bb jumps (NBBJUMPS) (SS) */
+  double *gamma; /**< Photoionisation rate coefficient for bf transitions (SS) */
+  double *gamma_e; /**< Energy-weighted gamma for division of photoionisation energy (SS) */
+  double *alpha_st; /**< Stimulated recombination rate (SS) */
+  double *alpha_st_e; /**< Energy-weighted stimulated recombination rate (SS) */
+  double *recomb_sp; /**< Spontaneous recombination (SS) */
+  double *recomb_sp_e; /**< Energy-weighted spontaneous recombination coefficient (SS) */
+  double *matom_abs; /**< Energy absorbed by macro atom levels during ionization cycles (SS) */
+
+  double energy_flow_out, energy_flow_in; /**< Total energy flow in/out of macro atom levels in cell during ionization cycles */
+
+  /* Cooling rate stores, calculated each cycle, used for kpkt destruction rates */
+  double cooling_normalisation;
+  double cooling_bbtot, cooling_bftot, cooling_bf_coltot;
+  double cooling_ff, cooling_ff_lofreq;
+  double cooling_adiabatic;     // this is just cool_adiabatic / vol / ne
+  double *cooling_bf;
+  double *cooling_bf_col;
+  double *cooling_bb;
+} macro_estimators;
+
+/**
+ * macro_derived: quantities computed during wind updates, broadcast to all ranks.
+ */
+typedef struct macro_derived
+{
+  double *matom_emiss; /**< Luminosity from macro atom de-activation in the cell
+     in the frequency range for final spectral synthesis (SS) */
+  int kpkt_rates_known;
+  double cooling_bb_simple_tot;
   int matrix_rates_known;
-  double **matom_matrix;        /**<  array to store transitions probabilities */
+  double **matom_matrix;        /**<  array to store transition probabilities */
+} macro_derived;
+
+/**
+ * Top-level macro atom structure with sub-structure categorization.
+ */
+typedef struct macro
+{
+  struct macro_state state;         /**< Normalized rates, read-only during transport */
+  struct macro_estimators est;      /**< Raw estimators, accumulated during transport */
+  struct macro_derived derived;     /**< Computed quantities, broadcast after wind updates */
 } macro_dummy, *MacroPtr;
 
 extern MacroPtr macromain;
@@ -1243,6 +1300,118 @@ extern MacroPtr macromain;
 //extern int xxxpdfwind;          // When 1, line luminosity calculates pdf
 
 extern int size_Jbar_est, size_gamma_est, size_alpha_est;
+
+
+/*******************************CONTIGUOUS BLOCK MANAGEMENT*****************************/
+/**
+ * Contiguous block base pointers for plasma dynamic arrays.
+ * Instead of NPLASMA separate calloc() calls per array, we allocate one
+ * contiguous block of NPLASMA * array_size elements, then point each cell's
+ * pointer into the block at the right offset.  This enables future
+ * MPI-3 shared memory (MPI_Win_allocate_shared requires contiguous blocks).
+ */
+
+typedef struct plasma_blocks
+{
+  /* state arrays (shared in MPI-3 mode) */
+  double *density_block;                /**< NPLASMA * nions */
+  double *partition_block;              /**< NPLASMA * nions */
+  double *levden_block;                 /**< NPLASMA * nlte_levels */
+  double *recomb_simple_block;          /**< NPLASMA * nphot_total */
+  double *recomb_simple_upweight_block; /**< NPLASMA * nphot_total */
+  double *kbf_use_block;                /**< NPLASMA * nphot_total (allocated as doubles for legacy compat) */
+
+  /* est arrays (always private per rank) */
+  double *ioniz_block;                  /**< NPLASMA * nions */
+  double *heat_ion_block;               /**< NPLASMA * nions */
+  double *heat_inner_ion_block;         /**< NPLASMA * nions */
+  double *inner_ioniz_block;            /**< NPLASMA * n_inner_tot */
+
+  /* state fixed-size arrays moved to contiguous blocks (shared in MPI-3 mode) */
+  double *state_xbands_dblock;          /**< NPLASMA * (6*NXBANDS + 2*(NXBANDS+1)) doubles: f1,f2,pl_alpha,pl_log_w,exp_temp,exp_w,fmin_mod,fmax_mod */
+  int *state_spec_mod_type_block;       /**< NPLASMA * NXBANDS ints: spec_mod_type */
+
+  /* derived arrays (shared in MPI-3 mode) */
+  double *recomb_block;                 /**< NPLASMA * nions */
+  int *scatters_block;                  /**< NPLASMA * nions */
+  double *xscatters_block;              /**< NPLASMA * nions */
+  double *cool_rr_ion_block;            /**< NPLASMA * nions */
+  double *lum_rr_ion_block;             /**< NPLASMA * nions */
+  double *cool_dr_ion_block;            /**< NPLASMA * nions */
+  double *inner_recomb_block;           /**< NPLASMA * nions */
+
+  /* derived fixed-size arrays moved to contiguous blocks (shared in MPI-3 mode) */
+  double *derived_persist_force_block;  /**< NPLASMA * 6 * NFORCE_DIRECTIONS doubles */
+  double *derived_persist_angle_block;  /**< NPLASMA * 3 * NFLUX_ANGLES doubles */
+
+  /* est cell_spec_flux block (private — accumulated during transport) */
+  double *cell_spec_flux_block;         /**< NPLASMA * nbins_in_cell_spec doubles */
+
+  /* derived n_bf diagnostic counters (private — written during transport) */
+  int *n_bf_in_block;                   /**< NPLASMA * nphot_total ints */
+  int *n_bf_out_block;                  /**< NPLASMA * nphot_total ints */
+
+#ifdef MPI_ON
+  /* MPI shared memory windows for state/derived blocks */
+  MPI_Win win_density, win_partition, win_levden;
+  MPI_Win win_recomb_simple, win_recomb_simple_upweight, win_kbf_use;
+  MPI_Win win_state_xbands_d, win_state_spec_mod_type;
+  MPI_Win win_recomb;
+  /* win_scatters and win_xscatters removed: these are always private (written during transport) */
+  MPI_Win win_cool_rr_ion, win_lum_rr_ion, win_cool_dr_ion, win_inner_recomb;
+  MPI_Win win_derived_persist_force, win_derived_persist_angle;
+  int shared_memory_active;             /**< TRUE if using MPI shared memory for this allocation */
+#endif
+} plasma_blocks;
+
+extern plasma_blocks plasma_block_ptrs;
+
+/**
+ * Contiguous block base pointers for macro atom dynamic arrays.
+ */
+
+typedef struct macro_blocks
+{
+  /* state arrays (shared in MPI-3 mode) */
+  double *jbar_old_block;               /**< NPLASMA * size_Jbar_est */
+  double *gamma_old_block;              /**< NPLASMA * size_gamma_est */
+  double *gamma_e_old_block;            /**< NPLASMA * size_gamma_est */
+  double *alpha_st_old_block;           /**< NPLASMA * size_gamma_est */
+  double *alpha_st_e_old_block;         /**< NPLASMA * size_gamma_est */
+
+  /* est arrays (always private per rank) */
+  double *jbar_block;                   /**< NPLASMA * size_Jbar_est */
+  double *gamma_block;                  /**< NPLASMA * size_gamma_est */
+  double *gamma_e_block;                /**< NPLASMA * size_gamma_est */
+  double *alpha_st_block;               /**< NPLASMA * size_gamma_est */
+  double *alpha_st_e_block;             /**< NPLASMA * size_gamma_est */
+  double *recomb_sp_block;              /**< NPLASMA * size_alpha_est */
+  double *recomb_sp_e_block;            /**< NPLASMA * size_alpha_est */
+  double *matom_abs_block;              /**< NPLASMA * nlevels_macro */
+  double *cooling_bf_block;             /**< NPLASMA * nphot_total */
+  double *cooling_bf_col_block;         /**< NPLASMA * nphot_total */
+  double *cooling_bb_block;             /**< NPLASMA * nlines */
+
+  /* derived arrays (shared in MPI-3 mode) */
+  double *matom_emiss_block;            /**< NPLASMA * nlevels_macro */
+
+  /* matom_matrix flat data (shared in MPI-3 mode when store_matom_matrix is TRUE) */
+  double *matom_matrix_block;           /**< NPLASMA * nrows * nrows, nrows = nlevels_macro + 1 */
+
+  /* per-rank row-pointer arrays for matom_matrix (always private calloc) */
+  double **matom_matrix_rowptrs;        /**< NPLASMA * nrows double* pointers into matom_matrix_block */
+
+#ifdef MPI_ON
+  /* MPI shared memory windows for state/derived blocks */
+  MPI_Win win_jbar_old, win_gamma_old, win_gamma_e_old;
+  MPI_Win win_alpha_st_old, win_alpha_st_e_old;
+  MPI_Win win_matom_emiss;
+  MPI_Win win_matom_matrix;
+  int shared_memory_active;             /**< TRUE if using MPI shared memory for this allocation */
+#endif
+} macro_blocks;
+
+extern macro_blocks macro_block_ptrs;
 
 
 //These constants are used in the various routines which compute ionization state

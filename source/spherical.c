@@ -56,10 +56,7 @@
  **********************************************************/
 
 double
-spherical_ds_in_cell (ndom, p)
-     int ndom;
-     PhotPtr p;
-
+spherical_ds_in_cell (int ndom, PhotPtr p)
 {
 
   int n, ix;
@@ -81,8 +78,13 @@ spherical_ds_in_cell (ndom, p)
 
   if (smax == VERY_BIG && s == VERY_BIG)
   {
-    Error ("spherical: ds_in_cell: s and smax returning VERY_BIG in cell %i nudging photon %d by DFUDGE\n", p->grid, p->np);
-    return (DFUDGE);
+    /* Photon is at exactly r = rmax (outer cell boundary) with an outgoing or tangential
+     * direction, so ds_to_sphere returns VERY_BIG for both spheres.  Returning DFUDGE
+     * does not help because a tangential nudge leaves r unchanged in floating point.
+     * Instead return the distance to a sphere just outside the boundary; this is always
+     * finite for a photon at r <= rmax and moves it cleanly into the next cell. */
+    Error ("spherical: ds_in_cell: s and smax returning VERY_BIG in cell %i for photon %d; pushing past outer boundary\n", p->grid, p->np);
+    return (ds_to_sphere (zdom[ndom].wind_x[ix + 1] + DFUDGE, p));
   }
 
 
@@ -197,9 +199,7 @@ spherical_make_grid (int ndom, WindPtr w)
  **********************************************************/
 
 int
-spherical_wind_complete (ndom, w)
-     int ndom;
-     WindPtr w;
+spherical_wind_complete (int ndom, WindPtr w)
 {
   int i;
   int ndim, nstart;
@@ -355,9 +355,7 @@ spherical_cell_volume (WindPtr w)
  **********************************************************/
 
 int
-spherical_where_in_grid (ndom, x)
-     int ndom;
-     double x[];
+spherical_where_in_grid (int ndom, double x[])
 {
   int n;
   double r;
@@ -412,9 +410,7 @@ spherical_where_in_grid (ndom, x)
  **********************************************************/
 
 int
-spherical_get_random_location (n, x)
-     int n;                     // Cell in which to create position
-     double x[];                // Returned position
+spherical_get_random_location (int n, double x[])
 {
   int i, j;
   int inwind;
@@ -480,9 +476,7 @@ spherical_get_random_location (n, x)
  **********************************************************/
 
 int
-spherical_extend_density (ndom, w)
-     int ndom;
-     WindPtr w;
+spherical_extend_density (int ndom, WindPtr w)
 {
 
   int j, n, m;

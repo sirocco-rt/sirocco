@@ -24,7 +24,7 @@ FC = g77
 NVCC = 
 # NVCC = nvcc  # default (and only?) CUDA compiler
 # specify any extra compiler flags here
-EXTRA_FLAGS = -Wno-deprecated-non-prototype -DMATOM_VER=$(MATOM_VER)
+EXTRA_FLAGS = -DMATOM_VER=$(MATOM_VER)
 LDFLAGS =
 
 # Use the next line if you want to change the c compiler that mpicc uses, or
@@ -117,20 +117,20 @@ ifeq (D,$(firstword $(MAKECMDGOALS)))
 # use pg when you want to use gprof the profiler
 # to use profiler make with arguments "make D sirocco"
 # this can be altered to whatever is best
-	CFLAGS = -std=gnu99 -g -pg -O0 -Wl,-Ttext-segment=0x68000000 -Wall -Werror $(EXTRA_FLAGS) -I$(INCLUDE) $(MPI_FLAG) ${CUDA_FLAG}
+	CFLAGS = -std=gnu99 -g -pg -O0 -Wl,-Ttext-segment=0x68000000 -Wall -Werror -fno-common $(EXTRA_FLAGS) -I$(INCLUDE) $(MPI_FLAG) ${CUDA_FLAG}
 	FFLAGS = -g -pg
 	PRINT_VAR = DEBUGGING, -g -pg -Wl,-Ttext-segment=0x68000000 -Wall flags
 	XDEBUG = True
 # Make the assumption that when using Clang the user is on MacOS, which doesn't
 # have (easy?) access to the GNU profiler or CUDA
 	ifeq ($(shell $(CC) -v 2>&1 | grep -c "clang version"), 1)
-		CFLAGS = -std=gnu99 -g -Wall $(EXTRA_FLAGS) -I$(INCLUDE) $(MPI_FLAG)
+		CFLAGS = -std=gnu99 -g -Wall -fno-common $(EXTRA_FLAGS) -I$(INCLUDE) $(MPI_FLAG)
 		FFLAGS = -g
 		PRINT_VAR = DEBUGGING, -g -Wall flags
 	endif
 else
 # Use this for large runs
-	CFLAGS = -std=gnu99 -O3 -Wall $(EXTRA_FLAGS) -I$(INCLUDE) $(MPI_FLAG) ${CUDA_FLAG}
+	CFLAGS = -std=gnu99 -O3 -Wall -fno-common $(EXTRA_FLAGS) -I$(INCLUDE) $(MPI_FLAG) ${CUDA_FLAG}
 	FFLAGS =
 	PRINT_VAR = LARGE RUNS, -03 -Wall flags
 endif
@@ -145,7 +145,9 @@ LDFLAGS+= -L$(LIB) -lm -lgsl -lgslcblas $(CUDA_LIBS)
 
 
 #Note that version should be a single string without spaces.
-VERSION = 1.3
+
+
+VERSION = 2.0
 
 
 
@@ -205,7 +207,7 @@ sirocco_source = agn.c anisowind.c atomic_extern_init.c atomicdata.c atomicdata_
 	recomb.c resonate.c reverb.c roche.c rtheta.c run.c saha.c setup.c setup_disk.c setup_domains.c  \
 	setup_files.c setup_line_transfer.c setup_reverb.c setup_star_bh.c shell_wind.c signal.c  \
 	spectra.c spectral_estimators.c spherical.c stellar_wind.c sv.c synonyms.c time.c  \
-	trans_phot.c vvector.c walls.c wind.c wind2d.c wind_sum.c wind_updates2d.c wind_util.c  \
+	trans_phot.c vvector.c walls.c wind.c wind2d.c wind_sum.c wind_update_model.c wind_updates2d.c wind_util.c  \
 	windsave.c windsave2table_sub.c xlog.c xtest.c zeta.c
 
 # these are the objects required for compilation of sirocco. We are using pattern
@@ -260,6 +262,7 @@ swind_objects = swind.o swind_ion.o swind_macro.o swind_sub.o swind_write.o $(si
 table_objects = windsave2table.o $(sirocco_objects) # windsave2table_sub.o is already part of $(sirocco_objects)
 rhf_objects = rad_hydro_files.o $(sirocco_objects)
 modify_wind_objects = modify_wind.o $(sirocco_objects)
+hydro2sirocco_objects = hydro2sirocco.o $(sirocco_objects)
 inspect_wind_objects = inspect_wind.o $(sirocco_objects)
 inspect_wind_objects = inspect_wind.o $(sirocco_objects)
 sirocco_optd_obj = sirocco_optd.o sirocco_optd_output.o sirocco_optd_trans.o sirocco_optd_util.o sirocco_optd_extern_init.o $(sirocco_objects)
@@ -299,6 +302,12 @@ modify_wind: startup $(modify_wind_objects) $(CUDA_OBJECTS)
 	mv $@ $(BIN)/modify_wind-$(VERSION)
 	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
 
+hydro2sirocco: startup $(hydro2sirocco_objects) $(CUDA_OBJECTS)
+	$(CC) $(CFLAGS) $(hydro2sirocco_objects) $(CUDA_OBJECTS) $(LDFLAGS) -o hydro2sirocco
+	cp $@ $(BIN)
+	mv $@ $(BIN)/hydro2sirocco-$(VERSION)
+	@if [ $(INDENT) = yes ] ; then  ../py_progs/run_indent.py -changed ; fi
+
 inspect_wind: startup $(inspect_wind_objects) $(CUDA_OBJECTS)
 	$(CC) $(CFLAGS) $(inspect_wind_objects) $(CUDA_OBJECTS) $(LDFLAGS)  -o inspect_wind
 	cp $@ $(BIN)
@@ -334,7 +343,7 @@ check:
 
 # The next line runs recompiles all of the routines after first cleaning the directory
 # all: clean run_indent sirocco windsave2table swind
-all: clean sirocco windsave2table swind indent rad_hydro_files modify_wind inspect_wind sirocco_optd
+all: clean sirocco windsave2table swind indent rad_hydro_files modify_wind hydro2sirocco inspect_wind sirocco_optd
 
 FILE = atomicdata.o atomicdata_init.o atomicdata_sub.o atomic.o
 

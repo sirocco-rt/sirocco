@@ -75,12 +75,7 @@ int previous_nplasma = -1;
 int previous_np = -1;
 
 int
-update_banded_estimators (xplasma, p, ds, w_ave, ndom)
-     PlasmaPtr xplasma;
-     PhotPtr p;
-     double ds;
-     double w_ave;
-     int ndom;
+update_banded_estimators (PlasmaPtr xplasma, PhotPtr p, double ds, double w_ave, int ndom)
 {
   int i;
   double log_freq;
@@ -99,23 +94,23 @@ update_banded_estimators (xplasma, p, ds, w_ave, ndom)
 
   /*photon weight times distance in the shell is proportional to the mean intensity */
 
-  xplasma->j += w_ave * ds;
+  xplasma->est.j += w_ave * ds;
 
   if (p->nscat == 0)
   {
-    xplasma->j_direct += w_ave * ds;
+    xplasma->est.j_direct += w_ave * ds;
   }
   else
   {
-    xplasma->j_scatt += w_ave * ds;
+    xplasma->est.j_scatt += w_ave * ds;
   }
 
 
 
 /* frequency weighted by the weights and distance in the shell .  See eqn 2 ML93 */
-  xplasma->mean_ds += ds;
-  xplasma->n_ds++;
-  xplasma->ave_freq += p->freq * w_ave * ds;
+  xplasma->est.mean_ds += ds;
+  xplasma->est.n_ds++;
+  xplasma->est.ave_freq += p->freq * w_ave * ds;
 
   /* The next loop updates the banded versions of j and ave_freq, analogously to routine inradiation
      nxfreq refers to how many frequencies we have defining the bands. So, if we have 5 bands, we have 6 frequencies, 
@@ -126,22 +121,22 @@ update_banded_estimators (xplasma, p, ds, w_ave, ndom)
      as energy packets are indisivible in macro atom mode */
 
 
-  for (i = 0; i < xplasma->nbands; i++)
+  for (i = 0; i < xplasma->state.nbands; i++)
   {
-    if (xplasma->f1[i] < p->freq && p->freq <= xplasma->f2[i])
+    if (xplasma->state.f1[i] < p->freq && p->freq <= xplasma->state.f2[i])
     {
-      xplasma->xave_freq[i] += p->freq * w_ave * ds;    /* frequency weighted by weight and distance */
-      xplasma->xsd_freq[i] += p->freq * p->freq * w_ave * ds;   /* input to allow standard deviation to be calculated */
-      xplasma->xj[i] += w_ave * ds;     /* photon weight times distance travelled */
-      xplasma->nxtot[i]++;      /* increment the frequency banded photon counter */
+      xplasma->est.xave_freq[i] += p->freq * w_ave * ds;        /* frequency weighted by weight and distance */
+      xplasma->est.xsd_freq[i] += p->freq * p->freq * w_ave * ds;       /* input to allow standard deviation to be calculated */
+      xplasma->est.xj[i] += w_ave * ds; /* photon weight times distance travelled */
+      xplasma->est.nxtot[i]++;  /* increment the frequency banded photon counter */
       /* work out the range of frequencies within a band where photons have been seen */
-      if (p->freq < xplasma->fmin[i])
+      if (p->freq < xplasma->est.fmin[i])
       {
-        xplasma->fmin[i] = p->freq;
+        xplasma->est.fmin[i] = p->freq;
       }
-      if (p->freq > xplasma->fmax[i])
+      if (p->freq > xplasma->est.fmax[i])
       {
-        xplasma->fmax[i] = p->freq;
+        xplasma->est.fmax[i] = p->freq;
       }
 
     }
@@ -153,11 +148,11 @@ update_banded_estimators (xplasma, p, ds, w_ave, ndom)
   i = (log_freq - geo.cell_log_freq_min) / geo.cell_delta_lfreq;
   if (i < 0)
     i = 0;
-  if (i > NBINS_IN_CELL_SPEC - 1)
+  if (i > geo.nbins_in_cell_spec - 1)
   {
-    i = NBINS_IN_CELL_SPEC - 1;
+    i = geo.nbins_in_cell_spec - 1;
   }
-  xplasma->cell_spec_flux[i] += w_ave * ds;
+  xplasma->est.cell_spec_flux[i] += w_ave * ds;
 
 
 
@@ -167,18 +162,18 @@ update_banded_estimators (xplasma, p, ds, w_ave, ndom)
 
   if (xplasma->nplasma != previous_nplasma || p->np != previous_np)
   {
-    xplasma->ntot++;
+    xplasma->est.ntot++;
 
     if (p->origin == PTYPE_STAR)
-      xplasma->ntot_star++;
+      xplasma->est.ntot_star++;
     else if (p->origin == PTYPE_BL)
-      xplasma->ntot_bl++;
+      xplasma->est.ntot_bl++;
     else if (p->origin == PTYPE_DISK)
-      xplasma->ntot_disk++;
+      xplasma->est.ntot_disk++;
     else if (p->origin == PTYPE_WIND)
-      xplasma->ntot_wind++;
+      xplasma->est.ntot_wind++;
     else if (p->origin == PTYPE_AGN)
-      xplasma->ntot_agn++;
+      xplasma->est.ntot_agn++;
     previous_nplasma = xplasma->nplasma;
     previous_np = p->np;
   }
@@ -195,27 +190,27 @@ update_banded_estimators (xplasma, p, ds, w_ave, ndom)
 
     if (xplasma->nplasma != previous_nioniz_nplasma || p->np != previous_nioniz_np)
     {
-      xplasma->nioniz++;
+      xplasma->est.nioniz++;
       previous_nioniz_nplasma = xplasma->nplasma;
       previous_nioniz_np = p->np;
     }
 
     /* IP needs to be radiation density in the cell. We sum contributions from
        each photon, then it is normalised in wind_update. */
-    xplasma->ip += ((w_ave * ds) / (PLANCK * p->freq));
+    xplasma->est.ip += ((w_ave * ds) / (PLANCK * p->freq));
 
     if (HEV * p->freq < 13600)  //Tartar et al integrate up to 1000Ryd to define the ionization parameter
     {
-      xplasma->xi += (w_ave * ds);
+      xplasma->derived.xi += (w_ave * ds);
     }
 
     if (p->nscat == 0)
     {
-      xplasma->ip_direct += ((w_ave * ds) / (PLANCK * p->freq));
+      xplasma->est.ip_direct += ((w_ave * ds) / (PLANCK * p->freq));
     }
     else
     {
-      xplasma->ip_scatt += ((w_ave * ds) / (PLANCK * p->freq));
+      xplasma->est.ip_scatt += ((w_ave * ds) / (PLANCK * p->freq));
     }
   }
 
@@ -266,12 +261,7 @@ update_banded_estimators (xplasma, p, ds, w_ave, ndom)
 
 
 int
-update_flux_estimators (xplasma, phot_mid, ds_obs, w_ave, ndom)
-     PlasmaPtr xplasma;
-     PhotPtr phot_mid;
-     double ds_obs;
-     double w_ave;
-     int ndom;
+update_flux_estimators (PlasmaPtr xplasma, PhotPtr phot_mid, double ds_obs, double w_ave, int ndom)
 {
   double flux[3];
   double flux_orig[3];
@@ -314,13 +304,13 @@ update_flux_estimators (xplasma, phot_mid, ds_obs, w_ave, ndom)
 
   iangle = (angle) / binw;      //Turn the angle into an integer to pass into the flux array
 
-  //xplasma->F_UV_ang_theta[iangle] += flux[0];
-  //xplasma->F_UV_ang_phi[iangle] += flux[1];
-  //xplasma->F_UV_ang_r[iangle] += flux[2];
+  //xplasma->est.F_UV_ang_theta[iangle] += flux[0];
+  //xplasma->est.F_UV_ang_phi[iangle] += flux[1];
+  //xplasma->est.F_UV_ang_r[iangle] += flux[2];
 
-  xplasma->F_UV_ang_r[iangle] += flux[0] * sin (theta) + flux[2] * cos (theta);
-  xplasma->F_UV_ang_phi[iangle] += flux[1];
-  xplasma->F_UV_ang_theta[iangle] += flux[0] * cos (theta) - flux[2] * sin (theta);
+  xplasma->est.F_UV_ang_r[iangle] += flux[0] * sin (theta) + flux[2] * cos (theta);
+  xplasma->est.F_UV_ang_phi[iangle] += flux[1];
+  xplasma->est.F_UV_ang_theta[iangle] += flux[0] * cos (theta) - flux[2] * sin (theta);
 
 
 
@@ -342,18 +332,18 @@ update_flux_estimators (xplasma, phot_mid, ds_obs, w_ave, ndom)
 
   if (phot_mid->freq < UV_low)
   {
-    vadd (xplasma->F_vis, flux, xplasma->F_vis);
-    xplasma->F_vis[3] += length (flux);
+    vadd (xplasma->est.F_vis, flux, xplasma->est.F_vis);
+    xplasma->est.F_vis[3] += length (flux);
   }
   else if (phot_mid->freq > UV_hi)
   {
-    vadd (xplasma->F_Xray, flux, xplasma->F_Xray);
-    xplasma->F_Xray[3] += length (flux);
+    vadd (xplasma->est.F_Xray, flux, xplasma->est.F_Xray);
+    xplasma->est.F_Xray[3] += length (flux);
   }
   else
   {
-    vadd (xplasma->F_UV, flux, xplasma->F_UV);
-    xplasma->F_UV[3] += length (flux);
+    vadd (xplasma->est.F_UV, flux, xplasma->est.F_UV);
+    xplasma->est.F_UV[3] += length (flux);
   }
 
 
@@ -394,11 +384,8 @@ update_flux_estimators (xplasma, phot_mid, ds_obs, w_ave, ndom)
 
 
 int
-update_force_estimators (xplasma, p, phot_mid, ds, w_ave, ndom, z, frac_ff, frac_auger, frac_tot)
-     PlasmaPtr xplasma;
-     PhotPtr p, phot_mid;
-     double ds, w_ave, z, frac_ff, frac_tot, frac_auger;
-     int ndom;
+update_force_estimators (PlasmaPtr xplasma, PhotPtr p, PhotPtr phot_mid, double ds, double w_ave, int ndom, double z, double frac_ff,
+                         double frac_auger, double frac_tot)
 {
   int i;
   double p_out[3], dp_cyl[3];
@@ -425,9 +412,9 @@ update_force_estimators (xplasma, p, phot_mid, ds, w_ave, ndom, z, frac_ff, frac
   }
   for (i = 0; i < 3; i++)
   {
-    xplasma->rad_force_ff[i] += dp_cyl[i];
+    xplasma->est.rad_force_ff[i] += dp_cyl[i];
   }
-  xplasma->rad_force_ff[3] += length (dp_cyl);
+  xplasma->est.rad_force_ff[3] += length (dp_cyl);
 
   stuff_v (p->lmn, p_out);
   renorm (p_out, (z * (frac_tot + frac_auger)) / VLIGHT);
@@ -444,10 +431,10 @@ update_force_estimators (xplasma, p, phot_mid, ds, w_ave, ndom, z, frac_ff, frac
   }
   for (i = 0; i < 3; i++)
   {
-    xplasma->rad_force_bf[i] += dp_cyl[i];
+    xplasma->est.rad_force_bf[i] += dp_cyl[i];
   }
 
-  xplasma->rad_force_bf[3] += length (dp_cyl);
+  xplasma->est.rad_force_bf[3] += length (dp_cyl);
 
   stuff_v (p->lmn, p_out);
   renorm (p_out, w_ave * ds * klein_nishina (p->freq));
@@ -464,9 +451,9 @@ update_force_estimators (xplasma, p, phot_mid, ds, w_ave, ndom, z, frac_ff, frac
   }
   for (i = 0; i < 3; i++)
   {
-    xplasma->rad_force_es[i] += dp_cyl[i];
+    xplasma->est.rad_force_es[i] += dp_cyl[i];
   }
-  xplasma->rad_force_es[3] += length (dp_cyl);
+  xplasma->est.rad_force_es[3] += length (dp_cyl);
 
   return 0;
 }
@@ -579,8 +566,7 @@ estimate_temperature_from_mean_frequency (double mean_nu_target, double nu_min, 
 #define BAND_CORRECTED_TRAD FALSE
 
 int
-normalise_simple_estimators (xplasma)
-     PlasmaPtr xplasma;
+normalise_simple_estimators (PlasmaPtr xplasma)
 {
   int i, j, nwind;
   double radiation_temperature, nh, wtest;
@@ -594,57 +580,58 @@ normalise_simple_estimators (xplasma)
 
   invariant_volume_time = wmain[nwind].vol / wmain[nwind].xgamma_cen;
 
-  if (xplasma->ntot > 0)
+  if (xplasma->est.ntot > 0)
   {
-    wtest = xplasma->ave_freq;
-    xplasma->ave_freq /= xplasma->j;    /* Normalization to frequency moment */
-    if (sane_check (xplasma->ave_freq))
+    wtest = xplasma->est.ave_freq;
+    xplasma->est.ave_freq /= xplasma->est.j;    /* Normalization to frequency moment */
+    if (sane_check (xplasma->est.ave_freq))
     {
       Error ("normalise_simple_estimators:sane_check nwind %d nplasma %d ave_freq %e j %e ntot %d\n", nwind, xplasma->nplasma, wtest,
-             xplasma->j, xplasma->ntot);
+             xplasma->est.j, xplasma->est.ntot);
     }
 
-    xplasma->j /= (4. * PI * invariant_volume_time);
-    xplasma->j_direct /= (4. * PI * invariant_volume_time);
-    xplasma->j_scatt /= (4. * PI * invariant_volume_time);
+    xplasma->est.j /= (4. * PI * invariant_volume_time);
+    xplasma->est.j_direct /= (4. * PI * invariant_volume_time);
+    xplasma->est.j_scatt /= (4. * PI * invariant_volume_time);
 
-    xplasma->t_r_old = xplasma->t_r;    // Store the previous t_r in t_r_old immediately before recalculating
+    xplasma->state.t_r_old = xplasma->state.t_r;        // Store the previous t_r in t_r_old immediately before recalculating
 
     /* the method of calculation of the band corrected radiation temperature depends on 
        the flag BAND_CORRECTED_TRAD -- see issue #1097 */
     if (BAND_CORRECTED_TRAD == FALSE)
     {
-      radiation_temperature = xplasma->t_r = PLANCK * xplasma->ave_freq / (BOLTZMANN * 3.832);
+      radiation_temperature = xplasma->state.t_r = PLANCK * xplasma->est.ave_freq / (BOLTZMANN * 3.832);
     }
     else
     {
-      radiation_temperature = xplasma->t_r =
-        estimate_temperature_from_mean_frequency (xplasma->ave_freq, xband.f1[0], xband.f2[xband.nbands - 1], radiation_temperature);
+      radiation_temperature = xplasma->state.t_r =
+        estimate_temperature_from_mean_frequency (xplasma->est.ave_freq, xband.f1[0], xband.f2[xband.nbands - 1], radiation_temperature);
     }
 
-    xplasma->w =
-      PI * xplasma->j / (STEFAN_BOLTZMANN * radiation_temperature * radiation_temperature * radiation_temperature * radiation_temperature);
+    xplasma->state.w =
+      PI * xplasma->est.j / (STEFAN_BOLTZMANN * radiation_temperature * radiation_temperature * radiation_temperature *
+                             radiation_temperature);
 
-    if (xplasma->w > 1e10)
+    if (xplasma->state.w > 1e10)
     {
-      Error ("normalise_simple_estimators: Huge w %8.2e in cell %d trad %10.2e j %8.2e\n", xplasma->w, xplasma->nplasma,
-             radiation_temperature, xplasma->j);
+      Error ("normalise_simple_estimators: Huge w %8.2e in cell %d trad %10.2e j %8.2e\n", xplasma->state.w, xplasma->nplasma,
+             radiation_temperature, xplasma->est.j);
     }
-    if (sane_check (radiation_temperature) || sane_check (xplasma->w))
+    if (sane_check (radiation_temperature) || sane_check (xplasma->state.w))
     {
-      Error ("normalise_simple_estimators:sane_check %d trad %8.2e w %8.2g\n", xplasma->nplasma, radiation_temperature, xplasma->w);
-      Error ("normalise_simple_estimators: ave_freq %8.2e j %8.2e\n", xplasma->ave_freq, xplasma->j);
+      Error ("normalise_simple_estimators:sane_check %d trad %8.2e w %8.2g\n", xplasma->nplasma, radiation_temperature, xplasma->state.w);
+      Error ("normalise_simple_estimators: ave_freq %8.2e j %8.2e\n", xplasma->est.ave_freq, xplasma->est.j);
       Exit (0);
     }
   }
   else
   {
-    xplasma->j = xplasma->j_direct = xplasma->j_scatt = 0;
+    xplasma->est.j = xplasma->est.j_direct = xplasma->est.j_scatt = 0;
     if (modes.fixed_temp != 1)
-      xplasma->t_e *= 0.7;
-    if (xplasma->t_e < MIN_TEMP)
-      xplasma->t_e = MIN_TEMP;
-    xplasma->w = 0;
+      xplasma->state.t_e *= 0.7;
+    if (xplasma->state.t_e < MIN_TEMP)
+      xplasma->state.t_e = MIN_TEMP;
+    xplasma->state.w = 0;
   }
 
   /* Temporary location for constructing estimators from speectra */
@@ -654,32 +641,32 @@ normalise_simple_estimators (xplasma)
   {
 
     j = 0;
-    for (i = 0; i < xplasma->nbands; i++)
+    for (i = 0; i < xplasma->state.nbands; i++)
     {
-      xplasma->xave_freq[i] = 0;
-      xplasma->xsd_freq[i] = 0;
-      xplasma->xj[i] = 0;
-      xplasma->nxtot[i] = 0;
-      xplasma->fmin[i] = geo.cell_freq[NBINS_IN_CELL_SPEC];
-      xplasma->fmax[i] = geo.cell_freq[0];
+      xplasma->est.xave_freq[i] = 0;
+      xplasma->est.xsd_freq[i] = 0;
+      xplasma->est.xj[i] = 0;
+      xplasma->est.nxtot[i] = 0;
+      xplasma->est.fmin[i] = geo.cell_freq[geo.nbins_in_cell_spec];
+      xplasma->est.fmax[i] = geo.cell_freq[0];
 
-      while (geo.cell_freq[j] < xplasma->f2[i] && j < NBINS_IN_CELL_SPEC)
+      while (geo.cell_freq[j] < xplasma->state.f2[i] && j < geo.nbins_in_cell_spec)
       {
         double ave_freq;
-        if (xplasma->cell_spec_flux[j] > 0)
+        if (xplasma->est.cell_spec_flux[j] > 0)
         {
           ave_freq = 0.5 * (geo.cell_freq[j + 1] + geo.cell_freq[j]);
-          xplasma->xave_freq[i] += ave_freq * xplasma->cell_spec_flux[j];
-          xplasma->xsd_freq[i] += ave_freq * ave_freq * xplasma->cell_spec_flux[j];
-          xplasma->xj[i] += xplasma->cell_spec_flux[j];
-          xplasma->nxtot[i]++;
-          if (ave_freq < xplasma->fmin[i])
+          xplasma->est.xave_freq[i] += ave_freq * xplasma->est.cell_spec_flux[j];
+          xplasma->est.xsd_freq[i] += ave_freq * ave_freq * xplasma->est.cell_spec_flux[j];
+          xplasma->est.xj[i] += xplasma->est.cell_spec_flux[j];
+          xplasma->est.nxtot[i]++;
+          if (ave_freq < xplasma->est.fmin[i])
           {
-            xplasma->fmin[i] = ave_freq;
+            xplasma->est.fmin[i] = ave_freq;
           }
-          if (ave_freq > xplasma->fmax[i])
+          if (ave_freq > xplasma->est.fmax[i])
           {
-            xplasma->fmax[i] = ave_freq;
+            xplasma->est.fmax[i] = ave_freq;
           }
         }
         j++;
@@ -697,33 +684,33 @@ normalise_simple_estimators (xplasma)
   /* Normalize and otherwise complete the information gathered about the 
      coarse spectra used for generation of spectral models */
 
-  for (i = 0; i < xplasma->nbands; i++)
+  for (i = 0; i < xplasma->state.nbands; i++)
   {
-    if (xplasma->nxtot[i] > 0)
+    if (xplasma->est.nxtot[i] > 0)
     {
-      xplasma->xave_freq[i] /= xplasma->xj[i];
-      xplasma->xsd_freq[i] /= xplasma->xj[i];
-      xplasma->xsd_freq[i] = sqrt (xplasma->xsd_freq[i] - (xplasma->xave_freq[i] * xplasma->xave_freq[i]));     /*Compute standard deviation */
-      xplasma->xj[i] /= (4 * PI * invariant_volume_time);       /*Convert to radiation density */
+      xplasma->est.xave_freq[i] /= xplasma->est.xj[i];
+      xplasma->est.xsd_freq[i] /= xplasma->est.xj[i];
+      xplasma->est.xsd_freq[i] = sqrt (xplasma->est.xsd_freq[i] - (xplasma->est.xave_freq[i] * xplasma->est.xave_freq[i]));     /*Compute standard deviation */
+      xplasma->est.xj[i] /= (4 * PI * invariant_volume_time);   /*Convert to radiation density */
     }
     else
     {
-      xplasma->xj[i] = 0;
-      xplasma->xave_freq[i] = 0;
-      xplasma->xsd_freq[i] = 0;
+      xplasma->est.xj[i] = 0;
+      xplasma->est.xave_freq[i] = 0;
+      xplasma->est.xsd_freq[i] = 0;
     }
   }
 
 
   /* Normalize the cell spectra to J_nu - erg/s/cm^3/Sr/Hz */
 
-  for (i = 0; i < NBINS_IN_CELL_SPEC; i++)
+  for (i = 0; i < geo.nbins_in_cell_spec; i++)
   {
     freq_min = geo.cell_log_freq_min + (i) * geo.cell_delta_lfreq;
     freq_max = freq_min + geo.cell_delta_lfreq;
     dfreq = pow (10., freq_max) - pow (10., freq_min);
 
-    xplasma->cell_spec_flux[i] /= (4 * PI * invariant_volume_time * dfreq);
+    xplasma->est.cell_spec_flux[i] /= (4 * PI * invariant_volume_time * dfreq);
 
   }
 
@@ -733,17 +720,17 @@ normalise_simple_estimators (xplasma)
    * and number density of hydrogen in the cell
    */
 
-  nh = xplasma->rho * rho2nh;
-  xplasma->ip /= (VLIGHT * invariant_volume_time * nh);
-  xplasma->ip_direct /= (VLIGHT * invariant_volume_time * nh);
-  xplasma->ip_scatt /= (VLIGHT * invariant_volume_time * nh);
+  nh = xplasma->state.rho * rho2nh;
+  xplasma->est.ip /= (VLIGHT * invariant_volume_time * nh);
+  xplasma->est.ip_direct /= (VLIGHT * invariant_volume_time * nh);
+  xplasma->est.ip_scatt /= (VLIGHT * invariant_volume_time * nh);
 
   /* Normalise xi, which at this point should be the luminosity of
    * ionizing photons in a cell (just the sum of photon weights)
    */
 
-  xplasma->xi *= 4. * PI;
-  xplasma->xi /= (invariant_volume_time * nh);
+  xplasma->derived.xi *= 4. * PI;
+  xplasma->derived.xi /= (invariant_volume_time * nh);
 
   /*
    * The radiation force and flux estimators are all observer frame
@@ -752,22 +739,22 @@ normalise_simple_estimators (xplasma)
    */
 
   /* there was an error here before, see #1030. The observer frame density is gamma times the CMF one */
-  electron_density_obs = xplasma->ne * wmain[nwind].xgamma_cen; // Mihalas & Mihalas p146
+  electron_density_obs = xplasma->state.ne * wmain[nwind].xgamma_cen;   // Mihalas & Mihalas p146
   volume_obs = wmain[nwind].vol / wmain[nwind].xgamma_cen;
 
   for (i = 0; i < NFORCE_DIRECTIONS; i++)
   {
-    xplasma->rad_force_es[i] *= (volume_obs * electron_density_obs) / (volume_obs * VLIGHT);
-    xplasma->F_vis[i] /= volume_obs;
-    xplasma->F_UV[i] /= volume_obs;
-    xplasma->F_Xray[i] /= volume_obs;
+    xplasma->est.rad_force_es[i] *= (volume_obs * electron_density_obs) / (volume_obs * VLIGHT);
+    xplasma->est.F_vis[i] /= volume_obs;
+    xplasma->est.F_UV[i] /= volume_obs;
+    xplasma->est.F_Xray[i] /= volume_obs;
   }
 
   for (i = 0; i < NFLUX_ANGLES; i++)
   {
-    xplasma->F_UV_ang_theta[i] /= volume_obs;
-    xplasma->F_UV_ang_phi[i] /= volume_obs;
-    xplasma->F_UV_ang_r[i] /= volume_obs;
+    xplasma->est.F_UV_ang_theta[i] /= volume_obs;
+    xplasma->est.F_UV_ang_phi[i] /= volume_obs;
+    xplasma->est.F_UV_ang_r[i] /= volume_obs;
   }
 
   return (0);
@@ -791,52 +778,57 @@ update_persistent_directional_flux_estimators (int nplasma, double flux_persist_
 
   if (geo.wcycle == 0)          //If this is the first time through, then the persistent flux is empty.
   {
-    vadd (plasmamain[nplasma].F_vis_persistent, plasmamain[nplasma].F_vis, plasmamain[nplasma].F_vis_persistent);
-    vadd (plasmamain[nplasma].F_UV_persistent, plasmamain[nplasma].F_UV, plasmamain[nplasma].F_UV_persistent);
-    vadd (plasmamain[nplasma].F_Xray_persistent, plasmamain[nplasma].F_Xray, plasmamain[nplasma].F_Xray_persistent);
-    vadd (plasmamain[nplasma].rad_force_bf_persist, plasmamain[nplasma].rad_force_bf, plasmamain[nplasma].rad_force_bf_persist);
+    vadd (plasmamain[nplasma].derived.F_vis_persistent, plasmamain[nplasma].est.F_vis, plasmamain[nplasma].derived.F_vis_persistent);
+    vadd (plasmamain[nplasma].derived.F_UV_persistent, plasmamain[nplasma].est.F_UV, plasmamain[nplasma].derived.F_UV_persistent);
+    vadd (plasmamain[nplasma].derived.F_Xray_persistent, plasmamain[nplasma].est.F_Xray, plasmamain[nplasma].derived.F_Xray_persistent);
+    vadd (plasmamain[nplasma].derived.rad_force_bf_persist, plasmamain[nplasma].est.rad_force_bf,
+          plasmamain[nplasma].derived.rad_force_bf_persist);
 
     for (n = 0; n < NFLUX_ANGLES; n++)
     {
-      plasmamain[nplasma].F_UV_ang_theta_persist[n] = plasmamain[nplasma].F_UV_ang_theta_persist[n] + plasmamain[nplasma].F_UV_ang_theta[n];
-      plasmamain[nplasma].F_UV_ang_phi_persist[n] = plasmamain[nplasma].F_UV_ang_phi_persist[n] + plasmamain[nplasma].F_UV_ang_phi[n];
-      plasmamain[nplasma].F_UV_ang_r_persist[n] = plasmamain[nplasma].F_UV_ang_r_persist[n] + plasmamain[nplasma].F_UV_ang_r[n];
+      plasmamain[nplasma].derived.F_UV_ang_theta_persist[n] =
+        plasmamain[nplasma].derived.F_UV_ang_theta_persist[n] + plasmamain[nplasma].est.F_UV_ang_theta[n];
+      plasmamain[nplasma].derived.F_UV_ang_phi_persist[n] =
+        plasmamain[nplasma].derived.F_UV_ang_phi_persist[n] + plasmamain[nplasma].est.F_UV_ang_phi[n];
+      plasmamain[nplasma].derived.F_UV_ang_r_persist[n] =
+        plasmamain[nplasma].derived.F_UV_ang_r_persist[n] + plasmamain[nplasma].est.F_UV_ang_r[n];
     }
   }
   else
   {
-    rescale (plasmamain[nplasma].F_vis_persistent, (1 - flux_persist_scale), plasmamain[nplasma].F_vis_persistent);
-    rescale (plasmamain[nplasma].F_vis, flux_persist_scale, flux_helper);
-    vadd (plasmamain[nplasma].F_vis_persistent, flux_helper, plasmamain[nplasma].F_vis_persistent);
+    rescale (plasmamain[nplasma].derived.F_vis_persistent, (1 - flux_persist_scale), plasmamain[nplasma].derived.F_vis_persistent);
+    rescale (plasmamain[nplasma].est.F_vis, flux_persist_scale, flux_helper);
+    vadd (plasmamain[nplasma].derived.F_vis_persistent, flux_helper, plasmamain[nplasma].derived.F_vis_persistent);
 
-    rescale (plasmamain[nplasma].F_UV_persistent, (1 - flux_persist_scale), plasmamain[nplasma].F_UV_persistent);
-    rescale (plasmamain[nplasma].F_UV, flux_persist_scale, flux_helper);
-    vadd (plasmamain[nplasma].F_UV_persistent, flux_helper, plasmamain[nplasma].F_UV_persistent);
+    rescale (plasmamain[nplasma].derived.F_UV_persistent, (1 - flux_persist_scale), plasmamain[nplasma].derived.F_UV_persistent);
+    rescale (plasmamain[nplasma].est.F_UV, flux_persist_scale, flux_helper);
+    vadd (plasmamain[nplasma].derived.F_UV_persistent, flux_helper, plasmamain[nplasma].derived.F_UV_persistent);
 
-    rescale (plasmamain[nplasma].F_Xray_persistent, (1 - flux_persist_scale), plasmamain[nplasma].F_Xray_persistent);
-    rescale (plasmamain[nplasma].F_Xray, flux_persist_scale, flux_helper);
-    vadd (plasmamain[nplasma].F_Xray_persistent, flux_helper, plasmamain[nplasma].F_Xray_persistent);
+    rescale (plasmamain[nplasma].derived.F_Xray_persistent, (1 - flux_persist_scale), plasmamain[nplasma].derived.F_Xray_persistent);
+    rescale (plasmamain[nplasma].est.F_Xray, flux_persist_scale, flux_helper);
+    vadd (plasmamain[nplasma].derived.F_Xray_persistent, flux_helper, plasmamain[nplasma].derived.F_Xray_persistent);
 
-    rescale (plasmamain[nplasma].rad_force_bf_persist, (1 - flux_persist_scale), plasmamain[nplasma].rad_force_bf_persist);
-    rescale (plasmamain[nplasma].rad_force_bf, flux_persist_scale, flux_helper);
-    vadd (plasmamain[nplasma].rad_force_bf_persist, flux_helper, plasmamain[nplasma].rad_force_bf_persist);
+    rescale (plasmamain[nplasma].derived.rad_force_bf_persist, (1 - flux_persist_scale), plasmamain[nplasma].derived.rad_force_bf_persist);
+    rescale (plasmamain[nplasma].est.rad_force_bf, flux_persist_scale, flux_helper);
+    vadd (plasmamain[nplasma].derived.rad_force_bf_persist, flux_helper, plasmamain[nplasma].derived.rad_force_bf_persist);
 
     for (n = 0; n < NFLUX_ANGLES; n++)
     {
-      plasmamain[nplasma].F_UV_ang_theta_persist[n] = plasmamain[nplasma].F_UV_ang_theta_persist[n] * (1 - flux_persist_scale);
-      plasmamain[nplasma].F_UV_ang_phi_persist[n] = plasmamain[nplasma].F_UV_ang_phi_persist[n] * (1 - flux_persist_scale);
-      plasmamain[nplasma].F_UV_ang_r_persist[n] = plasmamain[nplasma].F_UV_ang_r_persist[n] * (1 - flux_persist_scale);
-      plasmamain[nplasma].F_UV_ang_theta_persist[n] =
-        plasmamain[nplasma].F_UV_ang_theta_persist[n] + plasmamain[nplasma].F_UV_ang_theta[n] * flux_persist_scale;
-      plasmamain[nplasma].F_UV_ang_phi_persist[n] =
-        plasmamain[nplasma].F_UV_ang_phi_persist[n] + plasmamain[nplasma].F_UV_ang_phi[n] * flux_persist_scale;
-      plasmamain[nplasma].F_UV_ang_r_persist[n] =
-        plasmamain[nplasma].F_UV_ang_r_persist[n] + plasmamain[nplasma].F_UV_ang_r[n] * flux_persist_scale;
+      plasmamain[nplasma].derived.F_UV_ang_theta_persist[n] =
+        plasmamain[nplasma].derived.F_UV_ang_theta_persist[n] * (1 - flux_persist_scale);
+      plasmamain[nplasma].derived.F_UV_ang_phi_persist[n] = plasmamain[nplasma].derived.F_UV_ang_phi_persist[n] * (1 - flux_persist_scale);
+      plasmamain[nplasma].derived.F_UV_ang_r_persist[n] = plasmamain[nplasma].derived.F_UV_ang_r_persist[n] * (1 - flux_persist_scale);
+      plasmamain[nplasma].derived.F_UV_ang_theta_persist[n] =
+        plasmamain[nplasma].derived.F_UV_ang_theta_persist[n] + plasmamain[nplasma].est.F_UV_ang_theta[n] * flux_persist_scale;
+      plasmamain[nplasma].derived.F_UV_ang_phi_persist[n] =
+        plasmamain[nplasma].derived.F_UV_ang_phi_persist[n] + plasmamain[nplasma].est.F_UV_ang_phi[n] * flux_persist_scale;
+      plasmamain[nplasma].derived.F_UV_ang_r_persist[n] =
+        plasmamain[nplasma].derived.F_UV_ang_r_persist[n] + plasmamain[nplasma].est.F_UV_ang_r[n] * flux_persist_scale;
     }
   }
-  plasmamain[nplasma].F_vis_persistent[3] = length (plasmamain[nplasma].F_vis_persistent);
-  plasmamain[nplasma].F_UV_persistent[3] = length (plasmamain[nplasma].F_UV_persistent);
-  plasmamain[nplasma].F_Xray_persistent[3] = length (plasmamain[nplasma].F_Xray_persistent);
-  plasmamain[nplasma].rad_force_bf_persist[3] = length (plasmamain[nplasma].rad_force_bf_persist);
+  plasmamain[nplasma].derived.F_vis_persistent[3] = length (plasmamain[nplasma].derived.F_vis_persistent);
+  plasmamain[nplasma].derived.F_UV_persistent[3] = length (plasmamain[nplasma].derived.F_UV_persistent);
+  plasmamain[nplasma].derived.F_Xray_persistent[3] = length (plasmamain[nplasma].derived.F_Xray_persistent);
+  plasmamain[nplasma].derived.rad_force_bf_persist[3] = length (plasmamain[nplasma].derived.rad_force_bf_persist);
 
 }

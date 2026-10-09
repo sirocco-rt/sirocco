@@ -64,16 +64,14 @@
  **********************************************************/
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
 //OLD  WindPtr w;
 
   double freqmin, freqmax;
   int n;
   char values[LINELENGTH], answer[LINELENGTH];
-  int get_models ();            // Note: Needed because get_models cannot be included in templates.h
+  int get_models (char modellist[], int npars, int *spectype);
   int dummy_spectype;
   int opar_stat, restart_stat;
   double time_max;
@@ -93,6 +91,23 @@ main (argc, argv)
   }
   MPI_Comm_rank (MPI_COMM_WORLD, &my_rank);
   MPI_Comm_size (MPI_COMM_WORLD, &np_mpi);
+
+  /* Create node-local communicator for MPI-3 shared memory */
+  MPI_Comm_split_type (MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, my_rank, MPI_INFO_NULL, &node_comm);
+  MPI_Comm_rank (node_comm, &node_rank);
+  MPI_Comm_size (node_comm, &node_size);
+
+  /* Create inter-node leader communicator (one leader per node) */
+  MPI_Comm_split (MPI_COMM_WORLD, (node_rank == 0) ? 0 : MPI_UNDEFINED, my_rank, &leader_comm);
+
+  /* Determine total number of nodes */
+  num_nodes = 0;
+  if (leader_comm != MPI_COMM_NULL)
+  {
+    MPI_Comm_size (leader_comm, &num_nodes);
+  }
+  MPI_Bcast (&num_nodes, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
 #else
   my_rank = 0;
   np_mpi = 1;
@@ -113,6 +128,10 @@ main (argc, argv)
   np_mpi_global = np_mpi;       // Global variable which holds the number of MPI processes
   rank_global = my_rank;        // Global variable which holds the rank of the active MPI process
   Log_set_mpi_rank (my_rank, np_mpi);   // communicates my_rank to kpar
+
+#ifdef MPI_ON
+  Log ("MPI topology: %d ranks across %d node(s), %d ranks on this node (node_rank %d)\n", np_mpi, num_nodes, node_size, node_rank);
+#endif
 
 /* This completes the initialisation of mpi */
 
@@ -144,6 +163,9 @@ main (argc, argv)
 
 
   restart_stat = parse_command_line (argc, argv);
+
+  /* Save the command-line cell_spec_dim setting (if specified) so it survives wind_read overwriting geo */
+  int cmd_nbins_in_cell_spec = geo.nbins_in_cell_spec;
 
   /* If the restart flag has been set, we check to see if a windsave file exists.  If it doues we will
      we will restart from that point.  If the windsave file does not exist we will start from scratch */
@@ -198,6 +220,17 @@ main (argc, argv)
       Exit (0);
     }
     //OLD w = wmain;
+
+    /* Restore command-line cell_spec_dim or validate the value read from windsave */
+    if (cmd_nbins_in_cell_spec > 0)
+    {
+      geo.nbins_in_cell_spec = cmd_nbins_in_cell_spec;
+    }
+    if (geo.nbins_in_cell_spec < 1 || geo.nbins_in_cell_spec > NBINS_IN_CELL_SPEC)
+    {
+      Log ("Windsave had invalid nbins_in_cell_spec=%d, resetting to 100\n", geo.nbins_in_cell_spec);
+      geo.nbins_in_cell_spec = 100;
+    }
 
     geo.run_type = RUN_TYPE_RESTART;
 
@@ -264,6 +297,17 @@ main (argc, argv)
         Exit (0);
       }
 
+      /* Restore command-line cell_spec_dim or validate the value read from windsave */
+      if (cmd_nbins_in_cell_spec > 0)
+      {
+        geo.nbins_in_cell_spec = cmd_nbins_in_cell_spec;
+      }
+      if (geo.nbins_in_cell_spec < 1 || geo.nbins_in_cell_spec > NBINS_IN_CELL_SPEC)
+      {
+        Log ("Windsave had invalid nbins_in_cell_spec=%d, resetting to 100\n", geo.nbins_in_cell_spec);
+        geo.nbins_in_cell_spec = 100;
+      }
+
       geo.run_type = RUN_TYPE_PREVIOUS;
 
 //OLD w = wmain;
@@ -281,6 +325,14 @@ main (argc, argv)
       if (geo.run_type == RUN_TYPE_NEW)
       {
         init_geo ();
+        /* Re-apply command-line -cell_spec_dim if given; init_geo resets to default 100 */
+        if (cmd_nbins_in_cell_spec > 0)
+          geo.nbins_in_cell_spec = cmd_nbins_in_cell_spec;
+        if (geo.nbins_in_cell_spec < 1 || geo.nbins_in_cell_spec > NBINS_IN_CELL_SPEC)
+        {
+          Log ("cell_spec_dim %d out of range, resetting to 100\n", geo.nbins_in_cell_spec);
+          geo.nbins_in_cell_spec = 100;
+        }
       }
 
       /* get_stellar_params gets information like mstar, rstar, tstar etc.
@@ -666,6 +718,9 @@ main (argc, argv)
     error_summary ("wind definition only (--grid-only).");
 #ifdef MPI_ON
     MPI_Barrier (MPI_COMM_WORLD);
+    MPI_Comm_free (&node_comm);
+    if (leader_comm != MPI_COMM_NULL)
+      MPI_Comm_free (&leader_comm);
     MPI_Finalize ();
 #endif
     return EXIT_SUCCESS;
@@ -748,16 +803,6 @@ main (argc, argv)
 
 /* Finally done */
 
-#ifdef MPI_ON
-  char dummy[LINELENGTH];
-  sprintf (dummy, "End of program, Thread %d only", rank_global);       // added so we make clear these are just errors for thread ngit status
-  error_summary (dummy);        // Summarize the errors that were recorded by the program
-  Log ("Run py_error.py for full error report.\n");
-  MPI_Finalize ();
-#else
-  error_summary ("End of program");     // Summarize the errors that were recorded by the program
-#endif
-
 #ifdef CUDA_ON
   cusolver_destroy ();
 #endif
@@ -786,12 +831,33 @@ main (argc, argv)
   Log ("Information about luminosities and apparent fluxes due to various portions of the system:\n");
   phot_status ();
 
+#ifdef MPI_ON
+  {
+    char dummy[LINELENGTH];
+    sprintf (dummy, "End of program, Thread %d only", rank_global);
+    error_summary (dummy);
+    Log ("Run py_error.py for full error report.\n");
+  }
+#else
+  error_summary ("End of program");
+#endif
 
+  /* clean_on_exit calls free_wind_grid and free_plasma_grid which call MPI_Win_free.
+   * The barrier ensures all ranks finish cleanup before any rank calls MPI_Finalize. */
+#ifdef MPI_ON
+  MPI_Barrier (MPI_COMM_WORLD);
+#endif
   clean_on_exit ();
 
   print_memory_usage ("After program is complete");
   Log_close ();
 
+#ifdef MPI_ON
+  MPI_Comm_free (&node_comm);
+  if (leader_comm != MPI_COMM_NULL)
+    MPI_Comm_free (&leader_comm);
+  MPI_Finalize ();
+#endif
 
   return (0);
 }

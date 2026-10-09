@@ -148,6 +148,24 @@ Using polar coordinates, a 2.5D model can be read into SIROCCO.
     possible to extend beyond 90°, but these cells should not be inwind and
     should be reserved as ghost cells.
 
+Density and velocity conventions
+--------------------------------
+
+The density :math:`\rho` in a model file is the **volume-averaged** mass
+density, and both it and the velocities are in the observer frame. If the wind
+is clumped (``Wind.filling_factor`` :math:`f<1`), SIROCCO works with the
+density inside the clumps, which it calculates as
+
+.. math ::
+    \rho_{\rm clump} = \frac{\rho}{f\,\gamma},
+
+where :math:`\gamma` is the Lorentz factor at the cell centre (1 unless full
+special relativity is used, the default). The volume filled with material is
+:math:`f` times the volume of the cell.
+
+The same conventions apply when a model from a hydrodynamics code is used to
+update an existing wind save; see :ref:`hydro_coupling`.
+
 Setting Wind Temperatures
 -------------------------
 

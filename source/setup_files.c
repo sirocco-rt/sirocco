@@ -47,10 +47,9 @@
  **********************************************************/
 
 int
-init_log_and_windsave (restart_stat)
-     int restart_stat;
+init_log_and_windsave (int restart_stat)
 {
-  FILE *fopen (), *qptr;
+  FILE *qptr;
 
   if (restart_stat == FALSE)
   {                             // Then we are simply running from a new model

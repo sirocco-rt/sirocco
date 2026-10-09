@@ -48,7 +48,7 @@
 #include	<strings.h>
 #include	<string.h>
 #include 	"atomic.h"
-#include	"sirocco.h"      //This needs to come before modlel.h so that what is in models.h is used
+#include	"sirocco.h"     //This needs to come before modlel.h so that what is in models.h is used
 #include    "models.h"
 #define    	BIG 1e32
 
@@ -74,8 +74,7 @@ int get_models_init = 0;
  **********************************************************/
 
 int
-calloc_models (nmods)
-     int nmods;
+calloc_models (int nmods)
 {
 
   if (mods != NULL)
@@ -160,19 +159,14 @@ calloc_models (nmods)
  **********************************************************/
 
 int
-get_models (modellist, npars, spectype)
-     char modellist[];          // filename containing location and associated parameters of models
-     int npars;                 // Number of parameters which vary for these models
-     int *spectype;             //  The returned spectrum type
-
-
+get_models (char modellist[], int npars, int *spectype)
 {
-  FILE *mptr, *fopen ();
+  FILE *mptr;
   char dummy[LINELENGTH];
   int n, m, mm, nxpar;
   double xpar[NPARS], xmin[NPARS], xmax[NPARS];
-  int get_one_model ();
   int nw, nwaves;
+  int get_one_model (char filename[], struct Model *onemod);
 
   nwaves = 0;
 
@@ -339,9 +333,7 @@ get_models (modellist, npars, spectype)
  **********************************************************/
 
 int
-get_one_model (filename, onemod)
-     char filename[];
-     struct Model *onemod;
+get_one_model (char filename[], struct Model *onemod)
 {
   FILE *ptr;
   char dummy[LINELEN];
@@ -431,11 +423,7 @@ int nmodel_terror = 0;
  *
  **********************************************************/
 int
-model (spectype, par)
-     int spectype;
-     double par[];
-
-
+model (int spectype, double par[])
 {
   int j, n;
   int good_models[NMODS];       // Used to establish which models are to be included in creating output model

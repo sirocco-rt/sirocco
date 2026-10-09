@@ -106,6 +106,7 @@ Amin Mosallanezhad
    running_sirocco
    input
    output
+   c_executables
    plotting
    operation
    radiation

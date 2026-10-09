@@ -43,8 +43,7 @@
 
 
 int
-get_domain_params (ndom)
-     int ndom;
+get_domain_params (int ndom)
 {
   char answer[LINELENGTH];
 
@@ -217,8 +216,7 @@ allocate_domain_wind_coords (int ndom)
 ***********************************************************/
 
 int
-get_wind_params (ndom)
-     int ndom;
+get_wind_params (int ndom)
 {
   int import_t_init = FALSE;
 
@@ -489,11 +487,7 @@ setup_windcone ()
 
 
 int
-init_windcone (r, z, dzdr, allow_negative_dzdr, one_windcone)
-     double r, z, dzdr;
-     int allow_negative_dzdr;
-     ConePtr one_windcone;
-
+init_windcone (double r, double z, double dzdr, int allow_negative_dzdr, ConePtr one_windcone)
 {
 
 
