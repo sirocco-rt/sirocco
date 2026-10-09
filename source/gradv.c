@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <float.h>
 
 #include "atomic.h"
 #include "sirocco.h"
@@ -90,10 +91,19 @@ dvwind_ds_cmf (p)
     struct photon pnew;
     double v1[3], v2[3], dv[3], diff[3];
     double ds;
-    /* choose a small distance which is dependent on the cell size */
-    vsub (pp.x, wmain[pp.grid].x, diff);
+    /* choose a small distance dependent on the cell size, with a floor set by
+     * the floating-point precision at the photon's position.  For thin shells
+     * at large radii (e.g. 10 cm at 1e11 cm) 1e-6 * half_cell falls below
+     * ULP(r), so rmin+ds == rmin in double and the finite difference returns
+     * zero for every direction.  The floor is capped at 10% of the half-cell
+     * width so the step remains local. */
     vsub (wmain[pp.grid].xcen, wmain[pp.grid].x, diff);
     ds = 0.000001 * length (diff);
+    {
+      double ds_floor = 100.0 * DBL_EPSILON * length (pp.x);
+      if (ds < ds_floor)
+        ds = fmin (ds_floor, 0.1 * length (diff));
+    }
     /* calculate the velocity at the position of the photon */
     /* note we use model velocity, which could potentially be slow,
        but avoids interpolating (see #118) */
@@ -398,8 +408,10 @@ calculate_cell_dvds_max (int ndom, WindPtr cell)
  * @return     Returns dvds_max at the position of the photon
  *
  * @details
- * The routine interpolates dvds_max given the position of
- * a photon in a cell
+ * The routine estimates dvds_max given the position of
+ * a photon in a cell. It uses the maximum of the surrounding corners
+ * because it is only used to normalise the escape probability of a photon
+ * in anisotropic scatterings, so can be a conservative overestimate.
  *
  * dvds_max at the vertex points of cells must have been
  * initialized using the routine dvds_max
@@ -411,6 +423,10 @@ calculate_cell_dvds_max (int ndom, WindPtr cell)
  * must be acurrate.
  **********************************************************/
 
+ /** Ad hoc safety factor applied to the maximum of the corner dvds_max values, 
+  * to avoid sampled dvds values exceeding the maximum. 
+ */
+#define DVDS_MAX_SAFETY 1.05
 
 double
 get_dvds_max (p)
@@ -428,7 +444,8 @@ get_dvds_max (p)
 
   for (nn = 0; nn < nelem; nn++)
   {
-    dvds += wmain[nnn[nn]].dvds_max;
+    /* note we don't weight the maximum here, but take the maximum value of the surrounding corner values*/
+    dvds = fmax (dvds, wmain[nnn[nn]].dvds_max);
   }
 
   return dvds;

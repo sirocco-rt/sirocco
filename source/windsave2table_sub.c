@@ -1565,11 +1565,14 @@ get_one (ndom, variable_name)
       }
       else if (strcmp (variable_name, "energy_in_macro") == 0)
       {
-        x[n] = macromain[nplasma].energy_flow_in;
+        /* macromain is only allocated for models with macro atoms */
+        if (macromain != NULL)
+          x[n] = macromain[nplasma].energy_flow_in;
       }
       else if (strcmp (variable_name, "energy_out_macro") == 0)
       {
-        x[n] = macromain[nplasma].energy_flow_out;
+        if (macromain != NULL)
+          x[n] = macromain[nplasma].energy_flow_out;
       }
       else if (strcmp (variable_name, "gain") == 0)
       {
