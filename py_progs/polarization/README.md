@@ -24,9 +24,26 @@ summary:
 | `photon.py` | `photon_dtype`, Sirocco enum values, `make_photons`, `init_dummy_phot`, `set_unpolarized`, `stuff_phot` |
 | `stokes.py` | Stokes rotation, observer direction and sky North/East (as in `spectra.c`), P and PA, the Lorentz transform of `pol_ref` |
 | `es_scatter.py` | Thomson matrix, sampling of polarized scattered directions (`scatter_es`), peel-off toward an observer (`peel_es`) |
+| `toy_transport.py` | Step 2: vectorized transport through uniform ellipsoids (point source) and a slab lit from below, with peel-off (`Spectrum`) and live-or-die (`LiveOrDie`) tallies, and the Brown & McLean (1977) prediction |
+| `milne.py` | Deterministic solution for polarized electron scattering in a slab, the reference for the slab test (limb polarization 11.70%; Chandrasekhar: 11.71%) |
+| `step2_validate.py` | Runs the Step 2 validation cases and optionally plots them |
 
 All routines work on whole arrays of photons. Use a slice, `p[i:i+1]`, for a
 single photon.
+
+## Step 2 validation
+
+```bash
+python py_progs/polarization/step2_validate.py -plot step2.png    # ~1.5 min; -n 4 for 4x the photons
+```
+
+The cases:
+- A uniform sphere must give no net polarization.
+- Optically thin oblate and prolate ellipsoids must match Brown & McLean (1977): Q > 0 for oblate and Q < 0 for prolate.
+- In a thicker ellipsoid, peel-off and live-or-die must agree.
+- A tau = 10 slab must match `milne.py` in both intensity and polarization.
+
+Peel-off errors come from the scatter between batches of photons. A photon's contributions at successive scatters are correlated, so a simple sum of squares underestimates the errors.
 
 ## Tests
 
