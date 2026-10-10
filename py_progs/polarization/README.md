@@ -14,8 +14,8 @@ summary:
 - The sky frame follows the astronomical (IAU 1974) convention: North is the
   projected system +z axis, East = n_obs × North, Q > 0 is a North–South
   E-vector, and the position angle runs from North through East.
-- Electron scattering only, in the Thomson limit. Klein–Nishina is planned.
-  All other processes leave photons unpolarized.
+- Electron scattering in the Thomson limit (Klein–Nishina is planned) and
+  resonance-line scattering. All other processes leave photons unpolarized.
 
 ## Modules
 
@@ -27,6 +27,9 @@ summary:
 | `toy_transport.py` | Step 2: vectorized transport through uniform ellipsoids (point source) and a slab lit from below, with peel-off (`Spectrum`) and live-or-die (`LiveOrDie`) tallies, and the Brown & McLean (1977) prediction |
 | `milne.py` | Deterministic solution for polarized electron scattering in a slab, the reference for the slab test (limb polarization 11.70%; Chandrasekhar: 11.71%) |
 | `step2_validate.py` | Runs the Step 2 validation cases and optionally plots them |
+| `line_scatter.py` | Step 3: W2(J_l, J_u) from 6j symbols, the resonance-line phase matrix, `scatter_line`, `peel_line` |
+| `homologous.py` | Step 3: transport through a homologously expanding ellipsoid with electron scattering and one Sobolev line. It has three treatments of trapping in the resonance region (`explicit`, `single`, `effective`), and spectra resolved in frequency |
+| `step3_validate.py` | Runs the Step 3 validation cases and the line-effect spectra, and optionally plots them |
 
 All routines work on whole arrays of photons. Use a slice, `p[i:i+1]`, for a
 single photon.
@@ -44,6 +47,20 @@ The cases:
 - A tau = 10 slab must match `milne.py` in both intensity and polarization.
 
 Peel-off errors come from the scatter between batches of photons. A photon's contributions at successive scatters are correlated, so a simple sum of squares underestimates the errors.
+
+## Step 3 validation
+
+```bash
+python py_progs/polarization/step3_validate.py -plot step3.png    # ~2.5 min
+```
+
+Main result: trapping in a Sobolev resonance region depolarizes. Each local
+scatter keeps (7/10) W2 of the polarized (K = 2) part of the radiation. So the
+line-scattered polarization is F = beta / (1 - (1 - beta)(7/10) W2) times that
+of a single scatter, where beta is the escape probability. A single scatter with
+W2_eff = W2 F (the `effective` mode) reproduces exact trapping (`explicit`).
+A plain single scatter (`single`, what Sirocco's line scattering would do now)
+overestimates the polarization of thick lines by up to 1/F.
 
 ## Tests
 
