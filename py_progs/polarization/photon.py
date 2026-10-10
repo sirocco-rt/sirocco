@@ -2,21 +2,41 @@
 '''
 A Python mirror of the Sirocco photon structure, for prototyping polarization.
 
-The field names, enum values and helper routines follow ``struct photon``
-in ``source/sirocco.h`` and ``source/phot_util.c``, so that code written
-against this module can be ported to C more or less line by line.  Two
-fields are new:
 
-* ``stokes`` -- (q, u, v) = (Q/I, U/I, V/I); I is the photon weight ``w``
-* ``pol_ref`` -- e1, a unit vector perpendicular to ``lmn`` which defines
-  the axis along which Q > 0
+Command line usage (if any):
 
-A bundle of photons is a NumPy structured array, the analog of ``photmain``.
-``p['lmn']`` is then an (N, 3) array, so routines elsewhere in this package
-operate on whole arrays (or a slice, ``p[i:i+1]``, for a single photon).
+    None; this is a module, imported as ``from polarization import photon``
 
-The conventions are those in the Obsidian note
-Sirocco-2026-Polarization-Conventions.
+Description:
+
+    The field names, enum values and helper routines follow ``struct photon``
+    in ``source/sirocco.h`` and ``source/phot_util.c``, so that code written
+    against this module can be ported to C more or less line by line.  Two
+    fields are new:
+
+    * ``stokes`` -- (q, u, v) = (Q/I, U/I, V/I); I is the photon weight ``w``
+    * ``pol_ref`` -- e1, a unit vector perpendicular to ``lmn`` which defines
+      the axis along which Q > 0
+
+    A bundle of photons is a NumPy structured array, the analog of
+    ``photmain``.  ``p['lmn']`` is then an (N, 3) array, so routines elsewhere
+    in this package operate on whole arrays (or a slice, ``p[i:i+1]``, for a
+    single photon).
+
+Primary routines:
+
+    make_photons, init_dummy_phot, set_unpolarized, stuff_phot,
+    default_pol_ref
+
+Notes:
+
+    The conventions are those in the Obsidian note
+    Sirocco-2026-Polarization-Conventions.
+
+History:
+
+    261010 ksl Coding begun, with Claude Code
+
 '''
 
 import numpy as np

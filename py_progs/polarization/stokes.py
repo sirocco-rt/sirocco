@@ -2,17 +2,37 @@
 '''
 Stokes-parameter bookkeeping for polarized Monte Carlo transport.
 
-A photon moving along n carries (q, u, v) relative to a reference axis
-e1 (``pol_ref``), with e2 = n x e1, so (e1, e2, n) is right handed.
-Q > 0 means the E-vector lies along e1; U > 0 means along (e1 + e2)/sqrt(2).
 
-Observer (sky) frame: the astronomical (IAU 1974) convention, with North
-the projection of the system +z axis on the sky and East = n_obs x North,
-so that Q > 0 is a North-South E-vector and position angle increases from
-North through East.
+Command line usage (if any):
 
-See the Obsidian note Sirocco-2026-Polarization-Conventions, sections 2-4
-and 7.  All routines work on single vectors (3,) or arrays (N, 3).
+    None; this is a module, imported as ``from polarization import stokes``
+
+Description:
+
+    A photon moving along n carries (q, u, v) relative to a reference axis
+    e1 (``pol_ref``), with e2 = n x e1, so (e1, e2, n) is right handed.
+    Q > 0 means the E-vector lies along e1; U > 0 means along
+    (e1 + e2)/sqrt(2).
+
+    Observer (sky) frame: the astronomical (IAU 1974) convention, with North
+    the projection of the system +z axis on the sky and East = n_obs x North,
+    so that Q > 0 is a North-South E-vector and position angle increases
+    from North through East.
+
+Primary routines:
+
+    rotate_stokes, rotation_angle, observer_direction, sky_north, sky_east,
+    to_sky, pol_degree_angle, boost_pol_ref, lorentz_transform
+
+Notes:
+
+    All routines work on single vectors (3,) or arrays (N, 3).  See the
+    Obsidian note Sirocco-2026-Polarization-Conventions, sections 2-4 and 7.
+
+History:
+
+    261010 ksl Coding begun, with Claude Code
+
 '''
 
 import numpy as np

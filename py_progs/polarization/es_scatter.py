@@ -3,32 +3,49 @@
 Polarized electron (Thomson) scattering: the phase matrix, sampling of a
 new direction, and peel-off toward an observer.
 
-The matrix is written in the scattering-plane basis, e1 = e_perp =
-normalize(n x n'), which is perpendicular to both the incoming direction n
-and the outgoing direction n'.  With c = cos(Theta), s2 = 1 - c^2:
 
-              3 | 1+c^2  s2     0   0 |
-    M     =   - | s2     1+c^2  0   0 |
-              4 | 0      0     2c   0 |
-                | 0      0      0  2c |
+Command line usage (if any):
 
-normalized so that the intensity row averages to 1 over the sphere for
-unpolarized light.  (Chandrasekhar's parallel/perpendicular basis flips the
-sign of the off-diagonal s2 terms.)  Because e_perp is perpendicular to n'
-as well as n, it serves directly as the reference axis of the scattered
-photon and no rotation is needed afterwards.
+    None; this is a module, imported as ``from polarization import es_scatter``
 
-Only the Thomson limit is implemented here.  The Klein-Nishina (Fano)
-matrix is planned; it should replace thomson_matrix / thomson_phase
-without changing the bookkeeping.
+Description:
 
-See the Obsidian note Sirocco-2026-Polarization-Conventions, sections 5a
-and 6.
+    The matrix is written in the scattering-plane basis, e1 = e_perp =
+    normalize(n x n'), which is perpendicular to both the incoming direction
+    n and the outgoing direction n'.  With c = cos(Theta), s2 = 1 - c^2:
+
+                  3 | 1+c^2  s2     0   0 |
+        M     =   - | s2     1+c^2  0   0 |
+                  4 | 0      0     2c   0 |
+                    | 0      0      0  2c |
+
+    normalized so that the intensity row averages to 1 over the sphere for
+    unpolarized light.  (Chandrasekhar's parallel/perpendicular basis flips
+    the sign of the off-diagonal s2 terms.)  Because e_perp is perpendicular
+    to n' as well as n, it serves directly as the reference axis of the
+    scattered photon and no rotation is needed afterwards.
+
+Primary routines:
+
+    scatter_es, peel_es, thomson_phase, sample_thomson_cos,
+    sample_thomson_phi
+
+Notes:
+
+    Only the Thomson limit is implemented.  The Klein-Nishina (Fano) matrix
+    is planned; it should replace thomson_matrix / thomson_phase without
+    changing the bookkeeping.  See the Obsidian note
+    Sirocco-2026-Polarization-Conventions, sections 5a and 6.
+
+History:
+
+    261010 ksl Coding begun, with Claude Code
+
 '''
 
 import numpy as np
 
-from stokes import normalize, dot, rotate_stokes, rotation_angle
+from .stokes import normalize, dot, rotate_stokes, rotation_angle
 
 PERP_EPS = 1e-6    # |n x n'| below which a scatter counts as forward/back
 

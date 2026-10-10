@@ -4,28 +4,46 @@ A deterministic solution for polarized electron scattering in a plane-
 parallel slab, used as an independent check of the Monte Carlo slab in
 toy_transport.py.
 
-The slab has optical depth tau_max, nothing is incident on the top
-(tau = 0), and unpolarized isotropic radiation of intensity I_inc is
-incident on the base.  The radiation field is axisymmetric, so U = 0 and
-the Stokes parameters are I_l (E-vector in the meridian plane, i.e. along
-the projected normal) and I_r (perpendicular to it).  Averaging the dipole
-(Thomson) redistribution over azimuth gives the source functions
 
-    S_r(mu) = 3/8 C
-    S_l(mu) = 3/8 [mu^2 C + 2 (1 - mu^2) B]
+Command line usage (if any):
 
-with the moments
+    None; this is a module, imported as ``from polarization import milne``
 
-    C = integral (I_r + mu'^2 I_l) dmu'
-    B = integral (1 - mu'^2) I_l dmu'
+Description:
 
-The transfer equation is solved by short characteristics with a source
-function linear in tau, and the resulting linear system for B and C on the
-tau grid is solved exactly (no Lambda iteration).
+    The slab has optical depth tau_max, nothing is incident on the top
+    (tau = 0), and unpolarized isotropic radiation of intensity I_inc is
+    incident on the base.  The radiation field is axisymmetric, so U = 0 and
+    the Stokes parameters are I_l (E-vector in the meridian plane, i.e. along
+    the projected normal) and I_r (perpendicular to it).  Averaging the
+    dipole (Thomson) redistribution over azimuth gives the source functions
 
-In the sky convention of this package (North = projected normal),
-q = (I_l - I_r)/(I_l + I_r).  For tau_max >> 1 this is Chandrasekhar's
-Milne problem, whose limb polarization is q(mu -> 0) = -11.71%.
+        S_r(mu) = 3/8 C
+        S_l(mu) = 3/8 [mu^2 C + 2 (1 - mu^2) B]
+
+    with the moments
+
+        C = integral (I_r + mu'^2 I_l) dmu'
+        B = integral (1 - mu'^2) I_l dmu'
+
+    The transfer equation is solved by short characteristics with a source
+    function linear in tau, and the resulting linear system for B and C on
+    the tau grid is solved exactly (no Lambda iteration).
+
+Primary routines:
+
+    solve_slab
+
+Notes:
+
+    In the sky convention of this package (North = projected normal),
+    q = (I_l - I_r)/(I_l + I_r).  For tau_max >> 1 this is Chandrasekhar's
+    Milne problem, whose limb polarization is q(mu -> 0) = -11.71%.
+
+History:
+
+    261010 ksl Coding begun, with Claude Code
+
 '''
 
 import numpy as np

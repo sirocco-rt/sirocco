@@ -9,8 +9,8 @@ Run with:  python -m pytest py_progs/polarization/tests
 import numpy as np
 import pytest
 
-from toy_transport import Ellipsoid, Slab, run, brown_mclean
-from milne import solve_slab
+from polarization.toy_transport import Ellipsoid, Slab, run, brown_mclean
+from polarization.milne import solve_slab
 
 NSIG = 4.0
 

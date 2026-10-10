@@ -4,35 +4,54 @@ Toy Monte Carlo transport of polarized photons through pure electron-
 scattering media with analytic geometries (Step 2 of the polarization
 project).
 
-The structure follows Sirocco's spectral cycles: photons are generated,
-moved to their next interaction (cf. translate/trans_phot), peeled off
-toward each observer at every scatter (cf. extract/extract_one), and then
-scattered (cf. scatter).  Escaping photons are also binned by direction,
-giving a live-or-die spectrum to check the peel-off against.
 
-Geometries (the opacity kappa = n_e sigma_T is uniform inside each):
+Command line usage (if any):
 
-* Ellipsoid -- an axisymmetric ellipsoid with equatorial semi-axis a and
-  polar semi-axis c, around a central, isotropic, unpolarized point
-  source.  a = c is a uniform sphere.
-* Slab -- a plane-parallel slab, measured in optical depth, with
-  -tau_max < z < 0 and the surface at z = 0 facing +z.  Photons are
-  injected upward at the base with p(mu) ~ mu, and photons that leave
-  through the base are lost.  For tau_max >> 1 the emergent radiation is
-  that of Chandrasekhar's Milne problem.
+    None; this is a module.  step2_validate.py runs it.
 
-The tallies are energy per unit solid angle (as in Sirocco's extracted
-spectra), normalized so that an isotropic, unscattered source of total
-weight 1 gives I = 1 in every direction.  For the slab this quantity is
-mu times the specific intensity at the surface.
+Description:
+
+    The structure follows Sirocco's spectral cycles: photons are generated,
+    moved to their next interaction (cf. translate/trans_phot), peeled off
+    toward each observer at every scatter (cf. extract/extract_one), and
+    then scattered (cf. scatter).  Escaping photons are also binned by
+    direction, giving a live-or-die spectrum to check the peel-off against.
+
+    Geometries (the opacity kappa = n_e sigma_T is uniform inside each):
+
+    * Ellipsoid -- an axisymmetric ellipsoid with equatorial semi-axis a and
+      polar semi-axis c, around a central, isotropic, unpolarized point
+      source.  a = c is a uniform sphere.
+    * Slab -- a plane-parallel slab, measured in optical depth, with
+      -tau_max < z < 0 and the surface at z = 0 facing +z.  Photons are
+      injected upward at the base with p(mu) ~ mu, and photons that leave
+      through the base are lost.  For tau_max >> 1 the emergent radiation is
+      that of Chandrasekhar's Milne problem.
+
+Primary routines:
+
+    run, trans_phot, extract_one, brown_mclean, and the classes
+    Ellipsoid, Slab, Spectrum, LiveOrDie
+
+Notes:
+
+    The tallies are energy per unit solid angle (as in Sirocco's extracted
+    spectra), normalized so that an isotropic, unscattered source of total
+    weight 1 gives I = 1 in every direction.  For the slab this quantity is
+    mu times the specific intensity at the surface.
+
+History:
+
+    261010 ksl Coding begun, with Claude Code
+
 '''
 
 import numpy as np
 
-import photon
-from photon import P_INWIND, P_ESCAPE, P_ABSORB, P_TOO_MANY_SCATTERS, NRES_ES
-from stokes import normalize, dot, observer_direction, sky_north, to_sky
-from es_scatter import scatter_es, peel_es
+from . import photon
+from .photon import P_INWIND, P_ESCAPE, P_ABSORB, P_TOO_MANY_SCATTERS, NRES_ES
+from .stokes import normalize, dot, observer_direction, sky_north, to_sky
+from .es_scatter import scatter_es, peel_es
 
 ZAXIS = np.array([0.0, 0.0, 1.0])
 

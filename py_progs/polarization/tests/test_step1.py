@@ -9,11 +9,11 @@ import numpy as np
 import pytest
 from scipy import stats
 
-import photon
-from stokes import (rotate_stokes, rotation_angle, observer_direction, sky_north, sky_east,
+from polarization import photon
+from polarization.stokes import (rotate_stokes, rotation_angle, observer_direction, sky_north, sky_east,
                     to_sky, pol_degree_angle, boost_pol_ref, lorentz_transform, normalize, dot, C,
                     REL_MODE_LINEAR)
-from es_scatter import (thomson_matrix, thomson_phase, sample_thomson_cos, sample_thomson_phi,
+from polarization.es_scatter import (thomson_matrix, thomson_phase, sample_thomson_cos, sample_thomson_phi,
                         scatter_es, peel_es)
 
 

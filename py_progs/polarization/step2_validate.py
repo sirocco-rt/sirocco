@@ -2,22 +2,42 @@
 '''
 Validate the toy polarized transport against known results (Step 2).
 
-Cases:
 
-1. Uniform sphere around a point source: the net polarization must vanish
-   at every inclination.
-2. Optically thin oblate and prolate ellipsoids: compare with Brown &
-   McLean (1977).  Oblate gives Q > 0, prolate Q < 0 (IAU convention).
-3. A moderately thick oblate ellipsoid: no analytic answer, but peel-off
-   and live-or-die must agree.
-4. A thick slab lit from below: compare with the deterministic solution in
-   milne.py, whose limb polarization is Chandrasekhar's 11.71%.
+Command line usage (if any):
 
-Usage:
+    usage::
 
-    python step2_validate.py [-n SCALE] [-seed SEED] [-plot FILE]
+        step2_validate.py [-h] [-n SCALE] [-seed SEED] [-plot FILE]
 
-SCALE multiplies the default photon numbers (default 1; a few minutes).
+    -n      multiplies the default photon numbers (default 1; ~1.5 minutes)
+    -seed   seed for the random number generator
+    -plot   write a summary plot to FILE
+
+Description:
+
+    Runs four cases:
+
+    1. Uniform sphere around a point source: the net polarization must
+       vanish at every inclination.
+    2. Optically thin oblate and prolate ellipsoids: compare with Brown &
+       McLean (1977).  Oblate gives Q > 0, prolate Q < 0 (IAU convention).
+    3. A moderately thick oblate ellipsoid: no analytic answer, but
+       peel-off and live-or-die must agree.
+    4. A thick slab lit from below: compare with the deterministic solution
+       in milne.py, whose limb polarization is Chandrasekhar's 11.71%.
+
+Primary routines:
+
+    main, case_sphere, case_brown_mclean, case_live_vs_peel, case_slab, plot
+
+Notes:
+
+    Requires numpy, and matplotlib for -plot.
+
+History:
+
+    261010 ksl Coding begun, with Claude Code
+
 '''
 
 import argparse
@@ -27,10 +47,11 @@ import time
 
 import numpy as np
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Make the polarization package importable when this is run as a script
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from toy_transport import Ellipsoid, Slab, run, brown_mclean
-from milne import solve_slab
+from polarization.toy_transport import Ellipsoid, Slab, run, brown_mclean
+from polarization.milne import solve_slab
 
 
 def nsig(x, x0, sig):
