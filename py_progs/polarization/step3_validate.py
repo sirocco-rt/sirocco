@@ -60,7 +60,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from polarization.line_scatter import w2_factor
-from polarization.homologous import HomologousEllipsoid, run, thin_line_brown_mclean, trap_factor, p_escape
+from polarization.sobolev_flow import HomologousEllipsoid, run, thin_line_brown_mclean, trap_factor, p_escape
 
 VMAX = 0.001
 

@@ -14,7 +14,7 @@ from polarization import photon
 from polarization.stokes import normalize, dot, rotate_stokes, observer_direction, sky_north, to_sky
 from polarization.es_scatter import thomson_phase
 from polarization.line_scatter import w2_factor, line_phase, scatter_line, peel_line
-from polarization.homologous import (HomologousEllipsoid, run, thin_line_brown_mclean, trap_factor,
+from polarization.sobolev_flow import (HomologousEllipsoid, run, thin_line_brown_mclean, trap_factor,
                                      p_escape)
 
 NSIG = 4.0
