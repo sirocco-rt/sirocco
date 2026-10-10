@@ -17,7 +17,8 @@ Description:
 
     Runs five cases in a homologously expanding ellipsoid (v_max = 0.001 c):
 
-    1. The polarizability W2(J_l, J_u) against the textbook values.
+    1. The polarizability W2(J_l, J_u) against the textbook values, and the
+       fraction (7/10) W2 of the polarization kept per local line scatter.
     2. An optically thin line (pure line scattering of a central continuum):
        the band-integrated polarization must equal W2 times the Brown &
        McLean result for the equivalent electron-scattering opacity.
@@ -59,7 +60,9 @@ import numpy as np
 # Make the polarization package importable when this is run as a script
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from polarization.line_scatter import w2_factor
+from polarization import photon
+from polarization.stokes import observer_direction, sky_north
+from polarization.line_scatter import w2_factor, scatter_line, peel_line
 from polarization.sobolev_flow import HomologousEllipsoid, run, thin_line_brown_mclean, trap_factor, p_escape
 
 VMAX = 0.001
@@ -75,6 +78,32 @@ def case_w2():
         worst = max(worst, abs(w - expected))
         print(f'   {jl:>3} -> {ju:<3}  W2 = {w:.4f}  (expected {expected})')
     print(f'   largest difference {worst:.1e}')
+
+
+def case_retention(rng, nphot, ngen=6):
+    '''
+    Follow a beam through repeated line scatters at one point and measure
+    the Q it would send to an edge-on observer after each scatter: the
+    ratio between successive generations should be (7/10) W2.
+    '''
+    print(f'\n1b. Polarization kept per local scatter, {nphot} photons: Q(k+1)/Q(k) vs (7/10) W2')
+    n_obs, N = observer_direction(90, 0), sky_north(90, 0)
+    out = {}
+    for w2 in (1.0, 0.5, 0.25):
+        p = photon.make_photons(nphot)
+        p['lmn'] = [0.0, 0.0, 1.0]
+        photon.set_unpolarized(p)
+        p['w'] = 1.0
+        Q, sQ = [], []
+        for _ in range(ngen):
+            f, q, u = peel_line(p, n_obs, N, w2)
+            Q.append(np.mean(f * q))
+            sQ.append(np.std(f * q) / np.sqrt(nphot))
+            scatter_line(p, rng, w2)
+        Q, sQ = np.array(Q), np.array(sQ)
+        out[w2] = (Q, sQ)
+        print(f'   W2 = {w2}: ratios ' + ' '.join(f'{r:.3f}' for r in Q[1:4] / Q[:3]) + f'   (7/10) W2 = {0.7 * w2:.3f}')
+    return out
 
 
 def case_thin(rng, nphot):
@@ -164,7 +193,8 @@ def plot(results, fname):
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
 
-    fig, ax = plt.subplots(1, 3, figsize=(15, 4.5))
+    fig, axes = plt.subplots(2, 3, figsize=(15, 9))
+    ax = axes[0]
 
     tt = np.geomspace(0.05, 50, 200)
     for (w2, rows), color in zip(results['trap'].items(), ('C0', 'C1')):
@@ -193,6 +223,31 @@ def plot(results, fname):
     ax[2].set_title('Line effect: polarization, i = 90')
     ax[2].legend(fontsize=8)
 
+    for (w2, (Q, sQ)), color in zip(results['retention'].items(), ('C0', 'C1', 'C2')):
+        k = np.arange(len(Q))
+        ax2 = axes[1]
+        ax2[0].errorbar(k, np.abs(Q), sQ, fmt='o', color=color, label=f'W2 = {w2}')
+        ax2[0].plot(k, np.abs(Q[0]) * (0.7 * w2) ** k, '-', color=color, lw=1)
+    axes[1][0].set_yscale('log')
+    axes[1][0].set_xlabel('number of local scatters k')
+    axes[1][0].set_ylabel('|Q| toward an edge-on observer')
+    axes[1][0].set_title('Polarization kept per scatter (lines: (0.7 W2)^k)')
+    axes[1][0].legend(fontsize=8)
+
+    r = np.array(results['thin'])
+    labels = [f'{"oblate" if a > c else "prolate"}\nW2={w2}' for a, c, w2, *_ in results['thin']]
+    x = np.arange(len(r))
+    axes[1][1].errorbar(x, r[:, 3] / r[:, 5], np.abs(r[:, 4] / r[:, 5]), fmt='o')
+    axes[1][1].axhline(1.0, color='k', lw=0.8)
+    axes[1][1].axhline(0.996, color='k', lw=0.8, ls=':')
+    axes[1][1].set_xticks(x)
+    axes[1][1].set_xticklabels(labels, fontsize=8)
+    axes[1][1].set_ylabel('q / (W2 x Brown & McLean)')
+    axes[1][1].set_title('Optically thin line (dotted: expected O(tau) value)')
+    axes[1][1].set_ylim(0.85, 1.15)
+
+    axes[1][2].axis('off')
+
     fig.tight_layout()
     fig.savefig(fname, dpi=120)
     print(f'\nPlot written to {fname}')
@@ -209,6 +264,7 @@ def main():
     t0 = time.time()
     results = {}
     case_w2()
+    results['retention'] = case_retention(rng, int(2e6 * args.n))
     results['thin'] = case_thin(rng, int(1.2e7 * args.n))
     results['trap'] = case_trapping(rng, int(1e6 * args.n))
     case_sphere(rng, int(1e6 * args.n))

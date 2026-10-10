@@ -24,6 +24,7 @@ summary:
 | `photon.py` | `photon_dtype`, Sirocco enum values, `make_photons`, `init_dummy_phot`, `set_unpolarized`, `stuff_phot` |
 | `stokes.py` | Stokes rotation, observer direction and sky North/East (as in `spectra.c`), P and PA, the Lorentz transform of `pol_ref` |
 | `es_scatter.py` | Thomson matrix, sampling of polarized scattered directions (`scatter_es`), peel-off toward an observer (`peel_es`) |
+| `step1_validate.py` | Step 1: plots the Thomson samplers against their analytic distributions, and sampled scatters against peel-off |
 | `toy_transport.py` | Step 2: vectorized transport through uniform ellipsoids (point source) and a slab lit from below, with peel-off (`Spectrum`) and live-or-die (`LiveOrDie`) tallies, and the Brown & McLean (1977) prediction |
 | `milne.py` | Deterministic solution for polarized electron scattering in a slab, the reference for the slab test (limb polarization 11.70%; Chandrasekhar: 11.71%) |
 | `step2_validate.py` | Runs the Step 2 validation cases and optionally plots them |
