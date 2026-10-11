@@ -31,6 +31,9 @@ summary:
 | `line_scatter.py` | Step 3: W2(J_l, J_u) from 6j symbols, the resonance-line phase matrix, `scatter_line`, `peel_line` |
 | `sobolev_flow.py` | Step 3: transport through an expanding ellipsoid (homologous, or a radial power-law flow with direction-dependent Sobolev escape) with electron scattering and one Sobolev line. It has three treatments of trapping in the resonance region (`explicit`, `single`, `effective`), and spectra resolved in frequency |
 | `step3_validate.py` | Runs the Step 3 validation cases and the line-effect spectra, and optionally plots them |
+| `step3c_validate.py` | Step 3c: the capped trapping chain proposed for C (accuracy and cost against the cap) |
+| `sirocco_grid.py` | Step 4: electron-scattering transport through a Sirocco model's own grid (cylindrical, polar or spherical; several domains), with the model's disk and central sources |
+| `step4_regress.py` | Step 4: runs `sirocco_grid` on a directory of completed Sirocco models (e.g. `examples/regress`), with a Brown & McLean point-source check |
 | `step3b_validate.py` | Step 3b: trapping when the Sobolev escape probability depends on direction (radial power-law flow) |
 
 All routines work on whole arrays of photons. Use a slice, `p[i:i+1]`, for a
@@ -79,6 +82,20 @@ direction as 1/(1 - (1 - alpha) mu^2). The results:
   tau ~ 1-3, falling roughly as 1/tau at large tau, with opposite signs for
   radial (alpha < 1) and tangential (alpha > 1) trapping. Neither `single`
   nor `effective` can produce this, because both emit line photons unpolarized.
+
+## Step 4: Sirocco models
+
+Run the models (e.g. `regression.py -np 8 -out_dir runs sirocco` for
+`examples/regress`), then `windsave2table` on each root, then, from that
+directory:
+
+```bash
+python $SIROCCO/py_progs/polarization/step4_regress.py -plot step4.png .
+```
+
+This is electron scattering only, with the disk and central object as
+sources (no wind emission). Each model is also run with a point source and
+compared with Brown & McLean evaluated on its grid.
 
 ## Tests
 

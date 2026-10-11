@@ -58,6 +58,17 @@ Description:
         weight is multiplied by beta(x, n_obs) and by the number of tries
         (cf. nnscat/p_norm in extract.c).  This ignores the depolarization
         caused by the local scatters.
+    capped
+        The explicit chain as it would be done in C: at most nmax local
+        scatters (an integer, or 'auto' for ceil(3 / beta_mean), at most
+        1000), each escaping with beta(x, n).  The peel-off contributions
+        beta(x, n_obs) f (1, q, u) of all the local scatters are summed at the
+        scattering point, and the attenuation to the edge is computed once
+        per observer at the end.  A photon still trapped after nmax scatters
+        escapes as in Sirocco now: unpolarized, in a direction drawn from
+        beta(x, n) by rejection with beta / beta_max, with its peel-off
+        weighted by tries / beta_max.  With a
+        large nmax this reproduces explicit exactly (same random numbers).
     effective
         As single, but with the effective polarizability W2_eff = W2 F, where
 
@@ -97,7 +108,7 @@ from .line_scatter import peel_line, sample_line_direction, scattered_state
 from .toy_transport import Ellipsoid, LiveOrDie
 
 RES_EPS = 1e-12      # nu_cmf - 1 or s_res below this: at or past resonance
-TRAP_MODES = ('explicit', 'single', 'effective')
+TRAP_MODES = ('explicit', 'single', 'effective', 'capped')
 MAX_LOCAL = 100000   # cap on local scatters in one resonance region
 NMU_BETA = 16        # Gauss-Legendre points for the angle-averaged escape probability
 
@@ -123,7 +134,7 @@ class _SobolevEllipsoid(Ellipsoid):
 
     isotropic_escape = False
 
-    def _setup(self, tau_line, w2, line_frac, band, trap):
+    def _setup(self, tau_line, w2, line_frac, band, trap, nmax):
         if trap not in TRAP_MODES:
             raise ValueError(f'trap must be one of {TRAP_MODES}')
         self.tau_line = float(tau_line)
@@ -135,6 +146,13 @@ class _SobolevEllipsoid(Ellipsoid):
         # spectral window as out of it.
         self.cont_half = self.band + 3.0 * self.vmax
         self.trap = trap
+        # cap on the chain in the capped mode: an integer, or 'auto' for
+        # ceil(nmax_factor / beta_mean) local scatters, at most nmax_limit
+        self.nmax = nmax if nmax == 'auto' else int(nmax)
+        self.nmax_factor = 3.0
+        self.nmax_limit = 1000
+        # counts of line events, local scatters, fallbacks and fallback tries
+        self.stats = {'events': 0, 'local': 0, 'fallback': 0, 'tries': 0}
 
     def nu_cmf(self, x, n, nu):
         return nu * (1.0 - dot(n, self.velocity(x)))
@@ -213,10 +231,10 @@ class HomologousEllipsoid(_SobolevEllipsoid):
 
     isotropic_escape = True
 
-    def __init__(self, a, c, kappa, tau_line, w2=1.0, line_frac=0.0, band=1.5, trap='explicit'):
+    def __init__(self, a, c, kappa, tau_line, w2=1.0, line_frac=0.0, band=1.5, trap='explicit', nmax=30):
         super().__init__(a, c, kappa)
         self.vmax = max(a, c)
-        self._setup(tau_line, w2, line_frac, band, trap)
+        self._setup(tau_line, w2, line_frac, band, trap, nmax)
         self.beta0 = float(p_escape(tau_line)) if tau_line > 0 else 1.0
 
     def velocity(self, x):
@@ -233,6 +251,9 @@ class HomologousEllipsoid(_SobolevEllipsoid):
     def beta_mean(self, x):
         return np.full(len(x), self.beta0)
 
+    def beta_max(self, x):
+        return np.full(len(x), self.beta0)
+
 
 class RadialFlowEllipsoid(_SobolevEllipsoid):
     '''
@@ -243,7 +264,7 @@ class RadialFlowEllipsoid(_SobolevEllipsoid):
     '''
 
     def __init__(self, a, c, v0, alpha, kappa, tau_line, r_in=None, w2=1.0, line_frac=0.0,
-                 band=1.5, trap='explicit'):
+                 band=1.5, trap='explicit', nmax=30):
         super().__init__(a, c, kappa)
         if alpha <= 0:
             raise ValueError('alpha must be > 0, so that the flow accelerates in every direction')
@@ -252,7 +273,7 @@ class RadialFlowEllipsoid(_SobolevEllipsoid):
         self.a_ref = float(a)
         self.r_in = 0.2 * min(a, c) if r_in is None else float(r_in)
         self.vmax = self.v0 * (max(a, c) / a) ** self.alpha
-        self._setup(tau_line, w2, line_frac, band, trap)
+        self._setup(tau_line, w2, line_frac, band, trap, nmax)
         self._mu, self._wmu = np.polynomial.legendre.leggauss(NMU_BETA)
 
     def velocity(self, x):
@@ -269,6 +290,12 @@ class RadialFlowEllipsoid(_SobolevEllipsoid):
         mu = dot(n, x) / np.maximum(r, 1e-300)
         tau = self.tau_line * (r / self.a_ref) ** (1.0 - self.alpha) / (1.0 - (1.0 - self.alpha) * mu * mu)
         return np.where(r > self.r_in, tau, 0.0)
+
+    def beta_max(self, x):
+        '''The largest escape probability over directions at x (cf. p_norm).'''
+        r = np.linalg.norm(x, axis=-1)
+        t0 = self.tau_line * (r / self.a_ref) ** (1.0 - self.alpha)
+        return p_escape(t0 * min(1.0, 1.0 / self.alpha))
 
     def beta_mean(self, x):
         '''The escape probability averaged over all directions at x.'''
@@ -425,20 +452,25 @@ def extract(geom, p, spectra, kind, w2=None, ntries=None):
 def _draw_escaping(geom, rng, x, n, e1, stokes, w2):
     '''
     Draw a direction from beta(x, n') times the line phase function (w2 = 0
-    for isotropic emission) by rejection.  Returns the directions and the
-    number of tries for each photon.
+    for isotropic emission) by rejection, accepting with probability
+    beta / beta_max as randwind_thermal_trapping does with p_norm.
+
+    Returns the directions, the peel-off factor tries / beta_max (an
+    unbiased estimate of 1 / <beta>, cf. nnscat/p_norm in extract.c), and
+    the number of tries.
     '''
     nphot = len(x)
     n_new = np.empty((nphot, 3))
     tries = np.zeros(nphot)
+    bmax = geom.beta_max(x)
     todo = np.arange(nphot)
     while todo.size:
         trial = sample_line_direction(rng, n[todo], e1[todo], stokes[todo], w2[todo])
         tries[todo] += 1
-        ok = rng.random(todo.size) < geom.beta(x[todo], trial)
+        ok = rng.random(todo.size) * bmax[todo] < geom.beta(x[todo], trial)
         n_new[todo[ok]] = trial[ok]
         todo = todo[~ok]
-    return n_new, tries
+    return n_new, tries / bmax, tries
 
 
 def _apply_line_scatter(p, n_new, w2):
@@ -455,13 +487,16 @@ def _line_event(geom, p, rng, spectra):
     with their new direction, Stokes parameters and observer-frame frequency.
     '''
     x = p['x']
+    if geom.trap == 'capped':
+        _capped_chain(geom, p, rng, spectra, born=False)
+        return
     if geom.trap in ('single', 'effective'):
         w2 = geom.w2_scatter(x)
         if geom.isotropic_escape:
             n_new = sample_line_direction(rng, p['lmn'], p['pol_ref'], p['stokes'], w2)
             ntries = 1.0 / geom.beta_mean(x)
         else:
-            n_new, ntries = _draw_escaping(geom, rng, x, p['lmn'], p['pol_ref'], p['stokes'], w2)
+            n_new, ntries, _ = _draw_escaping(geom, rng, x, p['lmn'], p['pol_ref'], p['stokes'], w2)
         extract(geom, p, spectra, 'line', w2=w2, ntries=ntries)
         _apply_line_scatter(p, n_new, w2)
     else:
@@ -482,6 +517,87 @@ def _line_event(geom, p, rng, spectra):
     p['nres'] = 0
 
 
+def _capped_chain(geom, p, rng, spectra, born):
+    '''
+    The capped explicit chain for photons p at resonance.  If born, the
+    photons have just been emitted (unpolarized, isotropic) in the line and
+    the emission itself is the first event; otherwise they have just been
+    absorbed.  Peel-off contributions are summed per photon and attenuated
+    once per observer at the end.  On return the photons have escaped with
+    their new direction, Stokes parameters and observer-frame frequency.
+    '''
+    nphot = len(p)
+    x = p['x']
+    w2 = np.full(nphot, geom.w2)
+    obs = [np.broadcast_to(spec.lmn, x.shape) for spec in spectra]
+    beta_obs = [geom.beta(x, n_obs) for n_obs in obs]
+    acc = [np.zeros((3, nphot)) for _ in spectra]       # sums of I, Q, U per observer
+
+    if born:
+        for a, b in zip(acc, beta_obs):
+            a[0] += b
+        todo = np.where(rng.random(nphot) >= geom.beta(x, p['lmn']))[0]
+    else:
+        todo = np.arange(nphot)
+    geom.stats['events'] += nphot
+
+    if geom.nmax == 'auto':
+        cap = np.minimum(np.ceil(geom.nmax_factor / geom.beta_mean(x)), geom.nmax_limit)
+    else:
+        cap = np.full(nphot, geom.nmax)
+
+    nloc = 0
+    capped = []                                     # photons that reach their cap still trapped
+    while todo.size:
+        at_cap = cap[todo] <= nloc
+        capped.append(todo[at_cap])
+        todo = todo[~at_cap]
+        if not todo.size:
+            break
+        pt = p[todo]
+        for a, b, spec in zip(acc, beta_obs, spectra):
+            f, q, u = peel_line(pt, spec.lmn, spec.north, w2[todo])
+            fb = f * b[todo]
+            a[0, todo] += fb
+            a[1, todo] += fb * q
+            a[2, todo] += fb * u
+        n_new = sample_line_direction(rng, pt['lmn'], pt['pol_ref'], pt['stokes'], w2[todo])
+        _apply_line_scatter(pt, n_new, w2[todo])
+        pt['nrscat'] += 1
+        escaped = rng.random(todo.size) < geom.beta(pt['x'], n_new)
+        p[todo] = pt
+        geom.stats['local'] += todo.size
+        todo = todo[~escaped]
+        nloc += 1
+
+    todo = np.concatenate(capped) if capped else np.zeros(0, dtype=int)
+    if todo.size:
+        # Fallback for photons still trapped: escape unpolarized, in a
+        # direction drawn from beta(x, n), as Sirocco's thermal trapping does.
+        pt = p[todo]
+        n_new, ntries, tries = _draw_escaping(geom, rng, pt['x'], pt['lmn'], pt['pol_ref'], pt['stokes'],
+                                              np.zeros(todo.size))
+        pt['lmn'] = n_new
+        photon.set_unpolarized(pt)
+        p[todo] = pt
+        for a, b in zip(acc, beta_obs):
+            a[0, todo] += ntries * b[todo]
+        geom.stats['fallback'] += todo.size
+        geom.stats['tries'] += tries.sum()
+
+    for a, spec, n_obs in zip(acc, spectra, obs):
+        nu_obs = geom.nu_obs(x, n_obs, 1.0)
+        tau = geom.tau_to_edge(x, n_obs, nu_obs)
+        I = a[0]
+        with np.errstate(divide='ignore', invalid='ignore'):
+            q = np.where(I > 0, a[1] / I, 0.0)
+            u = np.where(I > 0, a[2] / I, 0.0)
+        spec.tally(nu_obs, p['w'] * I * np.exp(-tau), q, u, from_line=True)
+
+    p['freq'] = geom.nu_obs(p['x'], p['lmn'], 1.0)
+    p['nres'] = 0
+
+
 def _line_birth(geom, p, rng, spectra):
     '''
     Line photons at birth (unpolarized, isotropic emission at resonance).
@@ -490,12 +606,15 @@ def _line_birth(geom, p, rng, spectra):
     in a direction drawn from beta(x, n).
     '''
     x = p['x']
+    if geom.trap == 'capped':
+        _capped_chain(geom, p, rng, spectra, born=True)
+        return
     if geom.trap != 'explicit':
         if geom.isotropic_escape:
             ntries = 1.0 / geom.beta_mean(x)
         else:
             zero_w2 = np.zeros(len(p))
-            n_new, ntries = _draw_escaping(geom, rng, x, p['lmn'], p['pol_ref'], p['stokes'], zero_w2)
+            n_new, ntries, _ = _draw_escaping(geom, rng, x, p['lmn'], p['pol_ref'], p['stokes'], zero_w2)
             p['lmn'] = n_new
             photon.set_unpolarized(p)
         extract(geom, p, spectra, 'line_emit', ntries=ntries)
