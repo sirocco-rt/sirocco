@@ -273,9 +273,17 @@ trans_phot_single (WindPtr w, PhotPtr p, int iextract)
        * detailed spectrum.
        */
 
-      if (geo.absorb_reflect == BACK_RAD_SCATTER)
+      if (geo.absorb_reflect == BACK_RAD_SCATTER || geo.absorb_reflect == BACK_RAD_SPECULAR)
       {
-        randvcos (pp.lmn, normal);
+        /* if we are using specular reflection, simply reverse the 
+           z-component of the photon direction */
+        if (geo.absorb_reflect == BACK_RAD_SPECULAR)
+        {
+          pp.lmn[2] = -pp.lmn[2];
+        }
+        else
+          randvcos (pp.lmn, normal);
+
         if (move_phot (&pp, DFUDGE))
         {
           Error ("trans_phot_single: photon not in correct frame when reflecting off of star\n");

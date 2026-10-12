@@ -232,6 +232,12 @@ parse_command_line (int argc, char *argv[])
         Log ("Setting zeus_connect to %i\n", modes.zeus_connect);
         j = i;
       }
+      else if (strcmp (argv[i], "-early_stopping") == 0)
+      {
+        modes.early_stopping = 1;
+        Log ("Enabling convergence-based early stopping of ionization cycles\n");
+        j = i;
+      }
       else if (strcmp (argv[i], "-i") == 0)
       {
         modes.quit_after_inputs = 1;
@@ -422,6 +428,8 @@ These are largely diagnostic or for special cases. These include\n\
  -ignore_partial_cells  Ignore wind cells that are only partially filled by the wind (This is now the default)  \n\
  -include_partial_cells Include wind cells that are only partially filled by the wind   \n\
  -no-matrix-storage     Do not store macro-atom transition matrices if using the macro-atom line transfer and the matrix matom_transition_mode.\n\
+ -early_stopping        Enable convergence-based early stopping of ionization cycles. Sirocco will then query\n\
+                        the user for @estop parameters controlling when to stop early.\n\
 \n\
  -xtest                 Instead of running sirocco, call the routine xtest so that one can diagnose issues associted with the \n\
                         setup.  This is only useful to devlopers \n\

@@ -97,8 +97,10 @@ which may be useful in certain special cases.  These include:
   are maintained as to the number of times the error occurred, but it is not printed
   to the diagnostic file. The default is 100 (per process)
 
--f                    
-  Invoke a fixed temperature mode
+-f
+  Invoke a fixed temperature mode.  The electron temperature is not updated; the
+  ionization balance is found at the temperature supplied by the model.  This is
+  used when SIROCCO is coupled to a hydrodynamics code (see :ref:`hydro_coupling`).
 
 -nonrel
   Reverts to using v/c corrections for special relativity and eliminates work done to treat
@@ -120,6 +122,11 @@ which may be useful in certain special cases.  These include:
 -xtest
   Instead of running sirocco, call the routine xtest so that one can diagnose issues associted with the 
   setup.  This is only useful to developers.
+
+-early_stopping
+  Enables convergence-based early stopping of ionization cycles. The user is then queried
+  for parameters (prefixed with ``@estop.``) that control when cycles can terminate early.
+  These options are described further in :ref:`early_stopping`.
 
 Running Different Versions of SIROCCO
 =========================================

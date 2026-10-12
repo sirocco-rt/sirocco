@@ -1,0 +1,12 @@
+name: '@estop.Ionization_cycles.convergence_fraction(%)'
+description: |
+  The minimum percentage of cells that must be converged before early stopping
+  is allowed. This acts as a floor to prevent the code from stopping early on
+  a model that is stably unconverged (e.g. only 50% of cells converged).
+  For example, a value of 80 means at least 80% of cells must be converged
+  for the early stopping check to trigger.
+  Only queried when the -early_stopping switch is used.
+type: Double
+values: 0 to 100
+default: 80
+file: setup.c

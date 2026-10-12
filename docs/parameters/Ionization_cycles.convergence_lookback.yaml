@@ -1,0 +1,10 @@
+name: '@estop.Ionization_cycles.convergence_lookback'
+description: |
+  The number of consecutive cycles over which the convergence fraction must
+  be stable (average absolute change < tolerance) before early stopping triggers.
+  Larger values are more conservative. Only queried when the -early_stopping
+  switch is used.
+type: Integer
+values: 2 to 100
+default: 5
+file: setup.c

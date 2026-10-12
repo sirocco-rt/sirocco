@@ -1,0 +1,14 @@
+name: '@estop.Ionization_cycles.convergence_tolerance(%)'
+description: |
+  Percentage tolerance for early stopping of ionization cycles. If the
+  average cycle-to-cycle change in the convergence fraction over the
+  lookback window falls below this percentage AND the convergence fraction
+  is at or above the floor set by @estop.Ionization_cycles.convergence_fraction,
+  ionization stops early and proceeds to spectrum extraction. For example,
+  a value of 2 means stop when the average change is less than 2%.
+  Only queried when the -early_stopping switch is used.
+  Typical values: 1 to 5
+type: Double
+values: '> 0'
+default: 2
+file: setup.c

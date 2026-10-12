@@ -513,6 +513,147 @@ complete_wind_grid_creation (void)
 
 /**********************************************************/
 /**
+ * @brief Set the velocity and velocity gradient of a wind cell
+ *
+ * @param [in, out] WindPtr cell  The wind cell
+ *
+ * @details
+ *
+ * Sets the velocity at the cell vertex (except for imported models,
+ * where it has already been set from the model), and the velocity
+ * gradient and divergence.
+ *
+ * For CYLIND, RTHETA and SPHERICAL cells, the velocities at the other
+ * corners (v_rmax, v_thetamax, vmax) are also set, so that velocities
+ * can be interpolated bilinearly within a cell.  CYLVAR corners are
+ * not set yet.
+ *
+ * This is used both when the wind is created and when an existing
+ * wind is updated from a new model (see update_wind_from_model).
+ *
+ **********************************************************/
+
+void
+set_cell_velocity_gradient (WindPtr cell)
+{
+  if (zdom[cell->ndom].wind_type != IMPORT)
+  {
+    int coord_type = zdom[cell->ndom].coord_type;
+    double xc[3];
+
+    model_velocity (cell->ndom, cell->x, cell->v);
+
+    /* Populate the three additional corner velocities needed for self-contained
+       bilinear interpolation.  CYLVAR cells are deferred (non-rectangular
+       quadrilateral geometry requires a different approach). */
+    if (coord_type == CYLIND)
+    {
+      /* (rho_max, z_min) corner */
+      xc[0] = cell->xmax[0];
+      xc[1] = 0.0;
+      xc[2] = cell->x[2];
+      model_velocity (cell->ndom, xc, cell->v_rmax);
+      /* (rho_min, z_max) corner */
+      xc[0] = cell->x[0];
+      xc[1] = 0.0;
+      xc[2] = cell->xmax[2];
+      model_velocity (cell->ndom, xc, cell->v_thetamax);
+      /* (rho_max, z_max) corner = xmax */
+      model_velocity (cell->ndom, cell->xmax, cell->vmax);
+    }
+    else if (coord_type == RTHETA)
+    {
+      double scale;
+      /* (r_outer, theta_inner) corner: same direction as x, scaled to rmax */
+      if (cell->r > 0.0)
+      {
+        scale = cell->rmax / cell->r;
+        xc[0] = scale * cell->x[0];
+        xc[1] = 0.0;
+        xc[2] = scale * cell->x[2];
+      }
+      else
+      {
+        xc[0] = xc[1] = xc[2] = 0.0;
+      }
+      model_velocity (cell->ndom, xc, cell->v_rmax);
+      /* (r_inner, theta_outer) corner: same direction as xmax, scaled to r */
+      if (cell->rmax > 0.0)
+      {
+        scale = cell->r / cell->rmax;
+        xc[0] = scale * cell->xmax[0];
+        xc[1] = 0.0;
+        xc[2] = scale * cell->xmax[2];
+      }
+      else
+      {
+        xc[0] = xc[1] = xc[2] = 0.0;
+      }
+      model_velocity (cell->ndom, xc, cell->v_thetamax);
+      /* (r_outer, theta_outer) corner = xmax */
+      model_velocity (cell->ndom, cell->xmax, cell->vmax);
+    }
+    else if (coord_type == SPHERICAL)
+    {
+      /* 1D: only inner (v at x) and outer (vmax at xmax) are meaningful.
+         Set v_rmax and v_thetamax to the same values to avoid undefined data. */
+      model_velocity (cell->ndom, cell->xmax, cell->vmax);
+      for (int k = 0; k < 3; k++)
+      {
+        cell->v_rmax[k] = cell->v[k];
+        cell->v_thetamax[k] = cell->vmax[k];
+      }
+    }
+    /* CYLVAR: corner velocities not set (deferred). */
+  }
+
+  model_vgrad (cell->ndom, cell->x, cell->v_grad);
+  wind_div_v (cell->ndom, cell);
+}
+
+/**********************************************************/
+/**
+ * @brief Set dv/ds and the gamma factors of a wind cell
+ *
+ * @param [in, out] WindPtr cell  The wind cell
+ *
+ * @details
+ *
+ * Sets the average and maximum dv/ds, and the gamma factors at the
+ * vertex and centre of the cell.  It does not change the cell volume.
+ *
+ * In 2d grids dv/ds is found by interpolating the velocity gradients
+ * of neighbouring cells, so these should be set (with
+ * set_cell_velocity_gradient) first.
+ *
+ **********************************************************/
+
+void
+set_cell_dvds_and_gamma (WindPtr cell)
+{
+  double v_cen[3];
+
+  /* Now we do two expensive calculations to figure out the direction of
+   * the largest velocity gradient in the cell as well as the angle average
+   * velocity gradient of the cell */
+  calculate_cell_dvds_ave (cell->ndom, cell);   /* Defined at cell center */
+  calculate_cell_dvds_max (cell->ndom, cell);   /* Defined at cell vertex */
+
+  if (rel_mode == REL_MODE_FULL)
+  {
+    cell->xgamma = calculate_gamma_factor (cell->v);
+    model_velocity (cell->ndom, cell->xcen, v_cen);
+    cell->xgamma_cen = calculate_gamma_factor (v_cen);
+  }
+  else
+  {
+    cell->xgamma = 1.0;
+    cell->xgamma_cen = 1.0;
+  }
+}
+
+/**********************************************************/
+/**
  * @brief Initialise the properties of the wind grid
  *
  * @details
@@ -549,7 +690,6 @@ create_wind_grid (void)
   int n_start;
   int n_stop;
   int n_cells_rank;
-  double v_cen[3];
   WindPtr cell;
 
   /* Set up indices for starting and ending positions of each wind
@@ -631,98 +771,12 @@ create_wind_grid (void)
   {
     cell = &wmain[n];
     calculate_cell_volume (cell);
-
-    if (zdom[cell->ndom].wind_type != IMPORT)
-    {
-      int coord_type = zdom[cell->ndom].coord_type;
-      double xc[3];
-
-      model_velocity (cell->ndom, cell->x, cell->v);
-
-      /* Populate the three additional corner velocities needed for self-contained
-         bilinear interpolation.  CYLVAR cells are deferred (non-rectangular
-         quadrilateral geometry requires a different approach). */
-      if (coord_type == CYLIND)
-      {
-        /* (rho_max, z_min) corner */
-        xc[0] = cell->xmax[0];
-        xc[1] = 0.0;
-        xc[2] = cell->x[2];
-        model_velocity (cell->ndom, xc, cell->v_rmax);
-        /* (rho_min, z_max) corner */
-        xc[0] = cell->x[0];
-        xc[1] = 0.0;
-        xc[2] = cell->xmax[2];
-        model_velocity (cell->ndom, xc, cell->v_thetamax);
-        /* (rho_max, z_max) corner = xmax */
-        model_velocity (cell->ndom, cell->xmax, cell->vmax);
-      }
-      else if (coord_type == RTHETA)
-      {
-        double scale;
-        /* (r_outer, theta_inner) corner: same direction as x, scaled to rmax */
-        if (cell->r > 0.0)
-        {
-          scale = cell->rmax / cell->r;
-          xc[0] = scale * cell->x[0];
-          xc[1] = 0.0;
-          xc[2] = scale * cell->x[2];
-        }
-        else
-        {
-          xc[0] = xc[1] = xc[2] = 0.0;
-        }
-        model_velocity (cell->ndom, xc, cell->v_rmax);
-        /* (r_inner, theta_outer) corner: same direction as xmax, scaled to r */
-        if (cell->rmax > 0.0)
-        {
-          scale = cell->r / cell->rmax;
-          xc[0] = scale * cell->xmax[0];
-          xc[1] = 0.0;
-          xc[2] = scale * cell->xmax[2];
-        }
-        else
-        {
-          xc[0] = xc[1] = xc[2] = 0.0;
-        }
-        model_velocity (cell->ndom, xc, cell->v_thetamax);
-        /* (r_outer, theta_outer) corner = xmax */
-        model_velocity (cell->ndom, cell->xmax, cell->vmax);
-      }
-      else if (coord_type == SPHERICAL)
-      {
-        /* 1D: only inner (v at x) and outer (vmax at xmax) are meaningful.
-           Set v_rmax and v_thetamax to the same values to avoid undefined data. */
-        model_velocity (cell->ndom, cell->xmax, cell->vmax);
-        for (int k = 0; k < 3; k++)
-        {
-          cell->v_rmax[k] = cell->v[k];
-          cell->v_thetamax[k] = cell->vmax[k];
-        }
-      }
-      /* CYLVAR: corner velocities not set (deferred). */
-    }
-
-    model_vgrad (cell->ndom, cell->x, cell->v_grad);
-    wind_div_v (cell->ndom, cell);
-
-    /* Now we do two expensive calculations to figure out the direction of
-     * the largest velocity gradient in the cell as well as the angle average
-     * velocity gradient of the cell */
-    calculate_cell_dvds_ave (cell->ndom, cell); /* Defined at cell center */
-    calculate_cell_dvds_max (cell->ndom, cell); /* Defined at cell vertex */
+    set_cell_velocity_gradient (cell);
+    set_cell_dvds_and_gamma (cell);
 
     if (rel_mode == REL_MODE_FULL)
     {
-      cell->xgamma = calculate_gamma_factor (cell->v);
-      model_velocity (cell->ndom, cell->xcen, v_cen);
-      cell->xgamma_cen = calculate_gamma_factor (v_cen);
       cell->vol *= cell->xgamma_cen;
-    }
-    else
-    {
-      cell->xgamma = 1.0;
-      cell->xgamma_cen = 1.0;
     }
   }
 

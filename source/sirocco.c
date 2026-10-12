@@ -803,15 +803,6 @@ main (int argc, char *argv[])
 
 /* Finally done */
 
-#ifdef MPI_ON
-  char dummy[LINELENGTH];
-  sprintf (dummy, "End of program, Thread %d only", rank_global);       // added so we make clear these are just errors for thread ngit status
-  error_summary (dummy);        // Summarize the errors that were recorded by the program
-  Log ("Run py_error.py for full error report.\n");
-#else
-  error_summary ("End of program");     // Summarize the errors that were recorded by the program
-#endif
-
 #ifdef CUDA_ON
   cusolver_destroy ();
 #endif
@@ -839,6 +830,17 @@ main (int argc, char *argv[])
   check_convergence ();
   Log ("Information about luminosities and apparent fluxes due to various portions of the system:\n");
   phot_status ();
+
+#ifdef MPI_ON
+  {
+    char dummy[LINELENGTH];
+    sprintf (dummy, "End of program, Thread %d only", rank_global);
+    error_summary (dummy);
+    Log ("Run py_error.py for full error report.\n");
+  }
+#else
+  error_summary ("End of program");
+#endif
 
   /* clean_on_exit calls free_wind_grid and free_plasma_grid which call MPI_Win_free.
    * The barrier ensures all ranks finish cleanup before any rank calls MPI_Finalize. */

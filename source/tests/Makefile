@@ -15,7 +15,11 @@ TARGET = sirocco_unit_test
 
 I_FLAGS = -I$(SIROCCO)/include
 L_FLAGS = -L$(SIROCCO)/lib
-C_FLAGS = -O3 -Wall -Wno-deprecated-non-prototype -DMATOM_VER=$(MATOM_VER)
+C_FLAGS = -O3 -Wall -Wno-unused-result -DMATOM_VER=$(MATOM_VER)
+UNAME := $(shell uname)
+ifeq ($(UNAME), Darwin)
+	C_FLAGS += -Wno-deprecated-non-prototype
+endif
 CU_FLAGS = -O3
 
 INCLUDES =
@@ -34,7 +38,8 @@ TEST_SOURCES = \
 	tests/test_compton.c \
 	tests/test_define_wind.c \
 	tests/test_run_mode.c \
-	tests/test_translate.c
+	tests/test_translate.c \
+	tests/test_macro_estimators.c
 
 # Using absolute paths
 SIROCCO_SOURCES := $(patsubst %,$(SIROCCO)/source/%, $(SIROCCO_SOURCES))

@@ -1,0 +1,9 @@
+name: '@estop.Ionization_cycles.min_cycles'
+description: |
+  The minimum number of ionization cycles to complete before early stopping
+  is allowed. This prevents premature termination before the wind has had
+  a chance to settle. Only queried when the -early_stopping switch is used.
+type: Integer
+values: Greater than or equal to 0
+default: 0
+file: setup.c

@@ -320,19 +320,18 @@ calloc_wind (int nelem)
 #ifdef MPI_ON
   if (wmain != NULL)
   {
-#ifdef __APPLE__
-    /* On macOS wmain is always calloc'd (see below) */
-    free (wmain);
-#else
-    MPI_Win_free (&wmain_win);
-#endif
+    /* wmain is only in a shared window when running on more than one rank, 
+       so only use MPI_Win_free when np_mpi_global > 1. This mirrors free_wind_grid. */
+    if (np_mpi_global > 1)
+      MPI_Win_free (&wmain_win);
+    else
+      free (wmain);
     wmain = NULL;
   }
 
   if (np_mpi_global > 1)
   {
-#ifndef __APPLE__
-    /* Linux: use MPI-3 shared memory so all ranks on a node share one copy
+    /* Use MPI-3 shared memory so all ranks on a node share one copy
      * of wmain, avoiding per-rank duplication of large wind grids. */
     MPI_Aint win_size;
     int disp_unit;
@@ -351,12 +350,6 @@ calloc_wind (int nelem)
     wmain = (WindPtr) base;
     /* Barrier to ensure node leader's memset is visible before any rank uses wmain */
     MPI_Barrier (node_comm);
-#else
-    /* macOS: MPI-3 shared memory windows are mapped with invalid permissions
-     * for non-allocating ranks, causing SEGV_ACCERR.  Use private calloc on
-     * every rank instead; broadcast_wind_grid() keeps copies in sync. */
-    wmain = (WindPtr) calloc (nelem + 1, sizeof (wind_dummy));
-#endif
   }
   else
 #endif
@@ -379,11 +372,7 @@ calloc_wind (int nelem)
       ("Allocated %10d bytes for each of %5d elements of      wind totaling %10.1f Mb (%s)\n",
        sizeof (wind_dummy), nelem + 1, 1.e-6 * alloc_size,
 #ifdef MPI_ON
-#ifndef __APPLE__
        (np_mpi_global > 1) ? "shared" : "private"
-#else
-       "private"
-#endif
 #else
        "private"
 #endif
@@ -996,12 +985,24 @@ calloc_matom_matrix (int nelem)
   int n, row;
   int use_shared = FALSE;
   int was_shared = FALSE;
+  int store;
 
   if (nlevels_macro == 0 && geo.nmacro == 0)
   {
     geo.nmacro = 0;
     Log_silent ("Allocated no space for MA matrix since nlevels_macro==0 and geo.nmacro==0\n");
     return (0);
+  }
+
+  /* The matrices are only needed with the matrix transition mode, and only
+   * stored if -no-matrix-storage was not given.  Set every cell's flag to
+   * match, overriding any value read from a windsave file. */
+  store = (geo.matom_transition_mode == MATOM_MATRIX && modes.store_matom_matrix == TRUE);
+
+  for (n = 0; n < nelem; n++)
+  {
+    macromain[n].state.store_matom_matrix = store;
+    macromain[n].derived.matom_matrix = NULL;
   }
 
   /* Free any previously allocated blocks */
@@ -1013,6 +1014,12 @@ calloc_matom_matrix (int nelem)
     free_block ((void **) &macro_block_ptrs.matom_matrix_block, &MACRO_WIN (win_matom_matrix), was_shared);
     free (macro_block_ptrs.matom_matrix_rowptrs);
     macro_block_ptrs.matom_matrix_rowptrs = NULL;
+  }
+
+  if (store == FALSE)
+  {
+    Log ("calloc_matom_matrix: Not storing macro-atom matrices\n");
+    return (0);
   }
 
 #ifdef MPI_ON
@@ -1033,9 +1040,6 @@ calloc_matom_matrix (int nelem)
   /* Point each cell's matom_matrix into the shared block */
   for (n = 0; n < nelem; n++)
   {
-    if (macromain[n].state.store_matom_matrix == FALSE)
-      continue;
-
     double *flat = macro_block_ptrs.matom_matrix_block + (long) n * nrows * nrows;
     double **rowptrs = macro_block_ptrs.matom_matrix_rowptrs + (long) n * nrows;
     for (row = 0; row < nrows; row++)
