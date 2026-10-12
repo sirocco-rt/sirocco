@@ -115,3 +115,34 @@ def test_spherical_grid_has_no_net_polarization(rng):
         q, u, sq, su = s.result()
         assert abs(q) < NSIG * sq and abs(u) < NSIG * su
     assert np.isclose(brown_mclean_grid(m, 90)[2], 1.0 / 3.0)
+
+
+def test_wind_emission_positions_and_polarization(rng):
+    '''
+    Wind photons are placed uniformly in volume in proportion to the cell
+    emission, and an emitting sphere seen from any angle is unpolarized.
+    '''
+    for make in (cyl_ellipsoid, polar_ellipsoid):
+        dm = make(0.5)
+        # uniform emissivity in the ellipsoid: the emission of a cell is its volume
+        vol = dm.cells()[2].reshape(dm.ne[:-1, :-1].shape)
+        dm.emis[:-1, :-1] = np.where(dm.ne[:-1, :-1] > 0, vol, 0.0)
+        m = SiroccoModel.from_domains([dm], 2.0, angles=[90])
+        m.sources = {'wind': 1.0}
+        m.point_source = False
+        x = m._wind_positions(rng, 40000)
+        # uniform within the ellipsoid of uniform emissivity: <(rho/a)^2 + (z/c)^2> = 3/5
+        e2 = (np.hypot(x[:, 0], x[:, 1]) / A) ** 2 + (x[:, 2] / C) ** 2
+        assert abs(np.mean(e2) - 0.6) < 0.02
+        assert abs(np.mean(x[:, 2] > 0) - 0.5) < 0.01
+
+    r = np.linspace(0.2, 1.0, 30)
+    ne = np.full(30, 1.0 / (SIGMA_T * 0.8))
+    ne[-1] = 0
+    emis = np.append(np.diff(r ** 3), 0.0)
+    m = SiroccoModel.from_domains([Domain('spherical', r, None, ne, emis)], 1.5, angles=[45, 90])
+    m.sources = {'wind': 1.0}
+    m.point_source = False
+    for s in run(m, 50000, rng):
+        q, u, sq, su = s.result()
+        assert abs(q) < NSIG * sq and abs(u) < NSIG * su

@@ -21,18 +21,23 @@ Description:
 
     Only electron scattering (Thomson) is included, so the problem is grey
     and only the relative luminosities of the sources matter.  These are
-    taken from the last "xdefine_phot: lum_tot ..." line in Sirocco's
+    taken from the last "xdefine_phot:   f_tot ..." line in Sirocco's
     standard output, i.e. the luminosities in the band of the spectral
-    cycles.  The sources are
+    cycles.  (The "xdefine_phot: lum_tot ..." line gives bolometric
+    luminosities.)  The sources are
 
     * the central object, the boundary layer and the AGN, emitted from the
       surface of a sphere of the central-object radius;
     * the disk, emitted from both faces of a flat disk with the radial
       distribution of a standard steady-state disk.
 
+    * the wind, from the cells in proportion to their emission in the band
+      (windsave2table's heat table: lum_tot for simple atoms, kpkt_lum +
+      matom_lum for macro atoms), uniformly within each cell, isotropically
+      and unpolarized.
+
     Surfaces emit with Eddington limb darkening, p(mu) ~ mu (2 + 3 mu), the
     same law extract.c uses.  The disk and the central object are opaque.
-    Wind emission (lum_wind) is not included.
 
 Primary routines:
 
@@ -41,11 +46,15 @@ Primary routines:
 Notes:
 
     A vertically extended disk is treated as flat.  Cells that are only
-    partly in the wind are given their electron density over the whole cell.
+    partly in the wind are given their electron density and emission over
+    the whole cell.  Wind photons are emitted unpolarized and isotropically
+    in the rest frame of the observer; the polarization that line trapping
+    can give to line emission (Step 3b) is not included.
 
 History:
 
     261010 ksl Coding begun, with Claude Code
+    261011 ksl Wind emission added; source weights from the band (f_) luminosities
 
 '''
 
@@ -137,14 +146,28 @@ class Domain:
     domain has no wind.
     '''
 
-    def __init__(self, coord, edges1, edges2, ne):
+    def __init__(self, coord, edges1, edges2, ne, emis=None):
         self.coord = coord
         self.e1 = np.asarray(edges1, dtype=float)
         self.e2 = None if edges2 is None else np.asarray(edges2, dtype=float)
         self.ne = np.asarray(ne, dtype=float)
+        self.emis = np.zeros_like(self.ne) if emis is None else np.asarray(emis, dtype=float)
 
     @classmethod
-    def from_master(cls, fname):
+    def from_master(cls, fname, heat=None, simple=True):
+        '''
+        Read a master table and, if heat is given, the wind emission in the
+        band of the spectral cycles from the matching heat table: lum_tot if
+        simple (simple-atom emission is used by the model), plus kpkt_lum and
+        matom_lum when the table has them.
+        '''
+        dm = cls._from_master(fname)
+        if heat is not None:
+            dm.emis = read_emission(heat, dm.ne.shape, simple)
+        return dm
+
+    @classmethod
+    def _from_master(cls, fname):
         from astropy.io import ascii
         t = ascii.read(fname)
         ne = np.where(t['inwind'] >= 0, t['ne'], 0.0)
@@ -223,6 +246,27 @@ class Domain:
                     s = np.minimum(s, np.where(ok, d, np.inf))
         return s
 
+    def random_points(self, cell, rng):
+        '''Points distributed uniformly in volume within the given cells (flat indices), both hemispheres.'''
+        m = len(cell)
+        if self.coord == 'spherical':
+            r0, r1 = self.e1[cell], self.e1[cell + 1]
+            r = np.cbrt(r0 ** 3 + rng.random(m) * (r1 ** 3 - r0 ** 3))
+            return normalize(rng.normal(size=(m, 3))) * r[:, None]
+        i, j = np.unravel_index(cell, self.ne.shape)
+        a0, a1 = self.e1[i], self.e1[i + 1]
+        b0, b1 = self.e2[j], self.e2[j + 1]
+        phi = rng.uniform(0, 2 * np.pi, m)
+        side = np.where(rng.random(m) < 0.5, 1.0, -1.0)
+        if self.coord == 'cylindrical':
+            rho = np.sqrt(a0 ** 2 + rng.random(m) * (a1 ** 2 - a0 ** 2))
+            z = b0 + rng.random(m) * (b1 - b0)
+        else:
+            r = np.cbrt(a0 ** 3 + rng.random(m) * (a1 ** 3 - a0 ** 3))
+            mu = np.cos(b1) + rng.random(m) * (np.cos(b0) - np.cos(b1))
+            rho, z = r * np.sqrt(1 - mu * mu), r * mu
+        return np.column_stack([rho * np.cos(phi), rho * np.sin(phi), side * z])
+
     def extent(self):
         '''A radius that encloses the whole grid.'''
         if self.coord == 'cylindrical':
@@ -266,15 +310,45 @@ def read_pf(fname):
     return out
 
 
-def read_luminosities(stdout):
-    '''The last xdefine_phot luminosities (star, bl, bh, disk, wind) in Sirocco's output.'''
+def read_luminosities(stdout, band=True):
+    '''
+    The last xdefine_phot luminosities in Sirocco's output: in the band of the
+    spectral cycles (f_tot, f_star, f_bl, f_bh, f_disk, f_wind, f_matom,
+    f_kpkt) if band, otherwise bolometric (lum_tot, lum_star, ...).
+    '''
+    tag, prefix = ('xdefine_phot:   f_tot', 'f_') if band else ('xdefine_phot: lum_tot', 'lum_')
     lum = None
     with open(stdout) as f:
         for line in f:
-            if 'xdefine_phot: lum_tot' in line:
+            if tag in line:
                 w = line.split()
-                lum = {w[k]: float(w[k + 1]) for k in range(len(w) - 1) if w[k].startswith('lum_')}
+                lum = {w[k]: float(w[k + 1]) for k in range(len(w) - 1) if w[k].startswith(prefix)}
     return lum
+
+
+def read_emission(fname, shape, simple=True):
+    '''Wind emission per cell in the band of the spectral cycles, from a windsave2table heat table.'''
+    from astropy.io import ascii
+    t = ascii.read(fname)
+    inwind = np.asarray(t['inwind']) >= 0
+    e = np.zeros(len(t))
+    if simple:
+        e += np.asarray(t['lum_tot'])
+    for col in ('kpkt_lum', 'matom_lum'):
+        if col in t.colnames:
+            e += np.asarray(t[col])
+    e = np.where(inwind, e, 0.0)
+    grid = np.zeros(shape)
+    if len(shape) == 1:
+        grid[np.asarray(t['i'])] = e
+    else:
+        grid[np.asarray(t['i']), np.asarray(t['j'])] = e
+    # the guard cells (no outer edge) cannot emit
+    if len(shape) == 1:
+        grid[-1] = 0.0
+    else:
+        grid[-1, :] = grid[:, -1] = 0.0
+    return grid
 
 
 class SiroccoModel:
@@ -284,16 +358,22 @@ class SiroccoModel:
     standard output (root.stdout.txt, for the source luminosities).
     '''
 
-    def __init__(self, root, directory='.', point_source=False):
+    def __init__(self, root, directory='.', point_source=False, wind=True):
         d = directory
         pf_name = os.path.join(d, root + '.out.pf')
         if not os.path.exists(pf_name):
             pf_name = os.path.join(d, root + '.pf')
         self.pf = read_pf(pf_name)
-        masters = sorted(glob(os.path.join(d, root + '.*.master.txt')))
+        lum = read_luminosities(os.path.join(d, root + '.stdout.txt'))
+        self.lum = lum
+        masters = sorted(glob(os.path.join(d, root + '.[0-9]*.master.txt')))
         if not masters:
             masters = [os.path.join(d, root + '.master.txt')]
-        self.domains = [Domain.from_master(m) for m in masters]
+        use_wind = wind and not point_source
+        # simple-atom wind emission is in f_wind; macro-atom emission in f_kpkt and f_matom
+        simple = lum.get('f_wind', 0) > 0
+        self.domains = [Domain.from_master(m, m.replace('.master.txt', '.heat.txt') if use_wind else None, simple)
+                        for m in masters]
 
         def get(key, default=None):
             v = self.pf.get(key)
@@ -311,8 +391,6 @@ class SiroccoModel:
         self.angles = [float(v) for v in self.pf.get('Spectrum.angle', [])][:nobs]
         self.phase = float(get('Spectrum.orbit_phase', 0.5))
 
-        lum = read_luminosities(os.path.join(d, root + '.stdout.txt'))
-        self.lum = lum
         self.point_source = point_source
         if point_source:
             # an isotropic point source, no occultation: the Brown & McLean case
@@ -320,10 +398,11 @@ class SiroccoModel:
             self.r_star = 0.0
             self.disk = False
         else:
-            central = lum.get('lum_star', 0) + lum.get('lum_bl', 0) + lum.get('lum_bh', 0)
-            disk = lum.get('lum_disk', 0) if self.disk else 0.0
-            tot = central + disk
-            self.sources = {'central': central / tot, 'disk': disk / tot}
+            central = lum.get('f_star', 0) + lum.get('f_bl', 0) + lum.get('f_bh', 0)
+            disk = lum.get('f_disk', 0) if self.disk else 0.0
+            wnd = sum(dm.emis.sum() for dm in self.domains)
+            tot = central + disk + wnd
+            self.sources = {'central': central / tot, 'disk': disk / tot, 'wind': wnd / tot}
         self.disk_r_in = max(self.r_star, 1e-6 * self.r_max)
 
     @classmethod
@@ -436,6 +515,10 @@ class SiroccoModel:
                 p['x'][idx] = 0.0
                 p['lmn'][idx] = normalize(rng.normal(size=(m, 3)))
                 p['origin'][idx] = photon.PTYPE_STAR
+            elif name == 'wind':
+                p['x'][idx] = self._wind_positions(rng, m)
+                p['lmn'][idx] = normalize(rng.normal(size=(m, 3)))
+                p['origin'][idx] = photon.PTYPE_WIND
             elif name == 'central':
                 rhat = normalize(rng.normal(size=(m, 3)))
                 p['x'][idx] = rhat * (self.r_star + self.eps)
@@ -452,6 +535,18 @@ class SiroccoModel:
                 p['origin'][idx] = photon.PTYPE_DISK
         photon.set_unpolarized(p)
         return p
+
+    def _wind_positions(self, rng, m):
+        '''Positions of wind photons: cells chosen by their emission, uniform within a cell.'''
+        emis = np.concatenate([dm.emis.ravel() for dm in self.domains])
+        bounds = np.cumsum([0] + [dm.emis.size for dm in self.domains])
+        cell = rng.choice(emis.size, size=m, p=emis / emis.sum())
+        x = np.empty((m, 3))
+        for k, dm in enumerate(self.domains):
+            sel = (cell >= bounds[k]) & (cell < bounds[k + 1])
+            if sel.any():
+                x[sel] = dm.random_points(cell[sel] - bounds[k], rng)
+        return x
 
     def _disk_radii(self, rng, m):
         '''Radii from a standard disk, dL/dr ~ r^-2 (1 - sqrt(r_in/r)).'''

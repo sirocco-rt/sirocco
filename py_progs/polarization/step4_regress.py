@@ -8,14 +8,16 @@ Command line usage (if any):
 
     usage::
 
-        step4_regress.py [-h] [-n NPHOT] [-n_bm NPHOT] [-seed SEED] [-plot FILE]
-                         [-out FILE] [-from_table FILE] [directory] [root ...]
+        step4_regress.py [-h] [-n NPHOT] [-n_bm NPHOT] [-seed SEED] [-no_wind]
+                         [-plot FILE] [-out FILE] [-from_table FILE]
+                         [directory] [root ...]
 
     directory   where the models were run (default: the current directory)
     root ...    the models to use (default: every root with a .wind_save file)
     -n          photons per model with the model's own sources (default 1e5)
     -n_bm       photons per model for the point-source check (default 2e5)
     -seed       seed for the random number generator
+    -no_wind    leave out the emission of the wind
     -plot       write a summary plot to FILE
     -out        write the results table to FILE (default step4_results.txt)
     -from_table only make the plot (-plot FILE), from a results table saved earlier
@@ -23,16 +25,17 @@ Command line usage (if any):
 Description:
 
     Each model needs root.stdout.txt (for the source luminosities), root.pf
-    or root.out.pf, and the windsave2table master tables (run windsave2table
-    on each root first).
+    or root.out.pf, and the windsave2table master and heat tables (run
+    windsave2table on each root first; the heat tables must have the
+    kpkt_lum and matom_lum columns for macro-atom models).
 
     For each model two calculations are made with sirocco_grid:
 
-    1. The model's own sources (central object, boundary layer, AGN, disk)
-       weighted by their luminosities in the band of the spectral cycles,
-       peeled off toward the model's observers.  Only electron scattering is
-       included, and wind emission is not, so the polarization is that of
-       the light from the disk and the central object.
+    1. The model's own sources (central object, boundary layer, AGN, disk
+       and wind) weighted by their luminosities in the band of the spectral
+       cycles, peeled off toward the model's observers.  Only electron
+       scattering is included.  The wind emits unpolarized light, which is
+       then scattered like the rest.
     2. A check: an isotropic point source at the center with no disk or
        central object to block it, compared with Brown & McLean (1977)
        evaluated directly from the grid cells.  The two should agree when the
@@ -50,6 +53,7 @@ Notes:
 History:
 
     261010 ksl Coding begun, with Claude Code
+    261011 ksl Wind emission added; source weights from the band (f_) luminosities
 
 '''
 
@@ -70,15 +74,12 @@ from polarization.stokes import pol_degree_angle
 BM_ANGLES = (30, 60, 90)
 
 
-def do_model(root, directory, nphot, nphot_bm, rng):
+def do_model(root, directory, nphot, nphot_bm, rng, wind=True):
     '''Run one model; returns a dict of results.'''
     t0 = time.time()
-    model = SiroccoModel(root, directory)
-    lum = model.lum
-    src = sum(lum.get(k, 0) for k in ('lum_star', 'lum_bl', 'lum_bh')) + (lum.get('lum_disk', 0) if model.disk else 0)
-    wind_frac = lum.get('lum_wind', 0) / (src + lum.get('lum_wind', 0))
+    model = SiroccoModel(root, directory, wind=wind)
     out = {'root': root, 'coords': [d.coord for d in model.domains], 'sources': model.sources,
-           'wind_frac': wind_frac, 'obs': [], 'bm': []}
+           'obs': [], 'bm': []}
 
     for s in run(model, nphot, rng):
         q, u, sq, su = s.result()
@@ -102,7 +103,7 @@ def report(res, f):
     r = res
     srcs = ', '.join(f'{k} {v:.3f}' for k, v in r['sources'].items())
     both(f"\n{r['root']}  (grid: {', '.join(r['coords'])}; source weights: {srcs}; "
-         f"wind emission not included = {100 * r['wind_frac']:.0f}% of the band luminosity; {r['time']:.0f} s)")
+         f"{r['time']:.0f} s)")
     both('   angle   I        scattered     q (%)            u (%)          P (%)    PA (deg)')
     for ang, I, fs, q, sq, u, su, P, pa in r['obs']:
         both(f'   {ang:5.1f}  {I:.4f}   {fs:6.3f}    {100 * q:+7.3f}±{100 * sq:.3f}   {100 * u:+7.3f}±{100 * su:.3f}   '
@@ -192,6 +193,7 @@ def main():
     parser.add_argument('-n', type=float, default=1e5)
     parser.add_argument('-n_bm', type=float, default=2e5)
     parser.add_argument('-seed', type=int, default=20261010)
+    parser.add_argument('-no_wind', action='store_true', help='leave out the emission of the wind')
     parser.add_argument('-plot', default=None)
     parser.add_argument('-out', default='step4_results.txt')
     parser.add_argument('-from_table', default=None, help='only make the plot, from a saved results table')
@@ -205,10 +207,11 @@ def main():
     rng = np.random.default_rng(args.seed)
     results = []
     with open(args.out, 'w') as f:
-        f.write(f'# step4_regress.py on {os.path.abspath(args.directory)}: n = {int(args.n)}, n_bm = {int(args.n_bm)}\n')
+        f.write(f'# step4_regress.py on {os.path.abspath(args.directory)}: n = {int(args.n)}, n_bm = {int(args.n_bm)}, '
+                f'wind emission {"excluded" if args.no_wind else "included"}\n')
         for root in roots:
             try:
-                res = do_model(root, args.directory, int(args.n), int(args.n_bm), rng)
+                res = do_model(root, args.directory, int(args.n), int(args.n_bm), rng, wind=not args.no_wind)
             except Exception as e:
                 print(f'\n{root}: failed ({e})')
                 f.write(f'\n{root}: failed ({e})\n')

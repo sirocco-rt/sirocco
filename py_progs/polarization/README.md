@@ -32,7 +32,7 @@ summary:
 | `sobolev_flow.py` | Step 3: transport through an expanding ellipsoid (homologous, or a radial power-law flow with direction-dependent Sobolev escape) with electron scattering and one Sobolev line. It has three treatments of trapping in the resonance region (`explicit`, `single`, `effective`), and spectra resolved in frequency |
 | `step3_validate.py` | Runs the Step 3 validation cases and the line-effect spectra, and optionally plots them |
 | `step3c_validate.py` | Step 3c: the capped trapping chain proposed for C (accuracy and cost against the cap) |
-| `sirocco_grid.py` | Step 4: electron-scattering transport through a Sirocco model's own grid (cylindrical, polar or spherical; several domains), with the model's disk and central sources |
+| `sirocco_grid.py` | Step 4: electron-scattering transport through a Sirocco model's own grid (cylindrical, polar or spherical; several domains), with the model's disk, central and wind sources |
 | `step4_regress.py` | Step 4: runs `sirocco_grid` on a directory of completed Sirocco models (e.g. `examples/regress`), with a Brown & McLean point-source check |
 | `step3b_validate.py` | Step 3b: trapping when the Sobolev escape probability depends on direction (radial power-law flow) |
 
@@ -93,9 +93,16 @@ directory:
 python $SIROCCO/py_progs/polarization/step4_regress.py -plot step4.png .
 ```
 
-This is electron scattering only, with the disk and central object as
-sources (no wind emission). Each model is also run with a point source and
-compared with Brown & McLean evaluated on its grid.
+This is electron scattering only. The sources are the central object, the
+disk and the wind, weighted by their luminosities in the band of the spectral
+cycles (the `xdefine_phot:   f_tot ...` line of the standard output). The wind
+emits unpolarized and isotropically from each cell in proportion to the cell's
+emission in that band, read from the heat table: `lum_tot` for simple atoms,
+`kpkt_lum` + `matom_lum` for macro atoms. Those two columns were added to
+`windsave2table` on this branch, so macro-atom models need a `windsave2table`
+built from it. `-no_wind` leaves the wind emission out. Each model is also
+run with a point source and compared with Brown & McLean evaluated on its
+grid.
 
 ## Tests
 
