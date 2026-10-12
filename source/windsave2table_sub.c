@@ -278,14 +278,14 @@ create_master_table (int ndom, char rootname[])
     for (i = 0; i < ndim2; i++)
     {
       //This line is different from the two d case
-      sprintf (start, "%9.3e %9.3e %4d %5d %7d %6d %8.0f %9.2e %9.2e %9.2e ",
+      sprintf (start, "%9.6e %9.6e %4d %5d %7d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].r, wmain[nstart + i].rcen, i, wmain[nstart + i].nwind, wmain[nstart + i].nplasma, wmain[nstart + i].inwind,
                converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -317,7 +317,7 @@ create_master_table (int ndom, char rootname[])
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
       sprintf (start,
-               "%8.2e %8.2e %8.2e %8.2e %4d %4d %8d %6d %6d %8.0f %9.2e %9.2e %9.2e ",
+               "%8.6e %8.6e %8.6e %8.6e %4d %4d %8d %6d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                jj, wmain[nstart + i].nwind, wmain[nstart + i].nplasma, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0],
                wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
@@ -325,7 +325,7 @@ create_master_table (int ndom, char rootname[])
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -357,7 +357,7 @@ create_master_table (int ndom, char rootname[])
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
       sprintf (start,
-               "%9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %4d %4d %7d %7d %7d %8.0f %9.2e %9.2e %9.2e ",
+               "%9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %4d %4d %7d %7d %7d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].r, wmain[nstart + i].theta, wmain[nstart + i].rcen, wmain[nstart + i].thetacen,
                wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                jj, wmain[nstart + i].nwind, wmain[nstart + i].nplasma, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0],
@@ -366,7 +366,7 @@ create_master_table (int ndom, char rootname[])
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -514,15 +514,26 @@ create_heat_table (int ndom, char rootname[])
   c[27] = get_one (ndom, "heat_photo_macro");
   strcpy (column_name[27], "ht_ph_macro");
 
+  c[28] = get_one (ndom, "heat_qrecomb_macro");
+  strcpy (column_name[28], "ht_qr_macro");
 
-  c[28] = get_one (ndom, "cool_lines_macro");
-  strcpy (column_name[28], "cl_ln_macro");
+  c[29] = get_one (ndom, "cool_lines_macro");
+  strcpy (column_name[29], "cl_ln_macro");
 
-  c[29] = get_one (ndom, "cool_bf_macro");
-  strcpy (column_name[29], "cl_ph_macro");
+  c[30] = get_one (ndom, "cool_bf_macro");
+  strcpy (column_name[30], "cl_ph_macro");
+
+  c[31] = get_one (ndom, "cool_di_macro");
+  strcpy (column_name[31], "cl_di_macro");
+
+  c[32] = get_one (ndom, "energy_in_macro");
+  strcpy (column_name[32], "e_in_macro");
+
+  c[33] = get_one (ndom, "energy_out_macro");
+  strcpy (column_name[33], "e_out_macro");
 
   /* This should be the maximum number above +1 */
-  ncols = 30;
+  ncols = 34;
 
 
   converge = get_one (ndom, "converge");
@@ -560,14 +571,14 @@ create_heat_table (int ndom, char rootname[])
     for (i = 0; i < ndim2; i++)
     {
       //This line is different from the two d case
-      sprintf (start, "%9.3e %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+      sprintf (start, "%9.6e %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].r, i, wmain[nstart + i].inwind,
                converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -598,14 +609,14 @@ create_heat_table (int ndom, char rootname[])
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
       sprintf (start,
-               "%8.2e %8.2e %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+               "%8.6e %8.6e %4d %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                jj, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -759,14 +770,14 @@ create_convergence_table (int ndom, char rootname[])
     for (i = 0; i < ndim2; i++)
     {
       //This line is different from the two d case
-      sprintf (start, "%9.3e %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+      sprintf (start, "%9.6e %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].r, i, wmain[nstart + i].inwind,
                converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -797,14 +808,14 @@ create_convergence_table (int ndom, char rootname[])
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
       sprintf (start,
-               "%8.2e %8.2e %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+               "%8.6e %8.6e %4d %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                jj, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -940,14 +951,14 @@ create_velocity_gradient_table (int ndom, char rootname[])
     for (i = 0; i < ndim2; i++)
     {
       //This line is different from the two d case
-      sprintf (start, "%9.3e %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+      sprintf (start, "%9.6e %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].r, i, wmain[nstart + i].inwind,
                converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -978,14 +989,14 @@ create_velocity_gradient_table (int ndom, char rootname[])
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
       sprintf (start,
-               "%8.2e %8.2e %4d %4d %6d %8.0f %9.2e %9.2e %9.2e ",
+               "%8.6e %8.6e %4d %4d %6d %8.0f %9.6e %9.6e %9.6e ",
                wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                jj, wmain[nstart + i].inwind, converge[i], wmain[nstart + i].v[0], wmain[nstart + i].v[1], wmain[nstart + i].v[2]);
       strcpy (one_line, start);
       n = 0;
       while (n < ncols)
       {
-        sprintf (one_value, "%9.2e ", c[n][i]);
+        sprintf (one_value, "%9.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -1105,13 +1116,13 @@ create_ion_table (int ndom, char rootname[], int iz, int ion_switch)
     for (i = 0; i < ndim2; i++)
     {
       //This line is different from the two d case
-      sprintf (start, "%8.2e %4d %6d ", wmain[nstart + i].r, i, wmain[nstart + i].inwind);
+      sprintf (start, "%8.6e %4d %6d ", wmain[nstart + i].r, i, wmain[nstart + i].inwind);
       strcpy (one_line, start);
 
       n = 0;
       while (n < number_ions)
       {
-        sprintf (one_value, "%8.2e ", c[n][i]);
+        sprintf (one_value, "%8.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -1144,12 +1155,12 @@ create_ion_table (int ndom, char rootname[], int iz, int ion_switch)
     for (i = 0; i < ndim2; i++)
     {
       wind_n_to_ij (ndom, nstart + i, &ii, &jj);
-      sprintf (start, "%8.2e %8.2e %4d %4d %6d ", wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii, jj, wmain[nstart + i].inwind);
+      sprintf (start, "%8.6e %8.6e %4d %4d %6d ", wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii, jj, wmain[nstart + i].inwind);
       strcpy (one_line, start);
       n = 0;
       while (n < number_ions)
       {
-        sprintf (one_value, "%8.2e ", c[n][i]);
+        sprintf (one_value, "%8.4e ", c[n][i]);
         strcat (one_line, one_value);
         n++;
       }
@@ -1517,6 +1528,10 @@ get_one (int ndom, char variable_name[])
       {
         x[n] = plasmamain[nplasma].est.heat_photo_macro;
       }
+      else if (strcmp (variable_name, "heat_qrecomb_macro") == 0)
+      {
+        x[n] = plasmamain[nplasma].est.heat_qrecomb_macro;
+      }
       else if (strcmp (variable_name, "cool_lines_macro") == 0)
       {
         x[n] = plasmamain[nplasma].derived.cool_lines_macro;
@@ -1525,7 +1540,21 @@ get_one (int ndom, char variable_name[])
       {
         x[n] = plasmamain[nplasma].derived.cool_bf_macro;
       }
-
+      else if (strcmp (variable_name, "cool_di_macro") == 0)
+      {
+        x[n] = plasmamain[nplasma].derived.cool_di_macro;
+      }
+      else if (strcmp (variable_name, "energy_in_macro") == 0)
+      {
+        /* macromain is only allocated for models with macro atoms */
+        if (macromain != NULL)
+          x[n] = macromain[nplasma].est.energy_flow_in;
+      }
+      else if (strcmp (variable_name, "energy_out_macro") == 0)
+      {
+        if (macromain != NULL)
+          x[n] = macromain[nplasma].est.energy_flow_out;
+      }
       else if (strcmp (variable_name, "gain") == 0)
       {
         x[n] = plasmamain[nplasma].derived.gain;
@@ -1890,13 +1919,13 @@ create_spec_table (int ndom, char rootname[])
       for (i = 0; i < ndim2; i++)
       {
         //This line is different from the two d case
-        sprintf (start, "%9.3e %9.3e %4d %6d %8.0f %6d ",
+        sprintf (start, "%9.6e %9.6e %4d %6d %8.0f %6d ",
                  wmain[nstart + i].r, wmain[nstart + i].rcen, i, wmain[nstart + i].inwind, converge[i], nx);
         strcpy (one_line, start);
         n = 0;
         while (n < ncols)
         {
-          sprintf (one_value, "%9.2e ", c[n][j]);
+          sprintf (one_value, "%9.4e ", c[n][j]);
           strcat (one_line, one_value);
           n++;
         }
@@ -1932,14 +1961,14 @@ create_spec_table (int ndom, char rootname[])
       {
         wind_n_to_ij (ndom, nstart + i, &ii, &jj);
         sprintf (start,
-                 "%8.2e %8.2e %8.2e %8.2e %4d %4d %6d %8.0f %6d  ",
+                 "%8.6e %8.6e %8.6e %8.6e %4d %4d %6d %8.0f %6d  ",
                  wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                  jj, wmain[nstart + i].inwind, converge[i], nx);
         strcpy (one_line, start);
         n = 0;
         while (n < ncols)
         {
-          sprintf (one_value, "%9.2e ", c[n][j]);
+          sprintf (one_value, "%9.4e ", c[n][j]);
           strcat (one_line, one_value);
           n++;
         }
@@ -1976,7 +2005,7 @@ create_spec_table (int ndom, char rootname[])
       {
         wind_n_to_ij (ndom, nstart + i, &ii, &jj);
         sprintf (start,
-                 "%9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %9.2e %4d %4d %6d %8.0f %6d ",
+                 "%9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %9.6e %4d %4d %6d %8.0f %6d ",
                  wmain[nstart + i].r, wmain[nstart + i].theta, wmain[nstart + i].rcen, wmain[nstart + i].thetacen,
                  wmain[nstart + i].x[0], wmain[nstart + i].x[2], wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], ii,
                  jj, wmain[nstart + i].inwind, converge[i], nx);
@@ -1984,7 +2013,7 @@ create_spec_table (int ndom, char rootname[])
         n = 0;
         while (n < ncols)
         {
-          sprintf (one_value, "%9.2e ", c[n][j]);
+          sprintf (one_value, "%9.4e ", c[n][j]);
           strcat (one_line, one_value);
           n++;
         }

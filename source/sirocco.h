@@ -494,12 +494,16 @@ struct geometry
 
   int disk_type;
 
+  
 #define BACK_RAD_ABSORB_AND_DESTROY  0  /**< Disk simply absorbs the radiation and it is lost */
-#define BACK_RAD_SCATTER            1   /**< Disk reradiates the radiation immediately via electron scattering */
+#define BACK_RAD_SCATTER            1   /**< Disk reradiates and retains the photon's frequency but 
+                                            gives it a new direction, selected randomly according to 
+                                            cos(theta) */
 #define BACK_RAD_ABSORB_AND_HEAT     2  /**< Correct disk temperature for illumination by photons
                                            which hit the dsik.  Disk radiation is absorbed and changes
                                            the temperature of the disk for future ionization cycles
                                          */
+#define BACK_RAD_SPECULAR     3  /**< True "specular refleciton", reversing the sign of v_z */
 
   int absorb_reflect;           /**< Controls what happens when a photon hits the disk or star
                                  */
@@ -1031,6 +1035,7 @@ typedef struct plasma_estimators
   double heat_ch_ex;
   double heat_lines_macro, heat_photo_macro;    /**<  bb and bf heating due to macro atoms. Subset of heat_lines
                                                    and heat_photo. SS June 04. */
+  double heat_qrecomb_macro;    /**<  The heating due to macro atom 3-body recombinations, added Oct 2025 */
 
   /* Cooling estimator */
   double cool_tot;              /**< The total cooling in a cell */
@@ -1093,6 +1098,7 @@ typedef struct plasma_derived
   double cool_adiabatic;
   double cool_rr, cool_rr_metals;       /**< fb cooling & fb of metals */
   double cool_lines_macro, cool_bf_macro;    /**<  bb and bf cooling due to macro atoms */
+  double cool_di_macro;         /**<  direct/collisional ionization cooling due to macro atoms */
 
   /* Luminosities */
   double lum_lines, lum_ff;
@@ -1265,6 +1271,8 @@ typedef struct macro_estimators
   double *recomb_sp; /**< Spontaneous recombination (SS) */
   double *recomb_sp_e; /**< Energy-weighted spontaneous recombination coefficient (SS) */
   double *matom_abs; /**< Energy absorbed by macro atom levels during ionization cycles (SS) */
+
+  double energy_flow_out, energy_flow_in; /**< Total energy flow in/out of macro atom levels in cell during ionization cycles */
 
   /* Cooling rate stores, calculated each cycle, used for kpkt destruction rates */
   double cooling_normalisation;

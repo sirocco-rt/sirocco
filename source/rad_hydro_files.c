@@ -148,6 +148,8 @@ main (int argc, char *argv[])
 
   /* Initialize  MPI, which is needed because some of the routines are MPI enabled */
 
+  double old_density, old_ne;
+
   int my_rank;                  // these two variables are used regardless of parallel mode
   int np_mpi;                   // rank and number of processes, 0 and 1 in non-parallel
 
@@ -236,9 +238,9 @@ main (int argc, char *argv[])
 
 
   if (zdom[domain].coord_type == SPHERICAL || zdom[domain].coord_type == RTHETA)
-    fprintf (fptr_hc, "i j rcen thetacen vol temp xi ne heat_xray heat_comp heat_lines heat_ff cool_comp cool_lines cool_ff rho n_h\n");
+    fprintf (fptr_hc, "i j rcen thetacen vol t_e t_r xi ne heat_xray heat_comp heat_lines heat_ff cool_comp cool_lines cool_ff rho n_h\n");
   else if (zdom[domain].coord_type == CYLIND)
-    fprintf (fptr_hc, "i j rcen zcen vol temp xi ne heat_xray heat_comp heat_lines heat_ff cool_comp cool_lines cool_ff rho n_h\n");
+    fprintf (fptr_hc, "i j rcen zcen vol t_e t_r xi ne heat_xray heat_comp heat_lines heat_ff cool_comp cool_lines cool_ff rho n_h\n");
 
 
 
@@ -379,7 +381,7 @@ main (int argc, char *argv[])
       else if (zdom[domain].coord_type == CYLIND)
         fprintf (fptr_hc, "%d %d %e %e %e ", i, j, wmain[nwind].xcen[0], wmain[nwind].xcen[2], vol);    //output geometric things
 
-      fprintf (fptr_hc, "%e %e %e ", plasmamain[nplasma].state.t_e, plasmamain[nplasma].derived.xi, plasmamain[nplasma].state.ne);      //output temp, xi and ne to ease plotting of heating rates
+      fprintf (fptr_hc, "%e %e %e %e ", plasmamain[nplasma].state.t_e, plasmamain[nplasma].state.t_r, plasmamain[nplasma].derived.xi, plasmamain[nplasma].state.ne);    //output t_e, t_r, xi and ne to ease plotting of heating rates
       fprintf (fptr_hc, "%e ", (plasmamain[nplasma].est.heat_photo + plasmamain[nplasma].est.heat_auger) / vol);        //Xray heating - or photoionization
       fprintf (fptr_hc, "%e ", (plasmamain[nplasma].est.heat_comp) / vol);      //Compton heating
       fprintf (fptr_hc, "%e ", (plasmamain[nplasma].est.heat_lines) / vol);     //Line heating 28/10/15 - not currently used in zeus
@@ -543,8 +545,11 @@ main (int argc, char *argv[])
       else
         t_Xray = 0.0;           //Essentually a flag that there is no way of computing t (and hence M) in this cell.                
 
-      fprintf (fptr_pcon, " %e %e %e %e %e %e %e\n", plasmamain[nplasma].state.t_e, plasmamain[nplasma].state.rho,
-               plasmamain[nplasma].state.rho * rho2nh, plasmamain[nplasma].state.ne, t_opt, t_UV, t_Xray);
+      old_density = plasmamain[nplasma].state.rho * zdom[domain].fill;
+      old_ne = plasmamain[nplasma].state.ne * zdom[domain].fill;
+
+      fprintf (fptr_pcon, " %e %e %e %e %e %e %e\n", plasmamain[nplasma].state.t_e, old_density,
+               old_density * rho2nh, old_ne, t_opt, t_UV, t_Xray);
 
       fprintf (fptr_debug, "%d %d %e %e %e %e %e\n", i, j, wmain[nwind].rcen, wmain[nwind].thetacen / RADIAN, v_th, fabs (dvwind_ds_cmf (&ptest)), plasmamain[nplasma].est.j);  //output geometric things
     }

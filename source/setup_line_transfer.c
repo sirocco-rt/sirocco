@@ -151,32 +151,15 @@ get_line_transfer_mode ()
     }
 
 
-    if (geo.run_type == RUN_TYPE_PREVIOUS)
+    if (geo.run_type == RUN_TYPE_PREVIOUS && geo.nmacro > 0)
     {
-      if (geo.matom_transition_mode == MATOM_MATRIX)
+      /* The macro-atom matrices were allocated in wind_read according to the
+       * transition mode of the earlier run; reallocate them for this one */
+      for (n = 0; n < NPLASMA; n++)
       {
-        Log ("Warning: Storing macro-atom matrices -- be careful of high memory usage.\n");
-
-
-        {
-          for (n = 0; n < NPLASMA; n++)
-          {
-            macromain[n].state.store_matom_matrix = modes.store_matom_matrix;
-            macromain[n].state.matom_transition_mode = geo.matom_transition_mode;
-          }
-
-        }
+        macromain[n].state.matom_transition_mode = geo.matom_transition_mode;
       }
-      else
-      {
-        for (n = 0; n < NPLASMA; n++)
-        {
-          macromain[n].state.store_matom_matrix = modes.store_matom_matrix = FALSE;
-          macromain[n].state.matom_transition_mode = geo.matom_transition_mode;
-        }
-
-      }
-
+      calloc_matom_matrix (NPLASMA);
     }
 
   }

@@ -115,6 +115,7 @@ Amin Mosallanezhad
    examples
    physics
    atomic
+   speculate
    meta
    developer
    *

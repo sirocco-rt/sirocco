@@ -188,6 +188,8 @@ total_emission (PlasmaPtr xplasma, double f1, double f2)
     if (geo.rt_mode == RT_MODE_MACRO)
     {
       xplasma->derived.lum_rr = (total_fb_matoms (xplasma, t_e, f1, f2) + total_fb (xplasma, t_e, f1, f2, FB_FULL, OUTER_SHELL));       //outer shellrecombinations
+      /* historically we include macro collisional ionization cooling (this used to be part of total_fb_matoms) */
+      xplasma->derived.lum_rr += cooling_di_matoms (xplasma, t_e, f1, f2);
 
       /*
        *The first term here is the fb cooling due to macro ions and the second gives
@@ -195,10 +197,9 @@ total_emission (PlasmaPtr xplasma, double f1, double f2)
        *total_fb has been modified to exclude recombinations treated using macro atoms.
        */
       xplasma->derived.lum_tot = xplasma->derived.cool_rr;
-      /* Note: This the fb_matom call makes no use of f1 or f2. They are passed for
+      /* Note: the fb_matom call makes no use of f1 or f2. They are passed for
        * now in case they should be used in the future. But they could
-       * also be removed.
-       * (SS)
+       * also be removed. (SS)
        */
       xplasma->derived.lum_lines = total_bb_cooling (xplasma, t_e);
       xplasma->derived.lum_tot += xplasma->derived.lum_lines;

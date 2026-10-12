@@ -99,6 +99,15 @@ get_matom_f (int mode)
         Error ("kpkt_abs is %8.4e in matom %i\n", plasmamain[n].est.kpkt_abs, n);
     }
 
+    #ifdef MPI_ON
+    /* matom_emiss is in shared memory and every rank has just zeroed
+     * all of it.  Wait until every rank on the node has finished zeroing
+     * before any rank starts accumulating into its own cells, otherwise a
+     * slower rank can wipe out results a faster rank has already written. */
+    if (np_mpi_global > 1)
+      MPI_Barrier (node_comm);
+    #endif
+
     /* For MPI parallelisation, the following loop will be distributed over multiple tasks.
        Note that the mynmim and mynmax variables are still used even without MPI on */
     my_nmin = 0;
@@ -435,6 +444,13 @@ get_matom_f_accelerate (int mode)
         Error ("kpkt_abs is %8.4e in matom %i\n", plasmamain[n].est.kpkt_abs, n);
     }
 
+    #ifdef MPI_ON
+    /* as in get_matom_f: matom_emiss is in shared memory and every rank has just zeroed
+     * all of it.  Wait until every rank on the node has finished zeroing */
+    if (np_mpi_global > 1)
+      MPI_Barrier (node_comm);
+    #endif
+    
 
     /* For MPI parallelisation, the following loop will be distributed over multiple tasks.
        Note that the mynmim and mynmax variables are still used even without MPI on */
