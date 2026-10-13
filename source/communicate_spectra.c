@@ -78,6 +78,9 @@ normalize_spectra_across_ranks (void)
   }
 
   free (spectrum_buffer);
+
+  pol_spectra_reduce ();
+
   d_xsignal (files.root, "%-20s Finished spectrum reduction\n", "OK");
 #endif
   return (0);

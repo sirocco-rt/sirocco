@@ -580,6 +580,12 @@ extract_one (WindPtr w, PhotPtr pp, int nspec)
         xxspec[nspec].lf_wind[k1] += pp->w * exp (-(tau));
 
       }
+
+      if (modes.polarization)
+      {
+        pol_tally (pp, xxpol[nspec - MSPEC].north, nspec, pp->w * exp (-(tau)), k, k1,
+                   (pp->origin == PTYPE_WIND || pp->origin == PTYPE_WIND_MATOM || pp->nscat > 0));
+      }
       /*
        * Records the total distance travelled by extracted
        * photon if in reverberation mode

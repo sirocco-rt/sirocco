@@ -111,6 +111,8 @@ int nspectra;                   /**< After create_spectrum, the number of elemen
 int nscat[MAXSCAT + 1], nres[MAXSCAT + 1], nstat[NSTAT];
 
 SpecPtr xxspec;
+SpecPolPtr xxpol;
+int npolspec;
 
 int swind_min, swind_max, swind_delta, swind_project;
 double *aaa;                    ///< A pointer to an array used by swind

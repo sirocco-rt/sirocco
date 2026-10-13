@@ -553,8 +553,8 @@ spec_save (char filename[])
     Exit (EXIT_FAILURE);
   }
 
-  sprintf (header, "Version %s  nspectra %d NWAVE_IONIZ %d NWAVE_EXTRACT %d NWAVE_MAX %d\n", VERSION, nspectra, NWAVE_IONIZ,
-           NWAVE_EXTRACT, NWAVE_MAX);
+  sprintf (header, "Version %s  nspectra %d NWAVE_IONIZ %d NWAVE_EXTRACT %d NWAVE_MAX %d polarization %d\n", VERSION, nspectra,
+           NWAVE_IONIZ, NWAVE_EXTRACT, NWAVE_MAX, modes.polarization);
 
   count = (int) fwrite (header, sizeof (header), 1, fptr);
   count += (int) fwrite (xxspec, sizeof (spectrum_dummy), nspectra, fptr);
@@ -565,6 +565,11 @@ spec_save (char filename[])
     count += (int) fwrite (xxspec[i].lf, sizeof (*xxspec[i].lf), NWAVE_MAX, fptr);
     count += (int) fwrite (xxspec[i].f_wind, sizeof (*xxspec[i].f_wind), NWAVE_MAX, fptr);
     count += (int) fwrite (xxspec[i].lf_wind, sizeof (*xxspec[i].lf_wind), NWAVE_MAX, fptr);
+  }
+
+  if (modes.polarization)
+  {
+    count += pol_spectra_write (fptr);
   }
 
   fclose (fptr);
@@ -600,6 +605,7 @@ spec_read (char filename[])
 {
   FILE *fptr;
   int nhead, nwave_ioniz_check;
+  int ipol;
   int count;
   int i;
   char header[LINELENGTH];
@@ -613,8 +619,11 @@ spec_read (char filename[])
 
   count = (int) fread (header, sizeof (header), 1, fptr);
 
-  nhead = sscanf (header, "%*s %s %*s %d %*s %d %*s %d %*s %d", version, &nspectra, &nwave_ioniz_check, &NWAVE_EXTRACT, &NWAVE_MAX);
-  if (nhead != 5)
+  /* Files written before polarization was added have 5 items in the header */
+  ipol = FALSE;
+  nhead = sscanf (header, "%*s %s %*s %d %*s %d %*s %d %*s %d %*s %d", version, &nspectra, &nwave_ioniz_check, &NWAVE_EXTRACT,
+                  &NWAVE_MAX, &ipol);
+  if (nhead != 5 && nhead != 6)
   {
     Error ("Incorrect header format in %s\n", files.specsave);
     Exit (EXIT_FAILURE);
@@ -649,6 +658,11 @@ spec_read (char filename[])
     count += (int) fread (xxspec[i].lf, sizeof (*xxspec[i].lf), NWAVE_MAX, fptr);
     count += (int) fread (xxspec[i].f_wind, sizeof (*xxspec[i].f_wind), NWAVE_MAX, fptr);
     count += (int) fread (xxspec[i].lf_wind, sizeof (*xxspec[i].lf_wind), NWAVE_MAX, fptr);
+  }
+
+  if (ipol)
+  {
+    count += pol_spectra_read (fptr, nspectra - MSPEC);
   }
 
   fclose (fptr);
