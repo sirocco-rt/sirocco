@@ -82,7 +82,7 @@ matom (PhotPtr p, int *nres, int *escape)
   double t_e, ne;
   double bb_cont, choice, bf_cont;
   WindPtr one;
-  double rad_rate, coll_rate, lower_density, density_ratio;
+  double rad_rate, coll_rate;
   PlasmaPtr xplasma;
   MacroPtr mplasma;
   int z;
@@ -103,8 +103,6 @@ matom (PhotPtr p, int *nres, int *escape)
   t_e = xplasma->state.t_e;
   ne = xplasma->state.ne;
 
-  /* these are used later for stimulated recomb */
-  lower_density = density_ratio = 0.0;
 
 
   /* The first step is to identify the configuration that has been excited.
@@ -272,16 +270,11 @@ matom (PhotPtr p, int *nres, int *escape)
            gamma is the photoionisation rate. Stimulated recombination also included. */
         cont_ptr = &phot_top[xconfig[uplvl].bfu_jump[n]];       //pointer to continuum
 
-        /* first let us take care of the situation where the lower level is zero or close to zero */
-        lower_density = den_config (xplasma, cont_ptr->nlev);
-        if (lower_density >= DENSITY_PHOT_MIN)
-        {
-          density_ratio = den_config (xplasma, cont_ptr->uplev) / lower_density;
-        }
-        else
-          density_ratio = 0.0;
-
-        jprbs_known[uplvl][m] = jprbs[m] = (mplasma->state.gamma_old[xconfig[uplvl].bfu_indx_first + n] - (mplasma->state.alpha_st_old[xconfig[uplvl].bfu_indx_first + n] * xplasma->state.ne * density_ratio) + (q_ioniz (cont_ptr, t_e) * ne)) * xconfig[uplvl].ex;   //energy of lower state
+        // jumping probability, so uses energy of lower state 
+        jprbs_known[uplvl][m] = jprbs[m] =
+          (mplasma->state.gamma_old[xconfig[uplvl].bfu_indx_first + n] -
+           (mplasma->state.alpha_st_old[xconfig[uplvl].bfu_indx_first + n] * stim_recomb_factor (xplasma, cont_ptr)) +
+           (q_ioniz (cont_ptr, t_e) * ne)) * xconfig[uplvl].ex;
 
         /* this error condition can happen in unconverged hot cells where T_R >> T_E.
            for the moment we set to 0 and hope spontaneous recombiantion takes care of things */
@@ -529,6 +522,30 @@ int temp_choice;                //choice of type of calcualation for alpha_sp
 
 
 
+
+/**********************************************************/
+/**
+ * @brief the stimulated-recombination factor n_e n_u / n_l of a bf continuum
+ *
+ * @param [in] PlasmaPtr xplasma the plasma cell
+ * @param [in] struct topbase_phot cont_ptr the continuum
+ * @return n_e n_u / n_l, with n_l the lower (ionizing) and n_u the upper (recombined-from) level density; 0 if n_l <= 0
+ *
+ * @details
+ * The net photoionization rate per lower-level ion is gamma - alpha_st * stim_recomb_factor. It is the one
+ * definition used by matom, macro_accelerate and scatter, which clip a negative net rate to zero, in the same
+ * way as the bb stimulated-emission correction in normalise_macro_estimators.
+ **********************************************************/
+
+double
+stim_recomb_factor (PlasmaPtr xplasma, struct topbase_phot *cont_ptr)
+{
+  double lower_density = den_config (xplasma, cont_ptr->nlev);
+
+  if (lower_density <= 0.0)
+    return (0.0);
+  return (xplasma->state.ne * den_config (xplasma, cont_ptr->uplev) / lower_density);
+}
 
 /**********************************************************/
 /**

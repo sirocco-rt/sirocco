@@ -38,7 +38,8 @@ TEST_SOURCES = \
 	tests/test_compton.c \
 	tests/test_define_wind.c \
 	tests/test_run_mode.c \
-	tests/test_translate.c
+	tests/test_translate.c \
+	tests/test_macro_estimators.c
 
 # Using absolute paths
 SIROCCO_SOURCES := $(patsubst %,$(SIROCCO)/source/%, $(SIROCCO_SOURCES))

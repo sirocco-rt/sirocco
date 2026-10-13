@@ -18,7 +18,7 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-printf "Configuring Makefile for Python radiative transfer code\n"
+printf "Configuring Makefile for Sirocco radiative transfer code\n"
 
 printf "Checking for mpicc..."
 if hash mpicc 2>/dev/null; then

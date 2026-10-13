@@ -134,6 +134,8 @@ int cylind3d_extend_density(int ndom, WindPtr w);
 double cylind3d_ds_in_cell(int ndom, PhotPtr p);
 double ds_phi_boundary(double phi0, PhotPtr p);
 /* define_wind.c */
+void set_cell_velocity_gradient(WindPtr cell);
+void set_cell_dvds_and_gamma(WindPtr cell);
 void define_wind(void);
 /* density.c */
 double get_ion_density(int ndom, double x[], int nion);
@@ -188,9 +190,11 @@ int bf_estimators_increment(WindPtr one, PhotPtr p, double ds);
 int bb_estimators_increment(WindPtr one, PhotPtr p, double tau_sobolev, double dvds, int nn);
 int normalise_macro_estimators(PlasmaPtr xplasma);
 double total_fb_matoms(PlasmaPtr xplasma, double t_e, double f1, double f2);
+double cooling_di_matoms(PlasmaPtr xplasma, double t_e, double f1, double f2);
 double total_bb_cooling(PlasmaPtr xplasma, double t_e);
 double macro_bb_heating(PlasmaPtr xplasma, double t_e);
-double macro_bf_heating(PlasmaPtr xplasma, double t_e);
+double macro_photo_heating(PlasmaPtr xplasma, double t_e);
+double macro_qrecomb_heating(PlasmaPtr xplasma, double t_e);
 int bb_simple_heat(PlasmaPtr xplasma, PhotPtr p, double tau_sobolev, int nn);
 int check_stimulated_recomb(PlasmaPtr xplasma);
 int get_dilute_estimators(PlasmaPtr xplasma);
@@ -366,6 +370,7 @@ void macro_pops_copy_to_xplasma(PlasmaPtr xplasma, int index_element, double *po
 int matom(PhotPtr p, int *nres, int *escape);
 double b12(struct lines *line_ptr);
 double xalpha_sp(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice);
+double stim_recomb_factor(PlasmaPtr xplasma, struct topbase_phot *cont_ptr);
 double alpha_sp(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice);
 double scaled_alpha_sp_integral_band_limited(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice, double freq_min, double freq_max);
 double alpha_sp_integrand(double freq, void *params);
@@ -475,6 +480,7 @@ int opar(char filename[]);
 int add_par(char filename[]);
 int cpar(char filename[]);
 int rdpar_init(void);
+char *check_and_fix_string(char *s);
 int string_process(char question[], char dummy[]);
 int string_process_from_command_line(char question[], char dummy[]);
 int string_process_from_file(char question[], char dummy[]);
@@ -701,6 +707,8 @@ int get_random_location(int n, double x[]);
 int zero_scatters(void);
 int check_corners_inwind(int n);
 int check_grid(void);
+/* wind_update_model.c */
+int update_wind_from_model(int ndom, char *filename);
 /* wind_updates2d.c */
 int wind_update(WindPtr w);
 int report_bf_simple_ionpool(void);
@@ -735,7 +743,6 @@ int create_spec_table(int ndom, char rootname[]);
 int create_detailed_cell_spec_table(int ncell, char rootname[]);
 int create_big_detailed_spec_table(int ndom, char *rootname);
 /* xlog.c */
-void print_memory_usage(const char *label);
 int Log_init(char *filename);
 int Log_append(char *filename);
 void Log_close(void);

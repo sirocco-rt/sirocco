@@ -245,6 +245,24 @@ Example format (first two cells of a small SPH3D grid):
    0  0  0    -1    1.4e9   0.0     0.0     0.0     0.0     0.0     0.0     0.0    0.0
    0  0  1    -1    1.4e9   0.0     90.0    0.0     0.0     0.0     0.0     0.0    0.0
 
+Density and velocity conventions
+--------------------------------
+
+The density :math:`\rho` in a model file is the **volume-averaged** mass
+density, and both it and the velocities are in the observer frame. If the wind
+is clumped (``Wind.filling_factor`` :math:`f<1`), SIROCCO works with the
+density inside the clumps, which it calculates as
+
+.. math ::
+    \rho_{\rm clump} = \frac{\rho}{f\,\gamma},
+
+where :math:`\gamma` is the Lorentz factor at the cell centre (1 unless full
+special relativity is used, the default). The volume filled with material is
+:math:`f` times the volume of the cell.
+
+The same conventions apply when a model from a hydrodynamics code is used to
+update an existing wind save; see :ref:`hydro_coupling`.
+
 Setting Wind Temperatures
 -------------------------
 
@@ -320,6 +338,14 @@ spherical, cylindrical, polar, cyl3d, and sph3d.
 
 * Automatically runs ``check_import_model.py`` on the output file and prints a
   validation summary.
+
+.. warning::
+   Because the import file is created directly from the master table,
+   the resolution of the model is limited by the precision of the numbers saved in that table
+   (see e.g. `Issue #1188 <https://github.com/sirocco-rt/sirocco/issues/1188>`__). Currently radii
+   and velocities are saved to 6 decimal places in exponential notation, which is sufficient for most models, but
+   if your model is super thin or accelerates very slowly -- e.g. :math:`\Delta r / r \lesssim 10^{-6}` --
+   then you may need to modify the code in windsave2table_sub.c to increase the precision of the output.
 
 Validating an import file
 --------------------------

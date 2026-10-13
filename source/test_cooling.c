@@ -223,11 +223,16 @@ xcalc_te (PlasmaPtr xplasma, double tmin, double tmax)
 
   xplasma->est.heat_tot -= xplasma->est.heat_photo_macro;
   xplasma->est.heat_photo -= xplasma->est.heat_photo_macro;
+  xplasma->est.heat_tot -= xplasma->est.heat_qrecomb_macro;
+  xplasma->est.heat_photo -= xplasma->est.heat_qrecomb_macro;
 
-  xplasma->est.heat_photo_macro = macro_bf_heating (xplasma, xplasma->state.t_e);
+  xplasma->est.heat_photo_macro = macro_photo_heating (xplasma, xplasma->state.t_e);
+  xplasma->est.heat_qrecomb_macro = macro_qrecomb_heating (xplasma, xplasma->state.t_e);
 
   xplasma->est.heat_tot += xplasma->est.heat_photo_macro;
   xplasma->est.heat_photo += xplasma->est.heat_photo_macro;
+  xplasma->est.heat_tot += xplasma->est.heat_qrecomb_macro;
+  xplasma->est.heat_photo += xplasma->est.heat_qrecomb_macro;
 
 
   return (xplasma->state.t_e);
