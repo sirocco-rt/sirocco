@@ -86,7 +86,7 @@ decomposition of ``plasma_dummy`` and ``macro_dummy``:
      - Memory in v1.2
    * - ``state``
      - Ion populations, spectral model params
-     - **Shared**
+     - **Shared (for arrays), Private (for scalars)**
      - Private (duplicated)
    * - ``est`` (estimators)
      - Radiation field estimators, heating rates
@@ -94,13 +94,47 @@ decomposition of ``plasma_dummy`` and ``macro_dummy``:
      - Private
    * - ``derived``
      - Cooling rates, luminosities, transition matrix
-     - **Shared**
+     - **Shared (for arrays), Private (for scalars)**
      - Private (duplicated)
 
 The net effect is that for a model with *N* plasma cells, *I* ions, and *R*
 ranks on one node, the dominant variable-length state and derived arrays
 (roughly ``N × I × 14 × 8`` bytes) exist only once per node instead of *R*
 times.  See `Memory savings`_ below for worked examples.
+
+To be more explicit, with more than one MPI rank, the following live in node-shared memory
+(``MPI_Win_allocate_shared``).  Every rank on a node reads and writes the
+**same physical memory**:
+
+- the whole wind array ``wmain[]``, including its scalar fields
+- every *pointer* (array) field of ``plasmamain[n].state`` and
+  ``plasmamain[n].derived``, e.g. ``state.density[]``;
+- every *pointer* field of ``macromain[n].state`` and ``macromain[n].derived``,
+  e.g. ``state.jbar_old[]``, ``derived.matom_emiss[]``;
+- the macro-atom transition matrix block behind ``matom_matrix``.
+
+The following are **private** (one copy per rank, as in version 1.x):
+
+- the ``plasmamain[]`` and ``macromain[]`` arrays of structures themselves,
+  so every **scalar** field is private, including those in ``state`` and
+  ``derived`` such as ``plasmamain[n].state.t_e``, ``state.ne`` and
+  ``state.rho``;
+- every field of the ``est`` sub-structures (scalars and arrays);
+- the exceptions listed in below (``scatters``,
+  ``xscatters``, ``n_bf_in``, ``n_bf_out``), photon stores, spectra and all
+  other globals.
+
+.. warning::
+
+   The split is by **storage**, not by sub-structure.
+   ``plasmamain[n].state.rho`` is private but
+   ``plasmamain[n].state.density[i]`` is shared, even though both are "state".
+   A loop that updates both behaves differently for each.
+
+With one rank (or a build without ``MPI_ON``), everything is allocated with
+``calloc`` and the code behaves exactly as it did before version 2.0.  None of
+the problems below can occur in serial, which is why serial tests cannot catch
+them.
 
 MPI communication files
 =======================
@@ -400,6 +434,10 @@ variables track the node topology:
 - ``node_rank`` — rank index within the node (0 = node leader)
 - ``node_size`` — number of ranks on the node
 
+If SIROCCO is run with the ``-no-shared-memory`` switch, each rank is instead
+placed in a node communicator of its own, so nothing is shared and
+every rank holds a private copy of all grids (see :doc:`shared_memory_safety`).
+
 Contiguous block allocation
 ---------------------------
 
@@ -507,6 +545,12 @@ before proceeding.  These barriers appear at the end of:
 - ``broadcast_updated_macro_atom_properties()``
 - ``broadcast_macro_atom_emissivities()``
 - ``reduce_macro_atom_estimators()``
+
+Barriers are also needed *before* filling a shared array that every rank has
+just reset.  ``get_matom_f()`` and ``get_matom_f_accelerate()``
+(``macro_gen_f.c``) zero ``matom_emiss`` for all cells on every rank and then
+fill only their own cells, so an ``MPI_Barrier(node_comm)`` separates the two
+loops.  See :doc:`shared_memory_safety` for this and other patterns to avoid.
 
 A barrier is also placed in ``calloc_wind()`` (``gridwind.c``) immediately
 after the node leader's ``memset`` that zero-initialises the shared ``wmain``
@@ -629,64 +673,28 @@ small increase in Allreduce call overhead.
 Platform differences: macOS vs Linux
 =====================================
 
-The shared-memory code paths behave differently on macOS and Linux.  Because
-of this, certain classes of bug are only visible on Linux, and **any change to
-the shared-memory allocation or synchronisation logic must be tested on both
-platforms** before merging.
+On both macOS and Linux, ``wmain`` and the plasma and macro-atom arrays
+listed above are allocated with ``MPI_Win_allocate_shared``, so the same code
+paths and the same races are possible on both.  (An earlier version of the
+development branch gave each rank a private ``wmain`` on macOS, guarded by
+``#ifdef __APPLE__``; that fallback has been removed.)
 
-macOS behaviour
----------------
+The platforms still differ in ways that matter for testing:
 
-On macOS with OpenMPI 5.x, ``MPI_Win_allocate_shared`` has two known
-limitations:
-
-1. **Permission fault (SEGV_ACCERR).**  Non-allocating ranks receive a window
-   pointer that is mapped read-only, so the first write from any rank other
-   than the node leader causes a ``SEGV_ACCERR`` (signal code 2, "address has
-   wrong permissions").
-
-2. **Tiny shared-memory limit.**  The ``kern.sysv.shmmax`` kernel parameter
-   defaults to 4 MB on macOS, far smaller than a typical wind grid.
-
-As a result, the ``wmain`` wind array uses a **private** ``calloc`` per rank
-on macOS (guarded by ``#ifdef __APPLE__`` in ``calloc_wind()`` and
-``free_wind_grid()``).  Each rank holds its own independent copy, kept in sync
-by ``broadcast_wind_grid()``.
-
-The plasma and macro-atom dynamic arrays (allocated by
-``calloc_dyn_plasma()`` and ``calloc_estimators()``) still use
-``MPI_Win_allocate_shared`` on macOS via ``alloc_block_double()`` /
-``alloc_block_int()``.  Whether these work correctly on macOS under all
-OpenMPI versions has not been fully audited; if macOS ``SEGV_ACCERR`` faults
-re-emerge for plasma arrays, the same ``#ifdef __APPLE__`` fallback pattern
-should be applied.
-
-Linux behaviour
----------------
-
-On Linux, ``MPI_Win_allocate_shared`` works as specified: all node-local ranks
-receive a pointer to the same physical pages.  Both ``wmain`` and the
-plasma/macro dynamic arrays are therefore genuinely shared in memory — one
-physical copy per node, not per rank.
-
-Consequences for testing and debugging
----------------------------------------
-
-Because macOS uses a private copy of ``wmain`` per rank, **race conditions in
-the shared wind-grid code path are invisible on macOS**.  Specifically:
-
-- Missing ``MPI_Barrier(node_comm)`` calls after shared writes to ``wmain``
-  (e.g. the barriers in ``calloc_wind()`` and ``broadcast_wind_grid()``) have
-  no effect on macOS but are essential on Linux.  Without them, a rank can
-  proceed past a broadcast and read stale zero-initialised memory, producing
-  errors such as *"wind cell has zero volume but flagged inwind"* or silent
-  wrong results.
-
-- Similarly, any new code that allocates or writes to a shared MPI window must
-  include a ``MPI_Barrier(node_comm)`` before any rank reads from that window.
-  This requirement will not be caught by macOS testing alone.
+- **Memory ordering.**  Apple Silicon (ARM) orders memory more weakly than
+  x86.  A missing or misplaced barrier is *more* likely to show up as
+  run-to-run differences on an ARM Mac than on an x86 Linux machine, so ARM
+  is the stricter test of synchronisation.
+- **Temporary directory.**  Open MPI places its session files (including
+  shared-memory backing files and sockets) under ``$TMPDIR``.  The default
+  macOS ``$TMPDIR`` path can be too long for this; if ``mpirun`` fails at
+  start-up, set ``export TMPDIR=/tmp``.
+- **Permission faults.**  Earlier builds on macOS with Open MPI 5 saw a
+  ``SEGV_ACCERR`` (signal code 2, "address has wrong permissions") on the
+  first write to a shared window from a rank other than the node leader.  If
+  this reappears, report it together with the Open MPI version.
 
 **Rule of thumb:** whenever you add, remove, or reorder a ``MPI_Barrier``,
-``MPI_Win_allocate_shared``, ``MPI_Win_shared_query``, or ``memset`` on a
-shared block, run the full regression suite on Linux before merging.  Mac
-testing is sufficient for everything else in the MPI layer.
+``MPI_Win_allocate_shared``, ``MPI_Win_shared_query``, or a write to a shared
+block, run the tests described in :doc:`shared_memory_safety` on x86 Linux
+*and* on an ARM machine (for example an Apple Silicon Mac) before merging.

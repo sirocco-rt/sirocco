@@ -113,6 +113,12 @@ which may be useful in certain special cases.  These include:
 -no-matrix-storage
   Do not store macro-atom transition matrices if using the macro-atom line transfer and the matrix matom_transition_mode.
 
+-no-shared-memory
+  Give every MPI process its own copy of the wind, plasma and macro-atom grids instead of
+  sharing one copy between the processes on each node.  Results are identical; only memory
+  use changes (it goes up).  Use this if you suspect shared memory is causing problems on
+  your system.
+
 -ignore_partial_cells
   Ignore wind cells that are only partially filled by the wind (This is now the default)
 

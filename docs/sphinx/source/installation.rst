@@ -101,6 +101,19 @@ With mpi installed (and after recompiling with mpicc, which is the default) one 
 
 where  -np followed by a number designates the number of threads assigned.
 
+From version 2.0, Sirocco underwent a shared memory refactor. 
+Processes running on the same machine (node) share a single
+copy of the large wind, plasma and macro-atom arrays, to reduce memory use
+for large models.  If you want to test whether this is causing a problem or 
+whether a new code change introduces an issue under shared memory, you can 
+default to non-shared behaviour (i.e private memory)  with the ``-no-shared-memory``
+switch:
+
+.. code:: bash
+
+    $ mpirun -np 8  sirocco -no-shared-memory root.pf
+
+Results with and without this switch should be identical, with only memory use changing
 
 Auxiliary programs
 --------------------------
