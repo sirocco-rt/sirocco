@@ -579,3 +579,298 @@ pol_spectra_reduce (void)
 #endif
   return (0);
 }
+
+
+
+/**********************************************************/
+/**
+ * @brief      Whether photons should be scattered with polarization
+ *
+ * @return     TRUE if modes.polarization is set and this is a spectral cycle
+ *
+ * @details
+ * The ionization cycles are left exactly as they were, including
+ * the sequence of random numbers.
+ *
+ **********************************************************/
+
+int
+pol_active (void)
+{
+  return (modes.polarization && geo.ioniz_or_extract == CYCLE_EXTRACT);
+}
+
+
+
+/**********************************************************/
+/**
+ * @brief      Draw cos(Theta) from the Thomson (dipole) distribution
+ *
+ * @return     cos(Theta), distributed as (3/8)(1 + mu^2)
+ *
+ * @details
+ * The CDF is inverted exactly: mu^3 + 3 mu - (8 xi - 4) = 0 has the
+ * single real root
+ *
+ *     mu = cbrt(A + sqrt(A^2 + 1)) + cbrt(A - sqrt(A^2 + 1)),  A = 4 xi - 2
+ *
+ * This is also the marginal distribution of Theta for polarized light,
+ * because the terms in phi average to zero.
+ *
+ **********************************************************/
+
+double
+pol_thomson_cos (void)
+{
+  double a, r;
+
+  a = 4. * random_number (0.0, 1.0) - 2.;
+  r = sqrt (a * a + 1.);
+  return (cbrt (a + r) + cbrt (a - r));
+}
+
+
+
+/**********************************************************/
+/**
+ * @brief      The electron-scattering phase matrix applied to a Stokes vector
+ *
+ * @param [in] double  c   cos(Theta), Theta the scattering angle
+ * @param [in] double  eps   nu_out/nu_in; 1 for Thomson scattering
+ * @param [in] double  q_perp   Q/I of the incoming photon, referred to e_perp,
+ * the normal to the scattering plane
+ * @param [in] double  u_perp   U/I, referred to e_perp
+ * @param [out] double  *q_out   Q/I of the scattered photon, referred to e_perp
+ * @param [out] double  *u_out   U/I of the scattered photon, referred to e_perp
+ * @return     D/P11, the ratio of the scattered intensity in this direction to
+ * that for unpolarized light
+ *
+ * @details
+ * With e_perp as the reference axis the (Fano) matrix has
+ *
+ *     P11 = eps + 1/eps - s^2,  P12 = P21 = s^2,  P22 = 1 + c^2,  P33 = 2c
+ *
+ * which for eps = 1 is the Thomson matrix, P11 = 1 + c^2.  The
+ * scattered intensity is proportional to D = P11 + s^2 q_perp.
+ *
+ **********************************************************/
+
+double
+pol_es_matrix (double c, double eps, double q_perp, double u_perp, double *q_out, double *u_out)
+{
+  double s2, p11, d;
+
+  s2 = 1. - c * c;
+  p11 = eps + 1. / eps - s2;
+  d = p11 + s2 * q_perp;
+
+  *q_out = (s2 + (1. + c * c) * q_perp) / d;
+  *u_out = 2. * c * u_perp / d;
+
+  return (d / p11);
+}
+
+
+
+/**********************************************************/
+/**
+ * @brief      Choose the azimuth of an electron scatter and set the new
+ * direction and polarization of the photon
+ *
+ * @param [in, out] PhotPtr  p   The photon, with its incoming direction and
+ * polarization; on return its new direction and polarization
+ * @param [in] double  c   cos(Theta), already drawn from the unpolarized
+ * distribution (which is the exact marginal distribution of Theta)
+ * @param [in] double  eps   nu_out/nu_in; 1 for Thomson scattering
+ * @return     Always returns 0
+ *
+ * @details
+ * phi, the angle of e_perp measured from the photon's e1 toward e2,
+ * is drawn from the conditional distribution given Theta,
+ *
+ *     p(phi | Theta) ~ 1 + a (q cos 2phi + u sin 2phi),  a = s^2 / P11,
+ *
+ * by rejection with the envelope 1 + a sqrt(q^2 + u^2).  The new
+ * direction is c n + s (n x e_perp), so e_perp is perpendicular to
+ * both directions.  The weight does not change, because the
+ * direction is drawn from the exact phase function.
+ *
+ **********************************************************/
+
+int
+pol_scatter_es (PhotPtr p, double c, double eps)
+{
+  double e1[3], e2[3], e_perp[3], ne[3], n_new[3];
+  double s, s2, a, pmax, phi, f;
+  double q_perp, u_perp, q_out, u_out;
+  int i;
+
+  if (c > 1.)
+    c = 1.;
+  else if (c < -1.)
+    c = -1.;
+
+  s2 = 1. - c * c;
+  s = sqrt (s2);
+  a = s2 / (eps + 1. / eps - s2);
+  pmax = 1. + a * sqrt (p->q * p->q + p->u * p->u);
+
+  do
+  {
+    phi = random_number (0.0, 2. * M_PI);
+    f = 1. + a * (p->q * cos (2. * phi) + p->u * sin (2. * phi));
+  }
+  while (random_number (0.0, 1.0) * pmax > f);
+
+  pol_basis (p->lmn, e1, e2);
+  for (i = 0; i < 3; i++)
+  {
+    e_perp[i] = cos (phi) * e1[i] + sin (phi) * e2[i];
+  }
+  cross (p->lmn, e_perp, ne);
+  for (i = 0; i < 3; i++)
+  {
+    n_new[i] = c * p->lmn[i] + s * ne[i];
+  }
+  renorm (n_new, 1.0);
+
+  q_perp = p->q;
+  u_perp = p->u;
+  pol_rotate (&q_perp, &u_perp, phi);
+  pol_es_matrix (c, eps, q_perp, u_perp, &q_out, &u_out);
+
+  stuff_v (n_new, p->lmn);
+  pol_from_axis (p, e_perp, q_out, u_out);
+
+  return (0);
+}
+
+
+
+/**********************************************************/
+/**
+ * @brief      Polarization of an electron-scattered photon peeled off toward
+ * an observer
+ *
+ * @param [in] PhotPtr  p_in   The photon before the scatter
+ * @param [in, out] PhotPtr  pp   The photon to be extracted, already pointed
+ * toward the observer and reweighted for unpolarized scattering (and, for
+ * Compton scattering, with its frequency changed)
+ * @return     Always returns 0
+ *
+ * @details
+ * The weight of pp is multiplied by D/P11, and its q and u are set
+ * from the phase matrix.  For unpolarized incoming light D/P11 = 1, so
+ * the weight is unchanged, but the scattered light is polarized.
+ *
+ * If the observer is (almost) exactly forward or backward, the
+ * scattering plane is undefined, and e1 of the incoming photon is used
+ * for e_perp.
+ *
+ **********************************************************/
+
+int
+pol_peel_es (PhotPtr p_in, PhotPtr pp)
+{
+  double e_perp[3], e2[3];
+  double c, eps;
+  double q_perp, u_perp, q_out, u_out;
+
+  if (modes.polarization == FALSE)
+  {
+    return (0);
+  }
+
+  c = dot (p_in->lmn, pp->lmn);
+  if (c > 1.)
+    c = 1.;
+  else if (c < -1.)
+    c = -1.;
+  eps = pp->freq / p_in->freq;
+
+  cross (p_in->lmn, pp->lmn, e_perp);
+  if (length (e_perp) < POL_EPS)
+  {
+    pol_basis (p_in->lmn, e_perp, e2);
+  }
+  renorm (e_perp, 1.0);
+
+  q_perp = p_in->q;
+  u_perp = p_in->u;
+  pol_rotate (&q_perp, &u_perp, pol_axis_angle (p_in->lmn, e_perp));
+  pp->w *= pol_es_matrix (c, eps, q_perp, u_perp, &q_out, &u_out);
+
+  pol_from_axis (pp, e_perp, q_out, u_out);
+
+  return (0);
+}
+
+
+
+/**********************************************************/
+/**
+ * @brief      Re-express the polarization of a photon whose direction has been
+ * changed by a Lorentz transformation
+ *
+ * @param [in] double  n_in[]   The direction before the transformation
+ * @param [in] double  q   Q/I before the transformation, against the default
+ * axis for n_in
+ * @param [in] double  u   U/I before the transformation
+ * @param [in] double  v[]   The velocity (cm/s) of the frame being transformed into
+ * @param [in, out] PhotPtr  p_out   The transformed photon, whose lmn has
+ * already been changed; its q and u are set
+ * @return     Always returns 0
+ *
+ * @details
+ * Aberration is conformal, so q and u are unchanged against a reference
+ * axis that is carried through the transformation like the electric field,
+ *
+ *     e' = gamma (e + beta x (n x e)) - gamma^2/(gamma+1) beta (beta . e),
+ *
+ * but that axis is not the default axis for the new direction, so q and
+ * u are rotated onto it.  e' is made exactly perpendicular to the new
+ * direction before it is used.
+ *
+ **********************************************************/
+
+int
+pol_lorentz (double n_in[], double q, double u, double v[], PhotPtr p_out)
+{
+  double e1[3], e2[3], b[3], bxb[3], beta[3], e[3];
+  double gamma, bdote;
+  int i;
+
+  p_out->q = q;
+  p_out->u = u;
+  if (modes.polarization == FALSE || (q == 0 && u == 0))
+  {
+    return (0);
+  }
+
+  for (i = 0; i < 3; i++)
+  {
+    beta[i] = v[i] / VLIGHT;
+  }
+  gamma = 1. / sqrt (1. - dot (beta, beta));
+
+  pol_basis (n_in, e1, e2);
+  cross (n_in, e1, b);
+  cross (beta, b, bxb);
+  bdote = dot (beta, e1);
+  for (i = 0; i < 3; i++)
+  {
+    e[i] = gamma * (e1[i] + bxb[i]) - gamma * gamma / (gamma + 1.) * beta[i] * bdote;
+  }
+
+  /* Make e exactly perpendicular to the new direction */
+  bdote = dot (e, p_out->lmn);
+  for (i = 0; i < 3; i++)
+  {
+    e[i] -= bdote * p_out->lmn[i];
+  }
+  renorm (e, 1.0);
+
+  pol_from_axis (p_out, e, q, u);
+
+  return (0);
+}

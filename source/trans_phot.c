@@ -283,6 +283,7 @@ trans_phot_single (WindPtr w, PhotPtr p, int iextract)
         }
         else
           randvcos (pp.lmn, normal);
+        pp.q = pp.u = 0;        // Reflected light is treated as unpolarized
 
         if (move_phot (&pp, DFUDGE))
         {
@@ -362,6 +363,7 @@ trans_phot_single (WindPtr w, PhotPtr p, int iextract)
          */
 
         randvcos (pp.lmn, normal);
+        pp.q = pp.u = 0;        // Reflected light is treated as unpolarized
         p->ds = 0;
         tau_scat = -log (1. - random_number (0.0, 1.0));
         istat = pp.istat = P_INWIND;

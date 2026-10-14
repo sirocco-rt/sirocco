@@ -192,6 +192,137 @@ test_pol_sky_north (void)
 
 /** *******************************************************************************************************************
  *
+ * @brief The electron-scattering matrix: unpolarized light scattered through 90 degrees is fully polarized
+ * perpendicular to the scattering plane, forward scattering keeps the polarization, and Klein-Nishina reduces the
+ * polarization of the scattered light
+ *
+ * ****************************************************************************************************************** */
+
+void
+test_pol_es_matrix (void)
+{
+  double q, u, r;
+
+  r = pol_es_matrix (0.0, 1.0, 0.0, 0.0, &q, &u);
+  CU_ASSERT_DOUBLE_EQUAL (r, 1.0, POL_TOL);
+  CU_ASSERT_DOUBLE_EQUAL (q, 1.0, POL_TOL);
+  CU_ASSERT_DOUBLE_EQUAL (u, 0.0, POL_TOL);
+
+  r = pol_es_matrix (1.0, 1.0, 0.3, -0.2, &q, &u);
+  CU_ASSERT_DOUBLE_EQUAL (r, 1.0, POL_TOL);
+  CU_ASSERT_DOUBLE_EQUAL (q, 0.3, POL_TOL);
+  CU_ASSERT_DOUBLE_EQUAL (u, -0.2, POL_TOL);
+
+  /* Light polarized in the scattering plane does not scatter through 90 degrees */
+  r = pol_es_matrix (0.0, 1.0, -1.0, 0.0, &q, &u);
+  CU_ASSERT_DOUBLE_EQUAL (r, 0.0, POL_TOL);
+
+  /* q = s^2 / (1 + c^2) for Thomson; smaller for eps < 1 */
+  pol_es_matrix (0.5, 1.0, 0.0, 0.0, &q, &u);
+  CU_ASSERT_DOUBLE_EQUAL (q, 0.75 / 1.25, POL_TOL);
+  pol_es_matrix (0.5, 0.5, 0.0, 0.0, &q, &u);
+  CU_ASSERT_DOUBLE_EQUAL (q, 0.75 / (0.5 + 2.0 - 0.75), POL_TOL);
+}
+
+/** *******************************************************************************************************************
+ *
+ * @brief Peel-off: an unpolarized photon peeled at 90 degrees keeps its weight and is fully polarized, with the
+ * electric vector perpendicular to the scattering plane
+ *
+ * ****************************************************************************************************************** */
+
+void
+test_pol_peel_es (void)
+{
+  struct photon p_in, pp;
+  double t[3] = { 0, 1, 0 };
+  double qt, ut;
+
+  modes.polarization = TRUE;
+  init_dummy_phot (&p_in);
+  p_in.lmn[0] = 1;
+  p_in.lmn[1] = 0;
+  p_in.lmn[2] = 0;
+  p_in.freq = 1e15;
+  p_in.w = 1.0;
+
+  stuff_phot (&p_in, &pp);
+  pp.lmn[0] = 0;
+  pp.lmn[1] = 0;
+  pp.lmn[2] = 1;
+
+  pol_peel_es (&p_in, &pp);
+  CU_ASSERT_DOUBLE_EQUAL (pp.w, 1.0, POL_TOL);
+
+  /* The scattering plane is the xz plane, so the electric vector is along y */
+  pol_to_axis (&pp, t, &qt, &ut);
+  CU_ASSERT_DOUBLE_EQUAL (qt, 1.0, POL_TOL);
+  CU_ASSERT_DOUBLE_EQUAL (ut, 0.0, POL_TOL);
+  modes.polarization = FALSE;
+}
+
+/** *******************************************************************************************************************
+ *
+ * @brief Lorentz transformation: the polarization is carried through a boost and its inverse unchanged, and a
+ * pure boost along the photon direction does not change it
+ *
+ * ****************************************************************************************************************** */
+
+void
+test_pol_lorentz (void)
+{
+  struct photon p;
+  double v[3] = { 0.2 * VLIGHT, -0.3 * VLIGHT, 0.1 * VLIGHT };
+  double vback[3];
+  double q0, u0;
+  double e1[3], e2[3], qa, ua, qb, ub;
+
+  int rel_mode_save;
+
+  rel_mode_save = rel_mode;
+  rel_mode = REL_MODE_FULL;     /* REL_MODE_LINEAR does not change the direction */
+  modes.polarization = TRUE;
+  init_dummy_phot (&p);
+  p.lmn[0] = 0.6;
+  p.lmn[1] = 0.0;
+  p.lmn[2] = 0.8;
+  p.freq = 1e15;
+  p.w = 1.0;
+  p.q = q0 = 0.3;
+  p.u = u0 = 0.15;
+
+  lorentz_transform (&p, &p, v);
+  CU_ASSERT (fabs (p.lmn[0] - 0.6) > 0.01);     /* the boost really aberrates the photon */
+  CU_ASSERT (fabs (p.q - q0) > 1e-3);   /* and the default axis changes with it */
+  CU_ASSERT_DOUBLE_EQUAL (p.q * p.q + p.u * p.u, q0 * q0 + u0 * u0, POL_TOL);
+
+  rescale (v, -1, vback);
+  lorentz_transform (&p, &p, vback);
+  CU_ASSERT_DOUBLE_EQUAL (p.lmn[0], 0.6, 1e-10);
+  CU_ASSERT_DOUBLE_EQUAL (p.lmn[2], 0.8, 1e-10);
+  CU_ASSERT_DOUBLE_EQUAL (p.q, q0, 1e-10);
+  CU_ASSERT_DOUBLE_EQUAL (p.u, u0, 1e-10);
+
+  /* A boost along the photon direction changes neither the direction nor the axes */
+  p.lmn[0] = 0.6;
+  p.lmn[1] = 0.0;
+  p.lmn[2] = 0.8;
+  p.q = q0;
+  p.u = u0;
+  rescale (p.lmn, 0.3 * VLIGHT, v);
+  pol_basis (p.lmn, e1, e2);
+  pol_to_axis (&p, e1, &qa, &ua);
+  lorentz_transform (&p, &p, v);
+  pol_to_axis (&p, e1, &qb, &ub);
+  CU_ASSERT_DOUBLE_EQUAL (qa, qb, 1e-10);
+  CU_ASSERT_DOUBLE_EQUAL (ua, ub, 1e-10);
+
+  modes.polarization = FALSE;
+  rel_mode = rel_mode_save;
+}
+
+/** *******************************************************************************************************************
+ *
  * @brief Create the polarization test suite
  *
  * ****************************************************************************************************************** */
@@ -211,7 +342,10 @@ create_polarization_test_suite (void)
   if ((CU_add_test (suite, "Default basis", test_pol_basis) == NULL) ||
       (CU_add_test (suite, "Rotation of the reference axis", test_pol_rotate) == NULL) ||
       (CU_add_test (suite, "Axis round trip", test_pol_axis_round_trip) == NULL) ||
-      (CU_add_test (suite, "North on the sky", test_pol_sky_north) == NULL))
+      (CU_add_test (suite, "North on the sky", test_pol_sky_north) == NULL) ||
+      (CU_add_test (suite, "Electron-scattering matrix", test_pol_es_matrix) == NULL) ||
+      (CU_add_test (suite, "Electron-scattering peel-off", test_pol_peel_es) == NULL) ||
+      (CU_add_test (suite, "Lorentz transformation", test_pol_lorentz) == NULL))
   {
     fprintf (stderr, "Failed to add tests to `Polarization` suite\n");
     CU_cleanup_registry ();

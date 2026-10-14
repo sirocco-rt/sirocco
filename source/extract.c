@@ -328,6 +328,8 @@ extract (WindPtr w, PhotPtr p, int itype)
 
       }
 
+      pol_peel_es (&p_in, &pp);
+
 
 
 

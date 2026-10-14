@@ -454,6 +454,12 @@ int pol_spectra_renormalise(double factor);
 int pol_spectra_write(FILE *fptr);
 int pol_spectra_read(FILE *fptr, int nangle);
 int pol_spectra_reduce(void);
+int pol_active(void);
+double pol_thomson_cos(void);
+double pol_es_matrix(double c, double eps, double q_perp, double u_perp, double *q_out, double *u_out);
+int pol_scatter_es(PhotPtr p, double c, double eps);
+int pol_peel_es(PhotPtr p_in, PhotPtr pp);
+int pol_lorentz(double n_in[], double q, double u, double v[], PhotPtr p_out);
 /* sirocco_extern_init.c */
 /* radiation.c */
 double radiation(PhotPtr p, double ds);
