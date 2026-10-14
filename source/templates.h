@@ -374,6 +374,7 @@ int populate_ion_rate_matrix(double rate_matrix[nions][nions], double pi_rates[n
 /* models_extern_init.c */
 /* para_update.c */
 int get_parallel_nrange(int rank, int ntotal, int nproc, int *my_nmin, int *my_nmax);
+int no_shared_memory_requested(int argc, char *argv[]);
 int get_max_cells_per_rank(const int n_total);
 int calculate_comm_buffer_size(const int num_ints, const int num_doubles);
 /* parse.c */

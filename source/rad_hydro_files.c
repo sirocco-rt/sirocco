@@ -158,8 +158,12 @@ main (int argc, char *argv[])
   MPI_Comm_rank (MPI_COMM_WORLD, &my_rank);
   MPI_Comm_size (MPI_COMM_WORLD, &np_mpi);
 
-  /* Create node-local communicator for MPI-3 shared memory */
-  MPI_Comm_split_type (MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, my_rank, MPI_INFO_NULL, &node_comm);
+  /* Choose whether to use shared memory:  see no_shared_memory_requested() header
+     or code documentation *//
+  if (no_shared_memory_requested (argc, argv))
+    MPI_Comm_split (MPI_COMM_WORLD, my_rank, 0, &node_comm);
+  else
+    MPI_Comm_split_type (MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, my_rank, MPI_INFO_NULL, &node_comm);
   MPI_Comm_rank (node_comm, &node_rank);
   MPI_Comm_size (node_comm, &node_size);
 
