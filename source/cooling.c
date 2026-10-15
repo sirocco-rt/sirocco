@@ -37,12 +37,10 @@
  *
  **********************************************************/
 double
-cooling (xplasma, t)
-     PlasmaPtr xplasma;
-     double t;
+cooling (PlasmaPtr xplasma, double t)
 {
 
-  xplasma->t_e = t;
+  xplasma->state.t_e = t;
 
 
   if (geo.adiabatic)
@@ -53,37 +51,37 @@ cooling (xplasma, t)
          so we use the 'test' temperature to compute it. If div_v is less than zero, we don't do
          anything here, and so the existing value of adiabatic cooling is used - this was computed
          in wind_updates2d before the call to ion_abundances. */
-      xplasma->cool_adiabatic = adiabatic_cooling (&wmain[xplasma->nwind], t);
+      xplasma->derived.cool_adiabatic = adiabatic_cooling (&wmain[xplasma->nwind], t);
     }
   }
 
   else
   {
-    xplasma->cool_adiabatic = 0.0;
+    xplasma->derived.cool_adiabatic = 0.0;
   }
 
 
   /*81c - nsh - we now treat DR cooling as a recombinational process - still unsure as to how to treat emission, so at the moment
      it remains here */
 
-  xplasma->cool_dr = total_fb (xplasma, t, 0, VERY_BIG, FB_REDUCED, INNER_SHELL);
+  xplasma->derived.cool_dr = total_fb (xplasma, t, 0, VERY_BIG, FB_REDUCED, INNER_SHELL);
 
   /* 78b - nsh adding this line in next to calculate direct ionization cooling without generating photons */
 
-  xplasma->cool_di = total_di (&wmain[xplasma->nwind], t);
+  xplasma->derived.cool_di = total_di (&wmain[xplasma->nwind], t);
 
   /* 70g compton cooling calculated here to avoid generating photons */
 
-  xplasma->cool_comp = total_comp (&wmain[xplasma->nwind], t);
+  xplasma->derived.cool_comp = total_comp (&wmain[xplasma->nwind], t);
 
   /* we now call xtotal emission which computes the cooling rates for processes which can, in principle, make photons. */
 
 
-  xplasma->cool_tot =
-    xplasma->cool_adiabatic + xplasma->cool_dr + xplasma->cool_di +
-    xplasma->cool_comp + xtotal_emission (&wmain[xplasma->nwind], 0., VERY_BIG);
+  xplasma->est.cool_tot =
+    xplasma->derived.cool_adiabatic + xplasma->derived.cool_dr + xplasma->derived.cool_di +
+    xplasma->derived.cool_comp + xtotal_emission (&wmain[xplasma->nwind], 0., VERY_BIG);
 
-  return (xplasma->cool_tot);
+  return (xplasma->est.cool_tot);
 }
 
 
@@ -122,10 +120,7 @@ cooling (xplasma, t)
  **********************************************************/
 
 double
-xtotal_emission (one, f1, f2)
-     WindPtr one;               /* WindPtr to a specific cell in the wind */
-     double f1, f2;             /* The minimum and maximum frequency over which the emission is
-                                   integrated */
+xtotal_emission (WindPtr one, double f1, double f2)
 {
   double t_e;
   int nplasma;
@@ -136,46 +131,46 @@ xtotal_emission (one, f1, f2)
   nplasma = one->nplasma;
   xplasma = &plasmamain[nplasma];
 
-  t_e = xplasma->t_e;           // Change so calls to total emission are simpler
+  t_e = xplasma->state.t_e;     // Change so calls to total emission are simpler
 
   if (f2 < f1)
   {
-    xplasma->cool_tot = xplasma->lum_lines = xplasma->lum_ff = xplasma->cool_rr = 0;    //NSH 1108 Zero the new cool_comp variable NSH 1101 - removed
+    xplasma->est.cool_tot = xplasma->derived.lum_lines = xplasma->derived.lum_ff = xplasma->derived.cool_rr = 0;        //NSH 1108 Zero the new cool_comp variable NSH 1101 - removed
   }
   else
   {
     if (geo.rt_mode == RT_MODE_MACRO)   //Switch for macro atoms (SS)
     {
-      xplasma->cool_bf_macro = total_fb_matoms (xplasma, t_e, f1, f2);
+      xplasma->derived.cool_bf_macro = total_fb_matoms (xplasma, t_e, f1, f2);
       /* include macro collisional ionization cooling (this used to be part of total_fb_matoms) */
-      xplasma->cool_di_macro = cooling_di_matoms (xplasma, t_e, f1, f2);
+      xplasma->derived.cool_di_macro = cooling_di_matoms (xplasma, t_e, f1, f2);
 
-
-      xplasma->cool_rr = xplasma->cool_bf_macro + xplasma->cool_di_macro + total_fb (xplasma, t_e, f1, f2, FB_REDUCED, OUTER_SHELL);    //outer shellrecombinations
-      /* The sfurst term here is the fb cooling due to macro ions and the thirdgives
+      xplasma->derived.cool_rr = xplasma->derived.cool_bf_macro + xplasma->derived.cool_di_macro
+        + total_fb (xplasma, t_e, f1, f2, FB_REDUCED, OUTER_SHELL);   //outer shellrecombinations
+      /* The first term here is the fb cooling due to macro ions and the third gives
          the fb cooling due to simple ions. total_fb has been modified to exclude recombinations treated using macro atoms.
-         Note: This the fb_matom call makes no use of f1 or f2. They are passed for now in case they should be used in the future. 
+         Note: This the fb_matom call makes no use of f1 or f2. They are passed for now in case they should be used in the future.
          But they could also be removed. (SS) */
 
-      cooling = xplasma->cool_rr;
-      xplasma->lum_lines = total_bb_cooling (xplasma, t_e);
-      cooling += xplasma->lum_lines;
+      cooling = xplasma->derived.cool_rr;
+      xplasma->derived.lum_lines = total_bb_cooling (xplasma, t_e);
+      cooling += xplasma->derived.lum_lines;
       /* total_bb_cooling gives the total cooling rate due to bb transisions whether they
          are macro atoms or simple ions. */
-      xplasma->lum_ff = total_free (xplasma, t_e, f1, f2);
-      cooling += xplasma->lum_ff;
+      xplasma->derived.lum_ff = total_free (xplasma, t_e, f1, f2);
+      cooling += xplasma->derived.lum_ff;
 
 
     }
     else                        //default (non-macro atoms) (SS)
     {
       /*The line cooling is equal to the line emission */
-      cooling = xplasma->lum_lines = total_line_emission (xplasma, f1, f2);
+      cooling = xplasma->derived.lum_lines = total_line_emission (xplasma, f1, f2);
       /* The free free cooling is equal to the free free emission */
-      cooling += xplasma->lum_ff = total_free (xplasma, t_e, f1, f2);
+      cooling += xplasma->derived.lum_ff = total_free (xplasma, t_e, f1, f2);
       /*The free bound cooling is equal to the recomb rate x the electron energy - the boinding energy - this is computed
          with the FB_REDUCED switch */
-      cooling += xplasma->cool_rr = total_fb (xplasma, t_e, f1, f2, FB_REDUCED, OUTER_SHELL);   //outer shell recombinations
+      cooling += xplasma->derived.cool_rr = total_fb (xplasma, t_e, f1, f2, FB_REDUCED, OUTER_SHELL);   //outer shell recombinations
 
 
     }
@@ -214,11 +209,11 @@ xtotal_emission (one, f1, f2)
  * from all particles.  Adiabatic coolling due to the radiation
  * pressure is not considered.
  *
- * The routine does not populate xplasma->cool_adiabatic.
+ * The routine does not populate xplasma->derived.cool_adiabatic.
  *
  * Note also that this function should only be called
  * if geo.adiabatic == 1, in which case it populates
- * xplasma->cool_adiabatic. This is used in heating and cooling
+ * xplasma->derived.cool_adiabatic. This is used in heating and cooling
  * balance. We also use it as a potential destruction choice for
  * kpkts in which case the kpkt is thrown away by setting its istat
  * to P_ADIABATIC.
@@ -233,9 +228,7 @@ xtotal_emission (one, f1, f2)
  **********************************************************/
 
 double
-adiabatic_cooling (one, t)
-     WindPtr one;
-     double t;
+adiabatic_cooling (WindPtr one, double t)
 {
   double cooling;
   int nplasma, nion;
@@ -245,15 +238,15 @@ adiabatic_cooling (one, t)
   nplasma = one->nplasma;
   xplasma = &plasmamain[nplasma];
 
-  nparticles = xplasma->ne;
+  nparticles = xplasma->state.ne;
 
   /* loop over all ions as they all contribute to the pressure */
   for (nion = 0; nion < nions; nion++)
   {
-    nparticles += xplasma->density[nion];
+    nparticles += xplasma->state.density[nion];
   }
 
-  cooling = nparticles * BOLTZMANN * t * xplasma->vol * one->div_v;
+  cooling = nparticles * BOLTZMANN * t * xplasma->state.vol * one->div_v;
 
   return (cooling);
 }
@@ -305,8 +298,7 @@ adiabatic_cooling (one, t)
 
 
 double
-shock_heating (one)
-     WindPtr one;
+shock_heating (WindPtr one)
 {
   int nplasma;
   double x, r;
@@ -319,7 +311,7 @@ shock_heating (one)
 
   x = geo.shock_factor / (r * r * r * r);
 
-  x *= xplasma->vol;
+  x *= xplasma->state.vol;
 
   return (x);
 }
@@ -394,7 +386,7 @@ wind_cooling (void)
   /* We are going to do this bit in parallel, as cooling evaluates some expensive integrals */
   for (n_plasma = n_start; n_plasma < n_stop; ++n_plasma)
   {
-    cool_tot_cell = cooling (&plasmamain[n_plasma], plasmamain[n_plasma].t_e);
+    cool_tot_cell = cooling (&plasmamain[n_plasma], plasmamain[n_plasma].state.t_e);
     if (cool_tot_cell < 0)
     {
       Error ("wind_cooling: xtotal emission %8.4e is < 0!\n", cool_tot_cell);
@@ -408,26 +400,26 @@ wind_cooling (void)
    * up some numbers */
   for (n_plasma = 0; n_plasma < NPLASMA; ++n_plasma)
   {
-    cool_tot += plasmamain[n_plasma].cool_tot;
-    cool_rr += plasmamain[n_plasma].cool_rr;
-    cool_comp += plasmamain[n_plasma].cool_comp;
-    cool_dr += plasmamain[n_plasma].cool_dr;
-    cool_di += plasmamain[n_plasma].cool_di;
+    cool_tot += plasmamain[n_plasma].est.cool_tot;
+    cool_rr += plasmamain[n_plasma].derived.cool_rr;
+    cool_comp += plasmamain[n_plasma].derived.cool_comp;
+    cool_dr += plasmamain[n_plasma].derived.cool_dr;
+    cool_di += plasmamain[n_plasma].derived.cool_di;
 
-    lum_lines += plasmamain[n_plasma].lum_lines;
-    lum_ff += plasmamain[n_plasma].lum_ff;
+    lum_lines += plasmamain[n_plasma].derived.lum_lines;
+    lum_ff += plasmamain[n_plasma].derived.lum_ff;
 
     // Calculate the total adiabatic heating/cooling separating these into two variables
     if (geo.adiabatic)
     {
 
-      if (plasmamain[n_plasma].cool_adiabatic >= 0.0)
+      if (plasmamain[n_plasma].derived.cool_adiabatic >= 0.0)
       {
-        cool_adiab += plasmamain[n_plasma].cool_adiabatic;
+        cool_adiab += plasmamain[n_plasma].derived.cool_adiabatic;
       }
       else
       {
-        heat_adiab += plasmamain[n_plasma].cool_adiabatic;
+        heat_adiab += plasmamain[n_plasma].derived.cool_adiabatic;
       }
     }
     else
@@ -439,7 +431,7 @@ wind_cooling (void)
     /* Calculate the non-thermal heating (for FU Ori models with extra wind heating) */
     if (geo.nonthermal)
     {
-      nonthermal += plasmamain[n_plasma].heat_shock;
+      nonthermal += plasmamain[n_plasma].derived.heat_shock;
     }
   }
 

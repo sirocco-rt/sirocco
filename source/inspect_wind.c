@@ -23,17 +23,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <sys/stat.h>
 
 #include "atomic.h"
 #include "sirocco.h"
 
+int create_matom_level_map (void);
 
 char inroot[LINELENGTH], outroot[LINELENGTH], model_file[LINELENGTH], folder[LINELENGTH];
 int model_flag, ksl_flag, cmf2obs_flag, obs2cmf_flag;
 
 double line_matom_lum_single (double lum[], PlasmaPtr xplasma, int uplvl);
 int line_matom_lum (int uplvl);
-int create_matom_level_map ();
 
 /**********************************************************/
 /**
@@ -56,14 +57,11 @@ int create_matom_level_map ();
  **********************************************************/
 
 int
-xparse_command_line (argc, argv)
-     int argc;
-     char *argv[];
+xparse_command_line (int argc, char *argv[])
 {
   int j = 0;
   int i;
   char dummy[LINELENGTH];
-  int mkdir ();
   char *fgets_rc;
 
 
@@ -178,16 +176,13 @@ xparse_command_line (argc, argv)
 
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
 
   char infile[LINELENGTH], outfile[LINELENGTH];
   int n, i;
-  FILE *fptr, *fopen ();
+  FILE *fptr;
   int ii, jj, ndom, nnwind;
-  int mkdir ();
 
 
   xparse_command_line (argc, argv);
@@ -246,7 +241,7 @@ main (argc, argv)
 
     for (i = 0; i < nlevels_macro; i++)
     {
-      fprintf (fptr, "%8.2e ", macromain[n].jbar[i]);
+      fprintf (fptr, "%8.2e ", macromain[n].est.jbar[i]);
     }
     fprintf (fptr, "\n");
   }
@@ -264,7 +259,7 @@ main (argc, argv)
 
     for (i = 0; i < nlevels_macro; i++)
     {
-      fprintf (fptr, "%8.2e ", macromain[n].jbar_old[i]);
+      fprintf (fptr, "%8.2e ", macromain[n].state.jbar_old[i]);
     }
     fprintf (fptr, "\n");
   }
@@ -282,7 +277,7 @@ main (argc, argv)
 
     for (i = 0; i < nlevels_macro; i++)
     {
-      fprintf (fptr, "%8.2e ", macromain[n].gamma[i]);
+      fprintf (fptr, "%8.2e ", macromain[n].est.gamma[i]);
     }
     fprintf (fptr, "\n");
   }
@@ -301,7 +296,7 @@ main (argc, argv)
 
     for (i = 0; i < nlevels_macro; i++)
     {
-      fprintf (fptr, "%8.2e ", macromain[n].alpha_st[i]);
+      fprintf (fptr, "%8.2e ", macromain[n].est.alpha_st[i]);
     }
     fprintf (fptr, "\n");
   }
@@ -320,7 +315,7 @@ main (argc, argv)
 
     for (i = 0; i < nlevels_macro; i++)
     {
-      fprintf (fptr, "%8.2e ", macromain[n].recomb_sp[i]);
+      fprintf (fptr, "%8.2e ", macromain[n].est.recomb_sp[i]);
     }
     fprintf (fptr, "\n");
   }
@@ -339,7 +334,7 @@ main (argc, argv)
 
     for (i = 0; i < nlevels_macro; i++)
     {
-      fprintf (fptr, "%8.2e ", macromain[n].matom_abs[i]);
+      fprintf (fptr, "%8.2e ", macromain[n].est.matom_abs[i]);
     }
     fprintf (fptr, "\n");
   }
@@ -358,7 +353,7 @@ main (argc, argv)
 
     for (i = 0; i < nlevels_macro; i++)
     {
-      fprintf (fptr, "%8.2e ", macromain[n].matom_emiss[i]);
+      fprintf (fptr, "%8.2e ", macromain[n].derived.matom_emiss[i]);
     }
     fprintf (fptr, "\n");
   }
@@ -398,7 +393,7 @@ create_matom_level_map ()
 {
   int uplvl, nbbd, n;
   char outfile[LINELENGTH];
-  FILE *fptr, *fopen ();
+  FILE *fptr;
 
   /* open a file in the folder where we store the matom line luminosities */
   sprintf (outfile, "%.200s/line_map.txt", folder);
@@ -430,13 +425,12 @@ create_matom_level_map ()
  **********************************************************/
 
 int
-line_matom_lum (uplvl)
-     int uplvl;
+line_matom_lum (int uplvl)
 {
   int n, nbbd, i, ii, jj, nnwind, ndom, inwind;
   double lum[NBBJUMPS];
   char outfile[LINELENGTH];
-  FILE *fptr, *fopen ();
+  FILE *fptr;
 
   nbbd = xconfig[uplvl].n_bbd_jump;
 
@@ -491,7 +485,7 @@ line_matom_lum (uplvl)
       n = wmain[nnwind].nplasma;
       line_matom_lum_single (lum, &plasmamain[n], uplvl);
       /* print the filled volume */
-      fprintf (fptr, " %13.4e", plasmamain[n].vol);
+      fprintf (fptr, " %13.4e", plasmamain[n].state.vol);
       for (i = 0; i < nbbd; i++)
         fprintf (fptr, " %13.4e", lum[i]);
     }
@@ -516,10 +510,7 @@ line_matom_lum (uplvl)
  **********************************************************/
 
 double
-line_matom_lum_single (lum, xplasma, uplvl)
-     double lum[];
-     PlasmaPtr xplasma;
-     int uplvl;
+line_matom_lum_single (double lum[], PlasmaPtr xplasma, int uplvl)
 {
   int n, nbbd, m;
   double penorm, bb_cont;
@@ -561,7 +552,7 @@ line_matom_lum_single (lum, xplasma, uplvl)
     else
     {
       eprbs[n] = eprbs[n] / penorm;
-      lum[n] = eprbs[n] * macromain[xplasma->nplasma].matom_emiss[uplvl];
+      lum[n] = eprbs[n] * macromain[xplasma->nplasma].derived.matom_emiss[uplvl];
     }
     lum_tot += lum[n];
   }

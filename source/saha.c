@@ -40,9 +40,7 @@
  **********************************************************/
 
 int
-nebular_concentrations (xplasma, mode)
-     PlasmaPtr xplasma;
-     int mode;
+nebular_concentrations (PlasmaPtr xplasma, int mode)
 {
   int m;
 
@@ -144,16 +142,12 @@ nebular_concentrations (xplasma, mode)
  **********************************************************/
 
 int
-concentrations (xplasma, mode)
-     PlasmaPtr xplasma;
-     int mode;
+concentrations (PlasmaPtr xplasma, int mode)
 {
   int nion, niterate;
   double xne, xxne, xnew, xsaha;
   double theta, x;
-  double get_ne ();
   double t, nh;
-  int saha ();
 
 
   // This needs to be moved up into nebular_concentrations given that we
@@ -161,15 +155,15 @@ concentrations (xplasma, mode)
   //
   if (mode == NEBULARMODE_TR)
   {
-    t = xplasma->t_r;
+    t = xplasma->state.t_r;
   }
   else if (mode == NEBULARMODE_TE)
   {
-    t = xplasma->t_e;
+    t = xplasma->state.t_e;
   }
   else if (mode == NEBULARMODE_ML93)
   {
-    t = sqrt (xplasma->t_e * xplasma->t_r);
+    t = sqrt (xplasma->state.t_e * xplasma->state.t_r);
   }
   else
   {
@@ -178,7 +172,7 @@ concentrations (xplasma, mode)
     return (0);
   }
 
-  nh = xplasma->rho * rho2nh;
+  nh = xplasma->state.rho * rho2nh;
 
   /* make an initial estimate of ne based on H alone,  Our guess
      assumes ion[0] is H1.  Note that x below is the fractional
@@ -241,12 +235,12 @@ concentrations (xplasma, mode)
     /*Set some floor so future divisions are sensible */
     for (nion = 0; nion < nions; nion++)
     {
-      if (xplasma->density[nion] < DENSITY_MIN)
-        xplasma->density[nion] = DENSITY_MIN;
+      if (xplasma->state.density[nion] < DENSITY_MIN)
+        xplasma->state.density[nion] = DENSITY_MIN;
     }
 
     /* Now determine the new value of ne from the ion abundances */
-    xnew = get_ne (xplasma->density);
+    xnew = get_ne (xplasma->state.density);
 
     if (xnew < DENSITY_MIN)
       xnew = DENSITY_MIN;
@@ -265,7 +259,7 @@ concentrations (xplasma, mode)
     return (-1);
   }
 
-  xplasma->ne = xnew;
+  xplasma->state.ne = xnew;
   return (0);
 }
 
@@ -299,10 +293,7 @@ concentrations (xplasma, mode)
  **********************************************************/
 
 int
-saha (xplasma, ne, t)
-     PlasmaPtr xplasma;
-     double ne, t;
-
+saha (PlasmaPtr xplasma, double ne, double t)
 {
   double nh;
   int nelem;
@@ -313,10 +304,10 @@ saha (xplasma, ne, t)
   double sum, a, b;
   double big;
 
-  density = xplasma->density;
-  partition = xplasma->partition;
+  density = xplasma->state.density;
+  partition = xplasma->state.partition;
 
-  nh = xplasma->rho * rho2nh;   //LTE
+  nh = xplasma->state.rho * rho2nh;     //LTE
   xsaha = SAHA * pow (t, 1.5);
 
   for (nelem = 0; nelem < nelements; nelem++)
@@ -425,8 +416,7 @@ saha (xplasma, ne, t)
  **********************************************************/
 
 int
-lucy (xplasma)
-     PlasmaPtr xplasma;
+lucy (PlasmaPtr xplasma)
 {
   int nelem, nion, niterate;
   double xne, xnew;
@@ -434,21 +424,21 @@ lucy (xplasma)
   double t_r, nh;
   double t_e, www;
 
-  t_r = xplasma->t_r;
-  t_e = xplasma->t_e;
-  www = xplasma->w;
+  t_r = xplasma->state.t_r;
+  t_e = xplasma->state.t_e;
+  www = xplasma->state.w;
 
 
   /* Initally assume electron density from the LTE densities */
 
-  xne = xplasma->ne;
+  xne = xplasma->state.ne;
   if (xne < DENSITY_MIN)
   {
     Error ("nebular_concentrations: Very low ionization: ne initially %8.2e\n", xne);
     xne = DENSITY_MIN;
   }
 
-  nh = xplasma->rho * rho2nh;   //LTE -- Not clear needed at this level
+  nh = xplasma->state.rho * rho2nh;     //LTE -- Not clear needed at this level
 
   /* Begin iteration loop to find ne */
   niterate = 0;
@@ -461,7 +451,7 @@ lucy (xplasma)
          which are contained in xplasma. These corrected abundances are copied to newden, which
          is transferred over to xplasma when we converge on ne */
 
-      lucy_mazzali1 (nh, t_r, t_e, www, nelem, xplasma->ne, xplasma->density, xne, newden);
+      lucy_mazzali1 (nh, t_r, t_e, www, nelem, xplasma->state.ne, xplasma->state.density, xne, newden);
     }
 
     /* Re solve for the macro atom populations with the current guess for ne */
@@ -481,7 +471,7 @@ lucy (xplasma)
       /* if the ion is being treated by macro_pops then use the populations just computed */
       if ((ion[nion].macro_info == TRUE) && (geo.macro_simple == FALSE) && (geo.macro_ioniz_mode == MACRO_IONIZ_MODE_ESTIMATORS))
       {
-        newden[nion] = xplasma->density[nion];
+        newden[nion] = xplasma->state.density[nion];
       }
 
       /*Set some floor so future divisions are sensible */
@@ -510,13 +500,13 @@ lucy (xplasma)
 
 /* Finally transfer the calculated densities to the real density array */
 
-  xplasma->ne = xnew;
+  xplasma->state.ne = xnew;
   for (nion = 0; nion < nions; nion++)
   {
     /* If statement added here to suppress interference with macro populations (SS Apr 04) */
     if (ion[nion].macro_info == FALSE || geo.macro_ioniz_mode == MACRO_IONIZ_MODE_NO_ESTIMATORS || geo.macro_simple == TRUE)
     {
-      xplasma->density[nion] = newden[nion];
+      xplasma->state.density[nion] = newden[nion];
     }
   }
   return (0);
@@ -559,10 +549,7 @@ lucy (xplasma)
  **********************************************************/
 
 int
-lucy_mazzali1 (nh, t_r, t_e, www, nelem, ne, density, xne, newden)
-     double nh, t_r, t_e, www;
-     int nelem;
-     double ne, density[], xne, newden[];
+lucy_mazzali1 (double nh, double t_r, double t_e, double www, int nelem, double ne, double density[], double xne, double newden[])
 {
   double fudge;
   double fudge2, q;
@@ -725,20 +712,16 @@ int nforce;
  **********************************************************/
 
 int
-fix_concentrations (xplasma, mode)
-     PlasmaPtr xplasma;
-     int mode;                  // 0=saha using tr, 1=saha using te, 2= Lucy & Mazzali
-
+fix_concentrations (PlasmaPtr xplasma, int mode)
 {
   int nelem, nion;
   int n;
-  double get_ne ();
-  FILE *fopen (), *cptr;
+  FILE *cptr;
   char line[LINELENGTH];
 
   double nh;
 
-  nh = xplasma->rho * rho2nh;
+  nh = xplasma->state.rho * rho2nh;
 
 
   /* Define the element and ion which will be present in the wind */
@@ -769,7 +752,7 @@ fix_concentrations (xplasma, mode)
 
   /* Set all the ion abundances to 0 and *ne to 0 */
   for (nion = 0; nion < nions; nion++)
-    xplasma->density[nion] = 0;
+    xplasma->state.density[nion] = 0;
 
   /* Search for matches and if one is found set the density of that ion to be the density of that
      atom */
@@ -785,11 +768,11 @@ fix_concentrations (xplasma, mode)
       while (nelem < nelements && ele[nelem].z != con_force[n].z)
         nelem++;
       /* Increment the ion density and the electron density */
-      xplasma->density[nion] = nh * ele[nelem].abun * con_force[n].frac;
+      xplasma->state.density[nion] = nh * ele[nelem].abun * con_force[n].frac;
     }
   }
 
-  xplasma->ne = get_ne (xplasma->density);
+  xplasma->state.ne = get_ne (xplasma->state.density);
 
   partition_functions (xplasma, NEBULARMODE_TR);
 
@@ -818,8 +801,7 @@ fix_concentrations (xplasma, mode)
  **********************************************************/
 
 double
-get_ne (density)
-     double density[];
+get_ne (double density[])
 {
   int n;
   double ne;

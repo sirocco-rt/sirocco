@@ -52,8 +52,7 @@
  **********************************************************/
 
 int
-get_corona_params (ndom)
-     int ndom;
+get_corona_params (int ndom)
 {
   Log ("Creating a corona above a disk\n");
 
@@ -155,9 +154,7 @@ get_corona_params (ndom)
  **********************************************************/
 
 double
-corona_velocity (ndom, x, v)
-     int ndom;
-     double x[], v[];
+corona_velocity (int ndom, double x[], double v[])
 {
   double rho, speed;
   double xtest[3];
@@ -211,9 +208,7 @@ corona_velocity (ndom, x, v)
  **********************************************************/
 
 double
-corona_rho (ndom, x)
-     int ndom;
-     double x[];
+corona_rho (int ndom, double x[])
 {
   double rho;
 

@@ -84,8 +84,7 @@ allocate_shell_domain (int ndom)
  **********************************************************/
 
 int
-get_shell_wind_params (ndom)
-     int ndom;
+get_shell_wind_params (int ndom)
 {
   double vtemp[3];
   double rhotemp[200];

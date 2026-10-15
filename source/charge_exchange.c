@@ -121,10 +121,7 @@ compute_ch_ex_coeffs (double T)
  **********************************************************/
 
 double
-ch_ex_heat (one, t_e)
-     WindPtr one;               // Pointer to the current wind cell - we need the cell volume, this is not in the plasma structure
-     double t_e;                //Current electron temperature of the cell
-
+ch_ex_heat (WindPtr one, double t_e)
 {
   double x;                     //The returned variable
   int nplasma;                  //The cell number in the plasma array
@@ -145,11 +142,11 @@ ch_ex_heat (one, t_e)
   {
     if (ion[n].z == 1 && ion[n].istate == 1)
     {
-      nh1 = xplasma->density[n];
+      nh1 = xplasma->state.density[n];
     }
     if (ion[n].z == 1 && ion[n].istate == 2)
     {
-      nh2 = xplasma->density[n];
+      nh2 = xplasma->state.density[n];
     }
   }
 
@@ -162,11 +159,13 @@ ch_ex_heat (one, t_e)
     {
       if (ion[n].n_ch_ex < 0)   //We dont have a proper rate, so use the approximation
       {
-        x += xplasma->vol * charge_exchange_recomb_rates[n] * nh1 * xplasma->density[n] * 2.86 * (ion[n].istate - 1) * EV2ERGS;
+        x += xplasma->state.vol * charge_exchange_recomb_rates[n] * nh1 * xplasma->state.density[n] * 2.86 * (ion[n].istate - 1) * EV2ERGS;
       }
       else
       {
-        x += xplasma->vol * charge_exchange_recomb_rates[n] * nh1 * xplasma->density[n] * charge_exchange[ion[n].n_ch_ex].energy_defect;
+        x +=
+          xplasma->state.vol * charge_exchange_recomb_rates[n] * nh1 * xplasma->state.density[n] *
+          charge_exchange[ion[n].n_ch_ex].energy_defect;
       }
     }
   }
@@ -177,7 +176,8 @@ ch_ex_heat (one, t_e)
     if (ion[charge_exchange[n].nion2].z == 1)   //A hydrogen recomb - metal ionization rate
     {
       x +=
-        xplasma->vol * charge_exchange_ioniz_rates[n] * nh2 * xplasma->density[charge_exchange[n].nion1] * charge_exchange[n].energy_defect;
+        xplasma->state.vol * charge_exchange_ioniz_rates[n] * nh2 * xplasma->state.density[charge_exchange[n].nion1] *
+        charge_exchange[n].energy_defect;
     }
   return (x);
 }

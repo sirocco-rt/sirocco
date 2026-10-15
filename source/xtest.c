@@ -64,7 +64,7 @@ xtest ()
   double x, xmin, xmax;
   double y, z, delta;
   double rzero, theta, vel[3];
-  FILE *fopen (), *fptr;
+  FILE *fptr;
   modes.run_xtest_diagnostics = TRUE;
   double v_escape;
 

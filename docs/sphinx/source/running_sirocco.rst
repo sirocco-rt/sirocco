@@ -97,8 +97,10 @@ which may be useful in certain special cases.  These include:
   are maintained as to the number of times the error occurred, but it is not printed
   to the diagnostic file. The default is 100 (per process)
 
--f                    
-  Invoke a fixed temperature mode
+-f
+  Invoke a fixed temperature mode.  The electron temperature is not updated; the
+  ionization balance is found at the temperature supplied by the model.  This is
+  used when SIROCCO is coupled to a hydrodynamics code (see :ref:`hydro_coupling`).
 
 -nonrel
   Reverts to using v/c corrections for special relativity and eliminates work done to treat
@@ -110,6 +112,12 @@ which may be useful in certain special cases.  These include:
 
 -no-matrix-storage
   Do not store macro-atom transition matrices if using the macro-atom line transfer and the matrix matom_transition_mode.
+
+-no-shared-memory
+  Give every MPI process its own copy of the wind, plasma and macro-atom grids instead of
+  sharing one copy between the processes on each node.  Results are identical; only memory
+  use changes (it goes up).  Use this if you suspect shared memory is causing problems on
+  your system.
 
 -ignore_partial_cells
   Ignore wind cells that are only partially filled by the wind (This is now the default)

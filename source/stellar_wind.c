@@ -40,8 +40,7 @@
  **********************************************************/
 
 int
-get_stellar_wind_params (ndom)
-     int ndom;
+get_stellar_wind_params (int ndom)
 {
   Log ("Creating a wind model for a Star\n");
 
@@ -128,12 +127,9 @@ get_stellar_wind_params (ndom)
  **********************************************************/
 
 double
-stellar_velocity (ndom, x, v)
-     int ndom;
-     double x[], v[];
+stellar_velocity (int ndom, double x[], double v[])
 {
   double r, speed, zzz;
-  double length ();
 
   if ((r = length (x)) == 0.0)
   {
@@ -176,9 +172,7 @@ stellar_velocity (ndom, x, v)
  **********************************************************/
 
 double
-stellar_rho (ndom, x)
-     int ndom;
-     double x[];
+stellar_rho (int ndom, double x[])
 {
   double r, rho, v[3];
 

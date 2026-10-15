@@ -69,11 +69,11 @@ integrate_tau_across_cell (PhotPtr photon, double *c_column_density, double *c_o
 
   if (COLUMN_MODE == COLUMN_MODE_RHO)
   {
-    density = c_plasma_cell->rho;
+    density = c_plasma_cell->state.rho;
   }
   else
   {
-    density = c_plasma_cell->density[COLUMN_MODE_ION_NUMBER];
+    density = c_plasma_cell->state.density[COLUMN_MODE_ION_NUMBER];
   }
 
   smax = smax_in_cell (photon) * SMAX_FRAC;
@@ -146,7 +146,7 @@ integrate_tau_across_cell (PhotPtr photon, double *c_column_density, double *c_o
 
   if (RUN_MODE != RUN_MODE_NO_ES_OPACITY)
   {
-    kappa_total += klein_nishina (mean_freq) * c_plasma_cell->ne * zdom[n_domain].fill;
+    kappa_total += klein_nishina (mean_freq) * c_plasma_cell->state.ne * zdom[n_domain].fill;
   }
 
   /*

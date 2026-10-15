@@ -57,11 +57,7 @@
  **********************************************************/
 
 double
-cylvar_ds_in_cell (ndom, p)
-     int ndom;
-     PhotPtr p;
-
-
+cylvar_ds_in_cell (int ndom, PhotPtr p)
 {
 
   int n, ix, iz, iroot;
@@ -287,9 +283,7 @@ cylvar_make_grid (int ndom, WindPtr w)
  **********************************************************/
 
 int
-cylvar_wind_complete (ndom, w)
-     int ndom;
-     WindPtr w;
+cylvar_wind_complete (int ndom, WindPtr w)
 {
   int i, j, n;
   double drho, dz;
@@ -512,11 +506,7 @@ int ierr_cylvar_where_in_grid = 0;
  **********************************************************/
 
 int
-cylvar_where_in_grid (ndom, x, ichoice, fx, fz)
-     int ndom;
-     double x[];
-     int ichoice;
-     double *fx, *fz;
+cylvar_where_in_grid (int ndom, double x[], int ichoice, double *fx, double *fz)
 {
   int i, j, n, ii;
   double z[3];
@@ -664,9 +654,7 @@ cylvar_where_in_grid (ndom, x, ichoice, fx, fz)
  **********************************************************/
 
 int
-cylvar_get_random_location (n, x)
-     int n;                     // Cell in which to create position
-     double x[];                // Returned position
+cylvar_get_random_location (int n, double x[])
 {
   int i, j;
   int inwind, incell;
@@ -774,9 +762,7 @@ cylvar_get_random_location (n, x)
  **********************************************************/
 
 int
-cylvar_extend_density (ndom, w)
-     int ndom;
-     WindPtr w;
+cylvar_extend_density (int ndom, WindPtr w)
 {
 
   int i, j, n, m;
@@ -880,13 +866,7 @@ cylvar_extend_density (ndom, w)
  **********************************************************/
 
 int
-cylvar_coord_fraction (ndom, ichoice, x, ii, frac, nelem)
-     int ndom;
-     int ichoice;
-     double x[];
-     int ii[];
-     double frac[];
-     int *nelem;
+cylvar_coord_fraction (int ndom, int ichoice, double x[], int ii[], double frac[], int *nelem)
 {
   double dr, dz;
   int n;

@@ -48,8 +48,7 @@
  **********************************************************/
 
 int
-import_wind (ndom)
-     int ndom;
+import_wind (int ndom)
 {
   char filename[LINELENGTH];
 
@@ -63,9 +62,7 @@ import_wind (ndom)
 }
 
 int
-import_wind2 (ndom, filename)
-     int ndom;
-     char *filename;
+import_wind2 (int ndom, char *filename)
 {
 
   calloc_import (zdom[ndom].coord_type, ndom);
@@ -115,8 +112,7 @@ import_wind2 (ndom, filename)
  **********************************************************/
 
 int
-import_set_wind_boundaries (ndom)
-     int ndom;
+import_set_wind_boundaries (int ndom)
 {
   if (zdom[ndom].coord_type == SPHERICAL)
   {
@@ -206,9 +202,7 @@ import_make_grid (int ndom, WindPtr w)
  **********************************************************/
 
 double
-import_velocity (ndom, x, v)
-     int ndom;
-     double *x, *v;
+import_velocity (int ndom, double *x, double *v)
 {
   double speed = 0.0;
 
@@ -258,9 +252,7 @@ import_velocity (ndom, x, v)
  **********************************************************/
 
 double
-import_rho (ndom, x)
-     int ndom;
-     double *x;
+import_rho (int ndom, double *x)
 {
   double rho = 0.0;
 

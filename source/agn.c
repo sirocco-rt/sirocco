@@ -51,10 +51,7 @@
  **********************************************************/
 
 double
-agn_init (r, lum, alpha, freqmin, freqmax, ioniz_or_extract, f)
-     double r, lum, alpha, freqmin, freqmax;
-     int ioniz_or_extract;
-     double *f;
+agn_init (double r, double lum, double alpha, double freqmin, double freqmax, int ioniz_or_extract, double *f)
 {
 
   double t;
@@ -140,8 +137,7 @@ agn_init (r, lum, alpha, freqmin, freqmax, ioniz_or_extract, f)
  **********************************************************/
 
 double
-emittance_pow (freqmin, freqmax, alpha)
-     double freqmin, freqmax, alpha;
+emittance_pow (double freqmin, double freqmax, double alpha)
 {
   double emit, this_fmin;
 
@@ -203,8 +199,7 @@ emittance_pow (freqmin, freqmax, alpha)
  **********************************************************/
 
 double
-emittance_bpow (freqmin, freqmax, alpha)
-     double freqmin, freqmax, alpha;
+emittance_bpow (double freqmin, double freqmax, double alpha)
 {
   double constant_low, constant_hi, emit;
   double e1, e2, e3;
@@ -348,13 +343,7 @@ emittance_bpow (freqmin, freqmax, alpha)
  **********************************************************/
 
 int
-photo_gen_agn (p, r, alpha, weight, f1, f2, spectype, istart, nphot)
-     PhotPtr p;
-     double r, alpha, weight;
-     double f1, f2;             /* The freqency mininimum and maximum if a uniform distribution is selected */
-     int spectype;              /*The spectrum type to generate: 0 is bb, 1 (or in fact anything but 0)
-                                   is uniform in frequency space */
-     int istart, nphot;         /* Respecitively the starting point in p and the number of photons to generate */
+photo_gen_agn (PhotPtr p, double r, double alpha, double weight, double f1, double f2, int spectype, int istart, int nphot)
 {
   double freqmin, freqmax, t;
   int i, iend;
@@ -525,10 +514,10 @@ photo_gen_agn (p, r, alpha, weight, f1, f2, spectype, istart, nphot)
     else if (geo.pl_geometry == PL_GEOMETRY_ISO)
     {
       /* We want to generate photons isotropically from the surface of a sphere, 
-        but with radial direction so it resembles an isotropic point source */
-      randvec (p[i].x, r);            // Simple random coordinate on the surface of a sphere
-      stuff_v (p[i].x, p[i].lmn);     // we want photon to travel in the same direction as the random point on the sphere so it is isotropic
-      renorm (p[i].lmn, 1.0);         // turn into a unit vector
+         but with radial direction so it resembles an isotropic point source */
+      randvec (p[i].x, r);      // Simple random coordinate on the surface of a sphere
+      stuff_v (p[i].x, p[i].lmn);       // we want photon to travel in the same direction as the random point on the sphere so it is isotropic
+      renorm (p[i].lmn, 1.0);   // turn into a unit vector
     }
 
     /* This is a diagnostic mode one can use to look at photon origins  */

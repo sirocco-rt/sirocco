@@ -62,16 +62,14 @@ double old_t, old_g, old_freqmin, old_freqmax;
 
 
 double
-one_continuum (spectype, t, g, freqmin, freqmax)
-     int spectype;
-     double t, g, freqmin, freqmax;
+one_continuum (int spectype, double t, double g, double freqmin, double freqmax)
 {
   double lambdamin, lambdamax;
   double w_local[NCDF], f_local[NCDF];
   double f, y;
   int n, nwave;
   double par[2];
-  int model ();
+  int model (int spectype, double par[]);
 
   /* Check if the parameters are the same as the stored ones, otherwise initialise */
   if (old_t != t || old_g != g || old_freqmin != freqmin || old_freqmax != freqmax)
@@ -223,15 +221,13 @@ one_continuum (spectype, t, g, freqmin, freqmax)
 int integ_spectype;             //External variable pointing to the model for our Romburg interpolation.
 
 double
-emittance_continuum (spectype, freqmin, freqmax, t, g)
-     int spectype;
-     double freqmin, freqmax, t, g;
+emittance_continuum (int spectype, double freqmin, double freqmax, double t, double g)
 {
   int nwav, n;
   double x, lambdamin, lambdamax, w1, w2, f_interp;
 
   double par[2];
-  int model ();
+  int model (int spectype, double par[]);
 
   lambdamin = VLIGHT / (freqmax * ANGSTROM);
   lambdamax = VLIGHT / (freqmin * ANGSTROM);

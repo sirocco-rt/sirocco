@@ -231,9 +231,7 @@ parse_arguments (int argc, char *argv[], char root[], int *ion_switch, int *spec
  **********************************************************/
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
   char root[LINELENGTH], xroot[LINELENGTH];
   char outputfile[LINELENGTH];
