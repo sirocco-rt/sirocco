@@ -120,8 +120,11 @@ int cell_phot_stats;            ///< 1=do  it, 0=dont do it
 int ncstat;                     ///<  the actual number we are going to log
 int ncell_stats[NCSTAT];        ///< the numbers of the cells we are going to log
 
+/* counters for reporting errors on mean intensity models */
 int nerr_no_Jmodel;
 int nerr_Jmodel_wrong_freq;
+/* bf absorptions this cycle where stim recomb beats photoionization, set to zero */
+int nscat_neg_net_photoion; 
 
 struct advanced_modes modes;
 
