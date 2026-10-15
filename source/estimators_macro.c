@@ -989,29 +989,29 @@ check_stimulated_recomb (PlasmaPtr xplasma)
 
       sf = stim_recomb_factor (xplasma, cont_ptr);
 
-      if (mplasma->state.alpha_st_old[k] * sf <= mplasma->state.gamma_old[k] + q_ioniz (cont_ptr, xplasma->t_e) * xplasma->ne)
+      if (mplasma->state.alpha_st_old[k] * sf <= mplasma->state.gamma_old[k] + q_ioniz (cont_ptr, xplasma->state.t_e) * xplasma->state.ne)
         continue;
 
 
       njumps++;
 
       /* net thermal heating from this continuum, as in macro_photo_heating; negative means cooling */
-      net_heat = ((mplasma->gamma_e_old[k] - mplasma->gamma_old[k]) - (mplasma->alpha_st_e_old[k] - mplasma->alpha_st_old[k]) * sf)
-        * PLANCK * cont_ptr->freq[0] * den_config (xplasma, i) * xplasma->vol;
+      net_heat = ((mplasma->state.gamma_e_old[k] - mplasma->state.gamma_old[k]) - (mplasma->state.alpha_st_e_old[k] - mplasma->state.alpha_st_old[k]) * sf)
+        * PLANCK * cont_ptr->freq[0] * den_config (xplasma, i) * xplasma->state.vol;
 
       if (net_heat < 0.0)
       {
         cool -= net_heat;
-        x = PLANCK * cont_ptr->freq[0] / (BOLTZMANN * xplasma->t_e);
-        if (x > 1.0 && -net_heat > STIM_RECOMB_STRONG_FRAC * xplasma->cool_tot)
+        x = PLANCK * cont_ptr->freq[0] / (BOLTZMANN * xplasma->state.t_e);
+        if (x > 1.0 && -net_heat > STIM_RECOMB_STRONG_FRAC * xplasma->est.cool_tot)
           nstrong++;
       }
     }
   }
 
-  if (cool > STIM_RECOMB_COOL_FRAC * xplasma->cool_tot || nstrong > 0)
+  if (cool > STIM_RECOMB_COOL_FRAC * xplasma->est.cool_tot || nstrong > 0)
     Error ("check_stimulated_recomb: cell %d has %d bf jumps with stimulated recombination > photoionization "
-           "(%d with h nu_0 > k T_e), cooling %.2e of cool_tot\n", xplasma->nplasma, njumps, nstrong, cool / xplasma->cool_tot);
+           "(%d with h nu_0 > k T_e), cooling %.2e of cool_tot\n", xplasma->nplasma, njumps, nstrong, cool / xplasma->est.cool_tot);
 
   return (njumps);
 }
@@ -1422,7 +1422,7 @@ rescale_alpha_st_estimators (PlasmaPtr xplasma, double t_old)
   struct topbase_phot *cont_ptr;
   MacroPtr mplasma = &macromain[xplasma->nplasma];
 
-  if (t_old <= 0.0 || t_old == xplasma->t_e)
+  if (t_old <= 0.0 || t_old == xplasma->state.t_e)
     return (0);
 
   for (i = 0; i < nlte_levels; i++)
@@ -1435,15 +1435,15 @@ rescale_alpha_st_estimators (PlasmaPtr xplasma, double t_old)
 
       if (ft < 7.5e12 || ft > 5e18)     /* analytic values, as in normalise_macro_estimators */
       {
-        mplasma->alpha_st_old[k] = get_alpha_st (cont_ptr, xplasma);
-        mplasma->alpha_st_e_old[k] = get_alpha_st_e (cont_ptr, xplasma);
+        mplasma->state.alpha_st_old[k] = get_alpha_st (cont_ptr, xplasma);
+        mplasma->state.alpha_st_e_old[k] = get_alpha_st_e (cont_ptr, xplasma);
       }
-      else if (mplasma->alpha_st_old[k] > 0.0)
+      else if (mplasma->state.alpha_st_old[k] > 0.0)
       {
-        nu_eff = (mplasma->alpha_st_e_old[k] > 0.0) ? ft * mplasma->alpha_st_e_old[k] / mplasma->alpha_st_old[k] : ft;
-        scale = pow (t_old / xplasma->t_e, 1.5) * exp (-H_OVER_K * (nu_eff - ft) * (1. / xplasma->t_e - 1. / t_old));
-        mplasma->alpha_st_old[k] *= scale;
-        mplasma->alpha_st_e_old[k] *= scale;
+        nu_eff = (mplasma->state.alpha_st_e_old[k] > 0.0) ? ft * mplasma->state.alpha_st_e_old[k] / mplasma->state.alpha_st_old[k] : ft;
+        scale = pow (t_old / xplasma->state.t_e, 1.5) * exp (-H_OVER_K * (nu_eff - ft) * (1. / xplasma->state.t_e - 1. / t_old));
+        mplasma->state.alpha_st_old[k] *= scale;
+        mplasma->state.alpha_st_e_old[k] *= scale;
       }
     }
   }
