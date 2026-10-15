@@ -353,9 +353,10 @@ create_plasma_grid (void)
     }
   }
 
-  /* zero the counters which record diagnostics for mean_intensity */
+  /* zero the counters which record diagnostic errors for mean_intensity */
   nerr_Jmodel_wrong_freq = 0;
   nerr_no_Jmodel = 0;
+  nscat_neg_net_photoion = 0;
 
   broadcast_plasma_grid (n_start, n_stop, n_cells_rank);
 }
@@ -620,7 +621,6 @@ create_wind_grid (void)
   calloc_wind (NDIM2);
 
   /* Assign the domain for each cell in the wind grid */
-  int offset = 0;
   for (ndom = 0; ndom < geo.ndomain; ++ndom)
   {
     for (n = zdom[ndom].nstart; n < zdom[ndom].nstop; ++n)
@@ -628,10 +628,9 @@ create_wind_grid (void)
       wmain[n].ndom = ndom;
       wmain[n].inwind = W_NOT_ASSIGNED;
       wmain[n].dfudge = DFUDGE;
-      wmain[n].nwind = n + offset;
+      wmain[n].nwind = n;
       wmain[n].nwind_dom = n;
     }
-    offset += zdom[ndom].ndim;
   }
 
   /* The first thing we need to do is to create the coordinate grid. We'll do

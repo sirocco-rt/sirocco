@@ -367,9 +367,28 @@ cpar (filename)
   return (NORMAL);
 }
 
+/**********************************************************/
+/**
+ * @brief      Close the parameter-reading session without rewriting the parameter file
+ *
+ * @return     NORMAL
+ *
+ * Like cpar, but discards tmp.rdpar. used in unit tests
+ **********************************************************/
+
+int
+cpar_discard (void)
+{
+  if (rd_rank != 0)
+    return (0);
+  fclose (rdout_ptr);
+  rdpar_stat = 0;
+  remove ("tmp.rdpar");
+  return (NORMAL);
+}
+
 /* Despite its name, this routine is internal to the other rdpar parts of rdpar. It
    does however set put rdpar into a known mode and set up the output file */
-
 
 /**********************************************************/
 /** 

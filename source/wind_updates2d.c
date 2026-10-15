@@ -55,9 +55,14 @@ wind_update (WindPtr w)
   double xsum, psum, fsum, lsum, csum, icsum, ausum, chexsum;
   double cool_sum, lum_sum, radiated_luminosity_sum;    //1706 - the total cooling and luminosity of the wind
   double apsum, aausum, abstot; //Absorbed photon energy from PI and auger
+  double heat_macro_photo_sum, heat_macro_qrecomb_sum, heat_macro_lines_sum;
+  double cool_macro_photo_sum, cool_macro_di_sum, cool_macro_lines_sum;
+  double macro_energy_in, macro_energy_out;
   double flux_persist_scale;
   double volume;
   double dt_r, dt_e;
+  double t_e_prev;
+  int ncells_stimrec = 0;
   double t_r_ave_old, t_r_ave, t_e_ave_old, t_e_ave;
   int nmax_r, nmax_e;
   int nwind;
@@ -75,6 +80,13 @@ wind_update (WindPtr w)
   t_e_ave = 0.0;
 
   xsignal (files.root, "%-20s Start wind update\n", "NOK");
+
+  if (nscat_neg_net_photoion > 0)
+  {
+    Error ("wind_update: %d macro-atom bf absorptions on this thread had a negative net photoionization rate "
+           "(stimulated recombination > photoionization) in cycle %d, set to zero\n", nscat_neg_net_photoion, geo.wcycle);
+    nscat_neg_net_photoion = 0;
+  }
 
 #ifdef MPI_ON
   n_cells_rank = get_parallel_nrange (rank_global, NPLASMA, np_mpi_global, &my_nmin, &my_nmax);
@@ -149,9 +161,21 @@ wind_update (WindPtr w)
     }
 
     /* Calculate the densities in various ways depending on the ioniz_mode */
-    Log ("XXXXX  updating %3d %3d\n", geo.wcycle, n_plasma);
+    Debug ("XXX -- matrix_multishot -- updating cycle %3d cell %3d\n", geo.wcycle, n_plasma);
+    t_e_prev = plasmamain[n_plasma].t_e;
     ion_abundances (&plasmamain[n_plasma], geo.ioniz_mode);
+
+    /* alpha_st estimators were normalised at t_e_prev; rescale them to the new t_e and check for errors  */
+    if (geo.rt_mode == RT_MODE_MACRO && geo.macro_simple == FALSE && geo.macro_ioniz_mode == MACRO_IONIZ_MODE_ESTIMATORS)
+    {
+      rescale_alpha_st_estimators (&plasmamain[n_plasma], t_e_prev);
+      if (check_stimulated_recomb (&plasmamain[n_plasma]) > 0)
+        ncells_stimrec++;
+    }
   }
+
+  if (ncells_stimrec > 0)
+    Log ("wind_update: %d cells on this thread have bf jumps with stimulated recombination > photoionization\n", ncells_stimrec);
 
   /*This is the end of the update loop that is parallised. We now need to exchange data between the tasks. */
 
@@ -200,7 +224,6 @@ wind_update (WindPtr w)
     }
   }
   /* Finished updating region outside of wind */
-
   /* Check the balance between the absorbed and the emitted flux */
   /* NSH 0717 - ensure the cooling and luminosities reflect the current temperature */
 
@@ -221,6 +244,9 @@ wind_update (WindPtr w)
   aausum = 0.0;
   abstot = 0.0;
   chexsum = 0.0;
+  heat_macro_photo_sum = heat_macro_qrecomb_sum = heat_macro_lines_sum = 0.0;
+  cool_macro_photo_sum = cool_macro_di_sum = cool_macro_lines_sum = 0.0;
+  macro_energy_in = macro_energy_out = 0.0;
 
   /* Each rank now has updated plasma cells (temperature, ion abundances, heat/cool rates, etc.), so we can now find
    * out what the max d_t is in the wind and also sum up properties to find the total/global values */
@@ -269,6 +295,19 @@ wind_update (WindPtr w)
     apsum += plasmamain[n_plasma].abs_photo;
     aausum += plasmamain[n_plasma].abs_auger;
     chexsum += plasmamain[n_plasma].heat_ch_ex;
+
+    heat_macro_photo_sum += plasmamain[n_plasma].heat_photo_macro;
+    heat_macro_qrecomb_sum += plasmamain[n_plasma].heat_qrecomb_macro;
+    heat_macro_lines_sum += plasmamain[n_plasma].heat_lines_macro;
+    cool_macro_photo_sum += plasmamain[n_plasma].cool_bf_macro;
+    cool_macro_lines_sum += plasmamain[n_plasma].cool_lines_macro;
+    cool_macro_di_sum += plasmamain[n_plasma].cool_di_macro;
+
+    if (geo.rt_mode == RT_MODE_MACRO)
+    {
+      macro_energy_in += macromain[n_plasma].energy_flow_in;
+      macro_energy_out += macromain[n_plasma].energy_flow_out;
+    }
   }
 
   /* We can now calculate the average of the t */
@@ -332,11 +371,15 @@ wind_update (WindPtr w)
     ("!!wind_update: Wind cooling     %8.2e (recomb %8.2e ff %8.2e compton %8.2e DR %8.2e DI %8.2e lines %8.2e adiabatic %8.2e) after update\n",
      cool_sum, geo.cool_rr, geo.lum_ff, geo.cool_comp, geo.cool_dr, geo.cool_di, geo.lum_lines, geo.cool_adiabatic);
 
-  if (modes.use_upweighting_of_simple_macro_atoms)
+  if (geo.rt_mode == RT_MODE_MACRO)
   {
-    /* If we have "indivisible packet" mode on but are using the
-       upweighting scheme for simple atoms then we report the flows into and out of the ion pool */
-    if (geo.rt_mode == RT_MODE_MACRO)
+    Log ("!!wind_update: macro-atom heating: photoionization %8.2e three body recomb %8.2e lines %8.2e\n", heat_macro_photo_sum,
+         heat_macro_qrecomb_sum, heat_macro_lines_sum);
+    Log ("!!wind_update: macro-atom cooling: photoionization %8.2e collisional ionization %8.2e lines %8.2e\n", cool_macro_photo_sum,
+         cool_macro_di_sum, cool_macro_lines_sum);
+    Log ("!!wind_update: macro-atom energy flow: in %8.2e out %8.2e\n", macro_energy_in, macro_energy_out);
+
+    if (modes.use_upweighting_of_simple_macro_atoms)
     {
       report_bf_simple_ionpool ();
     }
@@ -717,6 +760,13 @@ init_macro_rad_properties (void)
     plasmamain[n_plasma].kpkt_emiss = 0.0;
     plasmamain[n_plasma].kpkt_abs = 0.0;
 
+
+    if (geo.rt_mode == RT_MODE_MACRO)   /* macromain is only allocated if geo.rt_mode == RT_MODE_MACRO */
+    {
+      macromain[n_plasma].energy_flow_out = 0.0;
+      macromain[n_plasma].energy_flow_in = 0.0;
+    }
+
     for (macro_level = 0; macro_level < nlevels_macro; ++macro_level)
     {
       macromain[n_plasma].matom_abs[macro_level] = 0.0;
@@ -730,15 +780,14 @@ init_macro_rad_properties (void)
       {
         macromain[n_plasma].gamma[xconfig[macro_level].bfu_indx_first + k] = 0.0;
         macromain[n_plasma].gamma_e[xconfig[macro_level].bfu_indx_first + k] = 0.0;
-        macromain[n_plasma].alpha_st[xconfig[macro_level].bfd_indx_first + k] = 0.0;
-        macromain[n_plasma].alpha_st_e[xconfig[macro_level].bfd_indx_first + k] = 0.0;
+        macromain[n_plasma].alpha_st[xconfig[macro_level].bfu_indx_first + k] = 0.0;
+        macromain[n_plasma].alpha_st_e[xconfig[macro_level].bfu_indx_first + k] = 0.0;
       }
     }
   }
 
   /* calculating recomb_sp and recomb_simple is expensive due to calls to
    * `alpha_sp()` , so we do this part of the initialisation in parallel */
-
 #ifdef MPI_ON
   n_cells = get_parallel_nrange (rank_global, NPLASMA, np_mpi_global, &n_start, &n_stop);
 #else

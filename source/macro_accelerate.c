@@ -42,7 +42,7 @@ calc_matom_matrix (xplasma, matom_matrix)
   struct topbase_phot *cont_ptr;
   double rad_rate, coll_rate;
   int n, i, nn, mm, iauger, nauger;
-  double Qcont_kpkt, bb_cont, sp_rec_rate, bf_cont, lower_density, density_ratio;
+  double Qcont_kpkt, bb_cont, sp_rec_rate, bf_cont;
   double kpacket_to_rpacket_rate, norm, Rcont, auger_rate;
   int matrix_error;
   double *a_data, *a_inverse;
@@ -184,17 +184,8 @@ calc_matom_matrix (xplasma, matom_matrix)
          gamma is the photoionisation rate. Stimulated recombination also included. */
       cont_ptr = &phot_top[xconfig[uplvl].bfu_jump[n]]; //pointer to continuum
 
-      /* first let us take care of the situation where the lower level is zero or close to zero */
-      lower_density = den_config (xplasma, cont_ptr->nlev);
-      if (lower_density >= DENSITY_PHOT_MIN)
-      {
-        density_ratio = den_config (xplasma, cont_ptr->uplev) / lower_density;
-      }
-      else
-        density_ratio = 0.0;
-
       target_level = phot_top[xconfig[uplvl].bfu_jump[n]].uplev;
-      Qcont = (mplasma->gamma_old[xconfig[uplvl].bfu_indx_first + n] - (mplasma->alpha_st_old[xconfig[uplvl].bfu_indx_first + n] * xplasma->ne * density_ratio) + (q_ioniz (cont_ptr, t_e) * ne)) * xconfig[uplvl].ex;  //energy of lower state
+      Qcont = (mplasma->gamma_old[xconfig[uplvl].bfu_indx_first + n] - (mplasma->alpha_st_old[xconfig[uplvl].bfu_indx_first + n] * stim_recomb_factor (xplasma, cont_ptr)) + (q_ioniz (cont_ptr, t_e) * ne)) * xconfig[uplvl].ex;      //energy of lower state
 
       /* this error condition can happen in unconverged hot cells where T_R >> T_E.
          for the moment we set to 0 and hope spontaneous recombiantion takes care of things */

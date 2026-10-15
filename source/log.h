@@ -2,7 +2,9 @@
 int opar(char filename[]);
 int add_par(char filename[]);
 int cpar(char filename[]);
+int cpar_discard(void);
 int rdpar_init(void);
+char *check_and_fix_string(char *s);
 int string_process(char question[], char dummy[]);
 int string_process_from_command_line(char question[], char dummy[]);
 int string_process_from_file(char question[], char dummy[]);
@@ -23,7 +25,6 @@ int rdpar_set_mpi_rank(int rank);
 int rdpar_set_verbose(int vlevel);
 int rdpar_check(void);
 /* xlog.c */
-void print_memory_usage(const char *label);
 int Log_init(char *filename);
 int Log_append(char *filename);
 void Log_close(void);

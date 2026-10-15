@@ -274,6 +274,14 @@ the output files :code:`test.0.master.txt` to an import file, :code:`test.import
 that can be used with the import mode of SIROCCO. The 3 different routines are
 for 1d spherical coordinates, and polar (r-theta) coordinates respectively.
 
+.. warning:: 
+   Because the import file is created directly from the master table, 
+   the resolution of the model is limited by the precision of the numbers saved in that table 
+   (see e.g. `Issue #1188 <https://github.com/sirocco-rt/sirocco/issues/1188>`__). Currently radii 
+   and velocities are saved to 6 decimal places in exponential notation, which is sufficient for most models, but 
+   if your model is super thin or accelerates very slowly -- e.g. :math:`\Delta r / r \lesssim 10^{-6}` -- 
+   then you may need to modify the code in windsave2table_sub.c to increase the precision of the output.  
+
 Assuming the py_progs directory is in your PATH, and given that our example is
 for cylindrical coordinates, one would run:
 

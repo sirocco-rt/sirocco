@@ -95,7 +95,7 @@ cleanup_model (const char *root_name)
   }
 
   snprintf (parameter_filepath, LINELENGTH, "%s/source/tests/test_data/define_wind/%s.pf", SIROCCO_ENV, files.root);
-  if (cpar (parameter_filepath) != 1)   /* cpar returns 1 when something is "normal" */
+  if (cpar_discard () != 1) /* 1 is "NORMAL" in rdpar */
   {
     return EXIT_FAILURE;
   }
@@ -114,10 +114,10 @@ cleanup_model (const char *root_name)
     }
     else if (zdom[n_dom].coord_type == CYLVAR)
     {
-      free ((void **) &zdom[n_dom].wind_z_var[0]);
-      free ((void **) &zdom[n_dom].wind_z_var);
-      free ((void **) &zdom[n_dom].wind_midz_var[0]);
-      free ((void **) &zdom[n_dom].wind_midz_var);
+      free_and_null ((void **) &zdom[n_dom].wind_z_var[0]);
+      free_and_null ((void **) &zdom[n_dom].wind_z_var);
+      free_and_null ((void **) &zdom[n_dom].wind_midz_var[0]);
+      free_and_null ((void **) &zdom[n_dom].wind_midz_var);
     }
   }
   free_and_null ((void **) &zdom);
