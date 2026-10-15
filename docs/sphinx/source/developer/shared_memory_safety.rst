@@ -2,14 +2,14 @@ Hazards of the Shared Memory Model
 ########################################
 
 :doc:`mixed_memory_model` describes how the shared memory model is implemented.  
-This page describes some pitfalls or hazars to be aware of when writing new code
+This page describes some pitfalls or hazards to be aware of when writing new code
 for SIROCCO. 
 
 Since version 2.0, some arrays that look like ordinary
 per-process C arrays are in fact **one copy per node, written by several
-processes at once**.  AS a result, innocuous-looking code that is correct 
+processes at once**.  As a result, innocuous-looking code that is correct
 in a serial or pure-MPI build can silently give wrong answers when run on 
-more than one rank. 
+more than one rank.
 
 .. contents:: On this page
    :local:
@@ -17,7 +17,7 @@ more than one rank.
 
 
 Who may write what
-------------------
+==================
 
 The rules that keep shared data correct are:
 
@@ -179,7 +179,7 @@ Writing the same value from every rank (e.g., the bound-free
 look-up table ``state.kbf_use[]`` built by ``kbf_need()``, see below) 
 does not change the
 result on current hardware, but it is still a data race in the C and MPI
-memory models and should be avoided
+memory models and should be avoided.
 
 
 Hazard 4: collectives on shared buffers
@@ -204,11 +204,11 @@ passive-target epoch such as ``MPI_Win_lock_all``) in addition to process
 synchronisation.  SIROCCO currently relies on ``MPI_Barrier`` alone.  This works
 in practice with common MPI implementations on x86 processors, 
 and all tests of the shared memory model so far have passed
-with it
+with it.
 
 Apple Silicon and other ARM processors (including ARM HPC nodes) order memory
 more weakly.  This makes them a stricter test of the synchronisation than
-x86 Linux, so it is worth testing an ARM Mac when e.g., Barriers are changed.
+x86 Linux, so it is worth testing an ARM Mac when, e.g., barriers are changed.
 
 
 Checklist for code review
@@ -245,8 +245,8 @@ An idealised testing workflow
 All of the hazards above produce either results that change
 from run to run, or results that depend on how ranks are laid out across
 nodes.  SIROCCO's fixed random seeds make both easy to detect, 
-because for a given number of ranks,
-results must be bit-for-bit identical regardless. 
+because for a given number of ranks and node layout,
+results must be bit-for-bit identical regardless of timing.
 
 The tests below compare the files produced by
 ``windsave2table`` and the ``.spec`` file.  

@@ -136,12 +136,12 @@ calculate_comm_buffer_size (const int num_ints, const int num_doubles)
  * @details
  * Normally ranks on the same node share one copy of the wind, plasma and
  * macro-atom grids.  With -no-shared-memory, each rank is placed in a node
- * communicator of its own, so every rank holds a private copy as in version
- * before the memory refactor for Sirocco 2.0. This uses more memory but gives 
+ * communicator of its own, so every rank holds a private copy as in versions
+ * before the memory refactor for Sirocco 2.0. This uses more memory but gives
  * identical results; it is intended as a fallback or for testing.
  *
- * This is called straight after MPI_Init, because the node communicator has to 
- * be created before anything is allocated and the command line is parsed.
+ * This is called straight after MPI_Init, before the command line is parsed,
+ * because the node communicator has to exist before any grids are allocated.
  **********************************************************/
 
 int

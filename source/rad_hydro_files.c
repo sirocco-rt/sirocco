@@ -159,7 +159,7 @@ main (int argc, char *argv[])
   MPI_Comm_size (MPI_COMM_WORLD, &np_mpi);
 
   /* Choose whether to use shared memory:  see no_shared_memory_requested() header
-     or code documentation *//
+     or code documentation */
   if (no_shared_memory_requested (argc, argv))
     MPI_Comm_split (MPI_COMM_WORLD, my_rank, 0, &node_comm);
   else

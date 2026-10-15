@@ -120,7 +120,7 @@ The following are **private** (one copy per rank, as in version 1.x):
   ``derived`` such as ``plasmamain[n].state.t_e``, ``state.ne`` and
   ``state.rho``;
 - every field of the ``est`` sub-structures (scalars and arrays);
-- the exceptions listed in below (``scatters``,
+- the exceptions listed below (``scatters``,
   ``xscatters``, ``n_bf_in``, ``n_bf_out``), photon stores, spectra and all
   other globals.
 
@@ -133,7 +133,7 @@ The following are **private** (one copy per rank, as in version 1.x):
 
 With one rank (or a build without ``MPI_ON``), everything is allocated with
 ``calloc`` and the code behaves exactly as it did before version 2.0.  None of
-the problems below can occur in serial, which is why serial tests cannot catch
+the problems described in :doc:`shared_memory_safety` can occur in serial, which is why serial tests cannot catch
 them.
 
 MPI communication files
