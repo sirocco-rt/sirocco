@@ -124,7 +124,7 @@ int ncell_stats[NCSTAT];        ///< the numbers of the cells we are going to lo
 int nerr_no_Jmodel;
 int nerr_Jmodel_wrong_freq;
 /* bf absorptions this cycle where stim recomb beats photoionization, set to zero */
-int nscat_neg_net_photoion = 0; 
+int nscat_neg_net_photoion; 
 
 struct advanced_modes modes;
 

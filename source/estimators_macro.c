@@ -978,49 +978,62 @@ bb_simple_heat (xplasma, p, tau_sobolev, nn)
 
 /**********************************************************/
 /**
- * @brief sanity check the stimulated recombination rate
+ * @brief check for bf jumps where stimulated recombination exceeds photoionization
  *
- * @param [in] PlasmaPtr  xplasma 
- * @return 0
+ * @param [in] PlasmaPtr  xplasma
+ * @return the number of such bf jumps in the cell
  *
- * @details check that stimulated recombination rate doesn't exceed the 
- * photoionization rate (check if any levels have 
- * \f$\alpha_{st}n_e*\frac{n_u}{n_l} > \gamma\f$
- *
+ * @details
+ * Stimulated recombination exceeds photoionization when the lower level's departure
+ * coefficient b_l < exp(-h nu / k T_e). For edges with h nu_0 << k T_e this is common
+ * and usually negligible, so an error is only reported if the net cooling from these
+ * jumps is at least STIM_RECOMB_COOL_FRAC of cool_tot, or if there is a strong inversion
+ * (h nu_0 > k T_e) that is not negligible (above STIM_RECOMB_STRONG_FRAC of cool_tot).
  **********************************************************/
 
-int
-check_stimulated_recomb (xplasma)
-     PlasmaPtr xplasma;
-{
-  int i, j;
-  struct topbase_phot *cont_ptr;
-  int st_recomb_err;
-  double st_recomb, gamma, coll_ioniz;
-  MacroPtr mplasma;
-  mplasma = &macromain[xplasma->nplasma];
+#define STIM_RECOMB_COOL_FRAC   0.01
+#define STIM_RECOMB_STRONG_FRAC 1e-6
 
-  st_recomb_err = 0;
+int
+check_stimulated_recomb (PlasmaPtr xplasma)
+{
+  MacroPtr mplasma = &macromain[xplasma->nplasma];
+  struct topbase_phot *cont_ptr;
+  double sf, net_heat, x, cool = 0.0;
+  int i, j, k, njumps = 0, nstrong = 0;
 
   for (i = 0; i < nlte_levels; i++)
   {
     for (j = 0; j < xconfig[i].n_bfu_jump; j++)
     {
+      k = xconfig[i].bfu_indx_first + j;
       cont_ptr = &phot_top[xconfig[i].bfu_jump[j]];
-      gamma = mplasma->gamma_old[xconfig[i].bfu_indx_first + j];
-      st_recomb = mplasma->alpha_st_old[xconfig[i].bfu_indx_first + j];
-      st_recomb *= stim_recomb_factor (xplasma, cont_ptr);
-      coll_ioniz = q_ioniz (cont_ptr, xplasma->t_e) * xplasma->ne;
+      sf = stim_recomb_factor (xplasma, cont_ptr);
 
-      if (st_recomb > (gamma + coll_ioniz))
-        st_recomb_err += 1;
+      if (mplasma->alpha_st_old[k] * sf <= mplasma->gamma_old[k] + q_ioniz (cont_ptr, xplasma->t_e) * xplasma->ne)
+        continue;
+
+      njumps++;
+
+      /* net thermal heating from this continuum, as in macro_photo_heating; negative means cooling */
+      net_heat = ((mplasma->gamma_e_old[k] - mplasma->gamma_old[k]) - (mplasma->alpha_st_e_old[k] - mplasma->alpha_st_old[k]) * sf)
+        * PLANCK * cont_ptr->freq[0] * den_config (xplasma, i) * xplasma->vol;
+
+      if (net_heat < 0.0)
+      {
+        cool -= net_heat;
+        x = PLANCK * cont_ptr->freq[0] / (BOLTZMANN * xplasma->t_e);
+        if (x > 1.0 && -net_heat > STIM_RECOMB_STRONG_FRAC * xplasma->cool_tot)
+          nstrong++;
+      }
     }
   }
 
-  if (st_recomb_err > 0)
-    Error ("check_stimulated_recomb: cell %i had %i bf jumps where ne*n_u/n_l*alpha_st > gamma\n", xplasma->nplasma, st_recomb_err);
+  if (cool > STIM_RECOMB_COOL_FRAC * xplasma->cool_tot || nstrong > 0)
+    Error ("check_stimulated_recomb: cell %d has %d bf jumps with stimulated recombination > photoionization "
+           "(%d with h nu_0 > k T_e), cooling %.2e of cool_tot\n", xplasma->nplasma, njumps, nstrong, cool / xplasma->cool_tot);
 
-  return (0);
+  return (njumps);
 }
 
 /**********************************************************/

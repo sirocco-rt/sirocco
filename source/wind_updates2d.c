@@ -62,6 +62,7 @@ wind_update (WindPtr w)
   double volume;
   double dt_r, dt_e;
   double t_e_prev;
+  int ncells_stimrec = 0;
   double t_r_ave_old, t_r_ave, t_e_ave_old, t_e_ave;
   int nmax_r, nmax_e;
   int nwind;
@@ -164,13 +165,17 @@ wind_update (WindPtr w)
     t_e_prev = plasmamain[n_plasma].t_e;
     ion_abundances (&plasmamain[n_plasma], geo.ioniz_mode);
 
-    /* alpha_st estimators were normalised at t_e_prev; rescale them to the new t_e */
+    /* alpha_st estimators were normalised at t_e_prev; rescale them to the new t_e and check for errors  */
     if (geo.rt_mode == RT_MODE_MACRO && geo.macro_simple == FALSE && geo.macro_ioniz_mode == MACRO_IONIZ_MODE_ESTIMATORS)
     {
       rescale_alpha_st_estimators (&plasmamain[n_plasma], t_e_prev);
-      check_stimulated_recomb (&plasmamain[n_plasma]);
+      if (check_stimulated_recomb (&plasmamain[n_plasma]) > 0)
+        ncells_stimrec++;
     }
   }
+
+  if (ncells_stimrec > 0)
+    Log ("wind_update: %d cells on this thread have bf jumps with stimulated recombination > photoionization\n", ncells_stimrec);
 
   /*This is the end of the update loop that is parallised. We now need to exchange data between the tasks. */
 
