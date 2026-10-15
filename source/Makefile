@@ -15,6 +15,8 @@
 # about the integration approach to use. The default is set to use the newer brute force technique
 
 MATOM_VER := 1
+# This is the sirocco version which should be a single string without spaces.
+VERSION = 1.4
 
 #MPICC is now default compiler
 CC = mpicc
@@ -142,10 +144,6 @@ endif
 # next line if you want to use kpar as a library, rather than as source below
 # LDFLAGS= -L$(LIB)  -lm -lkpar -lcfitsio -lgsl -lgslcblas
 LDFLAGS+= -L$(LIB) -lm -lgsl -lgslcblas $(CUDA_LIBS)
-
-
-#Note that version should be a single string without spaces.
-VERSION = 1.3
 
 
 
