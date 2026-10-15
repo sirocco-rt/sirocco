@@ -193,6 +193,7 @@ double macro_photo_heating(PlasmaPtr xplasma, double t_e);
 double macro_qrecomb_heating(PlasmaPtr xplasma, double t_e);
 int bb_simple_heat(PlasmaPtr xplasma, PhotPtr p, double tau_sobolev, int nn);
 int check_stimulated_recomb(PlasmaPtr xplasma);
+int rescale_alpha_st_estimators(PlasmaPtr xplasma, double t_old);
 int get_dilute_estimators(PlasmaPtr xplasma);
 double get_gamma(struct topbase_phot *cont_ptr, PlasmaPtr xplasma);
 double gamma_integrand(double freq, void *params);

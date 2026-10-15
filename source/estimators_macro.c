@@ -511,9 +511,10 @@ normalise_macro_estimators (PlasmaPtr xplasma)
         /* check for population inversions. We don't worry about this if the densities are extremely low or if the
            upper level has hit the density floor - the lower level is still allowed to hit this floor because it
            should never cause an inversion */
-        Error ("normalise_macro_estimators: bb stimulated correction factor is out of bounds, 0 <= stim_correction < 1 but got %g\n", stim_correction);
-        Error ("normalise_macro_estimators: upper_density %g lower_density %g xplasma->levden[config[nlev_upper].nden] %g\n",
-               upper_density, lower_density, xplasma->levden[xconfig[nlev_upper].nden]);
+        Error ("normalise_macro_estimators: bb stimulated correction factor is out of bounds, 0 <= stim_correction < 1 but got %g\n",
+               stim_correction);
+        Error ("normalise_macro_estimators: upper_density %g lower_density %g xplasma->levden[config[nlev_upper].nden] %g\n", upper_density,
+               lower_density, xplasma->levden[xconfig[nlev_upper].nden]);
         stim_correction = 0.0;
       }
       else
@@ -550,10 +551,8 @@ normalise_macro_estimators (PlasmaPtr xplasma)
   /* ensure the total heating is incremented too, for line and bound-free */
   xplasma->heat_tot += xplasma->heat_lines_macro + xplasma->heat_photo_macro + xplasma->heat_qrecomb_macro;
 
-  /* finally, check if we have any places where stimulated recombination wins over
-     photoionization */
-
-  check_stimulated_recomb (xplasma);
+  /* check_stimulated_recomb is called from wind_update once the populations have been solved and
+     the alpha_st estimators rescaled to the new t_e (see rescale_alpha_st_estimators) */
 
   /* Now that we have estimators, set the flag to use them for the level populations */
 
@@ -1420,4 +1419,58 @@ alpha_st_e_integrand (double freq, void *params)
   integrand = x * freq * freq * exp (H_OVER_K * (fthresh - freq) / tt) / (exp (H_OVER_K * freq / ttrr) - 1) * freq / fthresh;
 
   return (integrand);
+}
+
+/**********************************************************/
+/**
+ * @brief rescale the stimulated recombination estimators to the current electron temperature
+ *
+ * @param [in] PlasmaPtr xplasma the plasma cell with updated t_e 
+ * @param [in] double t_old the electron temperature at which the estimators were accumulated and normalised
+ * @return 0
+ *
+ * @details
+ * alpha_st is accumulated during photon transport as sum(w sigma ds / nu * exp(-h(nu - nu_0)/k t_old)) and
+ * normalised by stimfac(t_old) ~ t_old^(-3/2) in normalise_macro_estimators, but the level populations are
+ * then solved at the new t_e. Mixing the two temperatures can make the net photoionization rate negative.
+ *
+ * stimfac is rescaled exactly by (t_old / t_e)^(3/2), and the exponential approximately using an effective
+ * frequency nu_eff = nu_0 * alpha_st_e / alpha_st. Continua that use the analytic values are recomputed at t_e.
+ **********************************************************/
+
+int
+rescale_alpha_st_estimators (PlasmaPtr xplasma, double t_old)
+{
+  int i, j, k;
+  double ft, nu_eff, scale;
+  struct topbase_phot *cont_ptr;
+  MacroPtr mplasma = &macromain[xplasma->nplasma];
+
+  if (t_old <= 0.0 || t_old == xplasma->t_e)
+    return (0);
+
+  for (i = 0; i < nlte_levels; i++)
+  {
+    for (j = 0; j < xconfig[i].n_bfu_jump; j++)
+    {
+      k = xconfig[i].bfu_indx_first + j;
+      cont_ptr = &phot_top[xconfig[i].bfu_jump[j]];
+      ft = cont_ptr->freq[0];
+
+      if (ft < 7.5e12 || ft > 5e18)     /* analytic values, as in normalise_macro_estimators */
+      {
+        mplasma->alpha_st_old[k] = get_alpha_st (cont_ptr, xplasma);
+        mplasma->alpha_st_e_old[k] = get_alpha_st_e (cont_ptr, xplasma);
+      }
+      else if (mplasma->alpha_st_old[k] > 0.0)
+      {
+        nu_eff = (mplasma->alpha_st_e_old[k] > 0.0) ? ft * mplasma->alpha_st_e_old[k] / mplasma->alpha_st_old[k] : ft;
+        scale = pow (t_old / xplasma->t_e, 1.5) * exp (-H_OVER_K * (nu_eff - ft) * (1. / xplasma->t_e - 1. / t_old));
+        mplasma->alpha_st_old[k] *= scale;
+        mplasma->alpha_st_e_old[k] *= scale;
+      }
+    }
+  }
+
+  return (0);
 }
