@@ -11,4 +11,5 @@ Some of these are descibed below. We also recommend consulting `Matthews, Long e
    physics/macroatoms
    physics/relativity_comoving
    physics/aniso
+   physics/polarization
    physics/limitations

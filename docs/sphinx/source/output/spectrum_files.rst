@@ -100,6 +100,8 @@ These data in the first set of columns do not reflect the angular dependence of 
 
 The remaining columns are the spectra at various inclination angles and binary phases.  The label A30P0.50 means the spectrum is viewed at an inclination angle of 30 degrees and at a phase of 0.5 -- for a binary system this is when the secondary was located behind the primary. 
 
+If :ref:`Spectrum.polarization` is ``yes``, two more columns are added for each observer after all of the others, e.g. ``A30P0.50_Q`` and ``A30P0.50_U``: the Stokes Q and U spectra, in the same units as the intensity and referred to North on the sky (the projected symmetry axis).  This also applies to the *.spec_wind*, *.log_spec* and *.log_spec_wind* files.  See :doc:`/physics/polarization`.
+
 **An important note to the user:** Due to the nature of modelling with wavelength bounds on the SEDs, the edges (minimum and maximum wavelengths) of observers emergent spectra drop in flux artificially. This is expected behaviour and is not a bug. As a result, if one is interested with a certain spectral region or a particular line. Be sure to widen the pre-determined wavelength minimum and maximum bounds by 50 or so Angstroms extra. This will ensure that your region of interest is appropriately modelled.
 
 .log_spec
