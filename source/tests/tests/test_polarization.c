@@ -323,6 +323,92 @@ test_pol_lorentz (void)
 
 /** *******************************************************************************************************************
  *
+ * @brief Lorentz transformation, analytic check: for a pure boost the polarization angle measured from the normal
+ * m = n x v of the plane containing the photon direction and the velocity is unchanged
+ *
+ * @details
+ * The aberrated direction stays in the (n, v) plane, so m is perpendicular to it before and after.  For E parallel
+ * to m, E' = gamma (1 - beta.n) E, and for E in the plane, E' has the same magnitude and lies in the plane, so the
+ * map from E to E' is a rotation plus a uniform scaling and the angle from m is preserved.  In REL_MODE_LINEAR the
+ * direction is not aberrated and q, u must be unchanged.
+ *
+ * ****************************************************************************************************************** */
+
+void
+test_pol_lorentz_plane (void)
+{
+  struct photon p;
+  double vels[][3] = {
+    {0.3, 0.0, 0.0},
+    {0.0, -0.5, 0.2},
+    {-0.4, 0.3, -0.6},
+    {0.05, 0.02, -0.01},
+  };
+  double pols[][2] = {
+    {0.5, 0.0},
+    {0.0, -0.7},
+    {0.3, 0.4},
+  };
+  double n[3], v[3], m[3], qa, ua, qb, ub;
+  int i, j, k, rel_mode_save;
+
+  rel_mode_save = rel_mode;
+  modes.polarization = TRUE;
+  rel_mode = REL_MODE_FULL;
+
+  for (i = 0; i < NDIRS; i++)
+  {
+    for (j = 0; j < (int) (sizeof (vels) / sizeof (vels[0])); j++)
+    {
+      stuff_v (test_dirs[i], n);
+      renorm (n, 1.0);
+      rescale (vels[j], VLIGHT, v);
+      cross (n, v, m);
+      if (length (m) < 1e-3 * length (v))
+        continue;
+      renorm (m, 1.0);
+
+      for (k = 0; k < (int) (sizeof (pols) / sizeof (pols[0])); k++)
+      {
+        init_dummy_phot (&p);
+        stuff_v (n, p.lmn);
+        p.freq = 1e15;
+        p.w = 1.0;
+        p.q = pols[k][0];
+        p.u = pols[k][1];
+
+        pol_to_axis (&p, m, &qa, &ua);
+        lorentz_transform (&p, &p, v);
+        CU_ASSERT_DOUBLE_EQUAL (dot (p.lmn, m), 0.0, 1e-12);
+        pol_to_axis (&p, m, &qb, &ub);
+        CU_ASSERT_DOUBLE_EQUAL (qa, qb, 1e-10);
+        CU_ASSERT_DOUBLE_EQUAL (ua, ub, 1e-10);
+      }
+    }
+  }
+
+  /* REL_MODE_LINEAR: no aberration, so neither the direction nor q, u change */
+  rel_mode = REL_MODE_LINEAR;
+  init_dummy_phot (&p);
+  p.lmn[0] = 0.6;
+  p.lmn[1] = 0.0;
+  p.lmn[2] = 0.8;
+  p.freq = 1e15;
+  p.w = 1.0;
+  p.q = 0.3;
+  p.u = 0.15;
+  rescale (vels[2], VLIGHT, v);
+  lorentz_transform (&p, &p, v);
+  CU_ASSERT_DOUBLE_EQUAL (p.lmn[0], 0.6, 1e-15);
+  CU_ASSERT_DOUBLE_EQUAL (p.q, 0.3, 1e-15);
+  CU_ASSERT_DOUBLE_EQUAL (p.u, 0.15, 1e-15);
+
+  modes.polarization = FALSE;
+  rel_mode = rel_mode_save;
+}
+
+/** *******************************************************************************************************************
+ *
  * @brief Create the polarization test suite
  *
  * ****************************************************************************************************************** */
@@ -345,7 +431,8 @@ create_polarization_test_suite (void)
       (CU_add_test (suite, "North on the sky", test_pol_sky_north) == NULL) ||
       (CU_add_test (suite, "Electron-scattering matrix", test_pol_es_matrix) == NULL) ||
       (CU_add_test (suite, "Electron-scattering peel-off", test_pol_peel_es) == NULL) ||
-      (CU_add_test (suite, "Lorentz transformation", test_pol_lorentz) == NULL))
+      (CU_add_test (suite, "Lorentz transformation", test_pol_lorentz) == NULL) ||
+      (CU_add_test (suite, "Lorentz transformation, angle from the (n, v) plane", test_pol_lorentz_plane) == NULL))
   {
     fprintf (stderr, "Failed to add tests to `Polarization` suite\n");
     CU_cleanup_registry ();
