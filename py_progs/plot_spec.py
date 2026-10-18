@@ -43,6 +43,7 @@ History:
 '''
 
 import sys
+import os
 import numpy
 import matplotlib.pyplot as pylab
 import matplotlib.ticker as mtick
@@ -161,6 +162,10 @@ def do_all_angles_ev(rootname='sv',smooth=21,emin=1000,emax=9000,fmax=0,fig_no=1
     cols=[]
     while i<len(data.colnames):
         one=data.colnames[i]
+        if one.endswith(('_Q','_U')):
+            # Stokes Q and U of a polarized spectrum, not spectra to plot here
+            i=i+1
+            continue
         # print 'gotcha',one 
         new_name=one.replace('P0.50','')
         new_name=new_name.replace('A','')
@@ -240,6 +245,10 @@ def do_all_angles(rootname='sv',smooth=21,wmin=850,wmax=1850,fmax=0,fig_no=1, ti
     # i=9
     while i<len(data.colnames):
         one=data.colnames[i]
+        if one.endswith(('_Q','_U')):
+            # Stokes Q and U of a polarized spectrum, not spectra to plot here
+            i=i+1
+            continue
         # print 'gotcha',one 
         new_name=one.replace('P0.50','')
         new_name=new_name.replace('A','')
@@ -294,7 +303,7 @@ def do_all_angles(rootname='sv',smooth=21,wmin=850,wmax=1850,fmax=0,fig_no=1, ti
     return plotfile
 
 
-def do_mosaic(rootname='sv',smooth=21,wmin=850,wmax=1850,fmax=0,fig_no=1, title=None):
+def do_mosaic(rootname='sv',smooth=21,wmin=850,wmax=1850,fmax=0,fig_no=1, title=None, outdir=''):
     '''
     Plot each of the spectra where
 
@@ -303,6 +312,11 @@ def do_mosaic(rootname='sv',smooth=21,wmin=850,wmax=1850,fmax=0,fig_no=1, title=
 
     and other values should be obvious.
 
+    Spectra at the same inclination (e.g. all the photons and those selected by the number
+    of scatters, 80, 80_sc:0, 80_sc:1) are drawn in the same panel.  The plot is written
+    to outdir, if given.
+
+    261018    ksl    One panel per inclination; outdir
     140907    ksl    Updated to include fmax
     140912    ksl    Updated so uses rootname 
     141124    ksl    Updated for new formats which use astropy
@@ -330,6 +344,10 @@ def do_mosaic(rootname='sv',smooth=21,wmin=850,wmax=1850,fmax=0,fig_no=1, title=
     # i=9
     while i<len(data.colnames):
         one=data.colnames[i]
+        if one.endswith(('_Q','_U')):
+            # Stokes Q and U of a polarized spectrum, not spectra to plot here
+            i=i+1
+            continue
         # print 'gotcha',one 
         new_name=one.replace('P0.50','')
         new_name=new_name.replace('A','')
@@ -353,7 +371,12 @@ def do_mosaic(rootname='sv',smooth=21,wmin=850,wmax=1850,fmax=0,fig_no=1, title=
             wmax=xmax
 
 
-    nspectra=len(cols)
+    # group the spectra by observer, so that those at the same inclination share a panel
+    panels={}
+    for col in cols:
+        panels.setdefault(col.split('_')[0],[]).append(col)
+
+    nspectra=len(panels)
 
     print(nspectra)
 
@@ -385,15 +408,19 @@ def do_mosaic(rootname='sv',smooth=21,wmin=850,wmax=1850,fmax=0,fig_no=1, title=
     # print(cols)
 
     i=1
-    for col in cols:
+    for key,group in panels.items():
         # pylab.subplot(nspectra,1,i)
         xx=fig.add_subplot(nspectra,1,i)
         xx.yaxis.set_major_formatter(mtick.FormatStrFormatter('%5.1e'))
-        flux=data[col]
-        # print(flux)
-        xlabel=col+'$^{\circ}$'
-        q=convolve(flux,boxcar(smooth)/float(smooth),mode='same')
-        pylab.plot(data['Lambda'],q,'-',label=xlabel)
+        for col in group:
+            flux=data[col]
+            # print(flux)
+            if len(group)==1:
+                xlabel=col+'$^{\circ}$'
+            else:
+                xlabel=key+'$^{\circ}$ '+(col.split('_',1)[1] if '_' in col else 'all')
+            q=convolve(flux,boxcar(smooth)/float(smooth),mode='same')
+            pylab.plot(data['Lambda'],q,'-',label=xlabel)
         z=pylab.axis()
         if fmax==0:
             pylab.axis((wmin,wmax,0,z[3]))
@@ -404,7 +431,7 @@ def do_mosaic(rootname='sv',smooth=21,wmin=850,wmax=1850,fmax=0,fig_no=1, title=
         i+=1
 
     # pylab.tight_layout()
-    plotfile=root+'.png'
+    plotfile=os.path.join(outdir,root+'.png')
     pylab.savefig(plotfile)
     return plotfile,nspectra
 

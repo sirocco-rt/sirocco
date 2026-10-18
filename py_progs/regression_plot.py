@@ -470,7 +470,8 @@ def doit_two(run1='py82i_181127',run2='py82i_181126',model='cv_kur',outdir=''):
     # pylab.xlabel('Wavelength')
 
         pylab.subplot(615)
-        spec_list=spec1.colnames[9:]
+        # skip the Stokes Q and U columns that are present if polarization was calculated
+        spec_list=[one for one in spec1.colnames[9:] if not one.endswith(('_Q','_U'))]
         i=len(spec_list)//2
         # print(i,spec_list[i])
         name=spec_list[i]
