@@ -232,6 +232,8 @@ Processes treated as unpolarized
 
 The following set ``q = u = 0`` for the packet that leaves them:
 
+* emission by the sources (star, disk, boundary layer, central source), which are assumed to have no intrinsic
+  polarization;
 * resonance-line scattering, in both the simple-atom and macro-atom schemes, including thermal trapping
   (``resonate.c``);
 * free-free and bound-free emission, k-packets, and all macro-atom emission;
@@ -262,8 +264,10 @@ bins, is usually necessary.  For an axisymmetric model the U spectrum is a usefu
 advanced option :ref:`Spectrum.select_specific_no_of_scatters_in_spectra` can be used to separate the
 contributions of unscattered, singly scattered and multiply scattered light.
 
-``py_progs/polarization/c_spectra.py`` reads these columns, prints band-integrated :math:`q`, :math:`u`,
-:math:`P` and :math:`\chi` for each observer, and plots I, q and u against wavelength.
+``py_progs/plot_pol.py root`` plots the spectrum, :math:`P` and :math:`\chi` for each observer, with :math:`P`
+in coarse bins and the noise estimated from U.  ``plot_pol.py -table root`` instead prints band-integrated
+:math:`q`, :math:`u`, :math:`P` and :math:`\chi` for every observer (use ``-wmin`` and ``-wmax`` to choose the
+band).  ``run_check.py`` includes the plot when a run has polarization.
 
 Cost
 ~~~~
@@ -297,6 +301,16 @@ Validation
   agrees with an exact single-scattering calculation to about 1-2% in the scattered I and Q, although at
   :math:`0.3c` the relativistic effects halve the scattered Q.  Runs with ``-nonrel`` reproduce the static
   result.
+
+* **A CV-like wind in a polar cone or an equatorial wedge**, lit by a central source, with the ionization
+  calculated by SIROCCO: the light scattered once agrees with an independent single-scattering calculation to
+  within 0.4 points of :math:`P` for the cone, and for the wedge at :math:`80^\circ`.  For the wedge at
+  :math:`10^\circ` and :math:`45^\circ`, SIROCCO is about 2 points more positive than the prediction, which is not
+  yet understood.
+
+The last four tests are in ``examples/polarization``, and can be rerun with one command, in a quick (minutes)
+or full (hours) version; see :doc:`../developer/polarization_tests`.  ``examples/regress`` includes a short
+version of the polar-cone model, ``pol_cone``, which is run with ``-d``.
 
 .. _pol_not_included:
 
