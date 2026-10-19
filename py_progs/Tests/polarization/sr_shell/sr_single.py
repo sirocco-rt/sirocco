@@ -76,11 +76,49 @@ def predict(cells, inc, beta, nmu=8, nphi=256):
     return I, Q, U, tau
 
 
-if __name__ == '__main__':
-    for root in sys.argv[1:]:
+def doit(roots):
+    '''
+    Print the prediction for each run in roots (needs root.cells.npz)
+    '''
+
+    for root in roots:
         cells = np.load(root + '.cells.npz')
         beta = float(cells['beta'])
         print(f'{root}: beta = {beta}')
         for inc in ANGLES:
             I, Q, U, tau = predict(cells, inc, beta)
             print(f'  i = {inc:5.1f}  I_sc/I_0 = {I:.5e}  Q_sc/I_0 = {Q:+.5e}  U = {U:+.1e}  q_sc = {100*Q/I:+7.3f}%  tau_dir = {tau:.4f}')
+
+
+def steer(argv):
+    '''
+    Process the command line
+    '''
+
+    words = []
+
+    i = 1
+    while i < len(argv):
+        if argv[i] == '-h':
+            print(__doc__)
+            return
+        elif argv[i][0] == '-':
+            print('Error: Unknown switch ---  %s' % argv[i])
+            return
+        else:
+            words.append(argv[i])
+        i += 1
+
+    if len(words) == 0:
+        print(__doc__)
+        return
+
+    doit(words)
+
+
+# Next lines permit one to run the routine from the command line
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        steer(sys.argv)
+    else:
+        print(__doc__)

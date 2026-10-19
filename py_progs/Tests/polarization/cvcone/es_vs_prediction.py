@@ -6,7 +6,7 @@ wavelength.  Also prints the averages over the windows between the lines.  The p
 from root.pred.txt, which geom_pol.py root theta_min theta_max -central writes.
 Writes es_vs_prediction.png
 
-usage: es_vs_prediction.py [root ...]        (default: pbl_es eq_es)
+usage: es_vs_prediction.py root [root ...]        e.g. es_vs_prediction.py pbl_es eq_es
 '''
 import os
 import sys
@@ -53,7 +53,7 @@ def compare(root):
     return rows
 
 
-def main(roots):
+def doit(roots):
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
@@ -96,5 +96,35 @@ def main(roots):
     print('es_vs_prediction.png')
 
 
-if __name__ == '__main__':
-    main(sys.argv[1:] if len(sys.argv) > 1 else ['pbl_es', 'eq_es'])
+def steer(argv):
+    '''
+    Process the command line
+    '''
+
+    words = []
+
+    i = 1
+    while i < len(argv):
+        if argv[i] == '-h':
+            print(__doc__)
+            return
+        elif argv[i][0] == '-':
+            print('Error: Unknown switch ---  %s' % argv[i])
+            return
+        else:
+            words.append(argv[i])
+        i += 1
+
+    if len(words) == 0:
+        print(__doc__)
+        return
+
+    doit(words)
+
+
+# Next lines permit one to run the routine from the command line
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        steer(sys.argv)
+    else:
+        print(__doc__)

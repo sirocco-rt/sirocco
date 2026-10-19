@@ -5,7 +5,7 @@ sr_single.py, relative to the (attenuated) direct light at the same angle.
 -nonrel runs (root ending in n) are compared with the static prediction.
 Writes compare_sr.txt and compare_sr.png.
 
-usage: compare_sr.py [root ...]        (default: sb0 sb0.1 sb0.3 sb0.3n ss0.3)
+usage: compare_sr.py root [root ...]        e.g. compare_sr.py sb0 sb0.1 sb0.3 sb0.3n ss0.3
 '''
 import os
 import sys
@@ -14,7 +14,6 @@ import numpy as np
 import plot_pol as cs
 from sr_single import predict, ANGLES
 
-RUNS = ["sb0", "sb0.1", "sb0.3", "sb0.3n", "ss0.3"]
 
 
 def measure(root):
@@ -58,7 +57,7 @@ def compare(root):
     return beta, nonrel, rows
 
 
-def main(runs):
+def doit(runs):
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
@@ -90,5 +89,35 @@ def main(runs):
     print('\n'.join(lines))
 
 
-if __name__ == '__main__':
-    main(sys.argv[1:] if len(sys.argv) > 1 else RUNS)
+def steer(argv):
+    '''
+    Process the command line
+    '''
+
+    words = []
+
+    i = 1
+    while i < len(argv):
+        if argv[i] == '-h':
+            print(__doc__)
+            return
+        elif argv[i][0] == '-':
+            print('Error: Unknown switch ---  %s' % argv[i])
+            return
+        else:
+            words.append(argv[i])
+        i += 1
+
+    if len(words) == 0:
+        print(__doc__)
+        return
+
+    doit(words)
+
+
+# Next lines permit one to run the routine from the command line
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        steer(sys.argv)
+    else:
+        print(__doc__)

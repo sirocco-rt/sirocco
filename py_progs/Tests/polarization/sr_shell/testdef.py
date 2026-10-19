@@ -36,7 +36,7 @@ def models(tier):
 
 
 def post(tier):
-    return [['compare_sr.py', 'sb0.3']] if tier == 'quick' else [['compare_sr.py']]
+    return [['compare_sr.py', 'sb0.3']] if tier == 'quick' else [['compare_sr.py'] + [root for root, beta, sw in FULL]]
 
 
 def checks(tier):

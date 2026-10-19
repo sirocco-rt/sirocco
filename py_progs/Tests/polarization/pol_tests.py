@@ -53,7 +53,6 @@ History:
     261018 ksl Coding begun, with Claude Code
 
 '''
-import argparse
 import datetime
 import importlib.util
 import os
@@ -221,28 +220,69 @@ def doit(workdir, tier='quick', np=8, exe='sirocco', w2t='windsave2table', tests
     return nfail == 0
 
 
-def steer():
-    '''Parse the command line'''
-    parser = argparse.ArgumentParser(description='Run the polarization tests in py_progs/Tests/polarization')
-    parser.add_argument('workdir')
-    parser.add_argument('-full', action='store_true', help='the full tests (hours) rather than the quick ones')
-    parser.add_argument('-np', type=int, default=8)
-    parser.add_argument('-exe', default='sirocco')
-    parser.add_argument('-w2t', default='windsave2table')
-    parser.add_argument('-tests', nargs='+', default=TESTS, choices=TESTS)
-    parser.add_argument('-check_only', action='store_true')
-    args = parser.parse_args()
+def steer(argv):
+    '''
+    Process the command line; returns the exit status (0 if every check passed)
+    '''
 
+    workdir = ''
+    tier = 'quick'
+    nproc = 8
+    exe = 'sirocco'
+    w2t = 'windsave2table'
+    tests = TESTS
+    check_only = False
+
+    i = 1
+    while i < len(argv):
+        if argv[i] == '-h':
+            print(__doc__)
+            return 0
+        elif argv[i] == '-full':
+            tier = 'full'
+        elif argv[i] == '-np':
+            i += 1
+            nproc = int(argv[i])
+        elif argv[i] == '-exe':
+            i += 1
+            exe = argv[i]
+        elif argv[i] == '-w2t':
+            i += 1
+            w2t = argv[i]
+        elif argv[i] == '-tests':
+            tests = []
+            while i + 1 < len(argv) and argv[i + 1] in TESTS:
+                i += 1
+                tests.append(argv[i])
+            if len(tests) == 0:
+                print('Error: -tests needs one or more of %s' % TESTS)
+                return 1
+        elif argv[i] == '-check_only':
+            check_only = True
+        elif argv[i][0] == '-':
+            print('Error: Unknown switch ---  %s' % argv[i])
+            return 1
+        else:
+            workdir = argv[i]
+        i += 1
+
+    if workdir == '':
+        print(__doc__)
+        return 1
     if 'SIROCCO' not in os.environ:
         print('Error: $SIROCCO must be set')
         return 1
     repo = os.path.realpath(os.environ['SIROCCO'])
-    if os.path.realpath(os.path.abspath(args.workdir)).startswith(repo + os.sep):
+    if os.path.realpath(os.path.abspath(workdir)).startswith(repo + os.sep):
         print('Error: run the tests outside the repository, not in %s' % repo)
         return 1
-    ok = doit(args.workdir, 'full' if args.full else 'quick', args.np, args.exe, args.w2t, args.tests, args.check_only)
+    ok = doit(workdir, tier, nproc, exe, w2t, tests, check_only)
     return 0 if ok else 1
 
 
-if __name__ == '__main__':
-    sys.exit(steer())
+# Next lines permit one to run the routine from the command line
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        sys.exit(steer(sys.argv))
+    else:
+        print(__doc__)

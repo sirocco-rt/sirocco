@@ -74,8 +74,46 @@ def total_q(tau_eq, inc, Q, I_sc):
     return 100 * Q / (np.exp(-tau_eq * np.sin(np.radians(inc)) ** 2) + I_sc)
 
 
-if __name__ == '__main__':
-    tau_eq = float(sys.argv[1])
+def doit(tau_eq):
+    '''
+    Print the single-scattering prediction for an equatorial optical
+    depth tau_eq
+    '''
+
     for inc, (Q, I_sc, bm) in predict(tau_eq).items():
         print(f'tau_eq {tau_eq}: i={inc:2d}  single-scatter Q/I0 = {100*Q:+.6f}%  B&M {100*bm:+.6f}%  ratio {Q/bm:.4f}   '
               f'I_sc/I0 = {I_sc:.5f}  q_tot = {total_q(tau_eq, inc, Q, I_sc):+.6f}%')
+
+
+def steer(argv):
+    '''
+    Process the command line
+    '''
+
+    words = []
+
+    i = 1
+    while i < len(argv):
+        if argv[i] == '-h':
+            print(__doc__)
+            return
+        elif argv[i][0] == '-':
+            print('Error: Unknown switch ---  %s' % argv[i])
+            return
+        else:
+            words.append(argv[i])
+        i += 1
+
+    if len(words) == 0:
+        print(__doc__)
+        return
+
+    doit(float(words[0]))
+
+
+# Next lines permit one to run the routine from the command line
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        steer(sys.argv)
+    else:
+        print(__doc__)

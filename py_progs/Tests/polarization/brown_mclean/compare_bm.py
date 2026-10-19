@@ -40,7 +40,7 @@ def compare(root, tau):
     return rows
 
 
-def main(cases):
+def doit(cases):
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
@@ -77,5 +77,35 @@ def main(cases):
     print('compare_bm.png')
 
 
-if __name__ == '__main__':
-    main([(a.split(':')[0], float(a.split(':')[1])) for a in sys.argv[1:]])
+def steer(argv):
+    '''
+    Process the command line
+    '''
+
+    words = []
+
+    i = 1
+    while i < len(argv):
+        if argv[i] == '-h':
+            print(__doc__)
+            return
+        elif argv[i][0] == '-':
+            print('Error: Unknown switch ---  %s' % argv[i])
+            return
+        else:
+            words.append(argv[i])
+        i += 1
+
+    if len(words) == 0:
+        print(__doc__)
+        return
+
+    doit([(a.split(':')[0], float(a.split(':')[1])) for a in words])
+
+
+# Next lines permit one to run the routine from the command line
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        steer(sys.argv)
+    else:
+        print(__doc__)

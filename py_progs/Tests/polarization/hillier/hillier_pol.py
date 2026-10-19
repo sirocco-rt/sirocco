@@ -67,9 +67,42 @@ def albedo(root):
     return res
 
 
-if __name__ == '__main__':
-    if sys.argv[1] == '-albedo':
-        for r in sys.argv[2:]:
+def steer(argv):
+    '''
+    Process the command line
+    '''
+
+    words = []
+    xalbedo = False
+
+    i = 1
+    while i < len(argv):
+        if argv[i] == '-h':
+            print(__doc__)
+            return
+        elif argv[i] == '-albedo':
+            xalbedo = True
+        elif argv[i][0] == '-':
+            print('Error: Unknown switch ---  %s' % argv[i])
+            return
+        else:
+            words.append(argv[i])
+        i += 1
+
+    if len(words) == 0:
+        print(__doc__)
+        return
+
+    if xalbedo:
+        for r in words:
             albedo(r)
     else:
-        angles(sys.argv[1:])
+        angles(words)
+
+
+# Next lines permit one to run the routine from the command line
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        steer(sys.argv)
+    else:
+        print(__doc__)
