@@ -308,7 +308,7 @@ Validation
   :math:`10^\circ` and :math:`45^\circ`, SIROCCO is about 2 points more positive than the prediction, which is not
   yet understood.
 
-The last four tests are in ``examples/polarization``, and can be rerun with one command, in a quick (minutes)
+The last four tests are in ``py_progs/Tests/polarization``, and can be rerun with one command, in a quick (minutes)
 or full (hours) version; see :doc:`../developer/polarization_tests`.  ``examples/regress`` includes a short
 version of the polar-cone model, ``pol_cone``, which is run with ``-d``.
 

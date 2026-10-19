@@ -74,7 +74,7 @@ Primary routines:
     band_pol
         band-integrated q, u, P and PA for each observer, summing L_nu dnu
         over the band (also used by the polarization tests in
-        examples/polarization)
+        py_progs/Tests/polarization)
 
 Notes:
 

@@ -1,7 +1,7 @@
 Polarization Tests
 ##################
 
-The tests in :code:`$SIROCCO/examples/polarization` check that the polarization computed by SIROCCO (see
+The tests in :code:`$SIROCCO/py_progs/Tests/polarization` check that the polarization computed by SIROCCO (see
 :doc:`../physics/polarization`) is right.  Each test is a full SIROCCO run, made with
 :code:`@Spectrum.polarization yes`.  The result is compared with a calculation made independently of SIROCCO:
 an analytic result, a published one, or a separate numerical calculation.  They complement the other kinds of
@@ -22,8 +22,8 @@ The tests are run by :code:`pol_tests.py`, in a working directory outside the re
 
 .. code:: bash
 
-    $ python $SIROCCO/examples/polarization/pol_tests.py ~/pol_test_runs          # quick tests, ~10 minutes
-    $ python $SIROCCO/examples/polarization/pol_tests.py -full ~/pol_test_runs    # full tests, several hours
+    $ python $SIROCCO/py_progs/Tests/polarization/pol_tests.py ~/pol_test_runs          # quick tests, ~10 minutes
+    $ python $SIROCCO/py_progs/Tests/polarization/pol_tests.py -full ~/pol_test_runs    # full tests, several hours
 
 The main options are :code:`-np` (the number of MPI processes, 8 by default), :code:`-exe` (the SIROCCO
 executable to test) and :code:`-w2t` (a :code:`windsave2table` built from the same code, which one test needs).
@@ -67,7 +67,7 @@ All the tests use electron scattering only, the process whose polarization SIROC
        point
 
 Each test has a quick version, of a few minutes, for checking a change, and a full version, which reproduces
-the validation described in :ref:`pol_validation`.  The README in :code:`examples/polarization` describes each
+the validation described in :ref:`pol_validation`.  The README in :code:`py_progs/Tests/polarization` describes each
 test in more detail, and the :code:`testdef.py` in each test directory documents its tolerances and how they
 were set.
 

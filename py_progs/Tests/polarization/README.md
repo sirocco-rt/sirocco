@@ -18,12 +18,12 @@ the extraction (peel-off) or the spectra.
 ## Running the tests
 
 Run the tests in a working directory **outside the repository**. The driver
-copies everything it needs there, and writes nothing in `examples/`.
+copies everything it needs there, and writes nothing in the repository.
 
 ```
 export SIROCCO=/path/to/Sirocco
-python $SIROCCO/examples/polarization/pol_tests.py ~/pol_test_runs                   # quick tests, ~8 min
-python $SIROCCO/examples/polarization/pol_tests.py -full ~/pol_test_runs_full        # full tests, several hours
+python $SIROCCO/py_progs/Tests/polarization/pol_tests.py ~/pol_test_runs                   # quick tests, ~8 min
+python $SIROCCO/py_progs/Tests/polarization/pol_tests.py -full ~/pol_test_runs_full        # full tests, several hours
 ```
 
 Options:
@@ -176,7 +176,7 @@ Every script in the test directories can also be run on its own, in a copy
 of the directory. The usage is in each docstring. For example:
 
 ```
-mkdir ~/bm && cp $SIROCCO/examples/polarization/brown_mclean/* $SIROCCO/examples/polarization/h_*.dat ~/bm && cd ~/bm
+mkdir ~/bm && cp $SIROCCO/py_progs/Tests/polarization/brown_mclean/* $SIROCCO/py_progs/Tests/polarization/h_*.dat ~/bm && cd ~/bm
 Setup_Sirocco_Dir
 python make_bm.py bm01 0.1
 mpirun -np 8 sirocco -d bm01

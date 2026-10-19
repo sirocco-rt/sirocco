@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Run the polarization tests in examples/polarization and summarize whether
+Run the polarization tests in py_progs/Tests/polarization and summarize whether
 they pass.
 
 
@@ -12,7 +12,7 @@ Command line usage (if any):
                      [-tests TEST [TEST ...]] [-check_only] workdir
 
     workdir     the directory in which to run the tests; it is created if
-                necessary, and must not be inside $SIROCCO/examples
+                necessary, and must not be inside $SIROCCO
     -full       run the full tests (several hours on 8 processes) rather
                 than the quick ones (about 10 minutes)
     -np         number of MPI processes (default 8; 1 runs without mpirun)
@@ -26,7 +26,7 @@ Command line usage (if any):
 
 Description:
 
-    Each test is a subdirectory of examples/polarization.  It holds scripts
+    Each test is a subdirectory of py_progs/Tests/polarization.  It holds scripts
     that write the models, an independent prediction, and testdef.py, which
     says which models to run in the quick and the full tiers, which analysis
     scripts to run afterwards, and what to check.
@@ -223,7 +223,7 @@ def doit(workdir, tier='quick', np=8, exe='sirocco', w2t='windsave2table', tests
 
 def steer():
     '''Parse the command line'''
-    parser = argparse.ArgumentParser(description='Run the polarization tests in examples/polarization')
+    parser = argparse.ArgumentParser(description='Run the polarization tests in py_progs/Tests/polarization')
     parser.add_argument('workdir')
     parser.add_argument('-full', action='store_true', help='the full tests (hours) rather than the quick ones')
     parser.add_argument('-np', type=int, default=8)
@@ -236,9 +236,9 @@ def steer():
     if 'SIROCCO' not in os.environ:
         print('Error: $SIROCCO must be set')
         return 1
-    examples = os.path.realpath(os.path.join(os.environ['SIROCCO'], 'examples'))
-    if os.path.realpath(os.path.abspath(args.workdir)).startswith(examples + os.sep):
-        print('Error: run the tests outside the repository, not in %s' % examples)
+    repo = os.path.realpath(os.environ['SIROCCO'])
+    if os.path.realpath(os.path.abspath(args.workdir)).startswith(repo + os.sep):
+        print('Error: run the tests outside the repository, not in %s' % repo)
         return 1
     ok = doit(args.workdir, 'full' if args.full else 'quick', args.np, args.exe, args.w2t, args.tests, args.check_only)
     return 0 if ok else 1
