@@ -12,6 +12,7 @@
 extern int np_mpi_global;      /**< Global variable which holds the number of MPI processes
                                 */
 
+extern int nscat_neg_net_photoion;  /**< bf absorptions in scatter() with negative net photoionization rate this cycle */
 extern int rank_global;       /**<Global variable which holds the rank of the active MPI process
                                 */
 
