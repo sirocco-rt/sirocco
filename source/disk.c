@@ -57,13 +57,11 @@
  **********************************************************/
 
 double
-teff (x)
-     double x;
+teff (double x)
 {
   double q = 0;
   double theat, r;
   double temp;
-  double pow ();
   int kkk;
 
 
@@ -161,8 +159,7 @@ teff (x)
  **********************************************************/
 
 double
-geff (x)
-     double x;
+geff (double x)
 {
   double q;
   double r;
@@ -232,9 +229,7 @@ double north[] = { 0.0, 0.0, 1.0 };
  **********************************************************/
 
 double
-vdisk (x, v)
-     double x[];
-     double v[];
+vdisk (double x[], double v[])
 {
   double xhold[3];
   double r, speed;
@@ -280,8 +275,7 @@ vdisk (x, v)
  **********************************************************/
 
 double
-zdisk (r)
-     double r;
+zdisk (double r)
 {
   double z;
   z = geo.disk_z0 * pow (r / geo.disk_rad_max, geo.disk_z1) * geo.disk_rad_max;
@@ -362,10 +356,7 @@ struct plane diskplane, disktop, diskbottom;
  **********************************************************/
 
 double
-ds_to_disk (p, allow_negative, hit)
-     struct photon *p;
-     int allow_negative;
-     int *hit;
+ds_to_disk (struct photon *p, int allow_negative, int *hit)
 {
 
   /*

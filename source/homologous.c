@@ -50,8 +50,7 @@
  **********************************************************/
 
 int
-get_homologous_params (ndom)
-     int ndom;
+get_homologous_params (int ndom)
 {
   DomainPtr one_dom;
   one_dom = &zdom[ndom];
@@ -136,9 +135,7 @@ get_homologous_params (ndom)
  **********************************************************/
 
 double
-homologous_velocity (ndom, x, v)
-     int ndom;
-     double x[], v[];
+homologous_velocity (int ndom, double x[], double v[])
 {
   double r, speed;
 
@@ -185,11 +182,9 @@ homologous_velocity (ndom, x, v)
  **********************************************************/
 
 double
-homologous_rho (ndom, x)
-     int ndom;
-     double x[];
+homologous_rho (int ndom, double x[])
 {
-  double r, rho, length ();
+  double r, rho;
   DomainPtr one_dom;
   one_dom = &zdom[ndom];
 

@@ -60,10 +60,7 @@
 
 
 double
-num_int (func, a, b, eps)
-     double (*func) (double, void *);
-     double a, b;
-     double eps;
+num_int (double (*func) (double, void *), double a, double b, double eps)
 {
   double result, error, result2;
   double alpha = 0.0;
@@ -151,11 +148,7 @@ num_int (func, a, b, eps)
 
 
 double
-zero_find (func, x1, x2, tol, ierr)
-     double (*func) (double, void *);
-     double x1, x2;
-     double tol;
-     int *ierr;
+zero_find (double (*func) (double, void *), double x1, double x2, double tol, int *ierr)
 {
   double result;
   double x_below, x_above;
@@ -263,11 +256,7 @@ zero_find (func, x1, x2, tol, ierr)
 
 
 double
-find_function_minimum (a, m, b, func, tol, xmin)
-     double (*func) (double, void *);
-     double a, m, b;
-     double tol, *xmin;
-
+find_function_minimum (double a, double m, double b, double (*func) (double, void *), double tol, double *xmin)
 {
   int status = 0;
   void *test = NULL;
@@ -365,12 +354,7 @@ find_function_minimum (a, m, b, func, tol, xmin)
  **********************************************************/
 
 int
-fraction (value, array, npts, ival, f, mode)
-     double array[];            // The array in we want to search
-     int npts, *ival;           // ival is the lower point
-     double value;              // The value we want to index
-     double *f;                 // The fractional "distance" to the next point in the array
-     int mode;                  // 0 = compute in linear space, 1=compute in log space
+fraction (double value, double array[], int npts, int *ival, double *f, int mode)
 {
   int imin, imax, ihalf;
 
@@ -473,12 +457,7 @@ to reflect the behavior of the search routine in where_in_grid. */
  **********************************************************/
 
 int
-linterp (x, xarray, yarray, xdim, y, mode)
-     double x;                  // The value that we wish to index i
-     double xarray[], yarray[];
-     int xdim;
-     double *y;
-     int mode;                  //0 = linear, 1 = log
+linterp (double x, double xarray[], double yarray[], int xdim, double *y, int mode)
 {
   int nelem = 0;
   double frac;

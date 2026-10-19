@@ -39,8 +39,8 @@ test_init_resets_bf_estimators (void)
   {
     for (j = 0; j < size_gamma_est; ++j)
     {
-      macromain[n].gamma[j] = macromain[n].gamma_e[j] = 1.0;
-      macromain[n].alpha_st[j] = macromain[n].alpha_st_e[j] = 1.0;
+      macromain[n].est.gamma[j] = macromain[n].est.gamma_e[j] = 1.0;
+      macromain[n].est.alpha_st[j] = macromain[n].est.alpha_st_e[j] = 1.0;
     }
   }
 
@@ -53,10 +53,10 @@ test_init_resets_bf_estimators (void)
       for (k = 0; k < xconfig[level].n_bfu_jump; ++k)
       {
         j = xconfig[level].bfu_indx_first + k;
-        CU_ASSERT_EQUAL_FATAL (macromain[n].gamma[j], 0.0);
-        CU_ASSERT_EQUAL_FATAL (macromain[n].gamma_e[j], 0.0);
-        CU_ASSERT_EQUAL_FATAL (macromain[n].alpha_st[j], 0.0);
-        CU_ASSERT_EQUAL_FATAL (macromain[n].alpha_st_e[j], 0.0);
+        CU_ASSERT_EQUAL_FATAL (macromain[n].est.gamma[j], 0.0);
+        CU_ASSERT_EQUAL_FATAL (macromain[n].est.gamma_e[j], 0.0);
+        CU_ASSERT_EQUAL_FATAL (macromain[n].est.alpha_st[j], 0.0);
+        CU_ASSERT_EQUAL_FATAL (macromain[n].est.alpha_st_e[j], 0.0);
       }
     }
   }

@@ -75,9 +75,7 @@
  **********************************************************/
 
 int
-where_in_wind (x, ndomain)
-     double x[];
-     int *ndomain;
+where_in_wind (double x[], int *ndomain)
 {
   double rho, rad, z;
   int ireturn;
@@ -230,9 +228,7 @@ where_in_wind (x, ndomain)
  **********************************************************/
 
 double
-model_velocity (ndom, x, v)
-     double x[], v[];
-     int ndom;
+model_velocity (int ndom, double x[], double v[])
 {
   double speed = 0;
 
@@ -317,9 +313,7 @@ model_velocity (ndom, x, v)
  **********************************************************/
 
 int
-model_vgrad (ndom, x, v_grad)
-     double x[], v_grad[][3];
-     int ndom;
+model_vgrad (int ndom, double x[], double v_grad[][3])
 {
 
   double v[3], v_forward[3], v_reverse[3];
@@ -415,9 +409,7 @@ model_vgrad (ndom, x, v_grad)
  **********************************************************/
 
 double
-get_div_v_in_cmf_frame (ndom, x)
-     int ndom;
-     double *x;
+get_div_v_in_cmf_frame (int ndom, double *x)
 {
   int i;
   double v[3][3];
@@ -456,9 +448,7 @@ get_div_v_in_cmf_frame (ndom, x)
  **********************************************************/
 
 double
-model_rho (ndom, x)
-     int ndom;
-     double x[];
+model_rho (int ndom, double x[])
 {
   double rho = 0;
   int n = 0;
@@ -544,9 +534,7 @@ model_rho (ndom, x)
  **********************************************************/
 
 int
-wind_check (www, n)
-     WindPtr www;
-     int n;
+wind_check (WindPtr www, int n)
 {
   int i, j, k, istart, istop;
   int ierr = 0;

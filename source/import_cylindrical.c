@@ -57,9 +57,7 @@
  **********************************************************/
 
 int
-import_cylindrical (ndom, filename)
-     int ndom;
-     char *filename;
+import_cylindrical (int ndom, char *filename)
 {
   FILE *fptr;
   char line[LINELENGTH];
@@ -352,9 +350,7 @@ import_cylindrical_setup_boundaries (int ndom)
  **********************************************************/
 
 int
-cylindrical_make_grid_import (w, ndom)
-     WindPtr w;
-     int ndom;
+cylindrical_make_grid_import (WindPtr w, int ndom)
 {
   int n;
   int nn;
@@ -425,9 +421,7 @@ cylindrical_make_grid_import (w, ndom)
  **********************************************************/
 
 double
-velocity_cylindrical (ndom, x, v)
-     int ndom;
-     double *x, *v;
+velocity_cylindrical (int ndom, double *x, double *v)
 {
   int j;
   int nn;
@@ -482,9 +476,7 @@ velocity_cylindrical (ndom, x, v)
  **********************************************************/
 
 double
-rho_cylindrical (ndom, x)
-     int ndom;
-     double *x;
+rho_cylindrical (int ndom, double *x)
 {
   double rho = 0;
   double r, z;

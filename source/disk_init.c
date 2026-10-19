@@ -61,9 +61,7 @@
  **********************************************************/
 
 double
-disk_init (rmin, rmax, m, mdot, freqmin, freqmax, ioniz_or_extract, ftot)
-     double rmin, rmax, m, mdot, freqmin, freqmax, *ftot;
-     int ioniz_or_extract;
+disk_init (double rmin, double rmax, double m, double mdot, double freqmin, double freqmax, int ioniz_or_extract, double *ftot)
 {
   double t;
   double log_g;
@@ -310,8 +308,7 @@ disk_init (rmin, rmax, m, mdot, freqmin, freqmax, ioniz_or_extract, ftot)
  **********************************************************/
 
 int
-qdisk_init (rmin, rmax, m, mdot)
-     double rmin, rmax, m, mdot;
+qdisk_init (double rmin, double rmax, double m, double mdot)
 {
   int nrings;
   double log_rmin, log_rmax, dlog_r, log_r;
@@ -379,8 +376,7 @@ qdisk_init (rmin, rmax, m, mdot)
  **********************************************************/
 
 int
-qdisk_reinit (p)
-     PhotPtr p;
+qdisk_reinit (PhotPtr p)
 {
   int nphot, i, n;
   double rho;
@@ -457,9 +453,7 @@ qdisk_reinit (p)
  **********************************************************/
 
 int
-qdisk_save (diskfile, ichoice)
-     char *diskfile;
-     int ichoice;
+qdisk_save (char *diskfile, int ichoice)
 {
   FILE *qptr;
   int n;
@@ -559,11 +553,10 @@ qdisk_save (diskfile, ichoice)
  **********************************************************/
 
 int
-read_non_standard_disk_profile (tprofile)
-     char *tprofile;
+read_non_standard_disk_profile (char *tprofile)
 {
 
-  FILE *fopen (), *fptr;
+  FILE *fptr;
   int n;
   float r, t, g;
   int one, two;

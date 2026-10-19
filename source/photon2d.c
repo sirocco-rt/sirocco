@@ -77,12 +77,7 @@
  **********************************************************/
 
 int
-translate (w, pp, tau_scat, tau, nres)
-     WindPtr w;                 //w here refers to entire wind, not a single element
-     PhotPtr pp;
-     double tau_scat;
-     double *tau;
-     int *nres;
+translate (WindPtr w, PhotPtr pp, double tau_scat, double *tau, int *nres)
 {
   int istat;
   int ndomain;
@@ -139,8 +134,7 @@ translate (w, pp, tau_scat, tau, nres)
  **********************************************************/
 
 int
-translate_in_space (pp)
-     PhotPtr pp;
+translate_in_space (PhotPtr pp)
 {
   //OLD double ds, delta, s, smax, prhosq;
   double ds, delta, s, smax;
@@ -277,9 +271,7 @@ translate_in_space (pp)
  **********************************************************/
 
 double
-ds_to_wind (pp, ndom_current)
-     PhotPtr pp;
-     int *ndom_current;
+ds_to_wind (PhotPtr pp, int *ndom_current)
 {
   struct photon ptest, qtest;
   double ds, x, rho, z;
@@ -432,11 +424,7 @@ ds_to_wind (pp, ndom_current)
  *
  **********************************************************/
 int
-translate_in_wind (w, p, tau_scat, tau, nres)
-     WindPtr w;                 //w here refers to entire wind, not a single element
-     PhotPtr p;
-     double tau_scat, *tau;
-     int *nres;
+translate_in_wind (WindPtr w, PhotPtr p, double tau_scat, double *tau, int *nres)
 {
   int n;
   double smax, ds_current, ds_cmf;
@@ -486,20 +474,20 @@ translate_in_wind (w, p, tau_scat, tau, nres)
 
     if (p->nres == NRES_ES)
     {
-      xplasma->nscat_es++;
+      xplasma->derived.nscat_es++;
     }
     if (p->nres > NLINES)
     {
-      xplasma->nscat_bf++;
+      xplasma->derived.nscat_bf++;
     }
 
     else if (p->nres > 0)
     {
-      xplasma->nscat_res++;
+      xplasma->derived.nscat_res++;
     }
     else if (p->nres == NRES_FF)
     {
-      xplasma->nscat_ff++;
+      xplasma->derived.nscat_ff++;
     }
 
 
@@ -671,10 +659,7 @@ smax_in_cell (PhotPtr p)
  **********************************************************/
 
 double
-ds_in_cell (ndom, p)
-     int ndom;
-     PhotPtr p;
-
+ds_in_cell (int ndom, PhotPtr p)
 {
   int n;
   double smax;

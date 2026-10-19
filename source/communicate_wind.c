@@ -55,14 +55,13 @@ broadcast_wind_grid (const int n_start, const int n_stop, const int n_cells_rank
    * more efficiently. Although, it may just as easy and quick to communicate
    * each field one by one... but this is the right way to do it */
   MPI_Datatype wcone_derived_type;
-  const int count = 2;
   const int block_lengths[] = { 1, 1 };
   const MPI_Datatype block_types[] = { MPI_DOUBLE, MPI_DOUBLE };
   /* We need to find the memory displacements. We'll use the wcone struct in
    * the first cell for this. Each struct should have the same amount of
    * alignment for the fields, so this should be OK */
   MPI_Aint base_address;
-  MPI_Aint block_offsets[count];
+  MPI_Aint block_offsets[2];
   MPI_Get_address (&wmain[0].wcone, &base_address);
   MPI_Get_address (&wmain[0].wcone.z, &block_offsets[0]);
   MPI_Get_address (&wmain[0].wcone.dzdr, &block_offsets[1]);
@@ -70,7 +69,7 @@ broadcast_wind_grid (const int n_start, const int n_stop, const int n_cells_rank
   {
     block_offsets[i] = MPI_Aint_diff (block_offsets[i], base_address);
   }
-  MPI_Type_create_struct (count, block_lengths, block_offsets, block_types, &wcone_derived_type);
+  MPI_Type_create_struct (2, block_lengths, block_offsets, block_types, &wcone_derived_type);
   MPI_Type_commit (&wcone_derived_type);
 
   /* Calculate the size of the communication buffer */
@@ -162,6 +161,10 @@ broadcast_wind_grid (const int n_start, const int n_stop, const int n_cells_rank
 
   free (comm_buffer);
   MPI_Type_free (&wcone_derived_type);
+
+  /* Barrier to ensure shared memory writes are visible to all node-local ranks */
+  MPI_Barrier (node_comm);
+
   d_xsignal (files.root, "%-20s Finished communication of wind grid\n", "NOK");
 #endif
 }

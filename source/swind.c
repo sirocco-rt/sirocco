@@ -139,9 +139,7 @@ char *choice_options = "\n\
  **********************************************************/
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
 
 
@@ -236,7 +234,7 @@ main (argc, argv)
 
   /* Initialize other variables here */
 
-  swind_project = 1;          // The default is to try to project onto a yz plane
+  swind_project = 1;            // The default is to try to project onto a yz plane
 
 /* Read in the wind file */
 
@@ -393,10 +391,7 @@ I did not change this now.  Though it could be done.  02apr ksl */
  **********************************************************/
 
 int
-one_choice (choice, root, ochoice)
-     char choice;
-     char *root;
-     int ochoice;
+one_choice (int choice, char *root, int ochoice)
 {
   double lambda, freq;
   int n, istate, iswitch;

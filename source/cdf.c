@@ -94,12 +94,7 @@ double *pdf_array;
  **********************************************************/
 
 int
-cdf_gen_from_func (cdf, func, xmin, xmax, njumps, jump)
-     CdfPtr cdf;
-     double (*func) (double, void *);
-     double xmin, xmax;
-     double jump[];
-     int njumps;
+cdf_gen_from_func (CdfPtr cdf, double (*func) (double, void *), double xmin, double xmax, int njumps, double jump[])
 {
   double xstep;
   double y;
@@ -281,10 +276,7 @@ cdf_gen_from_func (cdf, func, xmin, xmax, njumps, jump)
  **********************************************************/
 
 double
-gen_array_from_func (func, xmin, xmax, pdfsteps)
-     double (*func) (double, void *);
-     double xmin, xmax;
-     int pdfsteps;
+gen_array_from_func (double (*func) (double, void *), double xmin, double xmax, int pdfsteps)
 {
 
   double x, z, xstep;
@@ -413,11 +405,7 @@ int pdf_n;
  **********************************************************/
 
 int
-cdf_gen_from_array (cdf, x, y, n_xy, xmin, xmax)
-     CdfPtr cdf;
-     double x[], y[];
-     int n_xy;
-     double xmin, xmax;
+cdf_gen_from_array (CdfPtr cdf, double x[], double y[], int n_xy, double xmin, double xmax)
 {
   int allzero;
   int nmin, nmax, cdf_n;
@@ -684,14 +672,13 @@ cdf_gen_from_array (cdf, x, y, n_xy, xmin, xmax)
  **********************************************************/
 
 double
-cdf_get_rand (cdf)
-     CdfPtr cdf;
+cdf_get_rand (CdfPtr cdf)
 {
   double x, r;
   int i, j;
   double q;
   double a, b, c, s[2];
-  int quadratic ();
+  int quadratic (double a, double b, double c, double r[]);
 
 /* Gnerate a random number and then find the interval n the cdf in which x lies */
   r = random_number (0.0, 1.0); //This *excludes* 0.0 and 1.0.
@@ -780,9 +767,7 @@ cdf_get_rand (cdf)
  **********************************************************/
 
 int
-cdf_limit (cdf, xmin, xmax)
-     CdfPtr cdf;
-     double xmin, xmax;
+cdf_limit (CdfPtr cdf, double xmin, double xmax)
 {
   int i;
   double q;
@@ -862,14 +847,13 @@ cdf_limit (cdf, xmin, xmax)
  **********************************************************/
 
 double
-cdf_get_rand_limit (cdf)
-     CdfPtr cdf;
+cdf_get_rand_limit (CdfPtr cdf)
 {
   double x, r;
   int i, j;
   double q;
   double a, b, c, s[2];
-  int quadratic ();
+  int quadratic (double a, double b, double c, double r[]);
   r = random_number (0.0, 1.0);
 
   r = r * cdf->limit2 + (1. - r) * cdf->limit1;
@@ -926,11 +910,9 @@ int cdf_write_init = 0;
  **********************************************************/
 
 int
-cdf_to_file (cdf, comment)
-     CdfPtr cdf;
-     char comment[];
+cdf_to_file (CdfPtr cdf, char comment[])
 {
-  FILE *fopen (), *fptr;
+  FILE *fptr;
   int n;
   if (cdf_write_init == 0)
   {
@@ -970,13 +952,9 @@ cdf_to_file (cdf, comment)
  **********************************************************/
 
 int
-cdf_inputs_to_file (x, y, n_xy, xmin, xmax, filename)
-     double x[], y[];
-     int n_xy;
-     double xmin, xmax;
-     char filename[];
+cdf_inputs_to_file (double x[], double y[], int n_xy, double xmin, double xmax, char filename[])
 {
-  FILE *fopen (), *fptr;
+  FILE *fptr;
   int n;
   fptr = fopen (filename, "w");
   fprintf (fptr, "# Number of samples in array %d\n", n_xy);
@@ -1003,8 +981,7 @@ cdf_inputs_to_file (x, y, n_xy, xmin, xmax, filename)
  **********************************************************/
 
 int
-cdf_check (cdf)
-     CdfPtr cdf;
+cdf_check (CdfPtr cdf)
 {
   int n;
   double x, y;
@@ -1116,8 +1093,7 @@ cdf_check (cdf)
  **********************************************************/
 
 int
-calc_cdf_gradient (cdf)
-     CdfPtr cdf;
+calc_cdf_gradient (CdfPtr cdf)
 {
   int n, istat;
   double dx1, dx2, dy1, dy2;
@@ -1200,9 +1176,7 @@ calc_cdf_gradient (cdf)
  **********************************************************/
 
 int
-cdf_array_fixup (x, y, n_xy)
-     double *x, *y;
-     int n_xy;
+cdf_array_fixup (double *x, double *y, int n_xy)
 {
   int n, m;
   size_t *order;

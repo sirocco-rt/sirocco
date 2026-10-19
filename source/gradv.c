@@ -51,8 +51,7 @@
  **********************************************************/
 
 double
-dvwind_ds_cmf (p)
-     PhotPtr p;
+dvwind_ds_cmf (PhotPtr p)
 {
   double v_grad[3][3];
   double lmn[3], dvel_ds[3], dvds;
@@ -429,8 +428,7 @@ calculate_cell_dvds_max (int ndom, WindPtr cell)
 #define DVDS_MAX_SAFETY 1.05
 
 double
-get_dvds_max (p)
-     PhotPtr p;
+get_dvds_max (PhotPtr p)
 {
   int ndom, nn, nnn[4], nelem;
   double frac[4];

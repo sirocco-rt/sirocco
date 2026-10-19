@@ -53,8 +53,7 @@ double lspec_numin, lspec_numax;
  **********************************************************/
 
 int
-spectral_estimators (xplasma)
-     PlasmaPtr xplasma;
+spectral_estimators (PlasmaPtr xplasma)
 {
   double pl_alpha_min, pl_alpha_max, pl_alpha_temp, pl_w_temp, j;
   double exp_temp_min, exp_temp_max, exp_temp_store;    /* The 'temperature' range we are going to search for an effective temperature for the exponential model */
@@ -103,14 +102,15 @@ spectral_estimators (xplasma)
   {
     Log_silent
       ("Starting out band %i in cell %i. mean=%e, sd=%e, minfreq=%e, maxfreq=%e, nphot=%i\n",
-       n, xplasma->nplasma, xplasma->xave_freq[n], xplasma->xsd_freq[n], xplasma->fmin[n], xplasma->fmax[n], xplasma->nxtot[n]);
+       n, xplasma->nplasma, xplasma->est.xave_freq[n], xplasma->est.xsd_freq[n], xplasma->est.fmin[n], xplasma->est.fmax[n],
+       xplasma->est.nxtot[n]);
 
     plflag = expflag = 1;       //Both potential models are in the running
 
-    if (xplasma->nxtot[n] <= 1) /* Catch the situation where there are only 1 or 0 photons in a band -
-                                   we cannot reasonably try to model this situation */
+    if (xplasma->est.nxtot[n] <= 1)     /* Catch the situation where there are only 1 or 0 photons in a band -
+                                           we cannot reasonably try to model this situation */
     {
-      if (xplasma->f1[n] >= genmax || xplasma->f2[n] <= genmin)
+      if (xplasma->state.f1[n] >= genmax || xplasma->state.f2[n] <= genmin)
       {
         /* The band is outside where photons were generated, so not very
            surprising that there are no photons - just generate a log */
@@ -125,26 +125,26 @@ spectral_estimators (xplasma)
 
       /* We also want to make sure that the weight will be zero, this way we make
          sure there is no contribution to the ionization balance from this frequency. */
-      xplasma->pl_log_w[n] = -999;      //A very tiny weight
-      xplasma->pl_alpha[n] = 999.9;     //Give alpha a value that will show up as an error
-      xplasma->exp_w[n] = 0.0;  //Make sure that w is zero, so no chance of mucking up ionization balance even if for some reason we end up integrating
-      xplasma->exp_temp[n] = 1e99;      //Give the effective temperature a value that will show up as an error
-      xplasma->spec_mod_type[n] = SPEC_MOD_FAIL;        //This tells the code that we have failed to model the spectrum in this band/cell/
+      xplasma->state.pl_log_w[n] = -999;        //A very tiny weight
+      xplasma->state.pl_alpha[n] = 999.9;       //Give alpha a value that will show up as an error
+      xplasma->state.exp_w[n] = 0.0;    //Make sure that w is zero, so no chance of mucking up ionization balance even if for some reason we end up integrating
+      xplasma->state.exp_temp[n] = 1e99;        //Give the effective temperature a value that will show up as an error
+      xplasma->state.spec_mod_type[n] = SPEC_MOD_FAIL;  //This tells the code that we have failed to model the spectrum in this band/cell/
     }
 
 
     /*  If all the photons in the cell are concentrated in a tiny range then we will also not
        expect to make a sensible model - this check could be reviewed later if lots of warning are produced */
 
-    else if (xplasma->fmax[n] == xplasma->fmin[n])
+    else if (xplasma->est.fmax[n] == xplasma->est.fmin[n])
     {
       Error ("spectral_estimators: multiple photons but only one frequency seen in %d band %d\n", xplasma->nplasma, n); /* Flag as a warning, so one can see if it is an issue */
 
-      xplasma->pl_log_w[n] = -999;      //A very tiny weight
-      xplasma->pl_alpha[n] = 999.9;     //Give alpha a value that will show up as an error
-      xplasma->exp_w[n] = 0.0;  //Make sure that w is zero, s no chance of mucking up ionization balance
-      xplasma->exp_temp[n] = 1e99;      //Give temp a value that will show up as an error
-      xplasma->spec_mod_type[n] = SPEC_MOD_FAIL;        //This tells the code that we have failed to model the spectrum in this band/cell/
+      xplasma->state.pl_log_w[n] = -999;        //A very tiny weight
+      xplasma->state.pl_alpha[n] = 999.9;       //Give alpha a value that will show up as an error
+      xplasma->state.exp_w[n] = 0.0;    //Make sure that w is zero, s no chance of mucking up ionization balance
+      xplasma->state.exp_temp[n] = 1e99;        //Give temp a value that will show up as an error
+      xplasma->state.spec_mod_type[n] = SPEC_MOD_FAIL;  //This tells the code that we have failed to model the spectrum in this band/cell/
     }
 
 
@@ -158,30 +158,30 @@ spectral_estimators (xplasma)
          end of the band is 'surprisingly' empty then we wasume this is because absolutely
          no photons are here - its probably an edge so we should modify the model bands. */
 
-      dfreq = (xplasma->f2[n] - xplasma->f1[n]) / sqrt (xplasma->nxtot[n]);     //This is a measure of the spacing between photons on average
-      if ((xplasma->fmin[n] - xplasma->f1[n]) < dfreq)  //If true, this check suggests that there are no edges
+      dfreq = (xplasma->state.f2[n] - xplasma->state.f1[n]) / sqrt (xplasma->est.nxtot[n]);     //This is a measure of the spacing between photons on average
+      if ((xplasma->est.fmin[n] - xplasma->state.f1[n]) < dfreq)        //If true, this check suggests that there are no edges
       {
-        spec_numin = xplasma->f1[n];    //Use the photon generation band edge to set the lower frequency band for the model
+        spec_numin = xplasma->state.f1[n];      //Use the photon generation band edge to set the lower frequency band for the model
       }
       else
       {
-        spec_numin = xplasma->fmin[n];  //There may be an edge, use the lowest observed photon frequency for the lower nu band in the model
+        spec_numin = xplasma->est.fmin[n];      //There may be an edge, use the lowest observed photon frequency for the lower nu band in the model
       }
-      if ((xplasma->f2[n] - xplasma->fmax[n]) < dfreq)  //Repeat above but for upper band edge
+      if ((xplasma->state.f2[n] - xplasma->est.fmax[n]) < dfreq)        //Repeat above but for upper band edge
       {
-        spec_numax = xplasma->f2[n];
+        spec_numax = xplasma->state.f2[n];
       }
       else
       {
-        spec_numax = xplasma->fmax[n];
+        spec_numax = xplasma->est.fmax[n];
       }
 
-      xplasma->fmin_mod[n] = spec_numin;        //This is the low frequency limit of any model we might make
-      xplasma->fmax_mod[n] = spec_numax;        //This is the high frequency limit of any model we might make
+      xplasma->state.fmin_mod[n] = spec_numin;  //This is the low frequency limit of any model we might make
+      xplasma->state.fmax_mod[n] = spec_numax;  //This is the high frequency limit of any model we might make
       lspec_numax = log10 (spec_numax);
       lspec_numin = log10 (spec_numin);
-      spec_numean = xplasma->xave_freq[n];
-      j = xplasma->xj[n];
+      spec_numean = xplasma->est.xave_freq[n];
+      j = xplasma->est.xj[n];
 
       /* Try to find the exponent of a power law model that fits the cell spectrum */
 
@@ -198,8 +198,8 @@ spectral_estimators (xplasma)
       {
         Error ("spectral_estimators: Alpha cannot be bracketed (%e %e)in band %i cell %i- setting w to zero\n", pl_alpha_min, pl_alpha_max,
                n, xplasma->nplasma);
-        xplasma->pl_log_w[n] = -999.0;
-        xplasma->pl_alpha[n] = -999.0;  //Set this to a value that might let us diagnose the problem
+        xplasma->state.pl_log_w[n] = -999.0;
+        xplasma->state.pl_alpha[n] = -999.0;    //Set this to a value that might let us diagnose the problem
         plflag = -1;            //Discount a PL model
       }
 
@@ -222,13 +222,13 @@ spectral_estimators (xplasma)
              pl_w_temp);
 
           plflag = -1;          // Dont use this model
-          xplasma->pl_log_w[n] = -999.0;
-          xplasma->pl_alpha[n] = -999.0;
+          xplasma->state.pl_log_w[n] = -999.0;
+          xplasma->state.pl_alpha[n] = -999.0;
         }
         else                    //All is well, assign model parameters to the plasma structure - we still need to work out if this is the *best* model
         {
-          xplasma->pl_alpha[n] = pl_alpha_temp;
-          xplasma->pl_log_w[n] = pl_w_temp;
+          xplasma->state.pl_alpha[n] = pl_alpha_temp;
+          xplasma->state.pl_log_w[n] = pl_w_temp;
         }
       }
 
@@ -256,8 +256,8 @@ spectral_estimators (xplasma)
       {
         Error ("spectral_estimators: Exponential temperature cannot be bracketed (%e %e) in band %i - setting w to zero\n", exp_temp_min,
                exp_temp_max, n);
-        xplasma->exp_w[n] = 0.0;
-        xplasma->exp_temp[n] = -1e99;
+        xplasma->state.exp_w[n] = 0.0;
+        xplasma->state.exp_temp[n] = -1e99;
         expflag = -1;           //Discount an exponential model
       }
 
@@ -288,62 +288,62 @@ spectral_estimators (xplasma)
           Error ("spectral_estimators: New exponential parameters (%e) unreasonable, using existing parameters. Check number of photons in this cell\n", exp_w_temp);   //NSH 131108 - now a warning, this should no longer happen
 
           expflag = -1;         //discount an exponential model
-          xplasma->exp_w[n] = 0.0;
-          xplasma->exp_temp[n] = -1e99;
+          xplasma->state.exp_w[n] = 0.0;
+          xplasma->state.exp_temp[n] = -1e99;
         }
         else                    //We have a reasonable exponential function model
         {
-          xplasma->exp_temp[n] = exp_temp_temp;
-          xplasma->exp_w[n] = exp_w_temp;
+          xplasma->state.exp_temp[n] = exp_temp_temp;
+          xplasma->state.exp_w[n] = exp_w_temp;
         }
       }
 
       /* compute standard deviations for exponential and power law models - these will be used to check the models */
-      exp_sd = exp_stddev (xplasma->exp_temp[n], spec_numin, spec_numax);
+      exp_sd = exp_stddev (xplasma->state.exp_temp[n], spec_numin, spec_numax);
 
-      pl_sd = pl_log_stddev (xplasma->pl_alpha[n], lspec_numin, lspec_numax);
+      pl_sd = pl_log_stddev (xplasma->state.pl_alpha[n], lspec_numin, lspec_numax);
 
       Log_silent ("NSH in this cell %i band %i PL estimators are log(w)=%10.2e, alpha=%5.3f giving sd=%e compared to %e\n",
-                  xplasma->nplasma, n, xplasma->pl_log_w[n], xplasma->pl_alpha[n], pl_sd, xplasma->xsd_freq[n]);
+                  xplasma->nplasma, n, xplasma->state.pl_log_w[n], xplasma->state.pl_alpha[n], pl_sd, xplasma->est.xsd_freq[n]);
 
       Log_silent ("NSH in this cell %i band %i exp estimators are w=%10.2e, temp=%10.2e giving sd=%e compared to %e\n",
-                  xplasma->nplasma, n, xplasma->exp_w[n], xplasma->exp_temp[n], exp_sd, xplasma->xsd_freq[n]);
+                  xplasma->nplasma, n, xplasma->state.exp_w[n], xplasma->state.exp_temp[n], exp_sd, xplasma->est.xsd_freq[n]);
 
       /*Compute the fractionasl errors in standard dev */
 
-      exp_sd = fabs ((exp_sd - xplasma->xsd_freq[n]) / xplasma->xsd_freq[n]);
-      pl_sd = fabs ((pl_sd - xplasma->xsd_freq[n]) / xplasma->xsd_freq[n]);
+      exp_sd = fabs ((exp_sd - xplasma->est.xsd_freq[n]) / xplasma->est.xsd_freq[n]);
+      pl_sd = fabs ((pl_sd - xplasma->est.xsd_freq[n]) / xplasma->est.xsd_freq[n]);
 
       /* These commands decide upon the best model,
          based upon how well the models predict the standard deviation */
       if (expflag > 0 && plflag > 0)    //Both models are in the running - see which has the lowest error in stdev
       {
         if (exp_sd < pl_sd)
-          xplasma->spec_mod_type[n] = SPEC_MOD_EXP;
+          xplasma->state.spec_mod_type[n] = SPEC_MOD_EXP;
         else
-          xplasma->spec_mod_type[n] = SPEC_MOD_PL;
+          xplasma->state.spec_mod_type[n] = SPEC_MOD_PL;
       }
 
       else if (plflag > 0)      //Only PL model in running, no point in testing for STDEV
       {
-        xplasma->spec_mod_type[n] = SPEC_MOD_PL;
+        xplasma->state.spec_mod_type[n] = SPEC_MOD_PL;
       }
 
       else if (expflag > 0)     //Only EXP model in running, no point in testing for STDEV
       {
-        xplasma->spec_mod_type[n] = SPEC_MOD_EXP;
+        xplasma->state.spec_mod_type[n] = SPEC_MOD_EXP;
       }
 
       else
       {
-        xplasma->spec_mod_type[n] = SPEC_MOD_FAIL;      //Oh dear, there is no suitable model - this should be an error
+        xplasma->state.spec_mod_type[n] = SPEC_MOD_FAIL;        //Oh dear, there is no suitable model - this should be an error
 
         Error ("No suitable model in band %i cell %i (nphot=%i fmin=%e fmax=%e)\n",
-               n, xplasma->nplasma, xplasma->nxtot[n], xplasma->fmin[n], xplasma->fmax[n]);
+               n, xplasma->nplasma, xplasma->est.nxtot[n], xplasma->est.fmin[n], xplasma->est.fmax[n]);
 
         /* We will set the applicable frequency bands for the model to values that will cause errors if the model is used */
-        xplasma->fmin_mod[n] = spec_numax;
-        xplasma->fmax_mod[n] = spec_numin;
+        xplasma->state.fmin_mod[n] = spec_numax;
+        xplasma->state.fmax_mod[n] = spec_numin;
       }
 
     }                           //End of loop that does things if there are more than zero photons in the band.
@@ -409,9 +409,7 @@ pl_alpha_func_log2 (double alpha, void *params)
  **********************************************************/
 
 double
-pl_logmean (alpha, lnumin, lnumax)
-     double alpha;
-     double lnumin, lnumax;
+pl_logmean (double alpha, double lnumin, double lnumax)
 {
   double k, answer, numerator, denominator, a, b, c, d;
 
@@ -451,10 +449,7 @@ pl_logmean (alpha, lnumin, lnumax)
  **********************************************************/
 
 double
-pl_log_w (j, alpha, lnumin, lnumax)
-     double j;                  //the band limited spectral density
-     double alpha;              //Computed spectral index for the cell
-     double lnumin, lnumax;     //Range of frequencies we are considering
+pl_log_w (double j, double alpha, double lnumin, double lnumax)
 {
   double logw;                  //the answer
   double logk;                  //scaling prefactor to permit huge numbers to be dealt with
@@ -489,9 +484,7 @@ pl_log_w (j, alpha, lnumin, lnumax)
  **********************************************************/
 
 double
-pl_log_stddev (alpha, lnumin, lnumax)
-     double alpha;              //Computed spectral index for the cell
-     double lnumin, lnumax;     //Range of frequencies we are considering
+pl_log_stddev (double alpha, double lnumin, double lnumax)
 {
   double answer;                //the answer
 
@@ -577,9 +570,7 @@ exp_temp_func2 (double exp_temp, void *params)
  **********************************************************/
 
 double
-exp_mean (exp_temp, numin, numax)
-     double exp_temp;
-     double numin, numax;
+exp_mean (double exp_temp, double numin, double numax)
 {
   double answer, numerator, denominator;
   double exp1;                  /* We supply a temperature, but actually we expect the correct function to be of the form e^-hnu/kt, so this will hold -1*h/kt */
@@ -622,10 +613,7 @@ exp_mean (exp_temp, numin, numax)
  **********************************************************/
 
 double
-exp_w (j, exp_temp, numin, numax)
-     double j;                  //the band limited spectral density
-     double exp_temp;           //Computed effective temperature for the cell
-     double numin, numax;       //Range of frequencies we are considering
+exp_w (double j, double exp_temp, double numin, double numax)
 {
   double w;                     //the answer
 
@@ -664,9 +652,7 @@ exp_w (j, exp_temp, numin, numax)
  **********************************************************/
 
 double
-exp_stddev (exp_temp, numin, numax)
-     double exp_temp;           //Computed spectral index for the cell
-     double numin, numax;       //Range of frequencies we are considering
+exp_stddev (double exp_temp, double numin, double numax)
 {
   double answer;                //the answer
   double exp1;                  /* We supply a temperature, but actually we expect the correct function to be of the form e^-hnu/kt, so this will hold -1*h/kt */

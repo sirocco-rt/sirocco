@@ -45,8 +45,7 @@
  **********************************************************/
 
 int
-calculate_ionization (restart_stat)
-     int restart_stat;
+calculate_ionization (int restart_stat)
 {
   WindPtr w;
   PhotPtr p;
@@ -464,8 +463,7 @@ calculate_ionization (restart_stat)
  **********************************************************/
 
 int
-make_spectra (restart_stat)
-     int restart_stat;
+make_spectra (int restart_stat)
 {
   WindPtr w;
   PhotPtr p;
@@ -518,8 +516,8 @@ make_spectra (restart_stat)
   {
     for (n = 0; n < NPLASMA; n++)
     {
-      macromain[n].kpkt_rates_known = FALSE;
-      macromain[n].matrix_rates_known = FALSE;
+      macromain[n].derived.kpkt_rates_known = FALSE;
+      macromain[n].derived.matrix_rates_known = FALSE;
     }
   }
 
@@ -729,9 +727,7 @@ make_spectra (restart_stat)
  **********************************************************/
 
 int
-stats_phot_pre (p, nphot)
-     PhotPtr p;
-     int nphot;
+stats_phot_pre (PhotPtr p, int nphot)
 {
   int nn;
   double zz;
@@ -763,9 +759,7 @@ stats_phot_pre (p, nphot)
  **********************************************************/
 
 int
-stats_phot_post (p, nphot)
-     PhotPtr p;
-     int nphot;
+stats_phot_post (PhotPtr p, int nphot)
 {
   int nn;
   double zz, z_abs_all, z_abs_all_orig, z_orig[N_ISTAT], z_abs[N_ISTAT], z_else, z_else_orig;
