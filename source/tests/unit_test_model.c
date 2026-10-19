@@ -91,7 +91,7 @@ cleanup_model (const char *root_name)
   }
 
   snprintf (parameter_filepath, 2 * LINELENGTH, "%s/source/tests/test_data/define_wind/%s.pf", SIROCCO_ENV, files.root);
-  if (cpar (parameter_filepath) != 1)   /* cpar returns 1 when something is "normal" */
+  if (cpar_discard () != 1) /* 1 is "NORMAL" in rdpar */
   {
     return EXIT_FAILURE;
   }

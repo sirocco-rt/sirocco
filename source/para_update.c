@@ -121,3 +121,38 @@ calculate_comm_buffer_size (const int num_ints, const int num_doubles)
   return 0;
 #endif
 }
+
+
+
+/**********************************************************/
+/**
+ * @brief  Check whether the user has asked to run without MPI shared memory
+ *
+ * @param [in] int argc       The number of command line arguments
+ * @param [in] char *argv[]   The command line arguments
+ * @return TRUE if the -no-shared-memory switch is on the command line,
+ * FALSE otherwise
+ *
+ * @details
+ * Normally ranks on the same node share one copy of the wind, plasma and
+ * macro-atom grids.  With -no-shared-memory, each rank is placed in a node
+ * communicator of its own, so every rank holds a private copy as in versions
+ * before the memory refactor for Sirocco 2.0. This uses more memory but gives
+ * identical results; it is intended as a fallback or for testing.
+ *
+ * This is called straight after MPI_Init, before the command line is parsed,
+ * because the node communicator has to exist before any grids are allocated.
+ **********************************************************/
+
+int
+no_shared_memory_requested (int argc, char *argv[])
+{
+  int i;
+
+  for (i = 1; i < argc; i++)
+  {
+    if (strcmp (argv[i], "-no-shared-memory") == 0)
+      return (TRUE);
+  }
+  return (FALSE);
+}

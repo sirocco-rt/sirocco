@@ -16,6 +16,9 @@
 
 MATOM_VER := 1
 
+# This is the sirocco version which should be a single string without spaces.
+VERSION = 2.0-x3d
+
 #MPICC is now default compiler
 CC = mpicc
 # CC = gcc	# can use GCC either from command line or by uncommenting this
@@ -154,12 +157,6 @@ endif
 # next line if you want to use kpar as a library, rather than as source below
 # LDFLAGS= -L$(LIB)  -lm -lkpar -lcfitsio -lgsl -lgslcblas
 LDFLAGS+= -L$(LIB) -lm -lgsl -lgslcblas $(CUDA_LIBS)
-
-
-#Note that version should be a single string without spaces.
-
-
-VERSION = 3.0
 
 
 

@@ -206,6 +206,7 @@ double get_alpha_st(struct topbase_phot *cont_ptr, PlasmaPtr xplasma);
 double alpha_st_integrand(double freq, void *params);
 double get_alpha_st_e(struct topbase_phot *cont_ptr, PlasmaPtr xplasma);
 double alpha_st_e_integrand(double freq, void *params);
+int rescale_alpha_st_estimators(PlasmaPtr xplasma, double t_old);
 /* estimators_simple.c */
 int update_banded_estimators(PlasmaPtr xplasma, PhotPtr p, double ds, double w_ave, int ndom);
 int update_flux_estimators(PlasmaPtr xplasma, PhotPtr phot_mid, double ds_obs, double w_ave, int ndom);
@@ -369,8 +370,8 @@ void macro_pops_copy_to_xplasma(PlasmaPtr xplasma, int index_element, double *po
 /* matom.c */
 int matom(PhotPtr p, int *nres, int *escape);
 double b12(struct lines *line_ptr);
-double xalpha_sp(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice);
 double stim_recomb_factor(PlasmaPtr xplasma, struct topbase_phot *cont_ptr);
+double xalpha_sp(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice);
 double alpha_sp(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice);
 double scaled_alpha_sp_integral_band_limited(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice, double freq_min, double freq_max);
 double alpha_sp_integrand(double freq, void *params);
@@ -390,6 +391,7 @@ int populate_ion_rate_matrix(double rate_matrix[nions][nions], double pi_rates[n
 /* models_extern_init.c */
 /* para_update.c */
 int get_parallel_nrange(int rank, int ntotal, int nproc, int *my_nmin, int *my_nmax);
+int no_shared_memory_requested(int argc, char *argv[]);
 int get_max_cells_per_rank(const int n_total);
 int calculate_comm_buffer_size(const int num_ints, const int num_doubles);
 /* parse.c */
@@ -479,6 +481,7 @@ double random_number(double min, double max);
 int opar(char filename[]);
 int add_par(char filename[]);
 int cpar(char filename[]);
+int cpar_discard(void);
 int rdpar_init(void);
 char *check_and_fix_string(char *s);
 int string_process(char question[], char dummy[]);

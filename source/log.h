@@ -2,6 +2,7 @@
 int opar(char filename[]);
 int add_par(char filename[]);
 int cpar(char filename[]);
+int cpar_discard(void);
 int rdpar_init(void);
 char *check_and_fix_string(char *s);
 int string_process(char question[], char dummy[]);
