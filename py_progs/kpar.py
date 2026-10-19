@@ -20,6 +20,10 @@ History:
 
     160704 ksl
         Coding begun
+    261019 ksl
+        rdpar now finds a parameter that comes earlier in the file
+        than the last one read; the search from the top of the file
+        compared each name with the text 'string'
 
 '''
 
@@ -136,7 +140,7 @@ def rdpar(string):
 
     while ixxx<len(xxx):
         word=xxx[ixxx][0].split('(')
-        if word[0]=='string':
+        if word[0]==string:
             try:
                 z=eval(xxx[ixxx][1])
             except NameError:
