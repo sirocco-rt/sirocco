@@ -8,14 +8,18 @@ Command line usage (if any):
 
     usage::
 
-        plot_pol.py [-h] [-wmin WMIN] [-wmax WMAX] [-nbin NBIN]
-                    [-max_obs N] [-out FILE] [-linear] [-separate] [-table]
+        plot_pol.py [-h] [-wmin WMIN] [-wmax WMAX] [-emin EMIN] [-emax EMAX]
+                    [-nbin NBIN] [-max_obs N] [-out FILE] [-linear]
+                    [-separate] [-xray | -optical] [-table]
                     rootname
 
         rootname    the root name of the run, or the spectrum file itself
-                    (rootname.spec is read by default)
+                    (rootname.spec is read by default, rootname.log_spec
+                    for X-rays)
         -wmin       shortest wavelength (A) to plot (default: all)
         -wmax       longest wavelength (A) to plot (default: all)
+        -emin       lowest energy (keV) to plot; sets -wmax
+        -emax       highest energy (keV) to plot; sets -wmin
         -nbin       combine this many wavelength bins for the polarization
                     (default: about 100 bins across the plot)
         -max_obs    plot at most this many inclinations, spread evenly over
@@ -24,6 +28,10 @@ Command line usage (if any):
         -linear     plot the flux on a linear axis (default logarithmic)
         -separate   one figure for each inclination, e.g. rootname_pol_A80.png,
                     instead of all of them in one
+        -xray       plot against energy, as for X-rays (see below)
+        -optical    plot against wavelength (by default the choice is made
+                    from the wavelengths in the spectrum)
+        -h          print this documentation
         -table      make no plot; print q, u, P and PA integrated over
                     -wmin to -wmax for every observer, including those
                     selected by the number of scatters
@@ -55,6 +63,15 @@ Description:
     is the rms over the whole band.  Position angles are grey where
     P < 3 sigma and are not meaningful there.
 
+    If the whole plotted range is shortward of 124 A (above 0.1 keV), or
+    with -xray, the plot is made as is usual for X-rays: against energy
+    in keV on a logarithmic axis, with the flux as E F_E (= nu F_nu).
+    Then, unless a spectrum file is named, rootname.log_spec is read
+    rather than rootname.spec, since Sirocco's .spec files have bins of
+    equal width in frequency, which are very coarse at the low-energy
+    end of a broad X-ray band, while the .log_spec files have bins of
+    equal width in log frequency.
+
     If there are several spectra at the same inclination, selected by the
     number of scatters (Spectrum.select_specific_no_of_scatters_in_spectra,
     e.g. A80P0.50_sc:0, _sc:1, _sc:>1), they are drawn together: the
@@ -66,6 +83,8 @@ Description:
 
 Primary routines:
 
+    steer
+        processes the command line
     doit
         makes the plot (plot_pol.doit(root) is the routine to call from
         a script, e.g. run_check.py)
@@ -87,16 +106,17 @@ History:
     261018 ksl Added band_pol and -table from c_spectra.py, which this replaces;
     spectra at the same inclination drawn together; -separate
 
+    261019 ksl Plots against energy for X-rays (-xray, -optical, -emin, -emax)
+
 '''
 
-import argparse
 import os
 
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import MaxNLocator, NullFormatter
 
 
 def read_spec(fname):
@@ -195,7 +215,17 @@ def selection(name):
     return name.split('_', 1)[1] if '_' in name else 'all'
 
 
-def doit(root, wmin=0, wmax=0, nbin=0, max_obs=4, outfile='', logflux=True, separate=False, only=''):
+HC_KEV = 12.398420              # hc in keV A
+XRAY_WMAX = 124.0               # A; a spectrum entirely shortward of this (0.1 keV) is plotted as X-rays
+
+
+def is_xray(wave, wmin=0, wmax=0):
+    '''True if the wavelengths to be plotted are all shortward of XRAY_WMAX'''
+    longest = wmax if wmax > 0 else np.max(wave)
+    return longest <= XRAY_WMAX
+
+
+def doit(root, wmin=0, wmax=0, nbin=0, max_obs=4, outfile='', logflux=True, separate=False, only='', mode=''):
     '''
     Plot the spectrum and q, u for the observers in root.spec.
 
@@ -203,10 +233,12 @@ def doit(root, wmin=0, wmax=0, nbin=0, max_obs=4, outfile='', logflux=True, sepa
     With separate=True, each inclination gets a figure of its own, named
     after outfile with the observer added (e.g. root_pol_A80.png), and the
     list of their names is returned.  only restricts the plot to one
-    observer (e.g. A80P0.50).
+    observer (e.g. A80P0.50).  mode is 'xray' (against energy, from
+    root.log_spec), 'optical' (against wavelength, from root.spec), or
+    '' to choose from the wavelengths in the spectrum.
     '''
-    fname = root if os.path.isfile(root) and not os.path.isdir(root) and '.' in os.path.basename(root) \
-        else root + '.spec'
+    named = os.path.isfile(root) and not os.path.isdir(root) and '.' in os.path.basename(root)
+    fname = root if named else root + '.spec'
     if not has_pol(fname):
         print('plot_pol: %s has no Q and U columns' % fname)
         return 'None'
@@ -214,7 +246,19 @@ def doit(root, wmin=0, wmax=0, nbin=0, max_obs=4, outfile='', logflux=True, sepa
         outfile = os.path.basename(fname).split('.')[0] + '_pol.png'
 
     units, freq, wave, cols = read_spec(fname)
+    if mode == '':
+        mode = 'xray' if is_xray(wave, wmin, wmax) else 'optical'
+    xray = mode == 'xray'
+    if xray and not named and has_pol(root + '.log_spec'):
+        fname = root + '.log_spec'
+        units, freq, wave, cols = read_spec(fname)
     fac = lnu_dnu(units, freq, 'log_spec' in os.path.basename(fname))
+    # the quantity plotted along x, and the flux in the top panel (nu F_nu for X-rays)
+    xval = HC_KEV / wave if xray else wave
+    if xray:
+        fscale = wave if units == 'flambda' else freq
+    else:
+        fscale = np.ones_like(wave)
 
     sel = np.ones(len(wave), dtype=bool)
     if wmin > 0:
@@ -239,7 +283,7 @@ def doit(root, wmin=0, wmax=0, nbin=0, max_obs=4, outfile='', logflux=True, sepa
     if separate:
         base = os.path.splitext(outfile)[0]
         return [doit(root, wmin, wmax, nbin, 0, '%s_%s.png' % (base, name.split('_')[0].replace('P0.50', '')),
-                     logflux, only=name.split('_')[0]) for name, variants in obs]
+                     logflux, only=name.split('_')[0], mode=mode) for name, variants in obs]
     if only:
         obs = [one for one in obs if one[0].split('_')[0] == only]
 
@@ -248,7 +292,7 @@ def doit(root, wmin=0, wmax=0, nbin=0, max_obs=4, outfile='', logflux=True, sepa
     fig = plt.figure(figsize=(9, (4.6 if nsel == 1 else 5.8) * nobs))
     outer = fig.add_gridspec(nobs, 1, hspace=0.22)
     nsmooth = max(1, nbin // 10)
-    wb = wave[idx].reshape(-1, nbin).mean(axis=1)
+    wb = xval[idx].reshape(-1, nbin).mean(axis=1)
 
     for k, (name, variants) in enumerate(obs):
         I = comb(cols[name] * fac)
@@ -287,15 +331,15 @@ def doit(root, wmin=0, wmax=0, nbin=0, max_obs=4, outfile='', logflux=True, sepa
         ax2s = fig.add_subplot(gs[2], sharex=ax1) if others else None
         ax3 = fig.add_subplot(gs[-1], sharex=ax1)
 
-        flux = np.convolve(cols[name], np.ones(nsmooth) / nsmooth, mode='same')
-        ax1.plot(wave[idx], flux[idx], color='0.65', lw=0.5)
-        ax1.plot(wb, comb(cols[name]) / nbin, color='k', lw=1.0, label=selection(name))
+        flux = np.convolve(cols[name] * fscale, np.ones(nsmooth) / nsmooth, mode='same')
+        ax1.plot(xval[idx], flux[idx], color='0.65', lw=0.5)
+        ax1.plot(wb, comb(cols[name] * fscale) / nbin, color='k', lw=1.0, label=selection(name))
         for j, v in enumerate(others):
-            ax1.plot(wb, comb(cols[v]) / nbin, color='C%d' % (j + 1), lw=0.9, label=selection(v))
+            ax1.plot(wb, comb(cols[v] * fscale) / nbin, color='C%d' % (j + 1), lw=0.9, label=selection(v))
         if others:
             ax1.legend(loc='upper left', fontsize=7, ncol=len(variants))
         if logflux:
-            fb = np.concatenate([comb(cols[v]) / nbin for v in variants])
+            fb = np.concatenate([comb(cols[v] * fscale) / nbin for v in variants])
             top = np.nanmax(fb[fb > 0]) if np.any(fb > 0) else 1.0
             ax1.set_yscale('log')
             ax1.set_ylim(max(np.nanmin(fb[fb > 0]) / 2, top / 1e4), top * 2)
@@ -303,7 +347,11 @@ def doit(root, wmin=0, wmax=0, nbin=0, max_obs=4, outfile='', logflux=True, sepa
             ax1.set_ylim(bottom=0)
             ax1.ticklabel_format(axis='y', style='sci', scilimits=(-2, 3), useMathText=True)
             ax1.yaxis.set_major_locator(MaxNLocator(nbins=5, prune='lower'))
-        ax1.set_ylabel('F$_\\lambda$' if units == 'flambda' else 'flux')
+        if xray:
+            ax1.set_ylabel('E F$_E$ ($\\nu$ F$_\\nu$)')
+            ax1.set_xscale('log')
+        else:
+            ax1.set_ylabel('F$_\\lambda$' if units == 'flambda' else 'flux')
         ax1.text(0.98, 0.92, label(name.split('_')[0]), transform=ax1.transAxes, ha='right', va='top')
         ax1.text(0.02, 0.06, 'band: P = %.2f%%, PA = %.0f$^\\circ$;  $\\sigma$(bin) = %.2f%%' % (pband, paband, sigma),
                  transform=ax1.transAxes, ha='left', va='bottom', fontsize=9,
@@ -338,7 +386,14 @@ def doit(root, wmin=0, wmax=0, nbin=0, max_obs=4, outfile='', logflux=True, sepa
         # ticks well inside the panel, so they do not run into the P labels above
         pc = 45 * np.round(paband / 45) if abs(paband - 45 * np.round(paband / 45)) < 10 else np.round(paband)
         ax3.set_yticks([pc - 45, pc, pc + 45])
-        ax3.set_xlim(wave[idx].min(), wave[idx].max())      # the actual range; shared by this observer's panels
+        ax3.set_xlim(xval[idx].min(), xval[idx].max())      # the actual range; shared by this observer's panels
+        if xray:
+            # plain numbers (0.5, 1, 2, ... keV) rather than powers of ten on the log axis
+            lo, hi = ax3.get_xlim()
+            ticks = [t for t in (0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500) if lo <= t <= hi]
+            ax3.set_xticks(ticks)
+            ax3.set_xticklabels(['%g' % t for t in ticks])
+            ax3.xaxis.set_minor_formatter(NullFormatter())
         ax3.set_ylabel('PA ($^\\circ$)')
 
         for a in (ax1, ax2, ax2s):
@@ -354,7 +409,7 @@ def doit(root, wmin=0, wmax=0, nbin=0, max_obs=4, outfile='', logflux=True, sepa
                 print('  %-14s P = %6.3f%%  (q = %+7.3f%%  u = %+7.3f%%)'
                       % (selection(v), 100 * np.hypot(Qv, Uv) / Iv, 100 * Qv / Iv, 100 * Uv / Iv))
 
-    ax3.set_xlabel('Wavelength ($\\AA$)')
+    ax3.set_xlabel('Energy (keV)' if xray else 'Wavelength ($\\AA$)')
     fig.axes[0].set_title('%s: spectrum, polarization and position angle (%d bins per point; grey: P < 3$\\sigma$)'
                           % (os.path.basename(fname), nbin), fontsize=10)
     fig.savefig(outfile, dpi=100, bbox_inches='tight')
@@ -403,26 +458,86 @@ def table(root, wmin=0, wmax=0):
         print('  %-16s %+8.3f %+8.3f %7.3f %6.1f' % (r['name'], r['q'], r['u'], r['P'], r['PA']))
 
 
-def steer():
-    '''Parse the command line'''
-    parser = argparse.ArgumentParser(description='Plot the spectrum and linear polarization of a Sirocco run')
-    parser.add_argument('rootname')
-    parser.add_argument('-wmin', type=float, default=0)
-    parser.add_argument('-wmax', type=float, default=0)
-    parser.add_argument('-nbin', type=int, default=0)
-    parser.add_argument('-max_obs', type=int, default=4)
-    parser.add_argument('-out', default='')
-    parser.add_argument('-linear', action='store_true', help='linear flux axis (default log)')
-    parser.add_argument('-separate', action='store_true', help='one figure for each inclination')
-    parser.add_argument('-table', action='store_true',
-                        help='only print the band-integrated polarization of every observer')
-    args = parser.parse_args()
-    if args.table:
-        table(args.rootname, args.wmin, args.wmax)
+def steer(argv):
+    '''
+    Process the command line
+    '''
+
+    root = ''
+    wmin = 0
+    wmax = 0
+    emin = 0
+    emax = 0
+    nbin = 0
+    max_obs = 4
+    outfile = ''
+    logflux = True
+    separate = False
+    mode = ''
+    xtable = False
+
+    i = 1
+    while i < len(argv):
+        if argv[i] == '-h':
+            print(__doc__)
+            return
+        elif argv[i] == '-wmin':
+            i += 1
+            wmin = float(argv[i])
+        elif argv[i] == '-wmax':
+            i += 1
+            wmax = float(argv[i])
+        elif argv[i] == '-emin':
+            i += 1
+            emin = float(argv[i])
+        elif argv[i] == '-emax':
+            i += 1
+            emax = float(argv[i])
+        elif argv[i] == '-nbin':
+            i += 1
+            nbin = int(argv[i])
+        elif argv[i] == '-max_obs':
+            i += 1
+            max_obs = int(argv[i])
+        elif argv[i] == '-out':
+            i += 1
+            outfile = argv[i]
+        elif argv[i] == '-linear':
+            logflux = False
+        elif argv[i] == '-separate':
+            separate = True
+        elif argv[i] == '-xray':
+            mode = 'xray'
+        elif argv[i] == '-optical':
+            mode = 'optical'
+        elif argv[i] == '-table':
+            xtable = True
+        elif argv[i][0] == '-':
+            print('Error: Unknown switch ---  %s' % argv[i])
+            return
+        else:
+            root = argv[i]
+        i += 1
+
+    if root == '':
+        print('Error: no rootname given')
+        return
+
+    if emin > 0:
+        wmax = HC_KEV / emin
+    if emax > 0:
+        wmin = HC_KEV / emax
+
+    if xtable:
+        table(root, wmin, wmax)
     else:
-        print(doit(args.rootname, args.wmin, args.wmax, args.nbin, args.max_obs, args.out, not args.linear,
-                   args.separate))
+        print(doit(root, wmin, wmax, nbin, max_obs, outfile, logflux, separate, mode=mode))
 
 
+# Next lines permit one to run the routine from the command line
 if __name__ == "__main__":
-    steer()
+    import sys
+    if len(sys.argv) > 1:
+        steer(sys.argv)
+    else:
+        print(__doc__)
