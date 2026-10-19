@@ -171,6 +171,8 @@ get_atomic_data (char masterfile[])
   gstmin = 0.0;
   gstmax = 1e99;
   nlevels = nxphot = nphot_total = ntop_phot = nauger = ndrecomb = n_inner_tot = 0;     //Added counter for DR/
+  n_total_rr = n_bad_gs_rr = n_dere_di_rate = 0;
+
   for (n = 0; n < NIONS; n++)
   {
     simple_line_ignore[n] = 0;  // diagnostic counter for how many lines ignored

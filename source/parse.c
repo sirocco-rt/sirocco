@@ -170,6 +170,12 @@ parse_command_line (int argc, char *argv[])
         Log ("Not storing the macro-atom matrix (on-the-fly method) if Matom.ransition_mode is matrix.\n");
         j = i;
       }
+      else if (strcmp (argv[i], "-no-shared-memory") == 0)
+      {
+        /* this is dealt with in main() before the command line is parsed; see no_shared_memory_requested */
+        Log ("MPI shared memory disabled: each rank holds its own copy of the wind, plasma and macro-atom grids.\n");
+        j = i;
+      }
 
       else if (strcmp (argv[i], "--version") == 0)
       {
@@ -428,6 +434,8 @@ These are largely diagnostic or for special cases. These include\n\
  -ignore_partial_cells  Ignore wind cells that are only partially filled by the wind (This is now the default)  \n\
  -include_partial_cells Include wind cells that are only partially filled by the wind   \n\
  -no-matrix-storage     Do not store macro-atom transition matrices if using the macro-atom line transfer and the matrix matom_transition_mode.\n\
+ -no-shared-memory      Give every MPI process its own copy of the wind, plasma and macro-atom grids instead of sharing one\n\
+                        copy per node.  Results are identical; only memory use changes.  Use if shared memory causes problems.\n\
  -early_stopping        Enable convergence-based early stopping of ionization cycles. Sirocco will then query\n\
                         the user for @estop parameters controlling when to stop early.\n\
 \n\

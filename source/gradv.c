@@ -449,10 +449,10 @@ get_dvds_max (PhotPtr p)
 
   for (nn = 0; nn < nelem; nn++)
   {
-    /* note we don't weight the maximum here, but take the maximum value of the surrounding corner values*/
+    /* note we don't weight the maximum here, but take the maximum value of the surrounding corner values */
     dvds = fmax (dvds, wmain[nnn[nn]].dvds_max);
   }
 
-  return dvds;
+  return (DVDS_MAX_SAFETY * dvds);
 
 }

@@ -61,6 +61,8 @@ wind_update (WindPtr w)
   double flux_persist_scale;
   double volume;
   double dt_r, dt_e;
+  double t_e_prev;
+  int ncells_stimrec = 0;
   double t_r_ave_old, t_r_ave, t_e_ave_old, t_e_ave;
   int nmax_r, nmax_e;
   int nwind;
@@ -78,6 +80,13 @@ wind_update (WindPtr w)
   t_e_ave = 0.0;
 
   xsignal (files.root, "%-20s Start wind update\n", "NOK");
+
+  if (nscat_neg_net_photoion > 0)
+  {
+    Error ("wind_update: %d macro-atom bf absorptions on this thread had a negative net photoionization rate "
+           "(stimulated recombination > photoionization) in cycle %d, set to zero\n", nscat_neg_net_photoion, geo.wcycle);
+    nscat_neg_net_photoion = 0;
+  }
 
 #ifdef MPI_ON
   n_cells_rank = get_parallel_nrange (rank_global, NPLASMA, np_mpi_global, &my_nmin, &my_nmax);
@@ -153,8 +162,20 @@ wind_update (WindPtr w)
 
     /* Calculate the densities in various ways depending on the ioniz_mode */
     Debug ("XXX -- matrix_multishot -- updating cycle %3d cell %3d\n", geo.wcycle, n_plasma);
+    t_e_prev = plasmamain[n_plasma].state.t_e;
     ion_abundances (&plasmamain[n_plasma], geo.ioniz_mode);
+
+    /* alpha_st estimators were normalised at t_e_prev; rescale them to the new t_e and check for errors  */
+    if (geo.rt_mode == RT_MODE_MACRO && geo.macro_simple == FALSE && geo.macro_ioniz_mode == MACRO_IONIZ_MODE_ESTIMATORS)
+    {
+      rescale_alpha_st_estimators (&plasmamain[n_plasma], t_e_prev);
+      if (check_stimulated_recomb (&plasmamain[n_plasma]) > 0)
+        ncells_stimrec++;
+    }
   }
+
+  if (ncells_stimrec > 0)
+    Log ("wind_update: %d cells on this thread have bf jumps with stimulated recombination > photoionization\n", ncells_stimrec);
 
   /*This is the end of the update loop that is parallised. We now need to exchange data between the tasks. */
 
