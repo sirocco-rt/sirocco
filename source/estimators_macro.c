@@ -658,10 +658,7 @@ total_fb_matoms (PlasmaPtr xplasma, double t_e, double f1, double f2)
  **********************************************************/
 
 double
-cooling_di_matoms (xplasma, t_e, f1, f2)
-     PlasmaPtr xplasma;
-     double t_e;
-     double f1, f2;
+cooling_di_matoms (PlasmaPtr xplasma, double t_e, double f1, double f2)
 {
   double cool_contribution;
   struct topbase_phot *cont_ptr;
@@ -864,9 +861,7 @@ macro_photo_heating (PlasmaPtr xplasma, double t_e)
  **********************************************************/
 
 double
-macro_qrecomb_heating (xplasma, t_e)
-     PlasmaPtr xplasma;
-     double t_e;
+macro_qrecomb_heating (PlasmaPtr xplasma, double t_e)
 {
   double heat_contribution;
   double total, upper_density;
