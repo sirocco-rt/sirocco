@@ -162,7 +162,7 @@ wind_update (WindPtr w)
 
     /* Calculate the densities in various ways depending on the ioniz_mode */
     Debug ("XXX -- matrix_multishot -- updating cycle %3d cell %3d\n", geo.wcycle, n_plasma);
-    t_e_prev = plasmamain[n_plasma].t_e;
+    t_e_prev = plasmamain[n_plasma].state.t_e;
     ion_abundances (&plasmamain[n_plasma], geo.ioniz_mode);
 
     /* alpha_st estimators were normalised at t_e_prev; rescale them to the new t_e and check for errors  */
