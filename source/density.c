@@ -46,8 +46,8 @@ double
 get_ion_density (int ndom, double x[], int nion)
 {
   double dd;
-  int nn, nnn[4], nelem;
-  double frac[4];
+  int nn, nnn[MAX_COORD_FRAC], nelem;
+  double frac[MAX_COORD_FRAC];
   int nplasma;
 
 

@@ -721,6 +721,7 @@ void init_plasma_rad_properties(void);
 void init_macro_rad_properties(void);
 void shell_output_wind_update_diagnostics(double xsum, double psum, double fsum, double csum, double icsum, double lsum, double ausum, double chexsum, double cool_sum, double lum_sum);
 /* wind_util.c */
+int phi_fraction(int ndom, int ichoice, double x[], int *k, int *kk, double *dphi);
 int coord_fraction(int ndom, int ichoice, double x[], int ii[], double frac[], int *nelem);
 int where_in_2dcell(int ichoice, double x[], int n, double *fx, double *fz);
 int wind_n_to_ij(int ndom, int n, int *i, int *j);

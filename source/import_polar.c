@@ -477,8 +477,8 @@ velocity_polar (int ndom, double *x, double *v)
 {
   int j;
   int nn;
-  int nnn[4], nelem;
-  double frac[4];
+  int nnn[MAX_COORD_FRAC], nelem;
+  double frac[MAX_COORD_FRAC];
   double vv[3];
   double speed;
   coord_fraction (ndom, 0, x, nnn, frac, &nelem);

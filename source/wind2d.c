@@ -140,8 +140,8 @@ vwind_xyz (int ndom, PhotPtr p, double v[])
   double rho, r;
   double vv[3];
   double ctheta, stheta;
-  double x, frac[4];
-  int nn, nnn[4], nelem;
+  double x, frac[MAX_COORD_FRAC];
+  int nn, nnn[MAX_COORD_FRAC], nelem;
   int n;
 
   /* Check if the velocity for this position is in the buffer, and if so return that */
@@ -390,8 +390,8 @@ rho (WindPtr w, double x[])
 {
   int n;
   double dd;
-  double frac[4];
-  int nn, nnn[4], nelem;
+  double frac[MAX_COORD_FRAC];
+  int nn, nnn[MAX_COORD_FRAC], nelem;
   int nplasma;
   int ndom, ndomain;
 

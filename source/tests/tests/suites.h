@@ -29,4 +29,7 @@ void create_translate_test_suite (void);
 /* test_macro_estimators.c */
 void create_macro_estimators_test_suite (void);
 
+/* test_coord_fraction.c */
+void create_coord_fraction_test_suite (void);
+
 #endif

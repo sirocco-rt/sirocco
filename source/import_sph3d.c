@@ -424,8 +424,8 @@ double
 velocity_sph3d (int ndom, double *x, double *v)
 {
   int j, nn;
-  int nnn[8], nelem;
-  double frac[8];
+  int nnn[MAX_COORD_FRAC], nelem;
+  double frac[MAX_COORD_FRAC];
   double vv[3];
   double speed;
 

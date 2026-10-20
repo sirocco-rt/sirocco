@@ -307,8 +307,8 @@ velocity_1d (int ndom, double *x, double *v)
 {
   double speed;
   double r;
-  int nelem, nn, nnn[4];
-  double frac[4];
+  int nelem, nn, nnn[MAX_COORD_FRAC];
+  double frac[MAX_COORD_FRAC];
 
   r = length (x);
   coord_fraction (ndom, 0, x, nnn, frac, &nelem);

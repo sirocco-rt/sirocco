@@ -61,8 +61,8 @@ write_array (char filename[], int choice)
 
   double xx[3];
   int i;
-  int nn, nnn[4], nelem;
-  double frac[4];
+  int nn, nnn[MAX_COORD_FRAC], nelem;
+  double frac[MAX_COORD_FRAC];
   int ndom, ndim, mdim, nstart, ndomain;
   ndom = current_domain;
   ndim = zdom[ndom].ndim;

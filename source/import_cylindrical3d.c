@@ -242,8 +242,7 @@ import_cylindrical3d (int ndom, char *filename)
   zdom[ndom].pdim = m->pdim;
   zdom[ndom].ndim2 = m->ndim * m->mdim * m->pdim;
 
-  Log ("import_cylindrical3d: ndim=%d mdim=%d pdim=%d ncell=%d\n",
-       m->ndim, m->mdim, m->pdim, m->ncell);
+  Log ("import_cylindrical3d: ndim=%d mdim=%d pdim=%d ncell=%d\n", m->ndim, m->mdim, m->pdim, m->ncell);
 
   return (0);
 }
@@ -407,8 +406,8 @@ double
 velocity_cylindrical3d (int ndom, double *x, double *v)
 {
   int j, nn;
-  int nnn[8], nelem;
-  double frac[8];
+  int nnn[MAX_COORD_FRAC], nelem;
+  double frac[MAX_COORD_FRAC];
   double vv[3];
   double speed;
 

@@ -58,8 +58,8 @@ dvwind_ds_cmf (PhotPtr p)
   double lmn[3], dvel_ds[3], dvds;
   int j, k, nn;
   struct photon pp;
-  int nnn[4], nelem;
-  double frac[4];
+  int nnn[MAX_COORD_FRAC], nelem;
+  double frac[MAX_COORD_FRAC];
   double x;
   int ndom;
 
@@ -425,8 +425,8 @@ calculate_cell_dvds_max (int ndom, WindPtr cell)
 double
 get_dvds_max (PhotPtr p)
 {
-  int ndom, nn, nnn[4], nelem;
-  double frac[4];
+  int ndom, nn, nnn[MAX_COORD_FRAC], nelem;
+  double frac[MAX_COORD_FRAC];
   double dvds;
 
   ndom = wmain[p->grid].ndom;

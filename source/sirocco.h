@@ -202,6 +202,9 @@ enum coord_type_enum
   SPH3D = 4                     //!< Full 3D spherical polar (r, theta, phi)
 };
 
+/** Maximum number of grid points returned by coord_fraction: 2 (1d), 4 (2d) or 8 (3d) */
+#define MAX_COORD_FRAC 8
+
 
 /* List of possible wind_types */
 

@@ -30,6 +30,85 @@ int ierr_coord_fraction = 0;
 
 /**********************************************************/
 /**
+ * @brief      Find the two phi slices that bracket a position, and the
+ * fractional distance between them, for a CYLIND3D or SPH3D domain
+ *
+ * @param [in] int  ndom   The domain
+ * @param [in] int  ichoice  vertices (0), i.e. phi = wind_phi[k], or
+ * centers (1), i.e. phi = wind_midphi[k]
+ * @param [in] double  x[]   the 3-vector position
+ * @param [out] int *  k   the lower phi slice
+ * @param [out] int *  kk   the upper phi slice, (k+1) mod pdim
+ * @param [out] double *  dphi   the fractional distance from slice k
+ * to slice kk, in [0,1)
+ * @return     Always returns 0
+ *
+ * @details
+ * The phi grid is periodic: positions beyond the last slice are
+ * interpolated between slice pdim-1 and slice 0.
+ *
+ * ### Notes ###
+ * The phi grids are in radians and are assumed to cover [0, 2 pi),
+ * so wind_phi[pdim] = wind_phi[0] + 2 pi.
+ *
+ **********************************************************/
+
+int
+phi_fraction (int ndom, int ichoice, double x[], int *k, int *kk, double *dphi)
+{
+  double *pp;
+  double phi, plo, phi_hi;
+  int pdim, lo, hi, mid;
+
+  pdim = zdom[ndom].pdim;
+  pp = (ichoice == 0) ? zdom[ndom].wind_phi : zdom[ndom].wind_midphi;
+
+  /* Put phi in [pp[0], pp[0] + 2 pi) */
+  plo = pp[0];
+  phi = atan2 (x[1], x[0]);
+  while (phi < plo)
+    phi += 2. * PI;
+  while (phi >= plo + 2. * PI)
+    phi -= 2. * PI;
+
+  if (phi >= pp[pdim - 1])
+  {
+    /* Between the last slice and the first one, which wraps round */
+    *k = pdim - 1;
+    *kk = 0;
+    phi_hi = pp[0] + 2. * PI;
+  }
+  else
+  {
+    /* Binary search for pp[lo] <= phi < pp[lo+1] */
+    lo = 0;
+    hi = pdim - 1;
+    while (hi - lo > 1)
+    {
+      mid = (lo + hi) / 2;
+      if (phi >= pp[mid])
+        lo = mid;
+      else
+        hi = mid;
+    }
+    *k = lo;
+    *kk = lo + 1;
+    phi_hi = pp[lo + 1];
+  }
+
+  *dphi = (phi_hi > pp[*k]) ? (phi - pp[*k]) / (phi_hi - pp[*k]) : 0.0;
+  if (*dphi < 0.0)
+    *dphi = 0.0;
+  if (*dphi > 1.0)
+    *dphi = 1.0;
+
+  return (0);
+}
+
+
+
+/**********************************************************/
+/**
  * @brief      calculate the fractional
  * 	contributions in interpolations of values of quantities,
  * 	such as electron density, by various cells in the
@@ -46,10 +125,9 @@ int ierr_coord_fraction = 0;
  * contribution of the corresponding
  * element
  * @param [out] int *  nelem   the number of elements that must be
- * summed, nominally 2 for a spherical grid
- * and 4 for a two dimensional grid.  (For
- * a 3 d grid it would be 6, but we have not
- * implemented this.
+ * summed: 2 for a spherical grid, 4 for a two dimensional grid,
+ * and 8 for a 3d grid (CYLIND3D, SPH3D) with more than one phi cell.
+ * ii[] and frac[] must have room for MAX_COORD_FRAC elements.
  *
  * @return
  * 	 1 if  inside the grid
@@ -86,6 +164,10 @@ int ierr_coord_fraction = 0;
  * 	  to x[2], so lower-hemisphere positions (x[2] < 0) give theta > 90 deg
  * 	  and are correctly mapped to lower-hemisphere cells.
  * 	- SPHERICAL: r = |x|, z unused (1d grid).
+ * 	- CYLIND3D, SPH3D: as CYLIND and RTHETA in (r, z or theta), and
+ * 	  linear in phi between the two bracketing phi slices (periodic),
+ * 	  see phi_fraction.  Vertex values (ichoice 0) are at wind_phi[k],
+ * 	  centre values (ichoice 1) at wind_midphi[k].
  *
  **********************************************************/
 
@@ -169,16 +251,41 @@ coord_fraction (int ndom, int ichoice, double x[], int ii[], double frac[], int 
     fraction (r, xx, zdom[ndom].ndim, &ix, &dr, 0);
     fraction (z, zz, zdom[ndom].mdim, &iz, &dz, 0);
 
+    frac[0] = (1. - dz) * (1. - dr);
+    frac[1] = (1. - dz) * dr;
+    frac[2] = (dz) * (1. - dr);
+    frac[3] = (dz) * (dr);
+    *nelem = 4;
+
     if (zdom[ndom].coord_type == CYLIND3D || zdom[ndom].coord_type == SPH3D)
     {
       /* For 3D grids cells are spaced mdim*pdim apart in the first axis and pdim
-         apart in the second.  Indices are into the k=0 phi slice. */
+         apart in the second.  The bilinear weights in (r, z or theta) are
+         multiplied by linear weights between phi slices k and k+1, so 8
+         elements are returned.  Interpolation in phi is periodic. With pdim = 1
+         the 4 elements of the k=0 slice are returned, as for a 2d grid. */
       int pdim = zdom[ndom].pdim;
       int mdim = zdom[ndom].mdim;
+      int k, kk, n;
+      double dphi;
+
       ii[0] = ix * mdim * pdim + iz * pdim;
       ii[1] = (ix + 1) * mdim * pdim + iz * pdim;
       ii[2] = ix * mdim * pdim + (iz + 1) * pdim;
       ii[3] = (ix + 1) * mdim * pdim + (iz + 1) * pdim;
+
+      if (pdim > 1)
+      {
+        phi_fraction (ndom, ichoice, x, &k, &kk, &dphi);
+        for (n = 0; n < 4; n++)
+        {
+          ii[n + 4] = ii[n] + kk;
+          ii[n] += k;
+          frac[n + 4] = frac[n] * dphi;
+          frac[n] *= (1. - dphi);
+        }
+        *nelem = 8;
+      }
     }
     else
     {
@@ -187,11 +294,6 @@ coord_fraction (int ndom, int ichoice, double x[], int ii[], double frac[], int 
       ii[2] = ix * zdom[ndom].mdim + iz + 1;
       ii[3] = (ix + 1) * zdom[ndom].mdim + iz + 1;
     }
-    frac[0] = (1. - dz) * (1. - dr);
-    frac[1] = (1. - dz) * dr;
-    frac[2] = (dz) * (1. - dr);
-    frac[3] = (dz) * (dr);
-    *nelem = 4;
 
 //    if (sane_check (dr) || sane_check (dz))
 //    {
