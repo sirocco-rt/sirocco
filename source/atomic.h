@@ -31,8 +31,7 @@ extern int nlevels;                    /**< These are the actual number of level
 extern int nlte_levels;                /**<  Actual number of levels to treat explicityly */
 
 
-/* AUGER NOTE: recommended to increase NLEVELS_MACRO to at least 500 for Auger macro-atoms */
-#define NLEVELS_MACRO   600     /**<  Maximum number of macro atom levels. (SS, June 04) */
+#define NLEVELS_MACRO   600    /**<  Maximum number of macro atom levels. (SS, June 04) */
 extern int nlevels_macro;              /**<  Actual number of macro atom levels. (SS, June 04) */
 #define NLINES 		200000  /**<  Maximum number of lines to be read */
 extern int nlines;                     /**<  Actual number of lines that were read in */
@@ -42,14 +41,14 @@ extern int nlines_macro;               /**<  Actual number of Macro Atom lines t
 extern int n_inner_tot;                /**< The actual number of inner shell ionization cross sections in total */
 
 
-#define LARGE_MACRO_ATOMS FALSE 
-/* sometimes we have to compile with larger hardwired values here for large macro-atoms e.g. Fe17to27 dataset */
+#define LARGE_MACRO_ATOMS FALSE
+/* Set LARGE_MACRO_ATOMS to TRUE for macro-atom data with more jumps from one level than the default limits allow.
+   None of the data sets in xdata needs this: fe_17to27.dat, the largest, has at most 40 jumps from any level. */
 #if LARGE_MACRO_ATOMS
   #define NBBJUMPS         200    /**<  Maximum number of Macro Atom bound-bound jumps from any one configuration (SS) */
   #define NBFJUMPS         200    /**<  Maximum number of Macro Atom Bound-free jumps from any one configuration (SS) */
 #else
-  /* AUGER NOTE: recommended to increase these values to at least 200 for Auger macro-atoms */
-  #define NBBJUMPS         100    /**<  Maximum number of Macro Atom bound-bound jumps from any one configuration (SS) */
+  #define NBBJUMPS         100   /**<  Maximum number of Macro Atom bound-bound jumps from any one configuration (SS) */
   #define NBFJUMPS         100    /**<  Maximum number of Macro Atom Bound-free jumps from any one configuration (SS) */
 #endif
 
@@ -319,12 +318,12 @@ extern double inner_freq_min;          /**< The lowest frequency for which inner
 extern int ntop_phot;                 /**<  The actual number of TopBase photoionzation x-sections */
 extern int nphot_total;                /**<  total number of photoionzation x-sections = nxphot + ntop_phot */
 
-/** 
-  * Photionization x-sections in topbase format
+/**
+  * A tabulated photoionization cross section.
   *
-  * Note
-  *  If the old topbase treatment is to be replaced by Macro Atoms perhaps this
-                                   can be dropped - need for backward compatibility? (SS) 
+  * The same structure holds all the tabulated cross sections: Topbase and
+  * macro-atom cross sections and VFKY ground-state cross sections in phot_top,
+  * and inner shell cross sections in inner_cross.
   */
 typedef struct topbase_phot
 {

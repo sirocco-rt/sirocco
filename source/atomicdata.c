@@ -94,12 +94,13 @@ grow_read_buffers (double **xe, double **xx, int *nmax, int np)
  * The program assumes that the ions for a given element are grouped together,
  * that the levels for a given element are grouped together, etc.
  *
- * If one wants to read both Topbase and VFKY photoionization x-sections, then the topbase
- * x-sections should be read first.  The routine will ignore data in the VFKY list if there
- * is a pre-existing Topbase data.  The routine will stop if you but a VFKY x-section first
- * on the assumption that Topbase data should trump VFKY data. (Making the program more flexible
- * would be difficult because you would have to drop various bits of Topbase data out of the
- * middle of the structure or mark it NG or something.)
+ * If one wants to read both Topbase and VFKY photoionization x-sections, then all the
+ * Topbase (and macro-atom) x-sections must be read first.  For an ion which already has Topbase
+ * data, a VFKY x-section replaces the Topbase ground-state x-section, and the excited
+ * levels keep their Topbase x-sections (phot_info = 2).  VFKY data for macro-atom ions are
+ * ignored.  The routine stops if Topbase data are read for an ion which already has a VFKY
+ * x-section, but not if VFKY data for other ions have been read first; that case is not
+ * handled correctly (see issue #1213).
  *
  * Similarly, as a general rule the macro information should be provided before the simple
  * ions are described, and the macro lines should be presented before simple lines.

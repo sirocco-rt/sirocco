@@ -83,9 +83,9 @@ grow_xsections (Topbase_phot *table, int *nmax, int n, double log_sigma, char *n
     table[i].nlev = (-1);
     table[i].uplev = (-1);
     table[i].nion = (-1);       //the ion to which this cross section belongs
-    table[i].n_elec_yield = -1; //pointer to the electron yield array (for inner shell)
-    table[i].n = -1;            //pointer to shell (inner shell)
-    table[i].l = -1;            //pointer to l subshell (inner shell only)
+    table[i].n_elec_yield = -1; //index into the electron yield array (inner shell only)
+    table[i].n = -1;            //n of the shell (inner shell only)
+    table[i].l = -1;            //l of the subshell (inner shell only)
     table[i].z = (-1);          //atomic number
     table[i].np = (-1);         //number of points in the fit
     table[i].macro_info = (-1); //Initialise - don't know if using Macro Atoms or not: set to -1 (SS)

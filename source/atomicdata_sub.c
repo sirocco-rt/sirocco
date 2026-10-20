@@ -196,14 +196,18 @@ index_lines ()
 
 /**********************************************************/
 /**
- * @brief      Index the topbase photoionzation crossections by frequency
+ * @brief      Index the photoionization cross sections by threshold frequency
  *
  *
  * @return     Always returns 0
  *
  * @details
  *
- * The results are stored in phot_top_ptr
+ * phot_top_ptr is (re)allocated with one element for each of the
+ * ntop_phot + nxphot cross sections in phot_top, and filled with
+ * pointers to them in order of increasing threshold frequency.
+ * It must be called after all the cross sections have been read,
+ * since phot_top may move while they are being read.
  *
  * ### Notes ###
  * Adapted from index_lines as part to topbase
@@ -260,15 +264,16 @@ index_phot_top ()
 
 /**********************************************************/
 /**
- * @brief      Index inner shell xsections in frequency order
+ * @brief      Index the inner shell cross sections by threshold frequency
  *
- * @return     Alwasy returns 0
+ * @return     Always returns 0
  *
  * @details
- * The rusults are stored in inner_cross_ptr
- *
- * ### Notes ###
- * ??? NOTES ???
+ * inner_cross_ptr is (re)allocated with one element for each of the
+ * n_inner_tot cross sections in inner_cross, and filled with pointers
+ * to them in order of increasing threshold frequency.  As for
+ * index_phot_top, it must be called after all the cross sections
+ * have been read.
  *
  **********************************************************/
 
