@@ -7,7 +7,7 @@ Central_object.radiation(yes,no)                  yes
 Central_object.rad_type_to_make_wind(bb,models)                   bb
 Central_object.temp                        40000
 Binary.mass_sec(msol)                      0.6
-Binary.period(hr)                          5.57
+Binary.period(hr)                          300
 
 ### Parameters for the Disk (if there is one)
 Disk.type(none,flat,vertically.extended)                 flat

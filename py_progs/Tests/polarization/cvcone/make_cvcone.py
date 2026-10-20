@@ -20,6 +20,14 @@ split into all/unscattered/scattered photons, 1000-3000 A, t_init 40 kK.
 (A CV-like source, L ~ 5e34, cannot photoionize a tau_es ~ 1 wind out to
 1e11 cm; the outer wind then collapses to the temperature floor.)
 
+The system is a CV, so Sirocco includes a secondary star, which hides
+from the observers any light whose path to them crosses its Roche lobe.
+With the usual period of a few hours the lobe lies inside the wind
+(L1 at 4e10 cm for 5.57 hr) and changes the polarization, which a
+calculation without a secondary does not reproduce (seen 261019; the
+wind itself is not affected).  The period is therefore set to 300 hr,
+which puts the secondary at about 1.1e12 cm, well outside the wind.
+
     rho(r) = A (r_in / r)^n          (-rho_index n; default 0, constant density)
     rho(r) = A / (r^2 v(r))          (-rho_index wind; mass conserving)
     v(r)   = v0 + (v_inf - v0) (1 - r_in / r)^beta,   radial
@@ -191,7 +199,7 @@ Central_object.radiation(yes,no)                  yes
 Central_object.rad_type_to_make_wind(bb,models)                   bb
 Central_object.temp                        40000
 Binary.mass_sec(msol)                      0.6
-Binary.period(hr)                          5.57
+Binary.period(hr)                          300
 
 ### Parameters for the Disk (if there is one)
 Disk.type(none,flat,vertically.extended)                 flat

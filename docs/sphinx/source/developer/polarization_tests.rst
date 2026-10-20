@@ -27,8 +27,8 @@ The tests are run by :code:`pol_tests.py`, in a working directory outside the re
 
 The main options are :code:`-np` (the number of MPI processes, 8 by default), :code:`-exe` (the SIROCCO
 executable to test) and :code:`-w2t` (a :code:`windsave2table` built from the same code, which one test needs).
-:code:`-tests` selects some of the tests, and :code:`-check_only` repeats the checks on results already in the
-working directory.
+:code:`-tests` selects some of the tests, and :code:`-check_only` repeats the analysis and the checks, with the
+current scripts, on results already in the working directory.
 
 For each test, :code:`pol_tests.py` copies the files it needs into a subdirectory of the working directory,
 makes and runs the models there, runs the analysis, and compares the results with tolerances.  Nothing is written
@@ -74,9 +74,14 @@ were set.
 Known issues
 ============
 
-* For the wedge model of :code:`cvcone` at inclinations of 10 and 45 degrees, SIROCCO gives a polarization
-  about 2 points more positive than the single-scattering prediction.  This is not understood, and these two
-  angles are reported but not checked.
+* The models of :code:`cvcone` are cataclysmic variables, so SIROCCO includes a secondary star, which hides
+  from the observers any light whose path to them crosses its Roche lobe.  The single-scattering prediction has no
+  secondary.  The models therefore use an orbital period of 300 hours, which puts the secondary well outside the
+  wind.  With the usual period of a few hours the secondary lies inside the wind, and the polarization of the
+  wedge at 10 and 45 degrees is about 2 points more positive than the prediction.
+* With the secondary outside the wind, the wedge in :code:`cvcone` differs from the mean of 5 predictions by
+  -0.03, +0.58 and -0.91 points at 10, 45 and 80 degrees.  The offsets at 45 and 80 degrees are larger than the
+  noise in the prediction, and their cause is not known.  The tolerance at 80 degrees is 1.5 points.
 * For the thinnest envelope in :code:`brown_mclean` (:math:`\tau_{eq} = 0.01`), SIROCCO's polarization has been a
   few per cent below single scattering, where multiple scattering should make it slightly higher.  It passes,
   but is close to the limit.

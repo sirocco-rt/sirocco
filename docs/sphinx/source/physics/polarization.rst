@@ -304,9 +304,10 @@ Validation
 
 * **A CV-like wind in a polar cone or an equatorial wedge**, lit by a central source, with the ionization
   calculated by SIROCCO: the light scattered once agrees with an independent single-scattering calculation to
-  within 0.4 points of :math:`P` for the cone, and for the wedge at :math:`80^\circ`.  For the wedge at
-  :math:`10^\circ` and :math:`45^\circ`, SIROCCO is about 2 points more positive than the prediction, which is not
-  yet understood.
+  within 0.4 points of :math:`P` for the cone, and within about 1 point for the wedge.  These models are cataclysmic
+  variables, so SIROCCO includes a secondary star, which hides from the observers any light whose path to them
+  crosses its Roche lobe.  The prediction has no secondary, so the comparison uses an orbital period long enough to
+  put the secondary well outside the wind.
 
 The last four tests are in ``py_progs/Tests/polarization``, and can be rerun with one command, in a quick (minutes)
 or full (hours) version; see :doc:`../developer/polarization_tests`.  ``examples/regress`` includes a short

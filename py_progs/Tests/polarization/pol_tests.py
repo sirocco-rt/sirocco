@@ -22,7 +22,8 @@ Command line usage (if any):
     -tests      run only these tests (default: brown_mclean hillier
                 sr_shell cvcone)
     -check_only do not run Sirocco; repeat the analysis and the checks on
-                the results already in workdir
+                the results already in workdir, with the current scripts
+                (the .py files are copied again; the models are not)
 
 Description:
 
@@ -89,6 +90,14 @@ def setup(test, testdir):
     if not os.path.exists(os.path.join(testdir, 'data')):
         subprocess.run([os.path.join(os.environ['SIROCCO'], 'bin', 'Setup_Sirocco_Dir')], cwd=testdir,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def refresh(test, testdir):
+    '''Copy the scripts of a test to testdir again, for -check_only'''
+    src = os.path.join(HERE, test)
+    for one in os.listdir(src):
+        if one.endswith('.py'):
+            shutil.copy(os.path.join(src, one), testdir)
 
 
 def load(test, testdir):
@@ -188,7 +197,9 @@ def doit(workdir, tier='quick', np=8, exe='sirocco', w2t='windsave2table', tests
     for test in tests:
         testdir = os.path.join(workdir, test)
         t0 = time.time()
-        if not check_only:
+        if check_only:
+            refresh(test, testdir)
+        else:
             setup(test, testdir)
         tdef = load(test, testdir)
         log('%s: %s' % (test, tdef.DESCRIPTION))

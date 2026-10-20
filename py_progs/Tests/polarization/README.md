@@ -34,7 +34,7 @@ Options:
 | `-exe NAME` | the Sirocco executable to test (default `sirocco`) |
 | `-w2t NAME` | a `windsave2table` built from the same code as `-exe` (default `windsave2table`). Only the cvcone test needs it |
 | `-tests T ...` | run only some of `brown_mclean hillier sr_shell cvcone` |
-| `-check_only` | don't run Sirocco; redo the analysis and checks on the results already in the working directory |
+| `-check_only` | don't run Sirocco; redo the analysis and checks on the results already in the working directory, with the current scripts |
 
 The driver needs Python with numpy and matplotlib, and `$SIROCCO`.
 
@@ -145,16 +145,23 @@ The test of Bulla et al. (2015, §3.1).
   `windsave2table`'s output, which is why this test needs `-w2t`.
 - **Check:** q of the light scattered once, in the windows between the
   lines, must be within 1 point of the prediction (1.5 points in the quick
-  tier).
+  tier, and for the wedge at 80°).
 - **Tiers:** quick, `pol_cone` (a small version of `pbl_es`); full, the cone
-  at 10°, 45° and 80°, and the wedge at 80°.
+  and the wedge at 10°, 45° and 80°.
 - **Prediction noise:** the full tier makes one 30,000-ray prediction for each
   model, which is uncertain by about 0.2–0.3 points. The validation in the
   plan note used the mean of 5 seeds for the wedge, so single runs can differ
   from it by that much.
-- **Note:** for the wedge at 10° and 45°, Sirocco is about 2 points more
-  positive than the prediction. This is not understood, so these angles are
-  reported (as INFO) but not checked.
+- **The wedge at 45° and 80°:** against the mean of 5 predictions, Sirocco
+  differs by −0.03, +0.58 and −0.91 points at 10°, 45° and 80° (261019).
+  The offsets at 45° and 80° are larger than the noise, and their cause is
+  not known.
+- **The secondary star:** the models are CVs, so Sirocco includes a secondary,
+  which hides from the observers any light whose path to them crosses its
+  Roche lobe. The prediction has no secondary, so the models use an orbital
+  period of 300 hours, which puts the secondary well outside the wind. With
+  the usual few hours it lies inside the wind, and the wedge at 10° and 45°
+  comes out about 2 points more positive than the prediction.
 - **Other scripts:** `analyze_split.py root` breaks the light down by number
   of scatters, and calculates τ with `sirocco_optd`.
 
