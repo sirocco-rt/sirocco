@@ -311,6 +311,7 @@ free_atomic_data (void)
   free (xconfig);
   free (line);
   free (auger_macro);
+  free_xsection_data ();
 }
 
 /**********************************************************/

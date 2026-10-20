@@ -14,4 +14,8 @@ double a21(struct lines *line_ptr);
 double upsilon(int n_coll, double u0);
 void skiplines(FILE *fptr, int nskip);
 /* atomicdata_init.c */
+TopPhotPtr alloc_phot_top_record(int n, int np);
+TopPhotPtr alloc_inner_cross_record(int n, int np);
+AugerPtr alloc_auger_macro_record(int n);
+int free_xsection_data(void);
 int init_atomic_data(void);

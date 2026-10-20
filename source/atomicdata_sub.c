@@ -230,6 +230,14 @@ index_phot_top ()
   indexx (ntop_phot + nxphot, freqs, index);    /* Note that this math recipes routine
                                                    expects arrays to run from 1 to nlines inclusive */
 
+  free (phot_top_ptr);
+  phot_top_ptr = (TopPhotPtr *) calloc (sizeof (TopPhotPtr), ntop_phot + nxphot);
+  if (phot_top_ptr == NULL)
+  {
+    Error ("index_phot_top: There is a problem in allocating memory for phot_top_ptr\n");
+    exit (0);
+  }
+
   /* The for loop indices are complicated by the numerical recipes routine,
      which is a simple translation of a fortran routine.
      Specifically, index array elements 1 to nlines are now filled,
@@ -282,6 +290,14 @@ index_inner_cross ()
 
   indexx (n_inner_tot, freqs, index);   /* Note that this math recipes routine
                                            expects arrays to run from 1 to nlines inclusive */
+
+  free (inner_cross_ptr);
+  inner_cross_ptr = (TopPhotPtr *) calloc (sizeof (TopPhotPtr), n_inner_tot);
+  if (inner_cross_ptr == NULL)
+  {
+    Error ("index_inner_cross: There is a problem in allocating memory for inner_cross_ptr\n");
+    exit (0);
+  }
 
   /* The for loop indices are complicated by the numerical recipes routine,
      which is a simple translation of a fortran routine.
