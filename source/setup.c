@@ -393,7 +393,7 @@ init_observers ()
     geo.angle[n] = 45;
   for (n = 0; n < NSPEC; n++)
   {
-    geo.observer_phi[n] = 0.0;
+    geo.observer_phi[n] = 180.0;
     geo.scat_select[n] = MAXSCAT;
     geo.top_bot_select[n] = 0;
   }

@@ -10,13 +10,15 @@ For binary systems the equivalent parameter is
 orbital phase (0–1).
 
 A value of 0 places the observer in the x-z plane (phi = 0 rad), looking
-in the −x direction.
+in the −x direction.  The default, 180, places the observer on the −x side,
+which is the same azimuth used for non-binary systems in 2-D models
+(equivalent to an orbital phase of 0.5).
 
 Type
   Double
 
 Values
-  0 to 360 (degrees). Default 0.
+  0 to 360 (degrees). Default 180.
 
 File
   `setup.c <https://github.com/sirocco-rt/sirocco/blob/master/source/setup.c>`_
