@@ -41,7 +41,8 @@ int ierr_coord_fraction = 0;
  * @param [in] double  x[]   the 3-vector position for which you want
  * the fractinal position
  * @param [out] int  ii[]    an array that contains the 1-d element
- * numbers that must be summed
+ * numbers that must be summed.  These are absolute indices into wmain,
+ * that is they include zdom[ndom].nstart, for every coordinate system
  * @param [out] double  frac[]   the array that contains the fractional
  * contribution of the corresponding
  * element
@@ -145,9 +146,9 @@ coord_fraction (int ndom, int ichoice, double x[], int ii[], double frac[], int 
   if (zdom[ndom].coord_type == SPHERICAL)
   {                             /* We are dealing with a 1d system */
     fraction (r, xx, zdom[ndom].ndim, &ix, &dr, 0);     //linear space
-    ii[0] = ix;
+    ii[0] = zdom[ndom].nstart + ix;
     frac[0] = (1. - dr);
-    ii[1] = ix + 1;
+    ii[1] = zdom[ndom].nstart + ix + 1;
     frac[1] = dr;
     *nelem = 2;
 //    if (sane_check (dr))
@@ -160,16 +161,16 @@ coord_fraction (int ndom, int ichoice, double x[], int ii[], double frac[], int 
     fraction (r, xx, zdom[ndom].ndim, &ix, &dr, 0);
     fraction (z, zz, zdom[ndom].mdim, &iz, &dz, 0);
 
-    ii[0] = ix * zdom[ndom].mdim + iz;
+    ii[0] = zdom[ndom].nstart + ix * zdom[ndom].mdim + iz;
     frac[0] = (1. - dz) * (1. - dr);
 
-    ii[1] = (ix + 1) * zdom[ndom].mdim + iz;
+    ii[1] = zdom[ndom].nstart + (ix + 1) * zdom[ndom].mdim + iz;
     frac[1] = (1. - dz) * dr;
 
-    ii[2] = ix * zdom[ndom].mdim + iz + 1;
+    ii[2] = zdom[ndom].nstart + ix * zdom[ndom].mdim + iz + 1;
     frac[2] = (dz) * (1. - dr);
 
-    ii[3] = (ix + 1) * zdom[ndom].mdim + iz + 1;
+    ii[3] = zdom[ndom].nstart + (ix + 1) * zdom[ndom].mdim + iz + 1;
     frac[3] = (dz) * (dr);
     *nelem = 4;
 
