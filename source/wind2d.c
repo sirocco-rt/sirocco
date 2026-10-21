@@ -103,6 +103,9 @@ int ierr_vwind = 0;
  * For SPHERICAL: linear interpolation in r between wmain[n].v (inner) and
  * wmain[n].vmax (outer).
  *
+ * For CYLIND3D and SPH3D: coord_fraction, which interpolates linearly in phi
+ * between the two neighbouring phi slices as well as in (rho, z) or
+ * (r, theta).
  *
  * If the position is outside the wind grid, coord_fraction is used as a fallback.
  *
@@ -171,12 +174,16 @@ vwind_xyz (int ndom, PhotPtr p, double v[])
        * Exception: imported models do not have corner velocities populated
        * (create_wind_grid skips that step for IMPORT), so fall back to
        * coord_fraction for them. coord_fraction handles the bilateral fold
-       * (fabs) for imported models internally. */
-      int use_corner_vels = (zdom[ndom].wind_type != IMPORT);
+       * (fabs) for imported models internally.
+       * CYLIND3D and SPH3D always use coord_fraction, which interpolates
+       * in phi between neighbouring slices; wmain[].v holds local
+       * (v_rho, v_phi, v_z) components at each slice's own phi (see
+       * set_cell_velocity_gradient_3d). */
+      int use_corner_vels = (zdom[ndom].wind_type != IMPORT && coord_type != CYLIND3D && coord_type != SPH3D);
       n = where_in_grid (ndom, p->x);
       if (n < 0 || !use_corner_vels)
       {
-        /* Outside grid, or imported model — use coord_fraction */
+        /* Outside grid, imported model, or 3D grid — use coord_fraction */
         coord_fraction (ndom, 0, p->x, nnn, frac, &nelem);
         for (i = 0; i < 3; i++)
         {
@@ -220,35 +227,11 @@ vwind_xyz (int ndom, PhotPtr p, double v[])
           vv[i] = (1.0 - dr) * (1.0 - dz) * wmain[n].v[i]
             + dr * (1.0 - dz) * wmain[n].v_rmax[i] + (1.0 - dr) * dz * wmain[n].v_thetamax[i] + dr * dz * wmain[n].vmax[i];
       }
-      else if (coord_type == CYLIND3D)
-      {
-        /* Phase 1: bilinear in (rho, z) using phi=0 corners — same as CYLIND.
-           Phase 3 will rotate to cylindrical frame and add phi interpolation. */
-        double rho_here = sqrt (p->x[0] * p->x[0] + p->x[1] * p->x[1]);
-        double z_here = p->x[2];
-        denom = wmain[n].xmax[0] - wmain[n].x[0];
-        dr = (denom > 0.0) ? (rho_here - wmain[n].x[0]) / denom : 0.5;
-        denom = wmain[n].xmax[2] - wmain[n].x[2];
-        dz = (denom > 0.0) ? (z_here - wmain[n].x[2]) / denom : 0.5;
-        if (dr < 0.0)
-          dr = 0.0;
-        if (dr > 1.0)
-          dr = 1.0;
-        if (dz < 0.0)
-          dz = 0.0;
-        if (dz > 1.0)
-          dz = 1.0;
-        for (i = 0; i < 3; i++)
-          vv[i] = (1.0 - dr) * (1.0 - dz) * wmain[n].v[i]
-            + dr * (1.0 - dz) * wmain[n].v_rmax[i] + (1.0 - dr) * dz * wmain[n].v_thetamax[i] + dr * dz * wmain[n].vmax[i];
-      }
-      else if (coord_type == RTHETA || coord_type == SPH3D)
+      else if (coord_type == RTHETA)
       {
         /* 2D bilinear in (r, theta_deg): corners stored as v, v_rmax, v_thetamax, vmax.
            theta_here uses signed x[2]/r giving 0-180 deg; lower-hemisphere cells have
-           wmain[n].theta > 90 deg so dz is correctly in [0,1].
-           For SPH3D, phi_max corners are not used here (axisymmetric models); Phase 3
-           will add trilinear phi interpolation for non-axisymmetric imported models. */
+           wmain[n].theta > 90 deg so dz is correctly in [0,1]. */
         r = length (p->x);
         double theta_here = (r > 0.0) ? acos (p->x[2] / r) * RADIAN : 0.0;
         denom = wmain[n].rmax - wmain[n].r;

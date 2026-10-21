@@ -134,6 +134,7 @@ int cylind3d_extend_density(int ndom, WindPtr w);
 double cylind3d_ds_in_cell(int ndom, PhotPtr p);
 double ds_phi_boundary(double phi0, PhotPtr p);
 /* define_wind.c */
+void set_cell_velocity_gradient_3d(WindPtr cell);
 void set_cell_velocity_gradient(WindPtr cell);
 void set_cell_dvds_and_gamma(WindPtr cell);
 void define_wind(void);

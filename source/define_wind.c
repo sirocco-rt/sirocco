@@ -523,6 +523,89 @@ complete_wind_grid_creation (void)
 
 /**********************************************************/
 /**
+ * @brief Set the velocity and velocity gradient of a CYLIND3D or SPH3D cell
+ *
+ * @param [in, out] WindPtr cell  The wind cell
+ *
+ * @details
+ *
+ * In 3D grids the values stored for a cell belong to its vertex at the
+ * cell's own azimuth, cell->phi, and are expressed in local cylindrical
+ * components (rho, phi, z) at that azimuth.  This is the same convention
+ * as for imported 3D models, so velocities and gradients from
+ * neighbouring phi slices can be interpolated directly (coord_fraction),
+ * and are rotated to the photon's azimuth where they are used (vwind_xyz,
+ * dvwind_ds_cmf).
+ *
+ * For analytic models, the velocity is evaluated at the vertex rotated to
+ * cell->phi and converted to local components; for imported models it
+ * has already been set from the model.  The velocity gradient tensor is
+ * calculated at the same point, in Cartesian components, and rotated to
+ * the local frame, V_local = R V R^T.  The divergence is calculated at
+ * the cell centre (cell->xcen, which is at cell->phicen).
+ *
+ * ### Notes ###
+ * cell->x is the vertex in the xz plane (x[1] = 0) for every phi slice,
+ * so cell->x[0] is the cylindrical radius of the vertex.  For slice
+ * k = 0, cell->phi = 0 and the results are the same as evaluating at
+ * cell->x.
+ *
+ **********************************************************/
+
+void
+set_cell_velocity_gradient_3d (WindPtr cell)
+{
+  int ndom = cell->ndom;
+  double xv[3], vc[3], grad[3][3], rot[3][3];
+  double c, s, sum;
+  int a, b, i, j;
+
+  c = cos (cell->phi);
+  s = sin (cell->phi);
+
+  /* The vertex at the cell's own azimuth */
+  xv[0] = cell->x[0] * c;
+  xv[1] = cell->x[0] * s;
+  xv[2] = cell->x[2];
+
+  /* rot converts Cartesian components to local (rho, phi, z) at cell->phi */
+  rot[0][0] = c;
+  rot[0][1] = s;
+  rot[0][2] = 0;
+  rot[1][0] = -s;
+  rot[1][1] = c;
+  rot[1][2] = 0;
+  rot[2][0] = 0;
+  rot[2][1] = 0;
+  rot[2][2] = 1;
+
+  if (zdom[ndom].wind_type != IMPORT)
+  {
+    model_velocity (ndom, xv, vc);
+    for (a = 0; a < 3; a++)
+      cell->v[a] = rot[a][0] * vc[0] + rot[a][1] * vc[1] + rot[a][2] * vc[2];
+  }
+
+  model_vgrad (ndom, xv, grad);
+  for (a = 0; a < 3; a++)
+  {
+    for (b = 0; b < 3; b++)
+    {
+      sum = 0;
+      for (i = 0; i < 3; i++)
+        for (j = 0; j < 3; j++)
+          sum += rot[a][i] * rot[b][j] * grad[i][j];
+      cell->v_grad[a][b] = sum;
+    }
+  }
+
+  wind_div_v (ndom, cell);
+}
+
+
+
+/**********************************************************/
+/**
  * @brief Set the velocity and velocity gradient of a wind cell
  *
  * @param [in, out] WindPtr cell  The wind cell
@@ -533,10 +616,10 @@ complete_wind_grid_creation (void)
  * where it has already been set from the model), and the velocity
  * gradient and divergence.
  *
- * For CYLIND, RTHETA, CYLIND3D, SPH3D and SPHERICAL cells, the
- * velocities at the other corners (v_rmax, v_thetamax, vmax, and for
- * SPH3D the phi_max face in sph3d_phi_corners) are also set, so that
- * velocities can be interpolated within a cell.
+ * For CYLIND, RTHETA and SPHERICAL cells, the velocities at the other
+ * corners (v_rmax, v_thetamax, vmax) are also set, so that velocities
+ * can be interpolated within a cell.  CYLIND3D and SPH3D cells are
+ * handled by set_cell_velocity_gradient_3d.
  *
  * This is used both when the wind is created and when an existing
  * wind is updated from a new model (see update_wind_from_model).
@@ -546,6 +629,12 @@ complete_wind_grid_creation (void)
 void
 set_cell_velocity_gradient (WindPtr cell)
 {
+  if (zdom[cell->ndom].coord_type == CYLIND3D || zdom[cell->ndom].coord_type == SPH3D)
+  {
+    set_cell_velocity_gradient_3d (cell);
+    return;
+  }
+
   if (zdom[cell->ndom].wind_type != IMPORT)
   {
     int coord_type = zdom[cell->ndom].coord_type;
@@ -601,67 +690,6 @@ set_cell_velocity_gradient (WindPtr cell)
       model_velocity (cell->ndom, xc, cell->v_thetamax);
       /* (r_outer, theta_outer) corner = xmax */
       model_velocity (cell->ndom, cell->xmax, cell->vmax);
-    }
-    else if (coord_type == CYLIND3D)
-    {
-      /* Phase 1: corners in the xz plane at phi=0, same as CYLIND.
-         Phase 3 will add phi_max corners for non-axisymmetric velocity. */
-      xc[0] = cell->xmax[0];
-      xc[1] = 0.0;
-      xc[2] = cell->x[2];
-      model_velocity (cell->ndom, xc, cell->v_rmax);
-      xc[0] = cell->x[0];
-      xc[1] = 0.0;
-      xc[2] = cell->xmax[2];
-      model_velocity (cell->ndom, xc, cell->v_thetamax);
-      xc[0] = cell->xmax[0];
-      xc[1] = 0.0;
-      xc[2] = cell->xmax[2];
-      model_velocity (cell->ndom, xc, cell->vmax);
-    }
-    else if (coord_type == SPH3D)
-    {
-      double scale;
-      /* phi_min face: identical to RTHETA (model is azimuthally symmetric) */
-      if (cell->r > 0.0)
-      {
-        scale = cell->rmax / cell->r;
-        xc[0] = scale * cell->x[0];
-        xc[1] = 0.0;
-        xc[2] = scale * cell->x[2];
-      }
-      else
-      {
-        xc[0] = xc[1] = xc[2] = 0.0;
-      }
-      model_velocity (cell->ndom, xc, cell->v_rmax);
-      if (cell->rmax > 0.0)
-      {
-        scale = cell->r / cell->rmax;
-        xc[0] = scale * cell->xmax[0];
-        xc[1] = 0.0;
-        xc[2] = scale * cell->xmax[2];
-      }
-      else
-      {
-        xc[0] = xc[1] = xc[2] = 0.0;
-      }
-      model_velocity (cell->ndom, xc, cell->v_thetamax);
-      model_velocity (cell->ndom, cell->xmax, cell->vmax);
-      /* phi_max face: same values as phi_min face (model is axisymmetric).
-         The importer will overwrite these for non-symmetric imported winds. */
-      /* sph3d_phi_corners is indexed by the wmain index; it is not allocated
-         when an existing wind is read back in (e.g. by hydro2sirocco). */
-      if (sph3d_phi_corners != NULL)
-      {
-        for (int kk = 0; kk < 3; kk++)
-        {
-          sph3d_phi_corners[cell->nwind].v_phimax[kk] = cell->v[kk];
-          sph3d_phi_corners[cell->nwind].v_rmax_phimax[kk] = cell->v_rmax[kk];
-          sph3d_phi_corners[cell->nwind].v_thetamax_phimax[kk] = cell->v_thetamax[kk];
-          sph3d_phi_corners[cell->nwind].vmax_phimax[kk] = cell->vmax[kk];
-        }
-      }
     }
     else if (coord_type == SPHERICAL)
     {

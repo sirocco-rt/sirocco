@@ -343,6 +343,18 @@ calculate_cell_dvds_max (int ndom, WindPtr cell)
     p.x[0] = 0.1 * cell->xcen[0];
   }
 
+  /* In 3D grids cell->x is in the xz plane for every phi slice; use the
+     vertex at the cell's own azimuth, where its v_grad is defined.  (xcen
+     is at the cell's centre azimuth, so take its cylindrical radius.) */
+  if (zdom[cell->ndom].coord_type == CYLIND3D || zdom[cell->ndom].coord_type == SPH3D)
+  {
+    double rho_v = cell->x[0];
+    if (rho_v == 0)
+      rho_v = 0.1 * sqrt (cell->xcen[0] * cell->xcen[0] + cell->xcen[1] * cell->xcen[1]);
+    p.x[0] = rho_v * cos (cell->phi);
+    p.x[1] = rho_v * sin (cell->phi);
+  }
+
   p.grid = icell;
 
   for (n = 0; n < N_DVDS_AVE; n++)

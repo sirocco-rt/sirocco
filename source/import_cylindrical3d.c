@@ -421,9 +421,22 @@ velocity_cylindrical3d (int ndom, double *x, double *v)
   }
 
   speed = length (vv);
-  v[0] = vv[0];
-  v[1] = vv[1];
-  v[2] = vv[2];
+
+  /* wmain[].v holds local (v_rho, v_phi, v_z) components, so rotate the
+     interpolated vector to Cartesian components at x.  This is needed by
+     model_vgrad and get_div_v_in_cmf_frame, which difference velocities at
+     positions off the xz plane.  On the z axis the local frame is undefined,
+     and the components are returned unrotated. */
+  if (x[0] * x[0] + x[1] * x[1] > 0)
+  {
+    project_from_cyl_xyz (x, vv, v);
+  }
+  else
+  {
+    v[0] = vv[0];
+    v[1] = vv[1];
+    v[2] = vv[2];
+  }
 
   return (speed);
 }
