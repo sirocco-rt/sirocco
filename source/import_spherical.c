@@ -320,7 +320,7 @@ velocity_1d (int ndom, double *x, double *v)
   speed = 0;
   for (nn = 0; nn < nelem; nn++)
   {
-    speed += wmain[zdom[ndom].nstart + nnn[nn]].v[0] * frac[nn];
+    speed += wmain[nnn[nn]].v[0] * frac[nn];
   }
 
   v[0] = x[0] / r * speed;
