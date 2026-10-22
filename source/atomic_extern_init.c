@@ -47,10 +47,10 @@ int ntop_phot;                  /* The actual number of TopBase photoionzation x
 int nphot_total;                /* total number of photoionzation x-sections = nxphot + ntop_phot */
 
 Topbase_phot *phot_top;
-TopPhotPtr phot_top_ptr[NLEVELS];       /* Pointers to phot_top in threshold frequency order - this */
+TopPhotPtr *phot_top_ptr;       /* Pointers to phot_top in threshold frequency order - this */
 
 Topbase_phot *inner_cross;
-TopPhotPtr inner_cross_ptr[N_INNER * NIONS];
+TopPhotPtr *inner_cross_ptr;
 
 Inner_elec_yield inner_elec_yield[N_INNER * NIONS];
 

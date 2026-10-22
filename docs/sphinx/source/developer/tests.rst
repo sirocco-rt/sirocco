@@ -3,7 +3,7 @@ Unit Test Framework
 
 Unit tests are an excellent way to ensure that any code you write is robust and correct. To manage unit testing, SIROCCO
 uses the `CUnit <https://gitlab.com/cunity/cunit>`_ test framework. Unit tests are run by using :code:`make check` in
-either the root directory of SIROCCO, or in the source/test directory.
+either the root directory of SIROCCO, or in the source/tests directory.
 
 Installing CUnit
 ================
@@ -45,32 +45,36 @@ To run the tests, navigate into one of three directories,
 
 - :code:`$SIROCCO`
 - :code:`$SIROCCO/source`
-- :code:`$SIROCCO/tests`
+- :code:`$SIROCCO/source/tests`
 
-Then run the command :code:`make check` which will compile and run the unit tests,
+Then run the command :code:`make check` which will compile and run the unit tests. The output below is shortened, and
+its layout depends on the version of CUnit,
 
 .. code:: bash
 
     $ [$SIROCCO/source] make check
 
-    CUnit - A unit testing framework for C - Version 3.2.7-cunity
-     http://cunit.sourceforge.net/
+         CUnit - A unit testing framework for C - Version 2.1-3
+         http://cunit.sourceforge.net/
 
-     Suite: Compton Processes
-       Test: Klein-Nisina Formula ...passed
-       Test: Compton Alpha - heating cross section  ...passed
-       Test: Compton Beta - cooling cross section ...passed
-       Test: Compton Formula ...passed
-     Suite: Matrix Functions: GNU Science Library
-       Test: Solve Matrix ...passed
-       Test: Invert Matrix ...passed
+    Suite: Matrix Functions: GNU Science Library
+      Test: Solve Matrix ...passed
+      Test: Invert Matrix ...passed
+    Suite: Compton Processes
+      Test: Klein-Nisina Formula ...passed
+      ...
+    Suite: Atomic data
+      Test: standard80 ...passed
+      ...
+      Test: fe_17to27 ...passed
 
-     Run Summary       -      Run    Failed  Inactive   Skipped
-          Suites       :        2         0         0         0
-          Asserts      :       15         0       n/a       n/a
-          Tests        :        6         0         0         0
+    Run Summary:    Type  Total    Ran Passed Failed Inactive
+                  suites      6      6    n/a      0        0
+                   tests     18     18     18      0        0
+                 asserts  58568  58568  58568      0      n/a
 
-     Elapsed Time: 0.009(s)
+    Elapsed time =   23.126 seconds
+    All tests ran successfully
 
 The important output is the "Run Summary", which lists the number of tests run and how many failed. To explain the
 output a bit more, a suite is a collection of tests and a test is a function which evaluates the output of the function
@@ -273,9 +277,11 @@ Unit tests should be kept in logically named files within the unit test director
 located at :code:`$SIROCCO/source/tests/Makefile`, specifically to the :code:`TEST_SOURCES` variable which is a list of
 all the source code required specifically for the unit test framework; this includes both the unit tests themselves and
 any other code required to, e.g., build and control the test registry. Prototypes for wrapper functions for creating
-test suites (which are called in the main function) should be placed in :code:`$SIROCCO/source/tests/tests/tests.h`
-header file. Any data required for the tests should be kept in the data directory, :code:`$SIROCCO/source/tests/data`, in
-appropriately organised directories as shown below.
+test suites (which are called in the main function) should be placed in :code:`$SIROCCO/source/tests/tests/suites.h`
+header file. Any data required for the tests should be kept in the test data directory,
+:code:`$SIROCCO/source/tests/test_data`, in appropriately organised directories as shown below. Tests which need the
+atomic data do not copy it: they make a link, :code:`data`, to :code:`$SIROCCO/xdata` in the directory the tests are
+run from (see :code:`test_define_wind.c` or :code:`test_atomic_data.c`).
 
 .. code:: bash
     :caption: :code:`$SIROCCO/source/tests`
@@ -284,21 +290,60 @@ appropriately organised directories as shown below.
 
     ├── Makefile
     ├── assert.h
-    ├── data
-    │   └── matrix
-    │       ├── inverse_macro
-    │       │   ├── inverse.txt
-    │       │   └── matrix.txt
-    │       └── small_matrix
-    │           ├── A.txt
-    │           ├── b.txt
-    │           └── x.txt
+    ├── test_data
+    │   ├── define_wind
+    │   │   ├── agn_macro.pf
+    │   │   ├── cv.pf
+    │   │   └── ...
+    │   └── matrix
+    │       ├── inverse_macro
+    │       ├── inverse_small
+    │       ├── matrix_ion
+    │       └── small_matrix
     ├── tests
-    │   ├── test_matrix.c
-    │   └── tests.h
-    └── unit_test_main.c
+    │   ├── suites.h
+    │   ├── test_atomic_data.c
+    │   ├── test_compton.c
+    │   ├── test_matrix.c
+    │   └── ...
+    ├── unit_test.h
+    ├── unit_test_main.c
+    └── unit_test_model.c
 
 We also need to include the SIROCCO source code we are testing in the :code:`SIROCCO_SOURCES` variable of the Makefile.
 If there are any CUDA files required, these should be added to the :code:`CUDA_SOURCES` variable. In theory, we should
 only need to include the files containing the code we are testing. But in practise, we choose to instead include all of
 SIROCCO's source files (as it makes our lives easier) which increases compile time and the size of the final binary.
+
+Tests with stored reference values
+----------------------------------
+
+Most tests check a result against a known answer. :code:`test_atomic_data.c` works differently: it checks that the
+atomic data are read exactly as before. For each masterfile in :code:`$SIROCCO/xdata` it calls
+:code:`get_atomic_data`, then reduces every photoionization cross section (:code:`phot_top`), inner shell cross
+section (:code:`inner_cross`) and macro-atom Auger record (:code:`auger_macro`) to a single 64-bit digest. The test
+passes if the number of records and the digest match the values stored in the :code:`REFERENCE` table at the top of
+the file.
+
+The digest includes only values which are exactly the same on any platform: the integer fields, the frequencies and
+cross sections, :code:`phot_freq_min`, :code:`inner_freq_min`, the frequency ordering of the cross sections, and the
+Auger records. The log versions of the cross sections depend on the maths library, so they are not in the digest;
+instead the test checks that each equals the log of the corresponding linear value. The same digests therefore pass on
+Linux and macOS.
+
+This test will fail whenever an atomic data file used by one of these masterfiles is changed, even if the change is
+correct. That is intended: it means a change to the atomic data, or to the code that reads it, cannot go unnoticed.
+When it happens:
+
+1. Check that the change in the data read is the one intended.
+2. Run :code:`make check`. For each masterfile that fails, the test prints the new digest, e.g.
+
+   .. code:: text
+
+       standard80.dat: atomic data digest 0x7d0e2417300c862eULL, expected 0x...ULL
+
+3. Copy the new digest, and any changed record counts, into the :code:`REFERENCE` table, and say in the commit message
+   why the reference values changed.
+
+When a masterfile is added to :code:`$SIROCCO/xdata`, add it to the :code:`REFERENCE` table and add a test for it in
+:code:`create_atomic_data_test_suite`; when one is removed, remove it from both.
