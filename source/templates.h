@@ -9,6 +9,10 @@ int randwind_thermal_trapping(PhotPtr p, int *nnscat);
 /* atomicdata.c */
 int get_atomic_data(char masterfile[]);
 /* atomicdata_init.c */
+TopPhotPtr alloc_phot_top_record(int n, int np);
+TopPhotPtr alloc_inner_cross_record(int n, int np);
+AugerPtr alloc_auger_macro_record(int n);
+int free_xsection_data(void);
 int init_atomic_data(void);
 /* atomicdata_sub.c */
 int atomicdata2file(void);

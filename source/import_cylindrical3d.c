@@ -418,7 +418,7 @@ velocity_cylindrical3d (int ndom, double *x, double *v)
   {
     vv[j] = 0;
     for (nn = 0; nn < nelem; nn++)
-      vv[j] += wmain[zdom[ndom].nstart + nnn[nn]].v[j] * frac[nn];
+      vv[j] += wmain[nnn[nn]].v[j] * frac[nn];
   }
 
   speed = length (vv);

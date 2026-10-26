@@ -712,7 +712,7 @@ sobolev (WindPtr one, double x[], double den_ion, struct lines *lptr, double dvd
     Error ("sobelev: Asking for tau for a cell that is not in wind. windcell %d inwind %d\n", one->nwind, one->inwind);
   }
   xplasma = &plasmamain[nplasma];
-  ndom = wmain[plasmamain->nwind].ndom;
+  ndom = wmain[xplasma->nwind].ndom;
   nion = lptr->nion;
 
   levden_upper = 0;

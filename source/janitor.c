@@ -304,6 +304,9 @@ free_photons (void)
  * @brief Free memory associated with atomic data
  *
  * @details
+ * Frees the element, ion, level, line and macro-atom Auger tables, and
+ * (through free_xsection_data) the photoionization and inner shell
+ * cross sections and their frequency-ordered pointers.
  *
  **********************************************************/
 
@@ -315,6 +318,7 @@ free_atomic_data (void)
   free (xconfig);
   free (line);
   free (auger_macro);
+  free_xsection_data ();
 }
 
 /**********************************************************/

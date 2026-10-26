@@ -33,6 +33,37 @@
 #define UNKNOWN     -1
 
 
+/**********************************************************/
+/**
+ * @brief      Make sure the buffers used to read one cross section
+ * hold at least np points
+ *
+ * @param [in, out] double **  xe   The buffer of energies
+ * @param [in, out] double **  xx   The buffer of cross sections
+ * @param [in, out] int *  nmax   The number of elements allocated in each buffer
+ * @param [in] int  np   The number of points about to be read
+ * @return     Always returns 0
+ *
+ **********************************************************/
+
+static int
+grow_read_buffers (double **xe, double **xx, int *nmax, int np)
+{
+  if (np <= *nmax)
+    return (0);
+
+  *xe = (double *) realloc (*xe, np * sizeof (double));
+  *xx = (double *) realloc (*xx, np * sizeof (double));
+  if (*xe == NULL || *xx == NULL)
+  {
+    Error ("get_atomic_data: There is a problem in allocating memory to read a cross section with %d points\n", np);
+    exit (0);
+  }
+  *nmax = np;
+  return (0);
+}
+
+
 
 /**********************************************************/
 /**
@@ -63,12 +94,13 @@
  * The program assumes that the ions for a given element are grouped together,
  * that the levels for a given element are grouped together, etc.
  *
- * If one wants to read both Topbase and VFKY photoionization x-sections, then the topbase
- * x-sections should be read first.  The routine will ignore data in the VFKY list if there
- * is a pre-existing Topbase data.  The routine will stop if you but a VFKY x-section first
- * on the assumption that Topbase data should trump VFKY data. (Making the program more flexible
- * would be difficult because you would have to drop various bits of Topbase data out of the
- * middle of the structure or mark it NG or something.)
+ * If one wants to read both Topbase and VFKY photoionization x-sections, then all the
+ * Topbase (and macro-atom) x-sections must be read first.  For an ion which already has Topbase
+ * data, a VFKY x-section replaces the Topbase ground-state x-section, and the excited
+ * levels keep their Topbase x-sections (phot_info = 2).  VFKY data for macro-atom ions are
+ * ignored.  The routine stops if Topbase data are read for an ion which already has a VFKY
+ * x-section, but not if VFKY data for other ions have been read first; that case is not
+ * handled correctly (see issue #1213).
  *
  * Similarly, as a general rule the macro information should be provided before the simple
  * ions are described, and the macro lines should be presented before simple lines.
@@ -136,7 +168,8 @@ get_atomic_data (char masterfile[])
   int islp, ilv, np;
   char configname[15];
   double e, rl;
-  double xe[NCROSS], xx[NCROSS];
+  double *xe, *xx;              /* energies and cross sections of the record being read */
+  int nxe_max;                  /* number of elements allocated in xe and xx */
   int nlines_simple;
   int nspline;
   double tmin;
@@ -166,6 +199,9 @@ get_atomic_data (char masterfile[])
 
   /* Initialize the atomic data structures and various counters */
   init_atomic_data ();
+
+  xe = xx = NULL;
+  nxe_max = 0;
 
   n_elec_yield_tot = 0;         //Counter for electron yield
   gstmin = 0.0;
@@ -931,13 +967,7 @@ described as macro-levels. */
             islp = -1;
             ilv = -1;
 
-            if (np > NCROSS)
-            {
-              Error ("Get_atomicdata: More x-sections (%d) to be read in than maximum allowed (%d).  Increase NCROSS\n", np, NCROSS);
-              Error ("Get_atomic_data: %s\n", aline);
-              exit (0);
-            }
-
+            grow_read_buffers (&xe, &xx, &nxe_max, np);
             for (n = 0; n < np; n++)
             {
               //Read the photo. records but do nothing with them until verifyina a valid level
@@ -987,6 +1017,7 @@ described as macro-levels. */
             }
 
             // Populate upper state info
+            alloc_phot_top_record (ntop_phot, np);
             phot_top[ntop_phot].uplev = n;      //store the level in the upper ion (SS)
             xconfig[n].bfd_jump[xconfig[n].n_bfd_jump] = ntop_phot;     //record the line index as a downward bf Macro Atom jump (SS)
             phot_top[ntop_phot].down_index = xconfig[n].n_bfd_jump;     //record jump index in the photoionization structure
@@ -1050,12 +1081,6 @@ described as macro-levels. */
             ntop_phot_macro++;
             ntop_phot++;
             nphot_total++;
-
-            if (nphot_total > NTOP_PHOT)
-            {
-              Error ("get_atomicdata: More macro photoionization cross sections that NTOP_PHOT (%d).  Increase in atomic.h\n", NTOP_PHOT);
-              exit (0);
-            }
             break;
           }
 
@@ -1064,13 +1089,7 @@ described as macro-levels. */
             // It's a TOPBASE style photoionization record, beginning with the summary record
             sscanf (aline, "%*s %d %d %d %d %le %d\n", &z, &istate, &islp, &ilv, &exx, &np);
 
-            if (np > NCROSS)
-            {
-              Error ("Get_atomicdata: More x-sections (%d) to be read in than maximum allowed (%d).  Increase NCROSS\n", np, NCROSS);
-              Error ("Get_atomic_data: %s\n", aline);
-              exit (0);
-            }
-
+            grow_read_buffers (&xe, &xx, &nxe_max, np);
             for (n = 0; n < np; n++)
             {                   //Read the topbase photoionization records
               if (fgets (aline, LINELENGTH, fptr) == NULL)
@@ -1104,6 +1123,7 @@ described as macro-levels. */
             }
             if (ion[xconfig[n].nion].macro_info == 0)   //this is not a macro atom level (SS)
             {
+              alloc_phot_top_record (ntop_phot, np);
               phot_top[ntop_phot].nlev = n;     // level associated with this crossection.
               phot_top[ntop_phot].nion = xconfig[n].nion;
               phot_top[ntop_phot].z = z;
@@ -1151,14 +1171,6 @@ described as macro-levels. */
               ntop_phot_simple++;
               ntop_phot++;
               nphot_total++;
-
-              /* check to assure we did not exceed the allowed number of photoionization records */
-              if (nphot_total > NTOP_PHOT)
-              {
-                Error
-                  ("get_atomicdata: More TopBase photoionization cross sections that NTOP_PHOT (%d).  Increase in atomic.h\n", NTOP_PHOT);
-                exit (0);
-              }
             }
             else
             {
@@ -1177,9 +1189,10 @@ described as macro-levels. */
           {
             // It's a VFKY style photoionization record, beginning with the summary record
             sscanf (aline, "%*s %d %d %d %d %le %d\n", &z, &istate, &islp, &ilv, &exx, &np);
+            grow_read_buffers (&xe, &xx, &nxe_max, np);
             for (n = 0; n < np; n++)
             {
-              //Read the cross-sections                     
+              //Read the cross-sections
               if (fgets (aline, LINELENGTH, fptr) == NULL)
               {
                 Error ("Get_atomic_data: Problem reading Vfky photoionization record\n");
@@ -1198,6 +1211,7 @@ described as macro-levels. */
                 if (ion[nion].phot_info == -1)
                 {
                   /* Then there is a match */
+                  alloc_phot_top_record (nphot_total, np);
                   phot_top[nphot_total].nlev = ion[nion].firstlevel;    // ground state
                   if (phot_top[nphot_total].nlev == -1)
                   {
@@ -1234,6 +1248,7 @@ described as macro-levels. */
                      data is superior for the ground state, so we replace that data with the current data
                      JM 1508 -- don't do this with macro-atoms for the moment */
                 {
+                  alloc_phot_top_record (ion[nion].ntop_ground, np);
                   phot_top[ion[nion].ntop_ground].nlev = ion[nion].firstlevel;  // ground state
                   phot_top[ion[nion].ntop_ground].nion = nion;
                   phot_top[ion[nion].ntop_ground].z = z;
@@ -1265,11 +1280,6 @@ described as macro-levels. */
               Error ("getatomic_data: file %s line %d: More photoionization edges than IONS.\n", file, lineno);
               exit (0);
             }
-            if (nphot_total > NTOP_PHOT)
-            {
-              Error ("get_atomicdata: More photoionization cross sections that NTOP_PHOT (%d).  Increase in atomic.h\n", NTOP_PHOT);
-              exit (0);
-            }
 
             break;
           }
@@ -1292,6 +1302,7 @@ described as macro-levels. */
             Error ("Get_atomic_data: %s\n", aline);
             exit (0);
           }
+          grow_read_buffers (&xe, &xx, &nxe_max, np);
           for (n = 0; n < np; n++)
           {
             //Read the topbase photoionization records
@@ -1309,6 +1320,7 @@ described as macro-levels. */
             if (ion[nion].z == z && ion[nion].istate == istate && ion[nion].macro_info != 1)
             {
               /* Then there is a match */
+              alloc_inner_cross_record (n_inner_tot, np);
               inner_cross[n_inner_tot].nlev = ion[nion].firstlevel;     //All these are for the ground state
               inner_cross[n_inner_tot].nion = nion;
               inner_cross[n_inner_tot].np = np;
@@ -1334,11 +1346,6 @@ described as macro-levels. */
 
             }
           }
-          if (n_inner_tot > N_INNER * NIONS)
-          {
-            Error ("getatomic_data: file %s line %d: Inner edges than we have room for.\n", file, lineno);
-            exit (0);
-          }
           break;
 
 /**
@@ -1355,105 +1362,99 @@ described as macro-levels. */
           /* check we haven't asked for too many Auger electron pathways */
           if (ne_records > NAUGER_ELECTRONS)
           {
-            Error ("Too many Auger electron records specified (%d), should be < NAUGER_ELECTRONS (%d)\n", ne_records, NAUGER_ELECTRONS);
+            Error ("Too many Auger electron records specified (%d), should be at most NAUGER_ELECTRONS (%d)\n", ne_records,
+                   NAUGER_ELECTRONS);
             exit (0);
           }
 
-          if (nauger_macro < NAUGER_MACRO)
+          alloc_auger_macro_record (nauger_macro);
+
+          //need to identify the configurations associated with the current and target levels 
+          n = 0;
+          while ((xconfig[n].z != z || xconfig[n].istate != istate || xconfig[n].ilv != levu) && n < nlevels)
+            n++;
+
+          /* check we've found a valid macro-atom level */
+          if (n == nlevels)
           {
-            //need to identify the configurations associated with the current and target levels 
-            n = 0;
-            while ((xconfig[n].z != z || xconfig[n].istate != istate || xconfig[n].ilv != levu) && n < nlevels)
-              n++;
-
-            /* check we've found a valid macro-atom level */
-            if (n == nlevels)
-            {
-              Error_silent ("Get_atomic_data: No configuration found to match Auger record %d\n", lineno);
-              exit (0);
-            }
-            if (xconfig[n].macro_info == -1)
-            {
-              Error ("Getatomic_data: Macro Atom Auger data supplied for config %d\n but there is no suitable level data\n", n);
-              exit (0);
-            }
-
-            /* copy information into the auger macro structure */
-            auger_macro[nauger_macro].z = z;
-            auger_macro[nauger_macro].istate = istate;
-            auger_macro[nauger_macro].nconfig = n;
-            auger_macro[nauger_macro].iauger = nauger_macro;
-            auger_macro[nauger_macro].nauger = 0;
-            auger_macro[nauger_macro].Avalue_auger = Avalue_auger;
-            xconfig[n].iauger = nauger_macro;
-
-            /* we now need to read the next line of Auger data which should be of form 
-               AugNels 26 24 -1 -1 -1 -1
-               the length depends on the variable ne_records
-             */
-            if (fgets (aline, LINELENGTH, fptr) == NULL)
-            {
-              Error ("Get_atomic_data: Problem reading Auger macro-atom record\n");
-              Error ("Get_atomic_data: %s\n", aline);
-              exit (0);
-            }
-
-            /* at the moment we a maximum of 4 auger electrons ejected but this could 
-               be expanded by reading in more entries here */
-            nwords = sscanf (aline, "%*s %d %d %le %le %le %le",
-                             &z, &istate, &auger_branches[0], &auger_branches[1], &auger_branches[2], &auger_branches[3]);
-
-            if (nwords != ne_records + 2)
-            {
-              Error ("Auger macro-atom input incorrectly formatted\n");
-              Error ("Get_atomic_data: %s\n", aline);
-              exit (0);
-            }
-
-            /* cycle through each of the possible ion stages we can go to and populate the 
-               branching ratio arrays */
-            for (m = 0; m < ne_records; m++)
-            {
-              if (auger_branches[m] <= 0)
-              {
-                auger_macro[nauger_macro].branching_ratio[m] = 0.0;
-              }
-
-              else
-              {
-                auger_macro[nauger_macro].nauger++;
-
-                /* the data is supplied as a branching ratio so copy over */
-                auger_macro[nauger_macro].branching_ratio[m] = auger_branches[m];
-
-                /* for the moment, we are assuming Auger ionization occurs to the ground state of the 
-                   target ion */
-                target_istate = istate + 1 + m;
-
-                n_augertarget = 0;
-                while ((xconfig[n_augertarget].z != z || xconfig[n_augertarget].istate != target_istate || xconfig[n_augertarget].ilv != 1)
-                       && n_augertarget < nlevels)
-                  n_augertarget++;
-                if (n_augertarget == nlevels)
-                {
-                  Error ("Get_atomic_data: No target ion configuration found to match Auger macro record %d\n", lineno);
-                  exit (0);
-                }
-
-                auger_macro[nauger_macro].nconfig_target[m] = n_augertarget;
-              }
-            }
-
-            /* also record the number of possible auger jumps in the config structure */
-            xconfig[n].nauger = auger_macro[nauger_macro].nauger;
-            nauger_macro++;
-          }
-          else
-          {
-            Error ("getatomic_data: file %s line %d: More Auger macro-atom records than allowed. Increase NAUGER_MACRO (%d) in atomic.h\n",
-                   file, lineno, NAUGER_MACRO);
+            Error_silent ("Get_atomic_data: No configuration found to match Auger record %d\n", lineno);
             exit (0);
           }
+          if (xconfig[n].macro_info == -1)
+          {
+            Error ("Getatomic_data: Macro Atom Auger data supplied for config %d\n but there is no suitable level data\n", n);
+            exit (0);
+          }
+
+          /* copy information into the auger macro structure */
+          auger_macro[nauger_macro].z = z;
+          auger_macro[nauger_macro].istate = istate;
+          auger_macro[nauger_macro].nconfig = n;
+          auger_macro[nauger_macro].iauger = nauger_macro;
+          auger_macro[nauger_macro].nauger = 0;
+          auger_macro[nauger_macro].Avalue_auger = Avalue_auger;
+          xconfig[n].iauger = nauger_macro;
+
+          /* we now need to read the next line of Auger data which should be of form 
+             AugNels 26 24 -1 -1 -1 -1
+             the length depends on the variable ne_records
+           */
+          if (fgets (aline, LINELENGTH, fptr) == NULL)
+          {
+            Error ("Get_atomic_data: Problem reading Auger macro-atom record\n");
+            Error ("Get_atomic_data: %s\n", aline);
+            exit (0);
+          }
+
+          /* at the moment we a maximum of 4 auger electrons ejected but this could 
+             be expanded by reading in more entries here */
+          nwords = sscanf (aline, "%*s %d %d %le %le %le %le",
+                           &z, &istate, &auger_branches[0], &auger_branches[1], &auger_branches[2], &auger_branches[3]);
+
+          if (nwords != ne_records + 2)
+          {
+            Error ("Auger macro-atom input incorrectly formatted\n");
+            Error ("Get_atomic_data: %s\n", aline);
+            exit (0);
+          }
+
+          /* cycle through each of the possible ion stages we can go to and populate the 
+             branching ratio arrays */
+          for (m = 0; m < ne_records; m++)
+          {
+            if (auger_branches[m] <= 0)
+            {
+              auger_macro[nauger_macro].branching_ratio[m] = 0.0;
+            }
+
+            else
+            {
+              auger_macro[nauger_macro].nauger++;
+
+              /* the data is supplied as a branching ratio so copy over */
+              auger_macro[nauger_macro].branching_ratio[m] = auger_branches[m];
+
+              /* for the moment, we are assuming Auger ionization occurs to the ground state of the 
+                 target ion */
+              target_istate = istate + 1 + m;
+
+              n_augertarget = 0;
+              while ((xconfig[n_augertarget].z != z || xconfig[n_augertarget].istate != target_istate || xconfig[n_augertarget].ilv != 1)
+                     && n_augertarget < nlevels)
+                n_augertarget++;
+              if (n_augertarget == nlevels)
+              {
+                Error ("Get_atomic_data: No target ion configuration found to match Auger macro record %d\n", lineno);
+                exit (0);
+              }
+
+              auger_macro[nauger_macro].nconfig_target[m] = n_augertarget;
+            }
+          }
+
+          /* also record the number of possible auger jumps in the config structure */
+          xconfig[n].nauger = auger_macro[nauger_macro].nauger;
+          nauger_macro++;
 
           break;
 
@@ -1870,7 +1871,7 @@ would like to have simple lines for macro-ions */
  */
 
         case 'D':              /* Dielectronic recombination data read in. */
-          nparam = sscanf (aline, "%*s %s %d %d %le %le %le %le %le %le %le %le %le", &drflag, &z, &ne, &drp[0], &drp[1], &drp[2], &drp[3], &drp[4], &drp[5], &drp[6], &drp[7], &drp[8]);       //split and assign the line
+          nparam = sscanf (aline, "%*s %c %d %d %le %le %le %le %le %le %le %le %le", &drflag, &z, &ne, &drp[0], &drp[1], &drp[2], &drp[3], &drp[4], &drp[5], &drp[6], &drp[7], &drp[8]);       //split and assign the line
           nparam -= 3;          //take 4 off the nparam to give the number of actual parameters
           if (nparam > 9 || nparam < 1) //     trap errors - not as robust as usual because there are a varaible number of parameters...
           {
@@ -2122,7 +2123,7 @@ would like to have simple lines for macro-ions */
  */
 
         case 'G':
-          nparam = sscanf (aline, "%*s %s %d %d %le %le %le %le %le %le %le %le %le %le %le %le %le %le %le %le %le %le %le", &gsflag, &z, &ne, &gstemp[0], &gstemp[1], &gstemp[2], &gstemp[3], &gstemp[4], &gstemp[5], &gstemp[6], &gstemp[7], &gstemp[8], &gstemp[9], &gstemp[10], &gstemp[11], &gstemp[12], &gstemp[13], &gstemp[14], &gstemp[15], &gstemp[16], &gstemp[17], &gstemp[18]);   //split and assign the line
+          nparam = sscanf (aline, "%*s %c %d %d %le %le %le %le %le %le %le %le %le %le %le %le %le %le %le %le %le %le %le", &gsflag, &z, &ne, &gstemp[0], &gstemp[1], &gstemp[2], &gstemp[3], &gstemp[4], &gstemp[5], &gstemp[6], &gstemp[7], &gstemp[8], &gstemp[9], &gstemp[10], &gstemp[11], &gstemp[12], &gstemp[13], &gstemp[14], &gstemp[15], &gstemp[16], &gstemp[17], &gstemp[18]);   //split and assign the line
           nparam -= 3;          //take 4 off the nparam to give the number of actual parameters
           if (nparam > 19 || nparam < 1)        //     trap errors - not as robust as usual because there are a varaible number of parameters...
           {
@@ -2896,6 +2897,9 @@ or zero so that simple checks of true and false can be used for them */
 
 
   check_xsections ();           // debug routine, only prints if verbosity > 4
+
+  free (xe);
+  free (xx);
 
   return (0);
 }
