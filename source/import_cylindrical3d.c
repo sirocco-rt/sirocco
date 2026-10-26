@@ -11,7 +11,9 @@
  *
  * where x, z are the cell corner coordinates (lower rho/z corner, in cm),
  * phi is the lower azimuthal corner in degrees (0-360), and rho is the
- * observer-frame mass density.  Sirocco converts phi to radians internally.
+ * observer-frame mass density.  v_x, v_y, v_z are the local cylindrical
+ * components (v_rho, v_phi, v_z) of the velocity at the cell's own phi, not
+ * Cartesian ones.  Sirocco converts phi to radians internally.
  * Cells must be in row-major order (k varies fastest, then j, then i).
  * The phi grid may be non-uniformly spaced but must be strictly increasing
  * in k order and span 0 to 360 degrees.

@@ -13,7 +13,8 @@
  *   r     is the inner radial boundary of the cell (cm)
  *   theta is the inner polar-angle boundary (degrees, 0-180)
  *   phi   is the inner azimuthal boundary (degrees, 0-360)
- *   v_x, v_y, v_z are Cartesian velocity components (cm/s)
+ *   v_x, v_y, v_z are the local cylindrical components (v_rho, v_phi, v_z)
+ *         of the velocity at the cell's own phi (cm/s), not Cartesian ones
  *   rho   is the mass density (g/cm^3)
  *
  * Cells must be written in row-major order (k varies fastest, then j, then i).

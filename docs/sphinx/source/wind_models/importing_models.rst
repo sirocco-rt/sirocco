@@ -153,9 +153,12 @@ A full 3-D model on a (rho, z, phi) grid, with phi running from 0 to 360°.
 * ``x``              — cylindrical rho coordinate at lower-rho corner (cm)
 * ``z``              — z coordinate at lower-z corner (cm)
 * ``phi``            — azimuthal lower boundary (degrees, 0–360)
-* ``v_x``            — x velocity (cm/s)
-* ``v_y``            — y velocity (cm/s)
+* ``v_x``            — v_rho, cylindrical radial velocity at the cell's ``phi`` (cm/s)
+* ``v_y``            — v_phi, azimuthal velocity at the cell's ``phi`` (cm/s)
 * ``v_z``            — z velocity (cm/s)
+
+The velocity columns are **local cylindrical components**, not Cartesian ones;
+see :ref:`import_3d_velocities` below.
 * ``rho``            — mass density (g/cm\ :sup:`3`)
 * ``t_e`` (optional) — electron temperature (K)
 * ``t_r`` (optional) — radiation temperature (K)
@@ -198,15 +201,16 @@ A full 3-D model on a (r, theta, phi) grid, with phi running from 0 to 360°.
 * ``r``              — inner radial boundary (cm)
 * ``theta``          — inner polar-angle boundary (degrees, 0–180)
 * ``phi``            — inner azimuthal boundary (degrees, 0–360)
-* ``v_x``            — x velocity (cm/s)
-* ``v_y``            — y velocity (cm/s)
+* ``v_x``            — v_rho, cylindrical radial velocity at the cell's ``phi`` (cm/s)
+* ``v_y``            — v_phi, azimuthal velocity at the cell's ``phi`` (cm/s)
 * ``v_z``            — z velocity (cm/s)
 * ``rho``            — mass density (g/cm\ :sup:`3`)
 * ``t_e`` (optional) — electron temperature (K)
 * ``t_r`` (optional) — radiation temperature (K)
 
-Velocities must be given in **Cartesian** coordinates (not spherical
-components), consistent with all other SIROCCO coordinate systems.
+As for CYLIND3D, the velocity columns are **local cylindrical components**
+(v_rho, v_phi, v_z), not Cartesian and not spherical (v_r, v_theta, v_phi)
+components; see :ref:`import_3d_velocities`.
 
 The grid must be **complete**: all ``ndim × mdim × pdim`` cells must be
 present.
@@ -244,6 +248,41 @@ Example format (first two cells of a small SPH3D grid):
    i  j  k  inwind  r       theta   phi     v_x     v_y     v_z     rho     t_e    t_r
    0  0  0    -1    1.4e9   0.0     0.0     0.0     0.0     0.0     0.0     0.0    0.0
    0  0  1    -1    1.4e9   0.0     90.0    0.0     0.0     0.0     0.0     0.0    0.0
+
+.. _import_3d_velocities:
+
+Velocity components in 3-D grids
+--------------------------------
+
+In both 3-D import formats the columns ``v_x``, ``v_y`` and ``v_z`` give the
+velocity at the cell's inner corner in **local cylindrical components** at the
+cell's own azimuth, the value in its ``phi`` column:
+
+* ``v_x`` = :math:`v_\rho`, the component away from the z axis,
+* ``v_y`` = :math:`v_\phi`, the component in the direction of increasing phi,
+* ``v_z`` = :math:`v_z`.
+
+This is the same as the 2-D cylindrical and polar formats, where the cells lie
+in the xz plane (phi = 0) and the local and Cartesian components coincide.  It
+means that an axisymmetric wind has the same three velocity values in every phi
+slice.  For example, a wind rotating in the positive phi direction has
+``v_y`` > 0 everywhere, and ``v_x`` > 0 where it flows away from the axis.
+
+If a model gives Cartesian velocities :math:`(v_X, v_Y, v_Z)`, convert them
+using the ``phi`` value of each cell:
+
+.. math::
+
+   v_x = v_X \cos\phi + v_Y \sin\phi, \qquad
+   v_y = -v_X \sin\phi + v_Y \cos\phi, \qquad
+   v_z = v_Z .
+
+SIROCCO stores these local components for each cell and interpolates them
+between neighbouring cells, including neighbouring phi slices, then rotates the
+result to Cartesian components at the photon's position.  The velocities that
+``windsave2table`` writes for 3-D grids use the same local convention, so its
+output can be turned back into an import file with ``import_model.py`` without
+any conversion.
 
 Density and velocity conventions
 --------------------------------
