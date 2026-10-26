@@ -23,6 +23,304 @@
 #define LINELENGTH 400
 #define MAXWORDS    20
 
+#define NXSECTION_INIT 100      /* Initial number of records in phot_top, inner_cross and auger_macro; they double as needed */
+
+/* Initial values of log_sigma, the log of the last cross section, for the two tables */
+#define PHOT_TOP_LOG_SIGMA_INIT    (-1.0)
+#define INNER_CROSS_LOG_SIGMA_INIT 0.0
+
+static int phot_top_max = 0;    /* The number of records currently allocated in phot_top */
+static int inner_cross_max = 0; /* The number of records currently allocated in inner_cross */
+static int auger_macro_max = 0; /* The number of records currently allocated in auger_macro */
+
+
+/**********************************************************/
+/**
+ * @brief      Grow a table of cross-section records so that it
+ * holds record n
+ *
+ * @param [in] Topbase_phot *  table   The table, which may be NULL
+ * @param [in, out] int *  nmax   The number of records allocated in the table
+ * @param [in] int  n   The index of the record that must exist
+ * @param [in] double  log_sigma   The initial value of log_sigma for new records
+ * @param [in] char *  name   The name of the table, for error messages
+ * @return     The (possibly moved) table
+ *
+ * @details
+ * The table is doubled in size until it holds record n.  New records
+ * are initialized to the values used before the tables were grown
+ * dynamically, with no cross-section points allocated.
+ *
+ * ### Notes ###
+ * Because realloc may move the table, nothing may hold a pointer into
+ * it while the atomic data are being read.  The frequency-ordered
+ * pointers phot_top_ptr and inner_cross_ptr are made after reading.
+ *
+ **********************************************************/
+
+static Topbase_phot *
+grow_xsections (Topbase_phot *table, int *nmax, int n, double log_sigma, char *name)
+{
+  int nnew, i;
+
+  if (n < *nmax)
+    return (table);
+
+  nnew = (*nmax > 0) ? *nmax : NXSECTION_INIT;
+  while (nnew <= n)
+    nnew *= 2;
+
+  table = (Topbase_phot *) realloc (table, nnew * sizeof (Topbase_phot));
+  if (table == NULL)
+  {
+    Error ("grow_xsections: There is a problem in allocating memory for %d records of %s\n", nnew, name);
+    exit (0);
+  }
+
+  for (i = *nmax; i < nnew; i++)
+  {
+    memset (&table[i], 0, sizeof (Topbase_phot));
+    table[i].nlev = (-1);
+    table[i].uplev = (-1);
+    table[i].nion = (-1);       //the ion to which this cross section belongs
+    table[i].n_elec_yield = -1; //index into the electron yield array (inner shell only)
+    table[i].n = -1;            //n of the shell (inner shell only)
+    table[i].l = -1;            //l of the subshell (inner shell only)
+    table[i].z = (-1);          //atomic number
+    table[i].np = (-1);         //number of points in the fit
+    table[i].macro_info = (-1); //Initialise - don't know if using Macro Atoms or not: set to -1 (SS)
+    table[i].f = (-1);          //last frequency
+    table[i].log_f = (-1);      //log of last frequency
+    table[i].sigma = 0.0;       //last cross section
+    table[i].log_sigma = log_sigma;     //log of last cross section
+  }
+
+  *nmax = nnew;
+  return (table);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Free a table of cross-section records and the
+ * points of each record
+ *
+ * @param [in, out] Topbase_phot **  table   The table, set to NULL on return
+ * @param [in, out] int *  nmax   The number of records allocated, set to 0 on return
+ * @return     Always returns 0
+ *
+ **********************************************************/
+
+static int
+free_xsections (Topbase_phot **table, int *nmax)
+{
+  int n;
+
+  for (n = 0; n < *nmax; n++)
+    free ((*table)[n].freq);
+
+  free (*table);
+  *table = NULL;
+  *nmax = 0;
+  return (0);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Allocate the cross-section points of one record
+ *
+ * @param [in, out] TopPhotPtr  xptr   The record
+ * @param [in] int  np   The number of points
+ * @return     Always returns 0
+ *
+ * @details
+ * freq, log_freq, x and log_x are allocated as one block of 4*np
+ * doubles, so freeing freq frees all four.  Any points the record
+ * already had are freed first, since a cross section may be replaced
+ * by one with a different number of points.
+ *
+ **********************************************************/
+
+static int
+alloc_xsection_points (TopPhotPtr xptr, int np)
+{
+  double *block;
+
+  if (np < 1)
+  {
+    Error ("alloc_xsection_points: A cross section cannot have %d points\n", np);
+    exit (0);
+  }
+
+  free (xptr->freq);
+  block = (double *) calloc (4 * np, sizeof (double));
+  if (block == NULL)
+  {
+    Error ("alloc_xsection_points: There is a problem in allocating memory for %d points\n", np);
+    exit (0);
+  }
+
+  xptr->freq = block;
+  xptr->log_freq = block + np;
+  xptr->x = block + 2 * np;
+  xptr->log_x = block + 3 * np;
+  return (0);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Make sure phot_top record n exists, with room for np
+ * cross-section points
+ *
+ * @param [in] int  n   The index of the record in phot_top
+ * @param [in] int  np   The number of points in the cross section
+ * @return     A pointer to the record
+ *
+ * @details
+ * phot_top may move, so the returned pointer is only valid until the
+ * next call.  Fields other than the points of an existing record are
+ * left as they are.
+ *
+ **********************************************************/
+
+TopPhotPtr
+alloc_phot_top_record (int n, int np)
+{
+  phot_top = grow_xsections (phot_top, &phot_top_max, n, PHOT_TOP_LOG_SIGMA_INIT, "phot_top");
+  alloc_xsection_points (&phot_top[n], np);
+  return (&phot_top[n]);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Make sure inner_cross record n exists, with room for np
+ * cross-section points
+ *
+ * @param [in] int  n   The index of the record in inner_cross
+ * @param [in] int  np   The number of points in the cross section
+ * @return     A pointer to the record
+ *
+ * @details
+ * As alloc_phot_top_record, but for the inner shell cross sections.
+ *
+ **********************************************************/
+
+TopPhotPtr
+alloc_inner_cross_record (int n, int np)
+{
+  inner_cross = grow_xsections (inner_cross, &inner_cross_max, n, INNER_CROSS_LOG_SIGMA_INIT, "inner_cross");
+  alloc_xsection_points (&inner_cross[n], np);
+  return (&inner_cross[n]);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Grow the table of macro-atom Auger records so that it
+ * holds record n
+ *
+ * @param [in] AugerPtr  table   The table, which may be NULL
+ * @param [in, out] int *  nmax   The number of records allocated in the table
+ * @param [in] int  n   The index of the record that must exist
+ * @return     The (possibly moved) table
+ *
+ * @details
+ * As grow_xsections, but for auger_macro.  Records are referred to
+ * by index (xconfig[].iauger) while the data are read, so the table
+ * may move.
+ *
+ **********************************************************/
+
+static AugerPtr
+grow_auger_macro (AugerPtr table, int *nmax, int n)
+{
+  int nnew, i, j;
+
+  if (n < *nmax)
+    return (table);
+
+  nnew = (*nmax > 0) ? *nmax : NXSECTION_INIT;
+  while (nnew <= n)
+    nnew *= 2;
+
+  table = (AugerPtr) realloc (table, nnew * sizeof (auger_dummy));
+  if (table == NULL)
+  {
+    Error ("grow_auger_macro: There is a problem in allocating memory for %d Auger records\n", nnew);
+    exit (0);
+  }
+
+  for (i = *nmax; i < nnew; i++)
+  {
+    memset (&table[i], 0, sizeof (auger_dummy));
+    table[i].z = -1;
+    table[i].nion = -1;
+    table[i].istate = -1;
+    table[i].nconfig = -1;
+    table[i].iauger = -1;
+    table[i].nauger = -1;
+    table[i].Avalue_auger = 0.0;
+    for (j = 0; j < NAUGER_ELECTRONS; j++)
+    {
+      table[i].nconfig_target[j] = -1;
+      table[i].branching_ratio[j] = 0.0;
+    }
+  }
+
+  *nmax = nnew;
+  return (table);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Make sure auger_macro record n exists
+ *
+ * @param [in] int  n   The index of the record in auger_macro
+ * @return     A pointer to the record
+ *
+ * @details
+ * auger_macro may move, so the returned pointer is only valid until
+ * the next call.
+ *
+ **********************************************************/
+
+AugerPtr
+alloc_auger_macro_record (int n)
+{
+  auger_macro = grow_auger_macro (auger_macro, &auger_macro_max, n);
+  return (&auger_macro[n]);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Free the photoionization and inner shell cross sections
+ *
+ * @return     Always returns 0
+ *
+ * @details
+ * Frees phot_top and inner_cross, the points of each record, and the
+ * frequency-ordered pointers phot_top_ptr and inner_cross_ptr, and
+ * sets them all to NULL.
+ *
+ **********************************************************/
+
+int
+free_xsection_data ()
+{
+  free_xsections (&phot_top, &phot_top_max);
+  free_xsections (&inner_cross, &inner_cross_max);
+  free (phot_top_ptr);
+  phot_top_ptr = NULL;
+  free (inner_cross_ptr);
+  inner_cross_ptr = NULL;
+  return (0);
+}
+
 
 /**********************************************************/
 /**
@@ -128,60 +426,22 @@ init_atomic_data ()
        sizeof (line_dummy), NLINES, 1.e-6 * NLINES * sizeof (line_dummy));
   }
 
-  if (auger_macro != NULL)
-  {
-    free (auger_macro);
-  }
-  auger_macro = (AugerPtr) calloc (sizeof (auger_dummy), NAUGER_MACRO);
+  /* auger_macro is grown by alloc_auger_macro_record as the data are read */
 
-  if (auger_macro == NULL)
-  {
-    Error ("There is a problem in allocating memory for the line structure\n");
-    exit (0);
-  }
-  else
-  {
-    Log_silent
-      ("Allocated %10d bytes for each of %6d elements of auger_macro totaling %10.1f Mb \n",
-       sizeof (auger_dummy), NAUGER_MACRO, 1.e-6 * NAUGER_MACRO * sizeof (auger_dummy));
-  }
+  free (auger_macro);
+  auger_macro = NULL;
+  auger_macro_max = 0;
+  auger_macro = grow_auger_macro (auger_macro, &auger_macro_max, 0);
 
 
-  if (phot_top != NULL)
-  {
-    free (phot_top);
-  }
-  phot_top = (Topbase_phot *) calloc (sizeof (Topbase_phot), NLEVELS);
+  /* The photoionization and inner shell cross sections start small and are
+     grown by alloc_phot_top_record and alloc_inner_cross_record as the data
+     are read.  Free anything left from a previous call first. */
 
-  if (phot_top == NULL)
-  {
-    Error ("There is a problem in allocating memory for the phot_top structure\n");
-    exit (0);
-  }
-  else
-  {
-    Log_silent
-      ("Allocated %10d bytes for each of %6d elements of   phot_top totaling %10.1f Mb \n",
-       sizeof (Topbase_phot), NLEVELS, 1.e-6 * NLEVELS * sizeof (Topbase_phot));
-  }
+  free_xsection_data ();
 
-  if (inner_cross != NULL)
-  {
-    free (inner_cross);
-  }
-  inner_cross = (Topbase_phot *) calloc (sizeof (Topbase_phot), N_INNER * NIONS);
-
-  if (inner_cross == NULL)
-  {
-    Error ("There is a problem in allocating memory for the inner_cross structure\n");
-    exit (0);
-  }
-  else
-  {
-    Log_silent
-      ("Allocated %10d bytes for each of %6d elements of inner_cross totaling %10.1f Mb \n",
-       sizeof (Topbase_phot), N_INNER * NIONS, 1.e-6 * N_INNER * NIONS * sizeof (Topbase_phot));
-  }
+  phot_top = grow_xsections (phot_top, &phot_top_max, 0, PHOT_TOP_LOG_SIGMA_INIT, "phot_top");
+  inner_cross = grow_xsections (inner_cross, &inner_cross_max, 0, INNER_CROSS_LOG_SIGMA_INIT, "inner_cross");
 
   /* Initialize variables */
 
@@ -237,63 +497,19 @@ init_atomic_data ()
   }
 
 
-  /*This initializes the top_phot array - it is used for all ionization processes so some elements
-     are only used in some circumstances
-   */
-
-  for (n = 0; n < NLEVELS; n++)
-  {
-    phot_top[n].nlev = (-1);
-    phot_top[n].uplev = (-1);
-    phot_top[n].nion = (-1);    //the ion to which this cross section belongs
-    phot_top[n].n_elec_yield = -1;      //pointer to the electron yield array (for inner shell)
-    phot_top[n].n = -1;         //pointer to shell (inner shell)
-    phot_top[n].l = -1;         //pointer to l subshell (inner shell only)
-    phot_top[n].z = (-1);       //atomic number
-    phot_top[n].np = (-1);      //number of points in the fit
-    phot_top[n].macro_info = (-1);      //Initialise - don't know if using Macro Atoms or not: set to -1 (SS)
-    for (j = 0; j < NCROSS; j++)        //initialise the crooss sectiond
-    {
-      phot_top[n].freq[j] = (-1);
-      phot_top[n].log_freq[j] = (-1);
-      phot_top[n].x[j] = (-1);
-      phot_top[n].log_x[j] = (-1);
-
-    }
-    phot_top[n].f = (-1);       //last frequency
-    phot_top[n].log_f = (-1);   //log of last frequency    
-    phot_top[n].sigma = 0.0;    //last cross section
-    phot_top[n].log_sigma = -1.0;       //log of last cross section
-
-  }
-
+  /* The phot_top and inner_cross records are initialized by grow_xsections
+     as they are allocated */
 
   for (n = 0; n < NIONS * N_INNER; n++) //Initialise atomic arrasy with dimension NIONS*NINNER
   {
-    inner_cross[n].nlev = (-1);
-    inner_cross[n].uplev = (-1);
-    inner_cross[n].nion = inner_elec_yield[n].nion = inner_fluor_yield[n].nion = (-1);
-    inner_cross[n].n_elec_yield = -1;
-    inner_cross[n].n = inner_elec_yield[n].n = inner_fluor_yield[n].n = (-1);
-    inner_cross[n].l = inner_elec_yield[n].l = inner_fluor_yield[n].l = (-1);
-    inner_cross[n].z = inner_elec_yield[n].z = inner_fluor_yield[n].z = (-1);
+    inner_elec_yield[n].nion = inner_fluor_yield[n].nion = (-1);
+    inner_elec_yield[n].n = inner_fluor_yield[n].n = (-1);
+    inner_elec_yield[n].l = inner_fluor_yield[n].l = (-1);
+    inner_elec_yield[n].z = inner_fluor_yield[n].z = (-1);
     inner_elec_yield[n].I = inner_elec_yield[n].Ea = 0.0;
     inner_fluor_yield[n].freq = inner_fluor_yield[n].yield = 0.0;
     for (j = 0; j < 10; j++)
       inner_elec_yield[n].prob[j] = 0.0;
-    inner_cross[n].np = (-1);
-    inner_cross[n].macro_info = (-1);   //Initialise - don't know if using Macro Atoms or not: set to -1 (SS)
-    for (j = 0; j < NCROSS; j++)
-    {
-      inner_cross[n].freq[j] = (-1);
-      inner_cross[n].x[j] = (-1);
-      inner_cross[n].log_freq[j] = (-1);
-      inner_cross[n].log_x[j] = (-1);
-    }
-    inner_cross[n].f = (-1);
-    inner_cross[n].sigma = 0.0;
-    inner_cross[n].log_f = (-1);
-    inner_cross[n].log_sigma = 0.0;
   }
 
 
@@ -318,22 +534,7 @@ init_atomic_data ()
     line[n].coll_index = -999;
   }
 
-  for (n = 0; n < NAUGER_MACRO; n++)
-  {
-    auger_macro[n].z = -1;
-    auger_macro[n].nion = -1;
-    auger_macro[n].istate = -1;
-    auger_macro[n].nconfig = -1;
-    auger_macro[n].iauger = -1;
-    auger_macro[n].nauger = -1;
-    auger_macro[n].Avalue_auger = 0.0;
-
-    for (i = 0; i < NAUGER_ELECTRONS; i++)
-    {
-      auger_macro[n].nconfig_target[i] = -1;
-      auger_macro[n].branching_ratio[i] = 0.0;
-    }
-  }
+  /* The auger_macro records are initialized by grow_auger_macro as they are allocated */
 
 /* The following lines initialise the dielectronic recombination structure */
   for (n = 0; n < NIONS; n++)
