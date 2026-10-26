@@ -107,6 +107,10 @@ write_array (char filename[], int choice)
   {
     fprintf (fptr, "# Coord_Sys CYLIND3D\n");
   }
+  else if (zdom[ndom].coord_type == SPH3D)
+  {
+    fprintf (fptr, "# Coord_Sys SPH3D\n");
+  }
   else
   {
     Error ("write_array: Unknown coordinaate system type: %d\n", zdom[ndom].coord_type);
@@ -138,8 +142,9 @@ are linear, and x otherwise.  This is not particularly transparent ?? ksl */
         fprintf (fptr, "%8.2e %8.2e %3d %3d \n", wmain[nstart + i].r, aaa[nstart + i], wmain[nstart + i].inwind, i);
       }
     }
-    else if (zdom[ndom].coord_type == CYLIND3D)
+    else if (zdom[ndom].coord_type == CYLIND3D || zdom[ndom].coord_type == SPH3D)
     {
+      /* xcen lies at the cell's own phi (phicen), so x is its cylindrical radius */
       int kk, pdim;
       pdim = zdom[ndom].pdim;
       fprintf (fptr, "x z phi var inwind i j k\n");
@@ -147,7 +152,8 @@ are linear, and x otherwise.  This is not particularly transparent ?? ksl */
       {
         wind_n_to_ijk (ndom, nstart + i, &ii, &jj, &kk);
         fprintf (fptr, "%8.4e %8.4e %8.4e %8.5e %3d %3d %3d %3d\n",
-                 wmain[nstart + i].xcen[0], wmain[nstart + i].xcen[2], zdom[ndom].wind_midphi[kk],
+                 sqrt (wmain[nstart + i].xcen[0] * wmain[nstart + i].xcen[0] + wmain[nstart + i].xcen[1] * wmain[nstart + i].xcen[1]),
+                 wmain[nstart + i].xcen[2], zdom[ndom].wind_midphi[kk],
                  aaa[nstart + i], wmain[nstart + i].inwind, ii, jj, kk);
       }
     }
