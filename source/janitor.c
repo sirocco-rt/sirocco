@@ -108,12 +108,6 @@ free_wind_grid (void)
   free (wind_paths_main);
   wind_paths_main = NULL;
 
-  if (sph3d_phi_corners != NULL)
-  {
-    free (sph3d_phi_corners);
-    sph3d_phi_corners = NULL;
-  }
-
 #ifdef MPI_ON
   if (np_mpi_global > 1)
   {

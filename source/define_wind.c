@@ -767,7 +767,8 @@ set_cell_dvds_and_gamma (WindPtr cell)
  *   - v_thetamax: velocity at (r_inner, theta_outer) for RTHETA; (rho_min, z_max) for CYLIND
  *   - vmax:      velocity at the outer corner xmax (r_outer, theta_outer)
  * For SPHERICAL only two corners are meaningful; v_rmax and v_thetamax are set
- * to copies of v and vmax respectively.
+ * to copies of v and vmax respectively.  CYLIND3D and SPH3D cells have no
+ * corner velocities; vwind_xyz interpolates them through coord_fraction.
  *
  * ### Notes ###
  *
@@ -854,17 +855,6 @@ create_wind_grid (void)
   n_stop = NDIM2;
   n_cells_rank = NDIM2;
 #endif
-
-  /* Allocate phi-max velocity corners for SPH3D domains (private per rank;
-   * a broadcast will be needed here when trilinear interpolation is implemented). */
-  {
-    int idom;
-    for (idom = 0; idom < geo.ndomain; idom++)
-      if (zdom[idom].coord_type == SPH3D)
-        break;
-    if (idom < geo.ndomain && sph3d_phi_corners == NULL)
-      sph3d_phi_corners = (Sph3dPhiCorners *) calloc (NDIM2, sizeof (Sph3dPhiCorners));
-  }
 
   /* The next stages are done in parallel, as calculating volumes and some
    * velocity gradients is expensive. Within this loop we:

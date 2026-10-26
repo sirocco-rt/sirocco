@@ -142,16 +142,23 @@ during grid initialisation.
 
 **3-D grids (CYLIND3D, SPH3D)**
 
-For 3-D cells SIROCCO performs a **trilinear** interpolation using all eight
-corners of the cell.  The phi-min face uses the same four corners as the 2-D
-case (``v``, ``v_rmax``, ``v_thetamax``, ``vmax``); the phi-max face uses
-four additional fields ``v_phimax``, ``v_rmax_phimax``,
-``v_thetamax_phimax``, and ``vmax_phimax``.
+For 3-D cells SIROCCO performs a **trilinear** interpolation in (rho, z, phi)
+for CYLIND3D, or (r, theta, phi) for SPH3D.  The bilinear weights in the first two
+coordinates are combined with linear weights between the two neighbouring phi
+slices, so eight values are used.  The interpolation is periodic in phi: the last
+slice wraps round to the first.  The per-cell corner fields used by the 2-D grids
+are not used for 3-D grids.
 
-For axisymmetric analytic models all eight corners have the same (r, theta)
-velocity, so the trilinear interpolation reduces to bilinear in (r, theta) or
-(rho, z).  For imported non-axisymmetric models the phi-face corner velocities
-carry genuine phi variation.
+In a 3-D grid the velocity stored for each cell, ``v``, is the velocity at the
+cell's inner vertex at the cell's own azimuth, expressed in **local**
+(v_rho, v_phi, v_z) components at that azimuth.  The velocity gradient
+``v_grad`` is stored in the same local frame.  Because the components are local,
+values from neighbouring phi slices can be interpolated directly; the result is
+then rotated to the Cartesian frame at the photon's position.  Imported 3-D
+models use the same convention (see :doc:`wind_models/importing_models`).
+
+For axisymmetric models every phi slice holds the same local velocities, so the
+interpolation reduces to the bilinear 2-D case.
 
 Grid size and memory
 ====================

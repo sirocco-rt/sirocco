@@ -912,12 +912,16 @@ typedef struct wind
                                    rtheta_wind_complete. Not used for CYLIND. */
   double v[3];                  /**< velocity at inner vertex (x) of cell in the observer frame.
                                    For 2d coordinate systems this is defined in the xz plane.
+                                   For CYLIND3D and SPH3D it is in local (v_rho, v_phi, v_z)
+                                   components at the cell's own phi.
                                    @see v_rmax, v_thetamax, vmax */
   double v_rmax[3];             /**< velocity at the outer-r, inner-theta/z corner of the cell,
                                    i.e. the corner at (rho_max, z_min) for CYLIND or
                                    (r_max, theta_min) for RTHETA.  Populated by define_wind.
                                    Together with v, v_thetamax, and vmax these form the four
-                                   corners needed for bilinear interpolation within a cell. */
+                                   corners needed for bilinear interpolation within a cell.
+                                   Not used (left zero) for CYLIND3D and SPH3D, which
+                                   interpolate through coord_fraction instead. */
   double v_thetamax[3];         /**< velocity at the inner-r, outer-theta/z corner of the cell,
                                    i.e. the corner at (rho_min, z_max) for CYLIND or
                                    (r_min, theta_max) for RTHETA.  Populated by define_wind. */
@@ -950,20 +954,6 @@ extern WindPtr wmain;
 #ifdef MPI_ON
 extern MPI_Win wmain_win;             /**< MPI shared memory window for wmain */
 #endif
-
-/** Phi-max face velocity corners for SPH3D cells, indexed by wmain cell index.
- *  Allocated (via calloc) only when a SPH3D domain is present; NULL otherwise.
- *  Stores the four trilinear corners on the phi_max face needed for future
- *  3D velocity interpolation in vwind_xyz. */
-typedef struct sph3d_phi_corners
-{
-  double v_phimax[3];           /**< velocity at (r_min, theta_min, phi_max) */
-  double v_rmax_phimax[3];      /**< velocity at (r_max, theta_min, phi_max) */
-  double v_thetamax_phimax[3];  /**< velocity at (r_min, theta_max, phi_max) */
-  double vmax_phimax[3];        /**< velocity at (r_max, theta_max, phi_max) */
-} Sph3dPhiCorners;
-
-extern Sph3dPhiCorners *sph3d_phi_corners;
 
 /**
  * Per-cell reverb path data, stored separately from wind_dummy so that
