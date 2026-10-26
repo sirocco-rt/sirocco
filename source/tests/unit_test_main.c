@@ -88,6 +88,7 @@ main (int argc, char **argv)
   create_translate_test_suite ();
   create_macro_estimators_test_suite ();
   create_coord_fraction_test_suite ();
+  create_atomic_data_test_suite ();
 
   /* Run the test suites */
   CU_basic_set_mode (CU_BRM_VERBOSE);

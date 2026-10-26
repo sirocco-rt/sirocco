@@ -32,4 +32,7 @@ void create_macro_estimators_test_suite (void);
 /* test_coord_fraction.c */
 void create_coord_fraction_test_suite (void);
 
+/* test_atomic_data.c */
+void create_atomic_data_test_suite (void);
+
 #endif
