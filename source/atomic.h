@@ -31,8 +31,7 @@ extern int nlevels;                    /**< These are the actual number of level
 extern int nlte_levels;                /**<  Actual number of levels to treat explicityly */
 
 
-/* AUGER NOTE: recommended to increase NLEVELS_MACRO to at least 500 for Auger macro-atoms */
-#define NLEVELS_MACRO   600     /**<  Maximum number of macro atom levels. (SS, June 04) */
+#define NLEVELS_MACRO   600    /**<  Maximum number of macro atom levels. (SS, June 04) */
 extern int nlevels_macro;              /**<  Actual number of macro atom levels. (SS, June 04) */
 #define NLINES 		200000  /**<  Maximum number of lines to be read */
 extern int nlines;                     /**<  Actual number of lines that were read in */
@@ -42,20 +41,18 @@ extern int nlines_macro;               /**<  Actual number of Macro Atom lines t
 extern int n_inner_tot;                /**< The actual number of inner shell ionization cross sections in total */
 
 
-#define LARGE_MACRO_ATOMS FALSE 
-/* sometimes we have to compile with larger hardwired values here for large macro-atoms e.g. Fe17to27 dataset */
+#define LARGE_MACRO_ATOMS FALSE
+/* Set LARGE_MACRO_ATOMS to TRUE for macro-atom data with more jumps from one level than the default limits allow.
+   None of the data sets in xdata needs this: fe_17to27.dat, the largest, has at most 40 jumps from any level. */
 #if LARGE_MACRO_ATOMS
   #define NBBJUMPS         200    /**<  Maximum number of Macro Atom bound-bound jumps from any one configuration (SS) */
   #define NBFJUMPS         200    /**<  Maximum number of Macro Atom Bound-free jumps from any one configuration (SS) */
-  #define NAUGER_MACRO     2000        /* number of Auger processes */
 #else
-  /* AUGER NOTE: recommended to increase these values to at least 200 for Auger macro-atoms */
-  #define NBBJUMPS         100    /**<  Maximum number of Macro Atom bound-bound jumps from any one configuration (SS) */
+  #define NBBJUMPS         100   /**<  Maximum number of Macro Atom bound-bound jumps from any one configuration (SS) */
   #define NBFJUMPS         100    /**<  Maximum number of Macro Atom Bound-free jumps from any one configuration (SS) */
-  #define NAUGER_MACRO     200        /* number of Auger processes */
 #endif
 
-extern int nauger_macro;        /* the number of auger processes read in associated with macro atoms */
+extern int nauger_macro;        /* the number of auger processes read in associated with macro atoms; auger_macro is grown to fit */
 #define NAUGER_ELECTRONS 4
 
 #define MAXJUMPS          1000000       /**<  The maximum number of Macro Atom jumps before emission (if this is exceeded
@@ -318,23 +315,15 @@ extern int nxphot;                     /**< The actual number of ions for which 
 extern double phot_freq_min;           /**< The lowest frequency for which photoionization can occur */
 extern double inner_freq_min;          /**< The lowest frequency for which inner shell ionization can take place */
 
-#define NCROSS 3000            /**<  Maximum number of x-sections for a single photionization process */
-
-#if LARGE_MACRO_ATOMS
-  #define NTOP_PHOT 600           /**<  Maximum number of photoionisation processes.  */
-#else
-  /* AUGER NOTE: recommended to increase NTOP_PHOT to 1000 for Auger macro-atoms */
-  #define NTOP_PHOT 1000           /**<  Maximum number of photoionisation processes.  */
-#endif
-extern int ntop_phot;                  /**<  The actual number of TopBase photoionzation x-sections */
+extern int ntop_phot;                 /**<  The actual number of TopBase photoionzation x-sections */
 extern int nphot_total;                /**<  total number of photoionzation x-sections = nxphot + ntop_phot */
 
-/** 
-  * Photionization x-sections in topbase format
+/**
+  * A tabulated photoionization cross section.
   *
-  * Note
-  *  If the old topbase treatment is to be replaced by Macro Atoms perhaps this
-                                   can be dropped - need for backward compatibility? (SS) 
+  * The same structure holds all the tabulated cross sections: Topbase and
+  * macro-atom cross sections and VFKY ground-state cross sections in phot_top,
+  * and inner shell cross sections in inner_cross.
   */
 typedef struct topbase_phot
 {
@@ -363,16 +352,16 @@ typedef struct topbase_phot
                                    configuration (nlev) and then up_index. (SS) */
   int up_index;
   int use;                      /**< It we are to use this cross section. This allows unused VFKY cross sections to sit in the array. */
-  double freq[NCROSS], log_freq[NCROSS], x[NCROSS], log_x[NCROSS];
-                                                                 /**< frequency and cross sections, plus log versions for FB integrals*/
+  double *freq, *log_freq, *x, *log_x;  /**< frequency and cross sections, plus log versions for FB integrals;
+                                           each array has np elements, allocated by alloc_xsection_points */
   double f, log_f, sigma, log_sigma;            /**< last freq, last x-section and log versions*/
 } Topbase_phot, *TopPhotPtr;
 
-extern Topbase_phot *phot_top;
-extern TopPhotPtr phot_top_ptr[NLEVELS];       /**<  Pointers to phot_top in threshold frequency order - this */
+extern Topbase_phot *phot_top;     /**< Photoionization x-sections; grown as the atomic data are read */
+extern TopPhotPtr *phot_top_ptr;   /**<  Pointers to phot_top in threshold frequency order, nphot_total of them */
 
 extern Topbase_phot *inner_cross;  /**< Pointer to inner shell cross sections which use the same structure type */
-extern TopPhotPtr inner_cross_ptr[N_INNER * NIONS];  /**< Pointer to inner shell cross sections in frequency order */
+extern TopPhotPtr *inner_cross_ptr;  /**< Pointer to inner shell cross sections in frequency order, n_inner_tot of them */
 
 
 
