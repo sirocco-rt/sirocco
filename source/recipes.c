@@ -99,6 +99,10 @@ num_int (double (*func) (double, void *), double a, double b, double eps)
       {
         Error ("num_init: some kind of error in romberg and qags integration\n");
       }
+      else
+      {
+        result = result2;
+      }
     }
     else if (status)
     {
