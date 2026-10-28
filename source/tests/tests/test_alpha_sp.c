@@ -3,11 +3,13 @@
  *  @file test_alpha_sp.c
  *  @date October 2026
  *
- *  @brief Unit tests for the macro-atom spontaneous recombination rate alpha_sp
+ *  @brief Unit tests for the macro-atom bound-free rate integrals bf_rate_integrals, alpha_sp_all and alpha_sp
  *
- *  alpha_sp is held to an independent adaptive quadrature (GSL cquad of sigma_phot itself, one call per table
- *  interval) for every photoionization continuum of the 20-level H + He macro-atom data set, over the electron
- *  temperatures a wind reaches.
+ *  bf_rate_integrals integrates the log-log interpolated cross section of a continuum times nu^2 and the Maxwellian
+ *  and Planck factors with Gauss-Legendre rules. These tests hold it to an independent adaptive quadrature (GSL cquad
+ *  of sigma_phot itself, one call per table interval) for every photoionization continuum of the 20-level H + He
+ *  macro-atom data set, over the temperatures a wind reaches, and check that no temperature, however extreme, gives
+ *  an infinite, NaN or negative integral.
  *
  * ****************************************************************************************************************** */
 
@@ -15,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 #include <errno.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -27,8 +30,8 @@
 #define ALPHA_SP_CONSTANT 5.79618e-36
 #define N_TEST_TEMPERATURES 13
 
-/* the 10000-point quadrature of alpha_sp is good to 2e-3 */
-#define ALPHA_SP_TOLERANCE 2e-3
+/* the accuracy asked of the reference, cquad at 1e-13, with margin; bf_rate_integrals itself is good to ~1e-13 */
+#define ALPHA_SP_TOLERANCE 1e-10
 
 static struct topbase_phot *ref_cont;
 static double ref_beta;
@@ -50,7 +53,12 @@ reference_integrand (double freq, void *params)
 
 /** *******************************************************************************************************************
  *
- * @brief The reference: adaptive quadrature of sigma_phot times the factors, one call per table interval
+ * @brief The reference: adaptive quadrature of sigma_phot times the factors
+ *
+ * @details
+ * One cquad call per -ln DBL_EPSILON e-folds of the exponential factor within each table interval: over a whole
+ * interval many e-folds wide cquad can miss the narrow peak at its start by more than its tolerance. The integral
+ * stops where exp (-beta (nu - nu_threshold)) is DBL_EPSILON^2.
  *
  * ****************************************************************************************************************** */
 
@@ -66,12 +74,16 @@ reference_integral (struct topbase_phot *cont_ptr, double freq_max, double beta,
   ref_cont = cont_ptr;
   ref_beta = beta;
   ref_weight = weight;
+  if (beta > 0)
+    freq_max = fmin (freq_max, cont_ptr->freq[0] - 2 * log (DBL_EPSILON) / beta);
   for (i = 0; i < cont_ptr->np - 1; i++)
   {
     const double a = cont_ptr->freq[i], b = fmin (cont_ptr->freq[i + 1], freq_max);
-    if (b > a)
+    const int pieces = b > a ? 1 + (int) (beta * (b - a) / -log (DBL_EPSILON)) : 0;
+    int k;
+    for (k = 0; k < pieces; k++)
     {
-      gsl_integration_cquad (&F, a, b, 0, 1e-13, ws, &result, &abserr, &neval);
+      gsl_integration_cquad (&F, a + (b - a) * k / pieces, a + (b - a) * (k + 1) / pieces, 0, 1e-13, ws, &result, &abserr, &neval);
       total += result;
     }
   }
@@ -81,8 +93,7 @@ reference_integral (struct topbase_phot *cont_ptr, double freq_max, double beta,
 
 /** *******************************************************************************************************************
  *
- * @brief alpha_sp is the reference integral, up to ALPHA_MATOM_NUMAX_LIMIT k T_e / h above the threshold, times
- * the constants
+ * @brief alpha_sp_all and alpha_sp are the reference integral over the whole table times the constants
  *
  * ****************************************************************************************************************** */
 
@@ -90,6 +101,7 @@ static void
 test_alpha_sp_matches_reference (void)
 {
   struct plasma xplasma;
+  double alpha[3];
   int n_cont, n_temp, ichoice;
 
   memset (&xplasma, 0, sizeof xplasma);
@@ -100,17 +112,83 @@ test_alpha_sp_matches_reference (void)
     for (n_temp = 0; n_temp < N_TEST_TEMPERATURES; n_temp++)
     {
       const double t_e = pow (10., 3.3 + 0.25 * n_temp + 0.0137);       /* 2e3 K to 2e6 K */
-      const double flast = fmin (cont_ptr->freq[cont_ptr->np - 1], cont_ptr->freq[0] + t_e * ALPHA_MATOM_NUMAX_LIMIT / H_OVER_K);
       xplasma.state.t_e = t_e;
+      alpha_sp_all (cont_ptr, &xplasma, alpha);
       for (ichoice = 0; ichoice < 3; ichoice++)
       {
-        const double reference = reference_integral (cont_ptr, flast, H_OVER_K / t_e, ichoice)
+        const double reference = reference_integral (cont_ptr, cont_ptr->freq[cont_ptr->np - 1], H_OVER_K / t_e, ichoice)
           * xconfig[cont_ptr->nlev].g / g_upper * pow (t_e, -1.5) * ALPHA_SP_CONSTANT;
-        const double alpha = alpha_sp (cont_ptr, &xplasma, ichoice);
-        CU_ASSERT_TRUE (alpha > 0.0);
-        CU_ASSERT_DOUBLE_EQUAL (alpha, reference, ALPHA_SP_TOLERANCE * reference);
+        CU_ASSERT_TRUE (alpha[ichoice] > 0.0);
+        CU_ASSERT_DOUBLE_EQUAL (alpha[ichoice], reference, ALPHA_SP_TOLERANCE * reference);
+        CU_ASSERT_DOUBLE_EQUAL (alpha_sp (cont_ptr, &xplasma, ichoice), alpha[ichoice], 0.0);
       }
     }
+  }
+}
+
+/** *******************************************************************************************************************
+ *
+ * @brief Band-limited integrals of two adjacent bands add up to the integral over both
+ *
+ * ****************************************************************************************************************** */
+
+static void
+test_band_limited_adds_up (void)
+{
+  struct plasma xplasma;
+  int n_cont;
+
+  memset (&xplasma, 0, sizeof xplasma);
+  xplasma.state.t_e = 1.7e4;
+  for (n_cont = 0; n_cont < nphot_total; n_cont++)
+  {
+    struct topbase_phot *cont_ptr = &phot_top[n_cont];
+    const double fthresh = cont_ptr->freq[0], flast = cont_ptr->freq[cont_ptr->np - 1], fmid = fthresh * 1.3;
+    const double full = scaled_alpha_sp_integral_band_limited (cont_ptr, &xplasma, 0, fthresh, flast);
+    const double lo = scaled_alpha_sp_integral_band_limited (cont_ptr, &xplasma, 0, fthresh, fmid);
+    const double hi = scaled_alpha_sp_integral_band_limited (cont_ptr, &xplasma, 0, fmid, flast);
+    CU_ASSERT_DOUBLE_EQUAL (lo + hi, full, 1e-12 * full);
+    CU_ASSERT_TRUE (lo > 0 && hi >= 0);
+  }
+}
+
+/** *******************************************************************************************************************
+ *
+ * @brief Extreme temperatures give finite, non-negative integrals; zero temperature gives zero
+ *
+ * ****************************************************************************************************************** */
+
+static void
+test_extreme_temperatures (void)
+{
+  const double temps[] = { 1e-3, 1, 30, 1e8, 1e10, 1e12 };
+  const int n_temps = sizeof temps / sizeof temps[0];
+  double sum[3];
+  int n_cont, i, j, ichoice;
+
+  for (n_cont = 0; n_cont < nphot_total; n_cont++)
+  {
+    struct topbase_phot *cont_ptr = &phot_top[n_cont];
+    const double fthresh = cont_ptr->freq[0], flast = cont_ptr->freq[cont_ptr->np - 1];
+    for (i = 0; i < n_temps; i++)
+    {
+      for (j = 0; j <= n_temps; j++)
+      {
+        const double beta_r = j < n_temps ? H_OVER_K / temps[j] : 0;
+        bf_rate_integrals (cont_ptr, fthresh, flast, H_OVER_K / temps[i], beta_r, sum);
+        for (ichoice = 0; ichoice < 3; ichoice++)
+          CU_ASSERT_TRUE (isfinite (sum[ichoice]) && sum[ichoice] >= 0);
+      }
+      bf_rate_integrals (cont_ptr, fthresh, flast, 0, H_OVER_K / temps[i], sum);
+      for (ichoice = 0; ichoice < 3; ichoice++)
+        CU_ASSERT_TRUE (isfinite (sum[ichoice]) && sum[ichoice] >= 0);
+    }
+    bf_rate_integrals (cont_ptr, fthresh, flast, INFINITY, 0, sum);
+    for (ichoice = 0; ichoice < 3; ichoice++)
+      CU_ASSERT_EQUAL (sum[ichoice], 0.0);
+    bf_rate_integrals (cont_ptr, fthresh, flast, 0, INFINITY, sum);
+    for (ichoice = 0; ichoice < 3; ichoice++)
+      CU_ASSERT_EQUAL (sum[ichoice], 0.0);
   }
 }
 
@@ -172,7 +250,9 @@ create_alpha_sp_test_suite (void)
     exit (CU_get_error ());
   }
 
-  if (CU_add_test (suite, "alpha_sp matches adaptive quadrature", test_alpha_sp_matches_reference) == NULL)
+  if ((CU_add_test (suite, "alpha_sp matches adaptive quadrature", test_alpha_sp_matches_reference) == NULL) ||
+      (CU_add_test (suite, "Band-limited integrals add up", test_band_limited_adds_up) == NULL) ||
+      (CU_add_test (suite, "Extreme temperatures", test_extreme_temperatures) == NULL))
   {
     fprintf (stderr, "Failed to add tests to `Macro-atom recombination integrals` suite\n");
     CU_cleanup_registry ();

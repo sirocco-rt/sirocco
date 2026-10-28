@@ -359,10 +359,10 @@ void macro_pops_copy_to_xplasma(PlasmaPtr xplasma, int index_element, double *po
 int matom(PhotPtr p, int *nres, int *escape);
 double b12(struct lines *line_ptr);
 double stim_recomb_factor(PlasmaPtr xplasma, struct topbase_phot *cont_ptr);
-double xalpha_sp(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice);
+void bf_rate_integrals(struct topbase_phot *cont_ptr, double freq_min, double freq_max, double beta, double beta_r, double sum[3]);
 double alpha_sp(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice);
+void alpha_sp_all(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, double alpha[3]);
 double scaled_alpha_sp_integral_band_limited(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice, double freq_min, double freq_max);
-double alpha_sp_integrand(double freq, void *params);
 int kpkt(PhotPtr p, int *nres, int *escape, int mode);
 int fake_matom_bb(PhotPtr p, int *nres, int *escape);
 int fake_matom_bf(PhotPtr p, int *nres, int *escape);
