@@ -109,8 +109,7 @@ int fbfr;
  *
  * ### Notes ###
  *
- * This routine used to be used for integrations, the wrapper routine fb_topbase_partial2 is
- * now used for that purpose - this is only used directly now.
+ * fb_topbase_integral integrates it over frequency.
  * Recast in log space for speedup purposes
  *
  *
@@ -118,33 +117,19 @@ int fbfr;
  *
  **********************************************************/
 
-double
-fb_topbase_partial (double freq)
+/** @brief log (g_n / (2 g_ion)), the statistical weights of the Milne relation for the record xtop */
+
+static double
+fb_log_weights (struct topbase_phot *xtop)
 {
-  int nion;
-  double partial, log_freq;
-  double logx;
-  double log_gn, log_gion;
-  double fthresh;
-  double test;
-  double x;
-
-  log_freq = log (freq);        //Go into log space
-
-  fthresh = fb_xtop->freq[0];
-  if (freq < fthresh)
-    return (0.0);               // No recombination at frequencies lower than the threshold freq occur
-
-  nion = fb_xtop->nion;
+  const int nion = xtop->nion;
+  double log_gn = 0;
 
   /* JM -- below lines to address bug #195 */
-//  gn = 1;
-  log_gn = 0;
   if (ion[nion].phot_info > 0)  // it's a topbase record
   {
-    log_gn = xconfig[fb_xtop->nlev].log_g;
+    log_gn = xconfig[xtop->nlev].log_g;
   }
-
   else if (ion[nion].phot_info == 0)    // it's a VFKY record, so shouldn't really use levels
   {
     log_gn = ion[nion].log_g;
@@ -156,8 +141,23 @@ fb_topbase_partial (double freq)
        ion[nion].phot_info, nion, ion[nion].z, ion[nion].istate);
     log_gn = -999.;             //Not really sure what to do here - probably return a zero
   }
+  return (log_gn - 0.6931471805599453 - ion[nion + 1].log_g);   // g of the next ion up
+}
 
-  log_gion = ion[nion + 1].log_g;       // Want the g factor of the next ion up in log space
+double
+fb_topbase_partial (double freq)
+{
+  double partial, log_freq;
+  double logx;
+  double fthresh;
+  double test;
+  double x;
+
+  log_freq = log (freq);        //Go into log space
+
+  fthresh = fb_xtop->freq[0];
+  if (freq < fthresh)
+    return (0.0);               // No recombination at frequencies lower than the threshold freq occur
 
   x = sigma_phot (fb_xtop, freq);
   if (x < VERY_SMALL)
@@ -179,8 +179,7 @@ fb_topbase_partial (double freq)
 
 //  partial = FBEMISS * gn / (2. * gion) * pow (freq * freq / fbt, 1.5) * exp (H_OVER_K * (fthresh - freq) / fbt) * x;
 
-  test =
-    LOG_FBEMISS + log_gn - 0.6931471805599453 - log_gion + 1.5 * (2.0 * log_freq - log_fbt) + (H_OVER_K * (fthresh - freq) / fbt) + logx;
+  test = LOG_FBEMISS + fb_log_weights (fb_xtop) + 1.5 * (2.0 * log_freq - log_fbt) + (H_OVER_K * (fthresh - freq) / fbt) + logx;
 
 
   partial = exp (test);         //Go back to linear space
@@ -197,8 +196,7 @@ fb_topbase_partial (double freq)
   if (sane_check (partial))
   {
     Error ("fb_topbase_partial: Failed test %e partial %e\n", test, partial);
-    Error ("log_gn %e log_gion %e log_freq %e log_fbt %e fthresh %e  freq %e  fbt %e logx %e\n",
-           log_gn, log_gion, log_freq, log_fbt, fthresh, freq, fbt, logx);
+    Error ("log_freq %e log_fbt %e fthresh %e  freq %e  fbt %e logx %e\n", log_freq, log_fbt, fthresh, freq, fbt, logx);
     partial = 0.0;
 
   }
@@ -212,42 +210,33 @@ fb_topbase_partial (double freq)
 
 /**********************************************************/
 /**
- * @brief      This is a wrapper for fb_topbase_partial to allow it to be used for integrations
+ * @brief      the integral of fb_topbase_partial over lo ... hi, for the record xtop at temperature t
  *
- * @param [in] double  freq   The freqeuncy of interest
- * @param [in] void  params   An extra (unused) variable to make it paletable for the gsl integrator
-
- * @return     An emissivity or a recombination rate
- *
- * What the routine returns depends on the external variable fbfr. The
- * choices are:
- *
- * * FB_FULL         Calculate fb emissivity including energy associated with the threshold
- * * FB_REDUCED      Calculate the fb emissivity without the threshold energy
- * * FB_RATE         Calulate the fb recombinarion rate
+ * @param [in] struct topbase_phot xtop   the photoionization record
+ * @param [in] double  t   the temperature
+ * @param [in] double  lo, hi   the frequency range, clipped to the record's table
+ * @param [in] int  fb_choice   FB_FULL, FB_REDUCED or FB_RATE, as for fb_topbase_partial
+ * @return     the integrated emissivity or recombination rate
  *
  * @details
- *
- *
- * ### Notes ###
- *
- * This routine is integrated over frequency using a gsl routine wrapped in the num_int
- * routine for that purpsoe.  Much of the information is passed externally for historical reasons
- * In Princible the extranl information could be contrained in the parameters.
- *
- *
- *
+ * fb_topbase_partial is the Milne relation, FBEMISS g_n / (2 g_ion) T^(-3/2) nu^3 sigma (nu)
+ * exp (h (nu_threshold - nu) / k T), times (nu - nu_threshold) / nu for FB_REDUCED and divided by h nu for FB_RATE,
+ * so its integral is that prefactor times nu_threshold sum[1], nu_threshold sum[2] or sum[0] / h, with the
+ * integrals sum of bf_rate_integrals, exact to rounding over the whole table.
  **********************************************************/
 
-
-double
-fb_topbase_partial2 (double freq, void *params)
+static double
+fb_topbase_integral (struct topbase_phot *xtop, double t, double lo, double hi, int fb_choice)
 {
-  double partial;
+  const double prefactor = exp (LOG_FBEMISS + fb_log_weights (xtop)) * pow (t, -1.5);
+  double sum[3];
 
-  partial = fb_topbase_partial (freq);
-
-  return (partial);
+  bf_rate_integrals (xtop, lo, hi, H_OVER_K / t, 0, sum);
+  if (fb_choice == FB_FULL)
+    return (prefactor * xtop->freq[0] * sum[1]);
+  if (fb_choice == FB_REDUCED)
+    return (prefactor * xtop->freq[0] * sum[2]);
+  return (prefactor * sum[0] / PLANCK);
 }
 
 
@@ -1167,12 +1156,10 @@ xinteg_fb (double t, double f1, double f2, int nion, int fb_choice)
 {
   int n;
   double fnu;
-  double dnu;                   //NSH 140120 - a parameter to allow one to restrict the integration limits.
   double fthresh, fmax;
   int nmin, nmax;               // These are the limits over which number xsections we will use
 
 
-  dnu = 0.0;                    //Avoid compilation errors.
 
   nmin = nmax = 0;
   if (-1 < nion && nion < nions)        //Get emissivity for this specific ion_number
@@ -1196,12 +1183,6 @@ xinteg_fb (double t, double f1, double f2, int nion, int fb_choice)
     Error ("integ_fb: %d is unacceptable value of nion\n", nion);
     Exit (0);
   }
-
-  // Put information where it can be used by the integrating function
-  fbt = t;
-  log_fbt = log (t);
-
-  fbfr = fb_choice;
 
   /* Limit the frequency range to one that is reasonable before integrating */
 
@@ -1233,14 +1214,7 @@ xinteg_fb (double t, double f1, double f2, int nion, int fb_choice)
       // Now calculate the emissivity as long as fmax exceeds xthreshold and there are ions to recombine
       if (fmax > fthresh)
       {
-        //NSH 140120 - this is a test to ensure that the exponential will not go to zero in the integrations
-        dnu = 100.0 * (fbt / H_OVER_K);
-        if (fthresh + dnu < fmax)
-        {
-          fmax = fthresh + dnu;
-        }
-//        fnu += qromb (fb_topbase_partial, fthresh, fmax, 1.e-4);
-        fnu += num_int (fb_topbase_partial2, fthresh, fmax, 1.e-4);
+        fnu += fb_topbase_integral (fb_xtop, t, fthresh, fmax, fb_choice);
 
       }
     }
@@ -1292,11 +1266,9 @@ xinteg_inner_fb (double t, double f1, double f2, int nion, int fb_choice)
 {
   int n, nn;
   double fnu;
-  double dnu;                   // a parameter to allow one to restrict the integration limits.
   double fthresh, fmax;
 
 
-  dnu = 0.0;                    //Avoid compilation errors.
   fnu = 0.0;
   nn = -1;
 
@@ -1313,10 +1285,6 @@ xinteg_inner_fb (double t, double f1, double f2, int nion, int fb_choice)
     if (inner_cross[n].nion == nion)
     {
       nn = n;
-      fbt = t;
-      log_fbt = log (t);
-
-      fbfr = fb_choice;
 
       /* Limit the frequency range to one that is reasonable before integrating */
 
@@ -1339,13 +1307,7 @@ xinteg_inner_fb (double t, double f1, double f2, int nion, int fb_choice)
         // Now calculate the emissivity as long as fmax exceeds xthreshold and there are ions to recombine
         if (fmax > fthresh)
         {
-          //NSH 140120 - this is a test to ensure that the exponential will not go to zero in the integrations
-          dnu = 100.0 * (fbt / H_OVER_K);
-          if (fthresh + dnu < fmax)
-          {
-            fmax = fthresh + dnu;
-          }
-          fnu += num_int (fb_topbase_partial2, fthresh, fmax, 1.e-4);
+          fnu += fb_topbase_integral (fb_xtop, t, fthresh, fmax, fb_choice);
         }
 
       }
@@ -1485,7 +1447,6 @@ gs_rrate (int nion, double T)
   int i, imin, imax;
   double rates[BAD_GS_RR_PARAMS], temps[BAD_GS_RR_PARAMS];
   int ntmin;
-  double fthresh, fmax, dnu;
 
 
   imin = imax = 0;              /* NSH 130605 to remove o3 compile error */
@@ -1542,12 +1503,6 @@ gs_rrate (int nion, double T)
    */
   else
   {
-    rate = 0.0;                 /* NSH 130605 to remove o3 compile error */
-
-    fbt = T;
-    log_fbt = log (T);
-    fbfr = FB_RATE;
-
     if (ion[nion - 1].phot_info > 0)    //topbase or hybrid
     {
       ntmin = ion[nion - 1].ntop_ground;
@@ -1558,16 +1513,7 @@ gs_rrate (int nion, double T)
       fb_xtop = &phot_top[ion[nion - 1].nxphot];
     }
 
-    fthresh = fb_xtop->freq[0];
-    fmax = fb_xtop->freq[fb_xtop->np - 1];
-    dnu = 100.0 * (fbt / H_OVER_K);
-
-    if (fthresh + dnu < fmax)
-    {
-      fmax = fthresh + dnu;
-    }
-
-    rate = num_int (fb_topbase_partial2, fthresh, fmax, 1e-5);
+    rate = fb_topbase_integral (fb_xtop, T, fb_xtop->freq[0], fb_xtop->freq[fb_xtop->np - 1], FB_RATE);
 
   }
 

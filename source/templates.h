@@ -499,7 +499,6 @@ int fraction(double value, double array[], int npts, int *ival, double *f, int m
 int linterp(double x, double xarray[], double yarray[], int xdim, double *y, int mode);
 /* recomb.c */
 double fb_topbase_partial(double freq);
-double fb_topbase_partial2(double freq, void *params);
 double integ_fb(double t, double f1, double f2, int nion, int fb_choice, int mode);
 double total_fb(PlasmaPtr xplasma, double t, double f1, double f2, int fb_choice, int mode);
 double one_fb(PlasmaPtr xplasma, double f1, double f2);

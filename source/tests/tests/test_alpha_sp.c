@@ -9,7 +9,9 @@
  *  and Planck factors with Gauss-Legendre rules. These tests hold it to an independent adaptive quadrature (GSL cquad
  *  of sigma_phot itself, one call per table interval) for every photoionization continuum of the 20-level H + He
  *  macro-atom data set, over the temperatures a wind reaches, and check that no temperature, however extreme, gives
- *  an infinite, NaN or negative integral, and that the integrals alpha_sp_all remembers are the fresh ones.
+ *  an infinite, NaN or negative integral, and that the integrals alpha_sp_all remembers are the fresh ones. The
+ *  free-bound emissivities and recombination rates of xinteg_fb are held to the same kind of reference of
+ *  fb_topbase_partial.
  *
  * ****************************************************************************************************************** */
 
@@ -278,6 +280,98 @@ test_memo_is_exact (void)
   alpha_sp_forget ();
 }
 
+/* fb_topbase_partial takes its record, temperature and choice from these (recomb.c) */
+extern struct topbase_phot *fb_xtop;
+extern double fbt, log_fbt;
+extern int fbfr;
+
+static double
+fb_reference_integrand (double freq, void *params)
+{
+  (void) params;
+  return fb_topbase_partial (freq);
+}
+
+/** @brief cquad of fb_topbase_partial over lo ... hi for the record cont_ptr, pieces as in reference_integral */
+
+static double
+fb_reference_integral (struct topbase_phot *cont_ptr, double t, double lo, double hi, int fb_choice)
+{
+  gsl_integration_cquad_workspace *ws = gsl_integration_cquad_workspace_alloc (200);
+  gsl_function F = { fb_reference_integrand, NULL };
+  const double big_b = H_OVER_K / t;
+  double total = 0, result, abserr;
+  size_t neval;
+  int i, k;
+
+  fb_xtop = cont_ptr;
+  fbt = t;
+  log_fbt = log (t);
+  fbfr = fb_choice;
+  hi = fmin (hi, cont_ptr->freq[0] - 2 * log (DBL_EPSILON) / big_b);
+  for (i = 0; i < cont_ptr->np - 1; i++)
+  {
+    const double a = fmax (lo, cont_ptr->freq[i]), b = fmin (cont_ptr->freq[i + 1], hi);
+    const int pieces = b > a ? 1 + (int) (big_b * (b - a) / -log (DBL_EPSILON)) : 0;
+    for (k = 0; k < pieces; k++)
+    {
+      gsl_integration_cquad (&F, a + (b - a) * k / pieces, a + (b - a) * (k + 1) / pieces, 0, 1e-13, ws, &result, &abserr, &neval);
+      total += result;
+    }
+  }
+  gsl_integration_cquad_workspace_free (ws);
+  return total;
+}
+
+/** *******************************************************************************************************************
+ *
+ * @brief xinteg_fb, for each free-bound choice, is the reference integral of fb_topbase_partial, and two halves of
+ * a band add up to the whole
+ *
+ * @details
+ * Every ion with photoionization records, 2e3 K to 6e8 K (below 2e3 K cquad itself misses 1e-10 on some records,
+ * by up to 2e-9 at 100 K against a long-double Gauss-Legendre integral, while xinteg_fb stays within 2e-12 of it);
+ * the macro-atom records count as simple ones here
+ * (geo.macro_simple), as xinteg_fb otherwise leaves them to the macro-atom machinery.
+ *
+ * ****************************************************************************************************************** */
+
+static void
+test_free_bound_matches_reference (void)
+{
+  const int choices[] = { FB_FULL, FB_REDUCED, FB_RATE };
+  const int macro_simple = geo.macro_simple;
+  int nion, n_temp, c, n;
+
+  geo.macro_simple = TRUE;
+  for (nion = 0; nion < nions; nion++)
+  {
+    int nmin, nmax;
+    if (ion[nion].phot_info > 0)
+      nmin = ion[nion].ntop_first, nmax = nmin + ion[nion].ntop;
+    else if (ion[nion].phot_info == 0)
+      nmin = ion[nion].nxphot, nmax = nmin + 1;
+    else
+      continue;
+    for (n_temp = 0; n_temp < 12; n_temp++)
+    {
+      const double t = pow (10., 3.3 + 0.5 * n_temp + 0.0137);
+      for (c = 0; c < 3; c++)
+      {
+        const double value = xinteg_fb (t, 0, VERY_BIG, nion, choices[c]);
+        const double fmid = 1.3 * phot_top[nmin].freq[0];
+        double reference = 0;
+        for (n = nmin; n < nmax; n++)
+          reference += fb_reference_integral (&phot_top[n], t, 3e12, 3e18, choices[c]);
+        CU_ASSERT_TRUE (value > 0);
+        CU_ASSERT_DOUBLE_EQUAL (value, reference, ALPHA_SP_TOLERANCE * reference);
+        CU_ASSERT_DOUBLE_EQUAL (xinteg_fb (t, 0, fmid, nion, choices[c]) + xinteg_fb (t, fmid, VERY_BIG, nion, choices[c]), value, 1e-12 * value);
+      }
+    }
+  }
+  geo.macro_simple = macro_simple;
+}
+
 /** *******************************************************************************************************************
  *
  * @brief Read the 20-level H + He macro-atom data set through a `data` link to $SIROCCO/xdata
@@ -340,7 +434,8 @@ create_alpha_sp_test_suite (void)
       (CU_add_test (suite, "Stimulated and photoionization integrals match adaptive quadrature", test_stimulated_matches_reference) == NULL) ||
       (CU_add_test (suite, "Band-limited integrals add up", test_band_limited_adds_up) == NULL) ||
       (CU_add_test (suite, "Extreme temperatures", test_extreme_temperatures) == NULL) ||
-      (CU_add_test (suite, "Remembered integrals are the fresh ones", test_memo_is_exact) == NULL))
+      (CU_add_test (suite, "Remembered integrals are the fresh ones", test_memo_is_exact) == NULL) ||
+      (CU_add_test (suite, "Free-bound integrals match adaptive quadrature", test_free_bound_matches_reference) == NULL))
   {
     fprintf (stderr, "Failed to add tests to `Macro-atom recombination integrals` suite\n");
     CU_cleanup_registry ();
