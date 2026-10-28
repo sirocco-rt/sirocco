@@ -97,7 +97,7 @@ num_int (double (*func) (double, void *), double a, double b, double eps)
       gsl_integration_romberg_free (wr);
       if (status2)
       {
-        Error ("num_init: some kind of error in romberg and qags integration\n");
+        Error ("num_int: some kind of error in romberg and qags integration\n");
       }
       else
       {
