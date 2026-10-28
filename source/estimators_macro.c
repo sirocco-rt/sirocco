@@ -590,6 +590,7 @@ total_fb_matoms (PlasmaPtr xplasma, double t_e, double f1, double f2)
   double t_e_store;
   struct topbase_phot *cont_ptr;
   double total, density;
+  double alpha[3];
   int i, j;
   MacroPtr mplasma;
 
@@ -613,16 +614,14 @@ total_fb_matoms (PlasmaPtr xplasma, double t_e, double f1, double f2)
 
         /* the cooling contribution for each transition is given by 
            density * ne * [(alpha_sp_e - alpha_sp) + (alpha_st_e - alpha_st)]
-           we call alpha_sp() with modes 1 and 0 to get the different
-           versions of the sp. recombination rate coefficient.
-           This is essentially equation (33) of Lucy (2003) */
+           alpha_sp_all gives the different versions of the sp. recombination
+           rate coefficient. This is essentially equation (33) of Lucy (2003) */
 
+        alpha_sp_all (cont_ptr, xplasma, alpha);
         cool_contribution =
-          (mplasma->state.alpha_st_e_old[xconfig[i].bfu_indx_first + j] +
-           alpha_sp (cont_ptr, xplasma, 1)
-           - mplasma->state.alpha_st_old[xconfig[i].bfu_indx_first + j]
-           - alpha_sp (cont_ptr, xplasma,
-                       0)) * PLANCK * phot_top[xconfig[i].bfu_jump[j]].freq[0] * density * xplasma->state.ne * xplasma->state.vol;
+          (mplasma->state.alpha_st_e_old[xconfig[i].bfu_indx_first + j] + alpha[1]
+           - mplasma->state.alpha_st_old[xconfig[i].bfu_indx_first + j] - alpha[0])
+          * PLANCK * phot_top[xconfig[i].bfu_jump[j]].freq[0] * density * xplasma->state.ne * xplasma->state.vol;
 
         /* That's the bf cooling contribution. */
         total += cool_contribution;
