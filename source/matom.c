@@ -629,10 +629,11 @@ static void
 bf_rate_segment (struct topbase_phot *cont_ptr, int i, double lo, double hi, double beta, double beta_r, double sum[3])
 {
   const double fthresh = cont_ptr->freq[0], freq_i = cont_ptr->freq[i], big_b = beta + beta_r;
-  const double slope = (cont_ptr->log_x[i + 1] - cont_ptr->log_x[i]) / (cont_ptr->log_freq[i + 1] - cont_ptr->log_freq[i]);
+  /* the width from the ratio: a difference of the stored log frequencies loses digits in a narrow interval */
+  const double t_end = log (cont_ptr->freq[i + 1] / freq_i);
+  const double slope = (cont_ptr->log_x[i + 1] - cont_ptr->log_x[i]) / t_end;
   const double scale = cont_ptr->x[i] * freq_i * freq_i * freq_i, c = slope + 3.5, planck = beta_r > 0;
-  const double t_lo = lo == freq_i ? 0 : log (lo / freq_i);
-  const double t_hi = hi == cont_ptr->freq[i + 1] ? cont_ptr->log_freq[i + 1] - cont_ptr->log_freq[i] : log (hi / freq_i);
+  const double t_lo = log (lo / freq_i), t_hi = hi < cont_ptr->freq[i + 1] ? log (hi / freq_i) : t_end;
   const double d1 = fmax (fabs (c - big_b * lo), fabs (c - big_b * hi)) + 0.5 + planck;
   const double reach = 0.5 * (t_hi - t_lo) * (d1 + bf_rate_sqrt_2n[BF_RATE_MAX_POINTS] * sqrt (big_b * hi));
   const int pieces = reach > bf_rate_reach[BF_RATE_MAX_POINTS] ? (int) ceil (reach / bf_rate_reach[BF_RATE_MAX_POINTS]) : 1;
