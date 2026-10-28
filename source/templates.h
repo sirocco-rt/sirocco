@@ -143,6 +143,7 @@ void define_wind(void);
 double get_ion_density(int ndom, double x[], int nion);
 /* diag.c */
 int get_standard_care_factors(void);
+int get_bf_integration_method(void);
 int get_extra_diagnostics(void);
 int init_searchlight(void);
 int init_extra_diagnostics(void);
@@ -359,9 +360,9 @@ void macro_pops_copy_to_xplasma(PlasmaPtr xplasma, int index_element, double *po
 int matom(PhotPtr p, int *nres, int *escape);
 double b12(struct lines *line_ptr);
 double stim_recomb_factor(PlasmaPtr xplasma, struct topbase_phot *cont_ptr);
-double xalpha_sp(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice);
 double alpha_sp(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice);
 double scaled_alpha_sp_integral_band_limited(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice, double freq_min, double freq_max);
+double bf_cross_section_integral(struct topbase_phot *cont_ptr, double fmin, double fmax, double a, double (*weight)(double, void *), void *params);
 double alpha_sp_integrand(double freq, void *params);
 int kpkt(PhotPtr p, int *nres, int *escape, int mode);
 int fake_matom_bb(PhotPtr p, int *nres, int *escape);

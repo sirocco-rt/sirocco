@@ -9,15 +9,11 @@
 # a different compiler other than mpicc.
 #
 
-# MATOM_VER is a temporary switch that allows one to compile the code so that it will
-# use the gsl routines wheen computing alpha_sp.  It should be invoked from the commad line, e.g
-# make MATOM_VER=2 sirocco (or all); the Makefile should not be altered unless we change our mind
-# about the integration approach to use. The default is set to use the newer brute force technique
-
-MATOM_VER := 1
+# The method used for the macro-atom bound-free integrals, formerly chosen with the
+# compile-time switch MATOM_VER, is now chosen at run time with @Diag.bf_integration; see #1219
 
 # This is the sirocco version which should be a single string without spaces.
-VERSION = 2.0-dev
+VERSION = 2.0-bug1219
 
 #MPICC is now default compiler
 CC = mpicc
@@ -27,7 +23,7 @@ FC = g77
 NVCC = 
 # NVCC = nvcc  # default (and only?) CUDA compiler
 # specify any extra compiler flags here
-EXTRA_FLAGS = -DMATOM_VER=$(MATOM_VER)
+EXTRA_FLAGS =
 LDFLAGS =
 
 # Use the next line if you want to change the c compiler that mpicc uses, or
@@ -336,7 +332,7 @@ unit_test: startup unit_test.o $(sirocco_objects)
 # the Python source. It doesn't require anything to be compiled, actually, as
 # the Makefile in tests/ will compile what is requried
 check:
-	cd tests; make check NVCC=$(NVCC) CC=$(CC) MATOM_VER=$(MATOM_VER)
+	cd tests; make check NVCC=$(NVCC) CC=$(CC)
 
 # The next line runs recompiles all of the routines after first cleaning the directory
 # all: clean run_indent sirocco windsave2table swind

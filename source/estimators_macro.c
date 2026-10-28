@@ -35,6 +35,34 @@ double temp_ext_rad;            //radiation temperature passed externally
 
 #define ALPHA_SP_CONSTANT 5.79618e-36   //
 
+/* The weights (the integrands without the cross section) for the dilute
+ * black-body estimators, for bf_cross_section_integral.  They use the same
+ * external temperatures and continuum as the integrands */
+
+static double
+gamma_weight (double freq, void *params)
+{
+  return (freq * freq / (exp (H_OVER_K * freq / temp_ext2) - 1));
+}
+
+static double
+gamma_e_weight (double freq, void *params)
+{
+  return (freq * freq * freq / (exp (H_OVER_K * freq / temp_ext2) - 1) / cont_ext_ptr2->freq[0]);
+}
+
+static double
+alpha_st_weight (double freq, void *params)
+{
+  return (freq * freq * exp (H_OVER_K * (cont_ext_ptr2->freq[0] - freq) / temp_ext2) / (exp (H_OVER_K * freq / temp_ext_rad) - 1));
+}
+
+static double
+alpha_st_e_weight (double freq, void *params)
+{
+  return (alpha_st_weight (freq, params) * freq / cont_ext_ptr2->freq[0]);
+}
+
 
 /**********************************************************/
 /**
@@ -991,8 +1019,11 @@ check_stimulated_recomb (PlasmaPtr xplasma)
       njumps++;
 
       /* net thermal heating from this continuum, as in macro_photo_heating; negative means cooling */
-      net_heat = ((mplasma->state.gamma_e_old[k] - mplasma->state.gamma_old[k]) - (mplasma->state.alpha_st_e_old[k] - mplasma->state.alpha_st_old[k]) * sf)
-        * PLANCK * cont_ptr->freq[0] * den_config (xplasma, i) * xplasma->state.vol;
+      net_heat =
+        ((mplasma->state.gamma_e_old[k] - mplasma->state.gamma_old[k]) -
+         (mplasma->state.alpha_st_e_old[k] - mplasma->state.alpha_st_old[k]) * sf) * PLANCK * cont_ptr->freq[0] * den_config (xplasma,
+                                                                                                                              i) *
+        xplasma->state.vol;
 
       if (net_heat < 0.0)
       {
@@ -1086,8 +1117,10 @@ get_gamma (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
   }
 
 
-  // gamma_value = qromb (gamma_integrand, fthresh, flast, 1e-4);
-  gamma_value = num_int (gamma_integrand, fthresh, flast, 1e-4);
+  if (modes.bf_integration == BF_INTEG_SEGMENTS)
+    gamma_value = bf_cross_section_integral (cont_ptr, fthresh, flast, H_OVER_K / temp_ext2, gamma_weight, NULL);
+  else
+    gamma_value = num_int (gamma_integrand, fthresh, flast, 1e-4);
 
   gamma_value *= 8 * PI / VLIGHT / VLIGHT * xplasma->state.w;
 
@@ -1163,8 +1196,10 @@ get_gamma_e (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
   }
 
 
-//  gamma_e_value = qromb (gamma_e_integrand, fthresh, flast, 1e-4);
-  gamma_e_value = num_int (gamma_e_integrand, fthresh, flast, 1e-4);
+  if (modes.bf_integration == BF_INTEG_SEGMENTS)
+    gamma_e_value = bf_cross_section_integral (cont_ptr, fthresh, flast, H_OVER_K / temp_ext2, gamma_e_weight, NULL);
+  else
+    gamma_e_value = num_int (gamma_e_integrand, fthresh, flast, 1e-4);
 
   gamma_e_value *= 8 * PI / VLIGHT / VLIGHT * xplasma->state.w;
 
@@ -1241,7 +1276,11 @@ get_alpha_st (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
   }
 
 
-  alpha_st_value = num_int (alpha_st_integrand, fthresh, flast, 1e-4);
+  if (modes.bf_integration == BF_INTEG_SEGMENTS)
+    alpha_st_value =
+      bf_cross_section_integral (cont_ptr, fthresh, flast, H_OVER_K / temp_ext2 + H_OVER_K / temp_ext_rad, alpha_st_weight, NULL);
+  else
+    alpha_st_value = num_int (alpha_st_integrand, fthresh, flast, 1e-4);
 
 
   /* The lines above evaluate the integral in alpha_sp. Now we just want to multiply 
@@ -1334,8 +1373,11 @@ get_alpha_st_e (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
   }
 
 
-//  alpha_st_e_value = qromb (alpha_st_e_integrand, fthresh, flast, 1e-4);
-  alpha_st_e_value = num_int (alpha_st_e_integrand, fthresh, flast, 1e-4);
+  if (modes.bf_integration == BF_INTEG_SEGMENTS)
+    alpha_st_e_value =
+      bf_cross_section_integral (cont_ptr, fthresh, flast, H_OVER_K / temp_ext2 + H_OVER_K / temp_ext_rad, alpha_st_e_weight, NULL);
+  else
+    alpha_st_e_value = num_int (alpha_st_e_integrand, fthresh, flast, 1e-4);
 
   /* The lines above evaluate the integral in alpha_sp. Now we just want to multiply 
      through by the appropriate constant. */

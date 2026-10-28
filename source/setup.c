@@ -346,6 +346,9 @@ init_advanced_modes ()
 
   modes.store_matom_matrix = TRUE;      /* default is to store the macro-atom matrix */
 
+  modes.bf_integration = BF_INTEG_SUM;  /* how macro-atom bound-free integrals are done, see #1219 */
+  modes.alpha_sp_table = FALSE; /* do not tabulate alpha_sp in temperature */
+
   modes.run_xtest_diagnostics = FALSE;  /* allow special xtest_diagnostics in the various routines */
   modes.partial_cells = PC_ZERO_DEN;    /* Default is to omit partial cells in calculation */
 

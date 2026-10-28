@@ -137,6 +137,51 @@ get_standard_care_factors ()
 
 /**********************************************************/
 /**
+ * @brief      Choose how the integrals over bound-free cross sections
+ * for macro atoms are done
+ *
+ * @return     Always returns 0
+ *
+ * @details
+ * The integrals are alpha_sp (in the temperature solve), the band-limited
+ * alpha_sp (in the spectral cycles) and the dilute black-body estimators
+ * used when macro_pops fails.  The choices are
+ *
+ * - sum: a 10,000-point sum for alpha_sp, and GSL (num_int) for the others
+ *   (the historical default)
+ * - gsl: GSL for all of them
+ * - segments: Gauss-Legendre over the segments of the tabulated cross
+ *   section, see bf_cross_section_integral
+ *
+ * The alpha_sp integral can also be tabulated in temperature for each
+ * continuum.  The inputs are only read in advanced mode (-d).
+ *
+ * ### Notes ###
+ * See #1146 and #1219
+ *
+ **********************************************************/
+
+int
+get_bf_integration_method ()
+{
+  char answer[LINELENGTH];
+
+  if (modes.iadvanced)
+  {
+    strcpy (answer, "sum");
+    modes.bf_integration = rdchoice ("@Diag.bf_integration(sum,gsl,segments)", "0,1,2", answer);
+
+    strcpy (answer, "no");
+    modes.alpha_sp_table = rdchoice ("@Diag.alpha_sp_table(yes,no)", "1,0", answer);
+  }
+
+  return (0);
+}
+
+
+
+/**********************************************************/
+/**
  * @brief      Allows the user to specify what extra diagnositcs
  * to write out
  *

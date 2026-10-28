@@ -54,10 +54,20 @@
  * internal test to ensure that the user is not asking for an integral where the function is zero everywhere.
  * The gsl routine does not handle this well, and takes ages to run and (sometimes) return zero.
  *
+ * If qags reports a rounding error, the integral is tried again with Romberg
+ * integration, limited to NUM_INT_ROMBERG_LEVELS levels (at most about
+ * 2^(NUM_INT_ROMBERG_LEVELS-1) evaluations of func), and the Romberg result
+ * is returned if it converged.
+ *
  * ### Notes ###
+ *
+ * Until 2026 the Romberg result was computed but not returned, the qags
+ * workspace was not freed if qags failed for another reason, and Romberg was
+ * allowed 30 levels (up to ~10^9 evaluations), see #1219.
  *
  **********************************************************/
 
+#define NUM_INT_ROMBERG_LEVELS 20
 
 double
 num_int (double (*func) (double, void *), double a, double b, double eps)
@@ -89,23 +99,20 @@ num_int (double (*func) (double, void *), double a, double b, double eps)
   {
     gsl_integration_workspace *w = gsl_integration_workspace_alloc (1000);
     status = gsl_integration_qags (&F, a, b, 0, eps, 1000, w, &result, &error);
-    if (status)
+    gsl_integration_workspace_free (w);
+    if (status == GSL_EROUND)   //The rounding error has been triggered - try a different integrator
     {
-      if (status == GSL_EROUND) //The rounding error has been triggered - try a different integrator
+      gsl_integration_romberg_workspace *wr = gsl_integration_romberg_alloc (NUM_INT_ROMBERG_LEVELS);
+      status2 = gsl_integration_romberg (&F, a, b, 0, eps, &result2, &neval, wr);
+      gsl_integration_romberg_free (wr);
+      if (status2)
       {
-        gsl_integration_workspace_free (w);
-        gsl_integration_romberg_workspace *w = gsl_integration_romberg_alloc (30);
-        status2 = gsl_integration_romberg (&F, a, b, 0, eps, &result2, &neval, w);
-        gsl_integration_romberg_free (w);
-        if (status2)
-        {
-          Error ("num_init: some kind of error in romberg and qags integration\n");
-        }
+        Error ("num_int: neither qags nor romberg integration converged; returning the qags result\n");
       }
-    }
-    else
-    {
-      gsl_integration_workspace_free (w);
+      else
+      {
+        result = result2;
+      }
     }
   }
   else
