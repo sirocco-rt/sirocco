@@ -9,7 +9,7 @@
  *  and Planck factors with Gauss-Legendre rules. These tests hold it to an independent adaptive quadrature (GSL cquad
  *  of sigma_phot itself, one call per table interval) for every photoionization continuum of the 20-level H + He
  *  macro-atom data set, over the temperatures a wind reaches, and check that no temperature, however extreme, gives
- *  an infinite, NaN or negative integral.
+ *  an infinite, NaN or negative integral, and that the integrals alpha_sp_all remembers are the fresh ones.
  *
  * ****************************************************************************************************************** */
 
@@ -237,6 +237,50 @@ test_extreme_temperatures (void)
 
 /** *******************************************************************************************************************
  *
+ * @brief alpha_sp_all gives the same rates, bit for bit, whether it integrates afresh or remembers
+ *
+ * @details
+ * Three temperatures, more than are remembered, in an order that returns to each of them after one and after two
+ * others, so that every call is either a remembered entry or a replacement of one; the full-band
+ * scaled_alpha_sp_integral_band_limited shares the remembered integrals.
+ *
+ * ****************************************************************************************************************** */
+
+static void
+test_memo_is_exact (void)
+{
+  const double temps[] = { 9.1e3, 1.3e4, 2.7e4 };
+  const int order[] = { 0, 0, 1, 0, 1, 2, 0, 2, 2, 1, 0, 1 };
+  struct plasma xplasma;
+  double alpha[3], fresh[3][3], sum[3];
+  int n_cont, i, ichoice;
+
+  memset (&xplasma, 0, sizeof xplasma);
+  for (n_cont = 0; n_cont < nphot_total; n_cont++)
+  {
+    struct topbase_phot *cont_ptr = &phot_top[n_cont];
+    for (i = 0; i < 3; i++)
+    {
+      alpha_sp_forget ();
+      xplasma.state.t_e = temps[i];
+      alpha_sp_all (cont_ptr, &xplasma, fresh[i]);
+    }
+    alpha_sp_forget ();
+    for (i = 0; i < (int) (sizeof order / sizeof order[0]); i++)
+    {
+      xplasma.state.t_e = temps[order[i]];
+      alpha_sp_all (cont_ptr, &xplasma, alpha);
+      for (ichoice = 0; ichoice < 3; ichoice++)
+        CU_ASSERT_EQUAL (alpha[ichoice], fresh[order[i]][ichoice]);
+      bf_rate_integrals (cont_ptr, cont_ptr->freq[0], cont_ptr->freq[cont_ptr->np - 1], H_OVER_K / xplasma.state.t_e, 0, sum);
+      CU_ASSERT_EQUAL (scaled_alpha_sp_integral_band_limited (cont_ptr, &xplasma, 0, 0, VERY_BIG), sum[0]);
+    }
+  }
+  alpha_sp_forget ();
+}
+
+/** *******************************************************************************************************************
+ *
  * @brief Read the 20-level H + He macro-atom data set through a `data` link to $SIROCCO/xdata
  *
  * ****************************************************************************************************************** */
@@ -296,7 +340,8 @@ create_alpha_sp_test_suite (void)
   if ((CU_add_test (suite, "alpha_sp matches adaptive quadrature", test_alpha_sp_matches_reference) == NULL) ||
       (CU_add_test (suite, "Stimulated and photoionization integrals match adaptive quadrature", test_stimulated_matches_reference) == NULL) ||
       (CU_add_test (suite, "Band-limited integrals add up", test_band_limited_adds_up) == NULL) ||
-      (CU_add_test (suite, "Extreme temperatures", test_extreme_temperatures) == NULL))
+      (CU_add_test (suite, "Extreme temperatures", test_extreme_temperatures) == NULL) ||
+      (CU_add_test (suite, "Remembered integrals are the fresh ones", test_memo_is_exact) == NULL))
   {
     fprintf (stderr, "Failed to add tests to `Macro-atom recombination integrals` suite\n");
     CU_cleanup_registry ();

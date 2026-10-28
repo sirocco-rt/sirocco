@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <float.h>
 #include <gsl/gsl_integration.h>
@@ -745,6 +746,69 @@ bf_rate_integrals (struct topbase_phot *cont_ptr, double freq_min, double freq_m
 
 /**********************************************************/
 /**
+ * @brief the integrals of alpha_sp_all at temperature temp, remembering the last ALPHA_SP_MEMO temperatures of
+ * each continuum
+ *
+ * @details
+ * A cell's temperature search asks for the same integrals again and again: the cooling is evaluated at both ends
+ * of a bracket, and the level populations at the final T_e in every iteration of the ionization solve. So each
+ * continuum keeps its last ALPHA_SP_MEMO temperatures and their integrals and gives them back, bit for bit, for an
+ * equal temperature. Only positive temperatures are kept, so any other still reaches bf_rate_integrals (and its
+ * error message). alpha_sp_forget clears the memory when the cross sections are freed.
+***********************************************************/
+
+#define ALPHA_SP_MEMO 2         /**< temperatures kept per continuum: the two ends of a bracket */
+
+static struct alpha_sp_memo
+{
+  double temp[ALPHA_SP_MEMO], sum[ALPHA_SP_MEMO][3];
+  int last;                     /**< the entry used last; the other one is replaced next */
+} *alpha_sp_memo = NULL;
+
+/** @brief forget the integrals remembered by alpha_sp_sums */
+
+void
+alpha_sp_forget (void)
+{
+  free (alpha_sp_memo);
+  alpha_sp_memo = NULL;
+}
+
+static void
+alpha_sp_sums (struct topbase_phot *cont_ptr, double temp, double sum[3])
+{
+  const long ncont = cont_ptr - phot_top;
+  struct alpha_sp_memo *memo;
+  int k;
+
+  if (!(temp > 0 && ncont >= 0 && ncont < nphot_total))
+  {
+    bf_rate_integrals (cont_ptr, cont_ptr->freq[0], cont_ptr->freq[cont_ptr->np - 1], H_OVER_K / temp, 0, sum);
+    return;
+  }
+  if (alpha_sp_memo == NULL && (alpha_sp_memo = calloc (nphot_total, sizeof *alpha_sp_memo)) == NULL)
+  {
+    Error ("alpha_sp_sums: could not allocate the memory of the integrals\n");
+    Exit (EXIT_FAILURE);
+  }
+  memo = &alpha_sp_memo[ncont];
+  for (k = 0; k < ALPHA_SP_MEMO; k++)
+  {
+    if (memo->temp[k] == temp)
+    {
+      memcpy (sum, memo->sum[k], sizeof memo->sum[k]);
+      memo->last = k;
+      return;
+    }
+  }
+  bf_rate_integrals (cont_ptr, cont_ptr->freq[0], cont_ptr->freq[cont_ptr->np - 1], H_OVER_K / temp, 0, sum);
+  memo->last = k = (memo->last + 1) % ALPHA_SP_MEMO;
+  memo->temp[k] = temp;
+  memcpy (memo->sum[k], sum, sizeof memo->sum[k]);
+}
+
+/**********************************************************/
+/**
  * @brief the matom estimator for the spontaneous recombination rate.
  *
  * @param [in] struct topbase_phot cont_ptr pointer to calculate
@@ -809,7 +873,7 @@ alpha_sp_all (struct topbase_phot *cont_ptr, PlasmaPtr xplasma, double alpha[3])
     g_upper = ion[cont_ptr->nion + 1].g;        //g for next ion up used
   }
 
-  bf_rate_integrals (cont_ptr, cont_ptr->freq[0], cont_ptr->freq[cont_ptr->np - 1], H_OVER_K / temp, 0, alpha);
+  alpha_sp_sums (cont_ptr, temp, alpha);
   for (ichoice = 0; ichoice < 3; ichoice++)
   {
     alpha[ichoice] *= xconfig[cont_ptr->nlev].g / g_upper * pow (temp, -1.5) * ALPHA_SP_CONSTANT;
@@ -849,7 +913,11 @@ scaled_alpha_sp_integral_band_limited (struct topbase_phot *cont_ptr, PlasmaPtr 
 {
   double sum[3];
 
-  bf_rate_integrals (cont_ptr, freq_min, freq_max, H_OVER_K / xplasma->state.t_e, 0, sum);
+  /* the whole continuum is the same integrals as alpha_sp_all's */
+  if (freq_min <= cont_ptr->freq[0] && freq_max >= cont_ptr->freq[cont_ptr->np - 1])
+    alpha_sp_sums (cont_ptr, xplasma->state.t_e, sum);
+  else
+    bf_rate_integrals (cont_ptr, freq_min, freq_max, H_OVER_K / xplasma->state.t_e, 0, sum);
   return (sum[ichoice]);
 }
 

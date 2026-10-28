@@ -358,6 +358,7 @@ double stim_recomb_factor(PlasmaPtr xplasma, struct topbase_phot *cont_ptr);
 void bf_rate_integrals(struct topbase_phot *cont_ptr, double freq_min, double freq_max, double beta, double beta_r, double sum[3]);
 double alpha_sp(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice);
 void alpha_sp_all(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, double alpha[3]);
+void alpha_sp_forget(void);
 double scaled_alpha_sp_integral_band_limited(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice, double freq_min, double freq_max);
 int kpkt(PhotPtr p, int *nres, int *escape, int mode);
 int fake_matom_bb(PhotPtr p, int *nres, int *escape);
