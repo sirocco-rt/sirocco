@@ -201,13 +201,9 @@ int bb_simple_heat(PlasmaPtr xplasma, PhotPtr p, double tau_sobolev, int nn);
 int check_stimulated_recomb(PlasmaPtr xplasma);
 int get_dilute_estimators(PlasmaPtr xplasma);
 double get_gamma(struct topbase_phot *cont_ptr, PlasmaPtr xplasma);
-double gamma_integrand(double freq, void *params);
 double get_gamma_e(struct topbase_phot *cont_ptr, PlasmaPtr xplasma);
-double gamma_e_integrand(double freq, void *params);
 double get_alpha_st(struct topbase_phot *cont_ptr, PlasmaPtr xplasma);
-double alpha_st_integrand(double freq, void *params);
 double get_alpha_st_e(struct topbase_phot *cont_ptr, PlasmaPtr xplasma);
-double alpha_st_e_integrand(double freq, void *params);
 int rescale_alpha_st_estimators(PlasmaPtr xplasma, double t_old);
 /* estimators_simple.c */
 int update_banded_estimators(PlasmaPtr xplasma, PhotPtr p, double ds, double w_ave, int ndom);

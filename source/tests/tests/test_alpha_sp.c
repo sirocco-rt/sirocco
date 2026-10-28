@@ -34,7 +34,7 @@
 #define ALPHA_SP_TOLERANCE 1e-10
 
 static struct topbase_phot *ref_cont;
-static double ref_beta;
+static double ref_beta, ref_beta_r;
 static int ref_weight;
 
 static double
@@ -44,6 +44,8 @@ reference_integrand (double freq, void *params)
   double f = sigma_phot (ref_cont, freq) * freq * freq * exp (ref_beta * (fthresh - freq));
 
   (void) params;
+  if (ref_beta_r > 0)
+    f /= expm1 (ref_beta_r * freq);
   if (ref_weight == 1)
     f *= freq / fthresh;
   else if (ref_weight == 2)
@@ -58,12 +60,12 @@ reference_integrand (double freq, void *params)
  * @details
  * One cquad call per -ln DBL_EPSILON e-folds of the exponential factor within each table interval: over a whole
  * interval many e-folds wide cquad can miss the narrow peak at its start by more than its tolerance. The integral
- * stops where exp (-beta (nu - nu_threshold)) is DBL_EPSILON^2.
+ * stops where the exponential factors have fallen by DBL_EPSILON^2.
  *
  * ****************************************************************************************************************** */
 
 static double
-reference_integral (struct topbase_phot *cont_ptr, double freq_max, double beta, int weight)
+reference_integral (struct topbase_phot *cont_ptr, double freq_max, double beta, double beta_r, int weight)
 {
   gsl_integration_cquad_workspace *ws = gsl_integration_cquad_workspace_alloc (200);
   gsl_function F = { reference_integrand, NULL };
@@ -73,13 +75,14 @@ reference_integral (struct topbase_phot *cont_ptr, double freq_max, double beta,
 
   ref_cont = cont_ptr;
   ref_beta = beta;
+  ref_beta_r = beta_r;
   ref_weight = weight;
-  if (beta > 0)
-    freq_max = fmin (freq_max, cont_ptr->freq[0] - 2 * log (DBL_EPSILON) / beta);
+  if (beta + beta_r > 0)
+    freq_max = fmin (freq_max, cont_ptr->freq[0] - 2 * log (DBL_EPSILON) / (beta + beta_r));
   for (i = 0; i < cont_ptr->np - 1; i++)
   {
     const double a = cont_ptr->freq[i], b = fmin (cont_ptr->freq[i + 1], freq_max);
-    const int pieces = b > a ? 1 + (int) (beta * (b - a) / -log (DBL_EPSILON)) : 0;
+    const int pieces = b > a ? 1 + (int) ((beta + beta_r) * (b - a) / -log (DBL_EPSILON)) : 0;
     int k;
     for (k = 0; k < pieces; k++)
     {
@@ -116,11 +119,51 @@ test_alpha_sp_matches_reference (void)
       alpha_sp_all (cont_ptr, &xplasma, alpha);
       for (ichoice = 0; ichoice < 3; ichoice++)
       {
-        const double reference = reference_integral (cont_ptr, cont_ptr->freq[cont_ptr->np - 1], H_OVER_K / t_e, ichoice)
+        const double reference = reference_integral (cont_ptr, cont_ptr->freq[cont_ptr->np - 1], H_OVER_K / t_e, 0, ichoice)
           * xconfig[cont_ptr->nlev].g / g_upper * pow (t_e, -1.5) * ALPHA_SP_CONSTANT;
         CU_ASSERT_TRUE (alpha[ichoice] > 0.0);
         CU_ASSERT_DOUBLE_EQUAL (alpha[ichoice], reference, ALPHA_SP_TOLERANCE * reference);
         CU_ASSERT_DOUBLE_EQUAL (alpha_sp (cont_ptr, &xplasma, ichoice), alpha[ichoice], 0.0);
+      }
+    }
+  }
+}
+
+/** *******************************************************************************************************************
+ *
+ * @brief With a Planck factor (stimulated recombination, photoionization) the integrals are the reference
+ *
+ * @details
+ * T_r is T_e / 2 and T_e, and the photoionization integrals have T_r = T_e and no Maxwellian. Only where h
+ * nu_threshold / k T_r < 200: deeper in the Wien tail cquad itself is unreliable; extreme temperatures are
+ * covered by test_extreme_temperatures.
+ *
+ * ****************************************************************************************************************** */
+
+static void
+test_stimulated_matches_reference (void)
+{
+  double sum[3];
+  int n_cont, n_temp, n_rad, ichoice;
+
+  for (n_cont = 0; n_cont < nphot_total; n_cont++)
+  {
+    struct topbase_phot *cont_ptr = &phot_top[n_cont];
+    const double fthresh = cont_ptr->freq[0], flast = cont_ptr->freq[cont_ptr->np - 1];
+    for (n_temp = 0; n_temp < N_TEST_TEMPERATURES; n_temp++)
+    {
+      const double t_e = pow (10., 3.3 + 0.25 * n_temp + 0.0137);
+      for (n_rad = 0; n_rad < 3; n_rad++)
+      {
+        const double t_r = n_rad == 0 ? 0.5 * t_e : t_e, beta = n_rad < 2 ? H_OVER_K / t_e : 0;
+        if (H_OVER_K * fthresh / t_r > 200)
+          continue;
+        bf_rate_integrals (cont_ptr, fthresh, flast, beta, H_OVER_K / t_r, sum);
+        for (ichoice = 0; ichoice < 3; ichoice++)
+        {
+          const double reference = reference_integral (cont_ptr, flast, beta, H_OVER_K / t_r, ichoice);
+          CU_ASSERT_DOUBLE_EQUAL (sum[ichoice], reference, ALPHA_SP_TOLERANCE * reference);
+        }
       }
     }
   }
@@ -251,6 +294,7 @@ create_alpha_sp_test_suite (void)
   }
 
   if ((CU_add_test (suite, "alpha_sp matches adaptive quadrature", test_alpha_sp_matches_reference) == NULL) ||
+      (CU_add_test (suite, "Stimulated and photoionization integrals match adaptive quadrature", test_stimulated_matches_reference) == NULL) ||
       (CU_add_test (suite, "Band-limited integrals add up", test_band_limited_adds_up) == NULL) ||
       (CU_add_test (suite, "Extreme temperatures", test_extreme_temperatures) == NULL))
   {
