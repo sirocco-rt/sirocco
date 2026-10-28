@@ -27,7 +27,6 @@
 #include "../../atomic.h"
 #include "../../sirocco.h"
 
-#define ALPHA_SP_CONSTANT 5.79618e-36
 #define N_TEST_TEMPERATURES 13
 
 /* the accuracy asked of the reference, cquad at 1e-13, with margin; bf_rate_integrals itself is good to ~1e-13 */

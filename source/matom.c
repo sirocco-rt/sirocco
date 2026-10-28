@@ -743,8 +743,6 @@ bf_rate_integrals (struct topbase_phot *cont_ptr, double freq_min, double freq_m
 
 
 
-#define ALPHA_SP_CONSTANT 5.79618e-36
-
 /**********************************************************/
 /**
  * @brief the integrals of alpha_sp_all at temperature temp, remembering the last ALPHA_SP_MEMO temperatures of

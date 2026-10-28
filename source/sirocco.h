@@ -1938,6 +1938,9 @@ extern struct filenames files;
    imposed on x = hnu/kT terms */
 
 #define ALPHA_MATOM_NUMAX_LIMIT 30      /**< maximum value for h nu / k T to be considered in integrals */
+
+/** 4 pi / c^2 (h^2 / 2 pi m_e k)^(3/2), the factor of the Milne relation for the macro-atom recombination rates */
+#define ALPHA_SP_CONSTANT (4. * PI / (VLIGHT * VLIGHT) * pow (PLANCK * PLANCK / (2. * PI * MELEC * BOLTZMANN), 1.5))
 #define ALPHA_FF 100.           /**< maximum h nu / kT to create the free free CDF
                                   */
 
