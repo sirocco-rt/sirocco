@@ -659,6 +659,23 @@ bf_rate_segment (struct topbase_phot *cont_ptr, int i, double lo, double hi, dou
   }
 }
 
+/** @brief add the integrals of bf_rate_integrals from lo to hi, table interval by table interval */
+
+static void
+bf_rate_range (struct topbase_phot *cont_ptr, double lo, double hi, double beta, double beta_r, double sum[3])
+{
+  int i;
+
+  for (i = 0; i < cont_ptr->np - 1 && cont_ptr->freq[i] < hi; i++)
+  {
+    const double a = fmax (lo, cont_ptr->freq[i]), b = fmin (hi, cont_ptr->freq[i + 1]);
+
+    /* sigma_phot is zero inside an interval with a zero cross section at either end */
+    if (b > a && cont_ptr->x[i] > 0 && cont_ptr->x[i + 1] > 0)
+      bf_rate_segment (cont_ptr, i, a, b, beta, beta_r, sum);
+  }
+}
+
 /**********************************************************/
 /**
  * @brief the frequency integrals of a photoionization continuum that the macro-atom rates need
@@ -673,20 +690,26 @@ bf_rate_segment (struct topbase_phot *cont_ptr, int i, double lo, double hi, dou
  * @details
  * sigma_phot interpolates the cross section linearly in log-log between the table points, so between two points the
  * integrand is a power law times exponentials, smooth whatever the resonance structure of the table; bf_rate_segment
- * integrates it there. The integration stops where the rest is below BF_RATE_EPSILON times the smallest sum. The
- * rest beyond nu is at most x_max / nu_threshold times the integral of nu'^3 exp (beta (nu_threshold - nu') - beta_r
- * nu') from nu to infinity, over 1 - exp (-beta_r nu), with x_max the largest cross section of the table. It is
- * checked -ln BF_RATE_EPSILON e-folds of the exponential factors above freq_min. If it is too large there, the
- * integration goes on to where the bound has fallen enough (nu'^3 grows by at most exp (3 dnu / nu), and beta +
- * beta_r > 3 / nu there); if nothing has been summed yet, it is checked again as many e-folds further on.
- * Infinite beta or beta_r (zero temperature) give zero integrals.
+ * integrates it there.
+ *
+ * The exponential factors fall by exp (-B dnu), B = beta + beta_r, so the integrals are first taken up to
+ * nu_1 = freq_min - ln (BF_RATE_EPSILON) / B. Beyond nu_1 the rest is at most
+ *
+ *    R = x_max / nu_threshold exp (beta (nu_threshold - nu_1) - beta_r nu_1) / (1 - exp (-beta_r nu_1))
+ *        (nu_1^3 / B + 3 nu_1^2 / B^2 + 6 nu_1 / B^3 + 6 / B^4)
+ *
+ * (x_max the largest cross section of the table, nu^2 and the weights at most nu^3 / nu_threshold), and since nu^3
+ * grows by at most exp (3 dnu / nu_1), with B nu_1 > 3, the rest beyond nu_1 + ln (R / F) / (B - 3 / nu_1) is below F
+ * = BF_RATE_EPSILON times the smallest sum. The integrals are completed to there. Infinite beta or beta_r (zero
+ * temperature) give zero integrals.
 ***********************************************************/
 
 void
 bf_rate_integrals (struct topbase_phot *cont_ptr, double freq_min, double freq_max, double beta, double beta_r, double sum[3])
 {
   const double fthresh = cont_ptr->freq[0], big_b = beta + beta_r;
-  double lo, end, check, x_max = 0;
+  const double lo = fmax (freq_min, fthresh), end = fmin (freq_max, cont_ptr->freq[cont_ptr->np - 1]);
+  double nu_1, rest, floor, x_max = 0;
   int i;
 
   sum[0] = sum[1] = sum[2] = 0;
@@ -700,39 +723,20 @@ bf_rate_integrals (struct topbase_phot *cont_ptr, double freq_min, double freq_m
   if (bf_rate_rule[1] == NULL)
     bf_rate_rules_init ();
 
-  lo = fmax (freq_min, fthresh);
-  end = fmin (freq_max, cont_ptr->freq[cont_ptr->np - 1]);
-  check = big_b > 0 ? lo - log (BF_RATE_EPSILON) / big_b : end;
+  nu_1 = big_b > 0 ? fmin (end, lo - log (BF_RATE_EPSILON) / big_b) : end;
+  bf_rate_range (cont_ptr, lo, nu_1, beta, beta_r, sum);
+  if (nu_1 == end)
+    return;
+
   for (i = 0; i < cont_ptr->np; i++)
     x_max = fmax (x_max, cont_ptr->x[i]);
-
-  for (i = 0; i < cont_ptr->np - 1 && cont_ptr->freq[i + 1] <= lo; i++);
-  while (i < cont_ptr->np - 1 && lo < end)
-  {
-    const double hi = fmin (fmin (cont_ptr->freq[i + 1], end), check);
-
-    /* sigma_phot is zero inside an interval with a zero cross section at either end */
-    if (cont_ptr->x[i] > 0 && cont_ptr->x[i + 1] > 0)
-      bf_rate_segment (cont_ptr, i, lo, hi, beta, beta_r, sum);
-    lo = hi;
-    if (lo == cont_ptr->freq[i + 1])
-      i++;
-    if (lo == check && lo < end)
-    {
-      const double floor = BF_RATE_EPSILON * fmin (sum[0], sum[2]);
-      double rest = (((lo / big_b + 3 / (big_b * big_b)) * lo + 6 / (big_b * big_b * big_b)) * lo + 6 / (big_b * big_b * big_b * big_b))
-        * x_max / fthresh * exp (beta * (fthresh - lo) - beta_r * lo);
-
-      if (beta_r > 0)
-        rest /= -expm1 (-beta_r * lo);
-      if (rest <= floor)
-        break;
-      if (floor > 0)
-        end = check = fmin (end, lo + log (rest / floor) / (big_b - 3 / lo));
-      else
-        check = lo - log (BF_RATE_EPSILON) / big_b;
-    }
-  }
+  rest = x_max / fthresh * exp (beta * (fthresh - nu_1) - beta_r * nu_1)
+    * (((nu_1 / big_b + 3 / (big_b * big_b)) * nu_1 + 6 / (big_b * big_b * big_b)) * nu_1 + 6 / (big_b * big_b * big_b * big_b));
+  if (beta_r > 0)
+    rest /= -expm1 (-beta_r * nu_1);
+  floor = BF_RATE_EPSILON * fmin (sum[0], sum[2]);
+  if (rest > floor)
+    bf_rate_range (cont_ptr, nu_1, fmin (end, nu_1 + log (rest / floor) / (big_b - 3 / nu_1)), beta, beta_r, sum);
 }
 
 
