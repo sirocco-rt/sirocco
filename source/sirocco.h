@@ -1761,6 +1761,13 @@ enum partial_cells_enum
                       */
 };
 
+enum bf_integration_enum
+{ BF_INTEG_EXACT = 0,    /**< Gauss-Legendre over the interpolated cross section (bf_rate_integrals); the default */
+  BF_INTEG_SUM = 1,      /**< 10,000-point sum for alpha_sp; GSL for the band-limited alpha_sp and
+                           * the dilute black-body estimators (the method used before #1219) */
+  BF_INTEG_GSL = 2       /**< GSL (num_int) for all of the integrals */
+};
+
 
 /***********************ADVANCED_MODES STRUCTURE **********************/
 /**
@@ -1850,7 +1857,11 @@ struct advanced_modes
                                   that make it less useful than it might seem. */
   int no_macro_pops_for_ions;     /* if true, then use the ion densities from the ionization mode
                                      for macro-atoms, rather than from macro_pops */
-  int early_stopping;             /**< when TRUE, enables convergence-based early stopping of ionization
+  int bf_integration;             /**< How the integrals over bound-free cross sections for macro atoms
+                                    * (alpha_sp, the band-limited alpha_sp, and the dilute black-body
+                                    * estimators) are done: BF_INTEG_EXACT, BF_INTEG_SUM or BF_INTEG_GSL.
+                                    * Set by @Diag.bf_integration; see #1219 */
+  int early_stopping;            /**< when TRUE, enables convergence-based early stopping of ionization
                                    * cycles. Set by the -early_stopping command line switch. When active,
                                    * sirocco queries the user for @estop parameters in the .pf file.
                                    */

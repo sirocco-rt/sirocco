@@ -143,6 +143,7 @@ void define_wind(void);
 double get_ion_density(int ndom, double x[], int nion);
 /* diag.c */
 int get_standard_care_factors(void);
+int get_bf_integration_method(void);
 int get_extra_diagnostics(void);
 int init_searchlight(void);
 int init_extra_diagnostics(void);

@@ -985,8 +985,11 @@ check_stimulated_recomb (PlasmaPtr xplasma)
       njumps++;
 
       /* net thermal heating from this continuum, as in macro_photo_heating; negative means cooling */
-      net_heat = ((mplasma->state.gamma_e_old[k] - mplasma->state.gamma_old[k]) - (mplasma->state.alpha_st_e_old[k] - mplasma->state.alpha_st_old[k]) * sf)
-        * PLANCK * cont_ptr->freq[0] * den_config (xplasma, i) * xplasma->state.vol;
+      net_heat =
+        ((mplasma->state.gamma_e_old[k] - mplasma->state.gamma_old[k]) -
+         (mplasma->state.alpha_st_e_old[k] - mplasma->state.alpha_st_old[k]) * sf) * PLANCK * cont_ptr->freq[0] * den_config (xplasma,
+                                                                                                                              i) *
+        xplasma->state.vol;
 
       if (net_heat < 0.0)
       {
@@ -1048,6 +1051,248 @@ get_dilute_estimators (PlasmaPtr xplasma)
   return (0);
 }
 
+/* The methods used before #1219 for the dilute black-body estimators, kept as options (@Diag.bf_integration
+   sum or gsl, which both used num_int here).  The integrands get the continuum and the temperatures through
+   these externals. */
+
+static struct topbase_phot *cont_ext_ptr2;      //continuum pointer passed externally
+static double temp_ext2;        //temperature passed externally
+static double temp_ext_rad;     //radiation temperature passed externally
+
+/** @brief integrand of gamma_old, for num_int */
+
+static double
+gamma_integrand (double freq, void *params)
+{
+  double fthresh;
+  double x;
+  double integrand;
+  double tt;
+
+  fthresh = cont_ext_ptr2->freq[0];
+  tt = temp_ext2;
+
+  if (freq < fthresh)
+    return (0.0);               // No photoionization at frequencies lower than the threshold freq occur
+
+  x = sigma_phot (cont_ext_ptr2, freq); //this is the cross-section
+
+  integrand = x * freq * freq / (exp (H_OVER_K * freq / tt) - 1);
+
+  return (integrand);
+}
+
+/** @brief integrand of gamma_e_old, for num_int */
+
+static double
+gamma_e_integrand (double freq, void *params)
+{
+  double fthresh;
+  double x;
+  double integrand;
+  double tt;
+
+  fthresh = cont_ext_ptr2->freq[0];
+  tt = temp_ext2;
+
+  if (freq < fthresh)
+    return (0.0);               // No photoionization at frequencies lower than the threshold freq occur
+
+  x = sigma_phot (cont_ext_ptr2, freq); //this is the cross-section
+  integrand = x * freq * freq * freq / (exp (H_OVER_K * freq / tt) - 1) / fthresh;
+
+  return (integrand);
+}
+
+/** @brief integrand of alpha_st_old, for num_int */
+
+static double
+alpha_st_integrand (double freq, void *params)
+{
+  double fthresh;
+  double x;
+  double integrand;
+  double tt;
+  double ttrr;
+
+  fthresh = cont_ext_ptr2->freq[0];
+  tt = temp_ext2;               //this is the electron temperature
+  /* Also need the radiation temperature here */
+  ttrr = temp_ext_rad;          //will do for now
+
+  if (freq < fthresh)
+    return (0.0);               // No recombination at frequencies lower than the threshold freq occur
+
+  x = sigma_phot (cont_ext_ptr2, freq); //this is the cross-section
+
+  integrand = x * freq * freq * exp (H_OVER_K * (fthresh - freq) / tt) / (exp (H_OVER_K * freq / ttrr) - 1);
+
+  return (integrand);
+}
+
+/** @brief integrand of alpha_st_e_old, for num_int */
+
+static double
+alpha_st_e_integrand (double freq, void *params)
+{
+  double fthresh;
+  double x;
+  double integrand;
+  double tt;
+  double ttrr;
+
+  fthresh = cont_ext_ptr2->freq[0];
+  tt = temp_ext2;               //this is the electron temperature
+  /* Also need the radiation temperature here */
+  ttrr = temp_ext_rad;          //will do for now
+
+  if (freq < fthresh)
+    return (0.0);               // No recombination at frequencies lower than the threshold freq occur
+
+  x = sigma_phot (cont_ext_ptr2, freq); //this is the cross-section  
+
+  integrand = x * freq * freq * exp (H_OVER_K * (fthresh - freq) / tt) / (exp (H_OVER_K * freq / ttrr) - 1) * freq / fthresh;
+
+  return (integrand);
+}
+
+/** @brief get_gamma by the method used before #1219 (num_int, cut at ALPHA_MATOM_NUMAX_LIMIT k T / h) */
+
+static double
+get_gamma_old (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
+{
+  double gamma_value;
+  double fthresh, flast;
+
+  temp_ext2 = xplasma->state.t_r;       //external temperature
+  cont_ext_ptr2 = cont_ptr;     //external cont pointer
+  fthresh = cont_ptr->freq[0];  //first frequency in list
+  flast = cont_ptr->freq[cont_ptr->np - 1];     //last frequency in list
+  if ((H_OVER_K * (flast - fthresh) / temp_ext2) > ALPHA_MATOM_NUMAX_LIMIT)
+  {
+    //flast is currently very far into the exponential tail: so reduce flast to limit value of h nu / k T.
+    flast = fthresh + temp_ext2 * ALPHA_MATOM_NUMAX_LIMIT / H_OVER_K;
+  }
+
+
+  // gamma_value = qromb (gamma_integrand, fthresh, flast, 1e-4);
+  gamma_value = num_int (gamma_integrand, fthresh, flast, 1e-4);
+
+  gamma_value *= 8 * PI / VLIGHT / VLIGHT * xplasma->state.w;
+
+  return (gamma_value);
+
+}
+
+/** @brief get_gamma_e by the method used before #1219 (num_int, cut at ALPHA_MATOM_NUMAX_LIMIT k T / h) */
+
+static double
+get_gamma_e_old (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
+{
+  double gamma_e_value;
+  double fthresh, flast;
+
+  temp_ext2 = xplasma->state.t_r;       //external temperature
+  cont_ext_ptr2 = cont_ptr;     //external cont pointer
+  fthresh = cont_ptr->freq[0];  //first frequency in list
+  flast = cont_ptr->freq[cont_ptr->np - 1];     //last frequency in list
+  if ((H_OVER_K * (flast - fthresh) / temp_ext2) > ALPHA_MATOM_NUMAX_LIMIT)
+  {
+    //flast is currently very far into the exponential tail: so reduce flast to limit value of h nu / k T.
+    flast = fthresh + temp_ext2 * ALPHA_MATOM_NUMAX_LIMIT / H_OVER_K;
+  }
+
+
+//  gamma_e_value = qromb (gamma_e_integrand, fthresh, flast, 1e-4);
+  gamma_e_value = num_int (gamma_e_integrand, fthresh, flast, 1e-4);
+
+  gamma_e_value *= 8 * PI / VLIGHT / VLIGHT * xplasma->state.w;
+
+  return (gamma_e_value);
+
+}
+
+/** @brief get_alpha_st by the method used before #1219 (num_int, cut at ALPHA_MATOM_NUMAX_LIMIT k T / h) */
+
+static double
+get_alpha_st_old (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
+{
+  double alpha_st_value;
+  double fthresh, flast;
+
+  temp_ext2 = xplasma->state.t_e;       //external for use in integrand
+  temp_ext_rad = xplasma->state.t_r;
+  cont_ext_ptr2 = cont_ptr;     //"
+  fthresh = cont_ptr->freq[0];  //first frequency in list
+  flast = cont_ptr->freq[cont_ptr->np - 1];     //last frequency in list
+
+  if ((H_OVER_K * (flast - fthresh) / temp_ext2) > ALPHA_MATOM_NUMAX_LIMIT)
+  {
+    //flast is currently very far into the exponential tail: so reduce flast to limit value of h nu / k T.
+    flast = fthresh + temp_ext2 * ALPHA_MATOM_NUMAX_LIMIT / H_OVER_K;
+  }
+
+
+  alpha_st_value = num_int (alpha_st_integrand, fthresh, flast, 1e-4);
+
+
+  /* The lines above evaluate the integral in alpha_sp. Now we just want to multiply 
+     through by the appropriate constant. */
+  if (cont_ptr->macro_info == 1 && geo.macro_simple == FALSE)
+  {
+    alpha_st_value = alpha_st_value * xconfig[cont_ptr->nlev].g / xconfig[cont_ptr->uplev].g * pow (xplasma->state.t_e, -1.5);
+  }
+  else                          //case for simple element
+  {
+    alpha_st_value = alpha_st_value * xconfig[cont_ptr->nlev].g / ion[cont_ptr->nion + 1].g * pow (xplasma->state.t_e, -1.5);   //g for next ion up used
+  }
+
+  alpha_st_value = alpha_st_value * ALPHA_SP_CONSTANT * xplasma->state.w;
+
+  return (alpha_st_value);
+}
+
+/** @brief get_alpha_st_e by the method used before #1219 (num_int, cut at ALPHA_MATOM_NUMAX_LIMIT k T / h) */
+
+static double
+get_alpha_st_e_old (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
+{
+  double alpha_st_e_value;
+  double fthresh, flast;
+
+  temp_ext2 = xplasma->state.t_e;       //external for use in integrand
+  temp_ext_rad = xplasma->state.t_r;    //"
+  cont_ext_ptr2 = cont_ptr;     //"
+  fthresh = cont_ptr->freq[0];  //first frequency in list
+  flast = cont_ptr->freq[cont_ptr->np - 1];     //last frequency in list
+
+  if ((H_OVER_K * (flast - fthresh) / temp_ext2) > ALPHA_MATOM_NUMAX_LIMIT)
+  {
+    //flast is currently very far into the exponential tail: so reduce flast to limit value of h nu / k T.
+    flast = fthresh + temp_ext2 * ALPHA_MATOM_NUMAX_LIMIT / H_OVER_K;
+  }
+
+
+//  alpha_st_e_value = qromb (alpha_st_e_integrand, fthresh, flast, 1e-4);
+  alpha_st_e_value = num_int (alpha_st_e_integrand, fthresh, flast, 1e-4);
+
+  /* The lines above evaluate the integral in alpha_sp. Now we just want to multiply 
+     through by the appropriate constant. */
+  if (cont_ptr->macro_info == TRUE && geo.macro_simple == FALSE)
+  {
+    alpha_st_e_value = alpha_st_e_value * xconfig[cont_ptr->nlev].g / xconfig[cont_ptr->uplev].g * pow (xplasma->state.t_e, -1.5);
+  }
+  else                          //case for simple element
+  {
+    alpha_st_e_value = alpha_st_e_value * xconfig[cont_ptr->nlev].g / ion[cont_ptr->nion + 1].g * pow (xplasma->state.t_e, -1.5);       //g for next ion up used
+  }
+
+  alpha_st_e_value = alpha_st_e_value * ALPHA_SP_CONSTANT * xplasma->state.w;
+
+  return (alpha_st_e_value);
+}
+
+
 /**********************************************************/
 /**
  * @brief the dilute photoionization rate estimator
@@ -1067,6 +1312,9 @@ double
 get_gamma (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
 {
   double sum[3];
+
+  if (modes.bf_integration != BF_INTEG_EXACT)
+    return (get_gamma_old (cont_ptr, xplasma));
 
   bf_rate_integrals (cont_ptr, cont_ptr->freq[0], cont_ptr->freq[cont_ptr->np - 1], 0, H_OVER_K / xplasma->state.t_r, sum);
   return (sum[0] * 8 * PI / VLIGHT / VLIGHT * xplasma->state.w);
@@ -1091,6 +1339,9 @@ double
 get_gamma_e (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
 {
   double sum[3];
+
+  if (modes.bf_integration != BF_INTEG_EXACT)
+    return (get_gamma_e_old (cont_ptr, xplasma));
 
   bf_rate_integrals (cont_ptr, cont_ptr->freq[0], cont_ptr->freq[cont_ptr->np - 1], 0, H_OVER_K / xplasma->state.t_r, sum);
   return (sum[1] * 8 * PI / VLIGHT / VLIGHT * xplasma->state.w);
@@ -1150,6 +1401,9 @@ get_alpha_st (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
 {
   double rate[2];
 
+  if (modes.bf_integration != BF_INTEG_EXACT)
+    return (get_alpha_st_old (cont_ptr, xplasma));
+
   stimulated_recombination_rates (cont_ptr, xplasma, rate);
   return (rate[0]);
 }
@@ -1172,6 +1426,9 @@ double
 get_alpha_st_e (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
 {
   double rate[2];
+
+  if (modes.bf_integration != BF_INTEG_EXACT)
+    return (get_alpha_st_e_old (cont_ptr, xplasma));
 
   stimulated_recombination_rates (cont_ptr, xplasma, rate);
   return (rate[1]);

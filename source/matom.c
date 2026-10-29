@@ -808,6 +808,168 @@ alpha_sp_sums (struct topbase_phot *cont_ptr, double temp, double sum[3])
   memcpy (memo->sum[k], sum, sizeof memo->sum[k]);
 }
 
+/* The methods used before #1219, kept as options (@Diag.bf_integration sum or gsl).  The GSL integrand
+   gets the continuum, the temperature and the choice through these externals. */
+
+static struct topbase_phot *cont_ext_ptr;       //continuum pointer passed externally
+static double temp_ext;         //temperature passed externally
+static int temp_choice;         //choice of type of calculation for alpha_sp
+
+/**********************************************************/
+/**
+ *  @brief the integrand of alpha_sp at a chosen frequency, for num_int
+ *
+ * @param [in] double freq
+ * @param [in] void *params
+ *
+ * Note:
+ *  The peculiar variable *params is needed by the gsl routine
+ *  that does the integration.
+***********************************************************/
+
+static double
+alpha_sp_integrand (double freq, void *params)
+{
+  double fthresh;
+  double x;
+  double integrand;
+  double tt;
+
+  fthresh = cont_ext_ptr->freq[0];
+  tt = temp_ext;
+
+  if (freq < fthresh)
+    return (0.0);               // No recombination at frequencies lower than the threshold freq occur
+
+  x = sigma_phot (cont_ext_ptr, freq);  //this is the cross-section
+
+  integrand = x * freq * freq * exp (H_OVER_K * (fthresh - freq) / tt);
+
+
+  if (temp_choice == 1)
+    return (integrand * freq / fthresh);        //energy weighted case
+  if (temp_choice == 2)
+    return (integrand * (freq - fthresh) / fthresh);    // difference case
+  return (integrand);           //spontaneous case
+}
+
+/**********************************************************/
+/**
+ * @brief the integrals of alpha_sp by the methods used before #1219
+ *
+ * @param [in] struct topbase_phot cont_ptr the continuum
+ * @param [in] double temp the electron temperature
+ * @param [in] int want[3] which of the integrals (ichoice 0, 1, 2) to calculate
+ * @param [out] double integral[3] the integrals asked for
+ *
+ * @details
+ * The integrals stop at ALPHA_MATOM_NUMAX_LIMIT k T / h above the threshold.  With BF_INTEG_SUM they are a
+ * 10,000-point sum in log nu, all three from one pass; with BF_INTEG_GSL each is a call to num_int.
+***********************************************************/
+
+static void
+alpha_sp_integrals_old (struct topbase_phot *cont_ptr, double temp, const int want[3], double integral[3])
+{
+  double fthresh, flast;
+  int ichoice;
+
+  fthresh = cont_ptr->freq[0];  //first frequency in list
+  flast = cont_ptr->freq[cont_ptr->np - 1];     //last frequency in list
+  if ((H_OVER_K * (flast - fthresh) / temp) > ALPHA_MATOM_NUMAX_LIMIT)
+  {
+    //flast is currently very far into the exponential tail: so reduce flast to limit value of h nu / k T.
+    flast = fthresh + temp * ALPHA_MATOM_NUMAX_LIMIT / H_OVER_K;
+  }
+
+  integral[0] = integral[1] = integral[2] = 0;
+
+  if (modes.bf_integration == BF_INTEG_GSL)
+  {
+    temp_ext = temp;
+    cont_ext_ptr = cont_ptr;
+    for (ichoice = 0; ichoice < 3; ichoice++)
+    {
+      if (want[ichoice])
+      {
+        temp_choice = ichoice;
+        integral[ichoice] = num_int (alpha_sp_integrand, fthresh, flast, 1e-4);
+      }
+    }
+    return;
+  }
+
+  double freq, dfreq;
+  double freq1, freq2;
+  double x, integrand;
+  int n, nmax;
+  double log_fmin, dlog_freq;
+
+  nmax = 10000;
+  log_fmin = log10 (cont_ptr->freq[0]);
+  dlog_freq = log10 (flast / cont_ptr->freq[0]) / nmax;
+
+  freq1 = cont_ptr->freq[0];
+  for (n = 1; n < nmax; n++)
+  {
+    freq2 = pow (10., log_fmin + n * dlog_freq);
+    freq = 0.5 * (freq1 + freq2);
+    dfreq = freq2 - freq1;
+    x = sigma_phot (cont_ptr, freq);
+    freq1 = freq2;
+
+    if (freq > flast)
+    {
+      break;
+    }
+
+    integrand = x * freq * freq * exp (H_OVER_K * (fthresh - freq) / temp);
+
+    if (want[0])
+      integral[0] += integrand * dfreq;
+    if (want[1])
+      integral[1] += integrand * (freq / fthresh) * dfreq;      //energy weighted case
+    if (want[2])
+      integral[2] += integrand * ((freq - fthresh) / fthresh) * dfreq;  // difference case
+  }
+}
+
+/**********************************************************/
+/**
+ * @brief the alpha_sp rates asked for, by the methods used before #1219
+ *
+ * @details
+ * The integrals of alpha_sp_integrals_old times the constants, in the same order of operations as before,
+ * so that the results are those of the earlier code.
+***********************************************************/
+
+static void
+alpha_sp_old (struct topbase_phot *cont_ptr, PlasmaPtr xplasma, const int want[3], double alpha[3])
+{
+  int ichoice;
+
+  alpha_sp_integrals_old (cont_ptr, xplasma->state.t_e, want, alpha);
+  for (ichoice = 0; ichoice < 3; ichoice++)
+  {
+    if (!want[ichoice])
+      continue;
+    if (cont_ptr->macro_info == TRUE && geo.macro_simple == FALSE)
+    {
+      alpha[ichoice] = alpha[ichoice] * xconfig[cont_ptr->nlev].g / xconfig[cont_ptr->uplev].g * pow (xplasma->state.t_e, -1.5);
+    }
+    else                        //case for simple element
+    {
+      alpha[ichoice] = alpha[ichoice] * xconfig[cont_ptr->nlev].g / ion[cont_ptr->nion + 1].g * pow (xplasma->state.t_e, -1.5); //g for next ion up used
+    }
+
+    alpha[ichoice] = alpha[ichoice] * ALPHA_SP_CONSTANT;
+
+    if (sane_check (alpha[ichoice]))
+    {
+      Error ("alpha_sp:sane_check value is %e\n", alpha[ichoice]);
+    }
+  }
+}
+
 /**********************************************************/
 /**
  * @brief the matom estimator for the spontaneous recombination rate.
@@ -842,6 +1004,14 @@ alpha_sp (struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice)
 {
   double alpha[3];
 
+  if (modes.bf_integration != BF_INTEG_EXACT)
+  {
+    int want[3] = { 0, 0, 0 };
+
+    want[ichoice] = 1;
+    alpha_sp_old (cont_ptr, xplasma, want, alpha);
+    return (alpha[ichoice]);
+  }
   alpha_sp_all (cont_ptr, xplasma, alpha);
   return (alpha[ichoice]);
 }
@@ -855,7 +1025,8 @@ alpha_sp (struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice)
  * @param [out] double alpha[3] the rates for ichoice 0, 1 and 2 of alpha_sp
  *
  * @details
- * The integrals, from bf_rate_integrals, run over the whole cross-section table.
+ * The integrals, from bf_rate_integrals, run over the whole cross-section table.  With @Diag.bf_integration
+ * sum or gsl they are done as before #1219 instead, see alpha_sp_old.
 ***********************************************************/
 
 void
@@ -864,6 +1035,14 @@ alpha_sp_all (struct topbase_phot *cont_ptr, PlasmaPtr xplasma, double alpha[3])
   const double temp = xplasma->state.t_e;
   double g_upper;
   int ichoice;
+
+  if (modes.bf_integration != BF_INTEG_EXACT)
+  {
+    const int want[3] = { 1, 1, 1 };
+
+    alpha_sp_old (cont_ptr, xplasma, want, alpha);
+    return;
+  }
 
   if (cont_ptr->macro_info == TRUE && geo.macro_simple == FALSE)
   {
@@ -883,6 +1062,40 @@ alpha_sp_all (struct topbase_phot *cont_ptr, PlasmaPtr xplasma, double alpha[3])
       Error ("alpha_sp:sane_check value is %e\n", alpha[ichoice]);
     }
   }
+}
+
+/**********************************************************/
+/**
+ * @brief the band-limited integral of alpha_sp by the method used before #1219 (num_int)
+ *
+ * @details
+ * Used for both @Diag.bf_integration sum and gsl, as before.  The integral stops at ALPHA_MATOM_NUMAX_LIMIT
+ * k T / h above the threshold.
+***********************************************************/
+
+static double
+scaled_alpha_sp_integral_band_limited_old (struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice, double freq_min, double freq_max)
+{
+  double alpha_sp_value;
+  double fthresh, flast;
+
+  temp_choice = ichoice;
+  temp_ext = xplasma->state.t_e;        //external for use in alph_sp_integrand
+  cont_ext_ptr = cont_ptr;      //"
+  fthresh = cont_ptr->freq[0];  //first frequency in list
+  flast = cont_ptr->freq[cont_ptr->np - 1];     //last frequency in list
+  if ((H_OVER_K * (flast - fthresh) / temp_ext) > ALPHA_MATOM_NUMAX_LIMIT)
+  {
+    //flast is currently very far into the exponential tail: so reduce flast to limit value of h nu / k T.
+    flast = fthresh + temp_ext * ALPHA_MATOM_NUMAX_LIMIT / H_OVER_K;
+  }
+  if (flast < freq_max)
+  {
+    freq_max = flast;
+  }
+  alpha_sp_value = num_int (alpha_sp_integrand, freq_min, freq_max, 1e-4);
+
+  return (alpha_sp_value);
 }
 
 /**********************************************************/
@@ -913,6 +1126,9 @@ double
 scaled_alpha_sp_integral_band_limited (struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice, double freq_min, double freq_max)
 {
   double sum[3];
+
+  if (modes.bf_integration != BF_INTEG_EXACT)
+    return (scaled_alpha_sp_integral_band_limited_old (cont_ptr, xplasma, ichoice, freq_min, freq_max));
 
   /* the whole continuum is the same integrals as alpha_sp_all's */
   if (freq_min <= cont_ptr->freq[0] && freq_max >= cont_ptr->freq[cont_ptr->np - 1])
