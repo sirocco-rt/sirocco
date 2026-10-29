@@ -711,10 +711,11 @@ calloc_estimators (int nelem)
 
 
 
+  /* The macro-atom matrices are allocated, and reported, separately in calloc_matom_matrix,
+   * and only when they are stored */
   if (nlevels_macro > 0 || geo.nmacro > 0)
   {
-    double nrows = nlevels_macro + 1;
-    double macro_shared_bytes = (double) nelem * sizeof (double) * (size_Jbar_est + 4.0 * size_gamma_est + nlevels_macro + nrows * nrows);
+    double macro_shared_bytes = (double) nelem * sizeof (double) * (size_Jbar_est + 4.0 * size_gamma_est + nlevels_macro);
     double macro_private_bytes = (double) nelem * sizeof (double) *
       (size_Jbar_est + 4.0 * size_gamma_est + 2.0 * size_alpha_est + nlevels_macro + 2.0 * nphot_total + nlines);
     Log
@@ -1037,6 +1038,10 @@ calloc_matom_matrix (int nelem)
     Error ("calloc_matom_matrix: failed to allocate matom_matrix_rowptrs\n");
     Exit (EXIT_FAILURE);
   }
+
+  Log
+    ("Macro-atom matrix memory per rank: shared %.1f MB (one copy/node), row pointers %.1f MB (per rank)\n",
+     1.e-6 * nelem * sizeof (double) * nrows * nrows, 1.e-6 * nelem * sizeof (double *) * nrows);
 
   /* Point each cell's matom_matrix into the shared block */
   for (n = 0; n < nelem; n++)
