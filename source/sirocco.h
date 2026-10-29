@@ -1416,7 +1416,7 @@ extern macro_blocks macro_block_ptrs;
 
 
 //These constants are used in the various routines which compute ionization state
-#define SAHA 4.82907e15         /**<  2* (2.*PI*MELEC*k)**1.5 / h**3  (Calculated in constants) */
+#define SAHA (2. * pow (2. * PI * MELEC * BOLTZMANN / (PLANCK * PLANCK), 1.5))     /**<  2 (2 pi m_e k / h^2)^(3/2), from the constants of constants.h */
 #define MAXITERATIONS	200     /**< /The number of loops to do to try to converge in ne */
 #define FRACTIONAL_ERROR 0.03   /**< The change in n_e which causes a break out of the loop for ne */
 #define THETAMAX	 1e4    /**< Used in initial calculation of n_e */

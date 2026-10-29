@@ -62,14 +62,9 @@ double fb_t[NTEMPS];
 int nfb = 0;
 
 
-/** FBEMISS was calculated as follows:
- * x= 2. * PI * MELEC * BOLTZMANN / (H*H);
- * x=pow(x,-1.5);
- * x*=8. * PI / (C*C);
- * x*= H;
- */
-#define FBEMISS   7.67413e-62   // Calculated with constants.c
-#define LOG_FBEMISS -140.7224208336316
+/** FBEMISS is 8 pi h / c^2 (h^2 / 2 pi m_e k)^(3/2), i.e. 2 h ALPHA_SP_CONSTANT, from the constants of constants.h */
+#define FBEMISS   (2. * PLANCK * ALPHA_SP_CONSTANT)
+#define LOG_FBEMISS log (FBEMISS)
 
 
 /* These are external structures used primarily because we need to call

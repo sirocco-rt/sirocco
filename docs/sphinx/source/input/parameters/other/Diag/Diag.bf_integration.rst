@@ -26,7 +26,9 @@ Values
   sum
     A 10,000-point sum for alpha_sp; GSL integration for the band-limited
     alpha_sp and the dilute black-body estimators. This is what was used
-    before this option was added.
+    before this option was added. (The constant in the rates is now computed
+    from the physical constants, so the rates are 0.094% lower than in
+    earlier versions.)
 
   gsl
     GSL integration for all of the integrals (what was obtained before by
