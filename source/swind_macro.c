@@ -419,7 +419,7 @@ depcoef_overview (int icell)
      wmain[x->nwind].xcen[0], wmain[x->nwind].xcen[1], wmain[x->nwind].xcen[2], wmain[x->nwind].vol);
   printf (" Z Ion nden macro  b       fpop    lte_fpop    t_e\n");
 
-  for (n = 0; n < NLEVELS; n++)
+  for (n = 0; n < nlevels; n++)
   {
     p = &xconfig[n];
     if (icell >= 0 && icell < NDIM2 && p->macro_info == 1)

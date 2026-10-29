@@ -24,6 +24,7 @@
 #define MAXWORDS    20
 
 #define NXSECTION_INIT 100      /* Initial number of records in phot_top, inner_cross and auger_macro; they double as needed */
+#define NLEVEL_LINE_INIT 1000   /* Initial number of records in xconfig, line and coll_stren; they double as needed */
 
 /* Initial values of log_sigma, the log of the last cross section, for the two tables */
 #define PHOT_TOP_LOG_SIGMA_INIT    (-1.0)
@@ -32,6 +33,9 @@
 static int phot_top_max = 0;    /* The number of records currently allocated in phot_top */
 static int inner_cross_max = 0; /* The number of records currently allocated in inner_cross */
 static int auger_macro_max = 0; /* The number of records currently allocated in auger_macro */
+static int xconfig_max = 0;     /* The number of records currently allocated in xconfig */
+static int line_max = 0;        /* The number of records currently allocated in line */
+static int coll_stren_max = 0;  /* The number of records currently allocated in coll_stren */
 
 
 /**********************************************************/
@@ -298,6 +302,183 @@ alloc_auger_macro_record (int n)
 
 /**********************************************************/
 /**
+ * @brief      Work out the new size of a table that must hold
+ * record n
+ *
+ * @param [in] int  nmax   The number of records allocated now
+ * @param [in] int  n   The index of the record that must exist
+ * @return     The number of records to allocate
+ *
+ **********************************************************/
+
+static int
+grown_size (int nmax, int n)
+{
+  int nnew;
+
+  nnew = (nmax > 0) ? nmax : NLEVEL_LINE_INIT;
+  while (nnew <= n)
+    nnew *= 2;
+  return (nnew);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Make sure xconfig record n exists
+ *
+ * @param [in] int  n   The index of the level in xconfig
+ * @return     A pointer to the record
+ *
+ * @details
+ * xconfig is doubled in size until it holds record n + 1.  The spare
+ * record is there because some searches look at the record one past
+ * the last level read before checking the index.  New records
+ * are initialized as they were when xconfig had a fixed size of
+ * NLEVELS.  Levels are referred to by index while the data are read,
+ * so xconfig may move; the returned pointer is only valid until the
+ * next call.
+ *
+ **********************************************************/
+
+ConfigPtr
+alloc_level_record (int n)
+{
+  int nnew, i;
+
+  if (n + 1 >= xconfig_max)
+  {
+    nnew = grown_size (xconfig_max, n + 1);
+    xconfig = (ConfigPtr) realloc (xconfig, nnew * sizeof (config_dummy));
+    if (xconfig == NULL)
+    {
+      Error ("alloc_level_record: There is a problem in allocating memory for %d levels\n", nnew);
+      exit (0);
+    }
+    for (i = xconfig_max; i < nnew; i++)
+    {
+      memset (&xconfig[i], 0, sizeof (config_dummy));
+      xconfig[i].iauger = -1;
+    }
+    xconfig_max = nnew;
+  }
+  return (&xconfig[n]);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Make sure line record n exists
+ *
+ * @param [in] int  n   The index of the line in line
+ * @return     A pointer to the record
+ *
+ * @details
+ * As alloc_level_record, but for line.  The frequency-ordered
+ * pointers in lin_ptr are made after the data are read.
+ *
+ **********************************************************/
+
+LinePtr
+alloc_line_record (int n)
+{
+  int nnew, i;
+
+  if (n + 1 >= line_max)
+  {
+    nnew = grown_size (line_max, n + 1);
+    line = (LinePtr) realloc (line, nnew * sizeof (line_dummy));
+    if (line == NULL)
+    {
+      Error ("alloc_line_record: There is a problem in allocating memory for %d lines\n", nnew);
+      exit (0);
+    }
+    for (i = line_max; i < nnew; i++)
+    {
+      memset (&line[i], 0, sizeof (line_dummy));
+      line[i].freq = -1;
+      line[i].f = -1;
+      line[i].nion = -1;
+      line[i].macro_info = -1;
+      line[i].coll_index = -999;
+    }
+    line_max = nnew;
+  }
+  return (&line[n]);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Make sure coll_stren record n exists
+ *
+ * @param [in] int  n   The index of the record in coll_stren
+ * @return     A pointer to the record
+ *
+ * @details
+ * As alloc_level_record, but for the collision strengths, which
+ * lines refer to by index (line[].coll_index).
+ *
+ **********************************************************/
+
+Coll_strenptr
+alloc_coll_stren_record (int n)
+{
+  int nnew, i;
+
+  if (n + 1 >= coll_stren_max)
+  {
+    nnew = grown_size (coll_stren_max, n + 1);
+    coll_stren = (Coll_strenptr) realloc (coll_stren, nnew * sizeof (Coll_stren));
+    if (coll_stren == NULL)
+    {
+      Error ("alloc_coll_stren_record: There is a problem in allocating memory for %d collision strengths\n", nnew);
+      exit (0);
+    }
+    for (i = coll_stren_max; i < nnew; i++)
+    {
+      memset (&coll_stren[i], 0, sizeof (Coll_stren));
+      coll_stren[i].n = -1;
+      coll_stren[i].lower = -1;
+      coll_stren[i].upper = -1;
+      coll_stren[i].type = -1;
+    }
+    coll_stren_max = nnew;
+  }
+  return (&coll_stren[n]);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Free the levels, lines and collision strengths
+ *
+ * @return     Always returns 0
+ *
+ * @details
+ * Frees xconfig, line and coll_stren and sets them to NULL, so that
+ * the atomic data can be read again.
+ *
+ **********************************************************/
+
+int
+free_level_line_data ()
+{
+  free (xconfig);
+  xconfig = NULL;
+  xconfig_max = 0;
+  free (line);
+  line = NULL;
+  line_max = 0;
+  free (coll_stren);
+  coll_stren = NULL;
+  coll_stren_max = 0;
+  return (0);
+}
+
+
+/**********************************************************/
+/**
  * @brief      Free the photoionization and inner shell cross sections
  *
  * @return     Always returns 0
@@ -390,41 +571,14 @@ init_atomic_data ()
   }
 
 
-  if (xconfig != NULL)
-  {
-    free (xconfig);
-  }
-  xconfig = (ConfigPtr) calloc (sizeof (config_dummy), NLEVELS);
+  /* The levels, lines and collision strengths start small and are grown by
+     alloc_level_record, alloc_line_record and alloc_coll_stren_record as the
+     data are read (#1223).  Free anything left from a previous call first. */
 
-  if (xconfig == NULL)
-  {
-    Error ("There is a problem in allocating memory for the config structure\n");
-    exit (0);
-  }
-  else
-  {
-    Log_silent
-      ("Allocated %10d bytes for each of %6d elements of     config totaling %10.1f Mb \n",
-       sizeof (config_dummy), NLEVELS, 1.e-6 * NLEVELS * sizeof (config_dummy));
-  }
-
-  if (line != NULL)
-  {
-    free (line);
-  }
-  line = (LinePtr) calloc (sizeof (line_dummy), NLINES);
-
-  if (line == NULL)
-  {
-    Error ("There is a problem in allocating memory for the line structure\n");
-    exit (0);
-  }
-  else
-  {
-    Log_silent
-      ("Allocated %10d bytes for each of %6d elements of       line totaling %10.1f Mb \n",
-       sizeof (line_dummy), NLINES, 1.e-6 * NLINES * sizeof (line_dummy));
-  }
+  free_level_line_data ();
+  alloc_level_record (0);
+  alloc_line_record (0);
+  alloc_coll_stren_record (0);
 
   /* auger_macro is grown by alloc_auger_macro_record as the data are read */
 
@@ -513,26 +667,8 @@ init_atomic_data ()
   }
 
 
-  for (i = 0; i < NLEVELS; i++)
-  {
-    xconfig[i].n_bbu_jump = 0;  // initialising the number of jumps from each level to 0. (SS)
-    xconfig[i].n_bbd_jump = 0;
-    xconfig[i].n_bfu_jump = 0;
-    xconfig[i].n_bfd_jump = 0;
-    xconfig[i].iauger = -1;
-    xconfig[i].nauger = 0;
-  }
-
-  for (n = 0; n < NLINES; n++)
-  {
-    line[n].freq = -1;
-    line[n].f = -1;
-    line[n].nion = -1;
-    line[n].gl = line[n].gu = 0;
-    line[n].el = line[n].eu = 0.0;
-    line[n].macro_info = -1;
-    line[n].coll_index = -999;
-  }
+  /* The xconfig and line records are initialized by alloc_level_record and
+     alloc_line_record as they are allocated */
 
   /* The auger_macro records are initialized by grow_auger_macro as they are allocated */
 
@@ -613,24 +749,7 @@ init_atomic_data ()
   }
 
 
-/* The following lines initialise the collision strengths */
-  for (n = 0; n < NLINES; n++)
-  {
-    coll_stren[n].n = -1;       //Internal index
-    coll_stren[n].lower = -1;   //The lower energy level - this is in Chianti notation and is currently unused
-    coll_stren[n].upper = -1;   //The upper energy level - this is in Chianti notation and is currently unused
-    coll_stren[n].energy = 0.0; //The energy of the transition
-    coll_stren[n].gf = 0.0;
-    coll_stren[n].hi_t_lim = 0.0;       //The high temperature limit
-    coll_stren[n].n_points = 0; //The number of points in the spline fit
-    coll_stren[n].type = -1;    //The type of fit, this defines how one computes the scaled temperature and scaled coll strength
-    coll_stren[n].scaling_param = 0.0;  //The scaling parameter C used in the Burgess and Tully calculations
-    for (n1 = 0; n1 < N_COLL_STREN_PTS; n1++)
-    {
-      coll_stren[n].sct[n1] = 0.0;      //The scaled temperature points in the fit
-      coll_stren[n].scups[n1] = 0.0;
-    }
-  }
+/* The collision strengths are initialized by alloc_coll_stren_record as they are allocated */
 
 
   return (0);

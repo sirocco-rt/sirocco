@@ -18,4 +18,8 @@ TopPhotPtr alloc_phot_top_record(int n, int np);
 TopPhotPtr alloc_inner_cross_record(int n, int np);
 AugerPtr alloc_auger_macro_record(int n);
 int free_xsection_data(void);
+ConfigPtr alloc_level_record(int n);
+LinePtr alloc_line_record(int n);
+Coll_strenptr alloc_coll_stren_record(int n);
+int free_level_line_data(void);
 int init_atomic_data(void);

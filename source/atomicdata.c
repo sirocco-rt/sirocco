@@ -574,6 +574,7 @@ structure does not have this property! */
 
 
         case 'N':
+          alloc_level_record (nlevels); /* make sure the record for a new level exists (#1223) */
 /*
     It's a non-lte level, i.e. one for which we are going to calculate populations, at least for some number of these.
 	For these, we have to set aside space in the levden array in the plasma structure.  This is used for topbase
@@ -761,6 +762,7 @@ the program working in both cases, and certainly mixed cases  04apr ksl  */
           break;
 
         case 'n':              // Its an "LTE" level
+          alloc_level_record (nlevels);
 
           if (sscanf (aline, "%*s %d %d %d %le %le\n", &zz, &iistate, &qnum, &gg, &exx) == 5)   //IT's KURUCZSTYLE
           {
@@ -1645,6 +1647,7 @@ described as macro-levels. */
  *   out if either was not accounted for.
 */
         case 'r':
+          alloc_line_record (nlines);   /* make sure the record for a new line exists (#1223) */
           if (strncmp (word, "LinMacro", 8) == 0)
           {                     //It's a macro atoms line(SS)
             if (mflag != 1)
@@ -2537,6 +2540,7 @@ SCUPS    1.132e-01   2.708e-01   5.017e-01   8.519e-01   1.478e+00
                 np = N_COLL_STREN_PTS;
               }
 
+              alloc_coll_stren_record (n_coll_stren);
               coll_stren[n_coll_stren].n = n_coll_stren;
               coll_stren[n_coll_stren].lower = c_l;
               coll_stren[n_coll_stren].upper = c_u;
