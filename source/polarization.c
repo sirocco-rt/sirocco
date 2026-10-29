@@ -42,7 +42,7 @@
 #include "atomic.h"
 #include "sirocco.h"
 
-#define POL_EPS  1e-6           /* |z x n| below which the x axis is used to define e1 */
+#define POL_EPS  1e-4           /* |z x n| below which the x axis is used to define e1 */
 
 
 /**********************************************************/
@@ -56,7 +56,8 @@
  *
  * @details
  * e1 = normalize(z x n), or normalize(x x n) if n is within
- * about 1e-6 of the z axis.
+ * about 1e-4 of the z axis.  POL_EPS must stay well above 1e-5, the
+ * shortest vector renorm will normalize.
  *
  **********************************************************/
 
