@@ -340,7 +340,7 @@ config_overview (int n, int icell)
               (m->state.alpha_st_old[xconfig[n].bfu_indx_first + ii]),
               (m->est.alpha_st_e[xconfig[n].bfu_indx_first + ii]),
               (m->state.alpha_st_e_old[xconfig[n].bfu_indx_first + ii]),
-              (m->est.recomb_sp[xconfig[n].bfd_indx_first + ii]), (m->est.recomb_sp_e[xconfig[n].bfd_indx_first + ii]));
+              (m->derived.recomb_sp[xconfig[n].bfd_indx_first + ii]), (m->derived.recomb_sp_e[xconfig[n].bfd_indx_first + ii]));
     }
 
 
@@ -357,7 +357,7 @@ config_overview (int n, int icell)
               (m->state.alpha_st_old[xconfig[n].bfu_indx_first + ii]),
               (m->est.alpha_st_e[xconfig[n].bfu_indx_first + ii]),
               (m->state.alpha_st_e_old[xconfig[n].bfu_indx_first + ii]),
-              (m->est.recomb_sp[xconfig[n].bfd_indx_first + ii]), (m->est.recomb_sp_e[xconfig[n].bfd_indx_first + ii]));
+              (m->derived.recomb_sp[xconfig[n].bfd_indx_first + ii]), (m->derived.recomb_sp_e[xconfig[n].bfd_indx_first + ii]));
     }
 
 

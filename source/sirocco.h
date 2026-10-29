@@ -1257,13 +1257,25 @@ typedef struct macro_estimators
   double *gamma_e; /**< Energy-weighted gamma for division of photoionisation energy (SS) */
   double *alpha_st; /**< Stimulated recombination rate (SS) */
   double *alpha_st_e; /**< Energy-weighted stimulated recombination rate (SS) */
-  double *recomb_sp; /**< Spontaneous recombination (SS) */
-  double *recomb_sp_e; /**< Energy-weighted spontaneous recombination coefficient (SS) */
   double *matom_abs; /**< Energy absorbed by macro atom levels during ionization cycles (SS) */
 
   double energy_flow_out, energy_flow_in; /**< Total energy flow in/out of macro atom levels in cell during ionization cycles */
+} macro_estimators;
 
-  /* Cooling rate stores, calculated each cycle, used for kpkt destruction rates */
+/**
+ * macro_derived: quantities computed from the plasma state, the same on all ranks.
+ */
+typedef struct macro_derived
+{
+  double *matom_emiss; /**< Luminosity from macro atom de-activation in the cell
+     in the frequency range for final spectral synthesis (SS) */
+
+  /* Spontaneous recombination rates and k-packet cooling rates.  They depend only on the
+   * plasma state, and are calculated once for every cell at the start of each cycle, by
+   * calc_macro_recomb_and_kpkt_rates, with the cells divided among the ranks.  The arrays
+   * are in shared memory (see #1218). */
+  double *recomb_sp; /**< Spontaneous recombination (SS) */
+  double *recomb_sp_e; /**< Energy-weighted spontaneous recombination coefficient (SS) */
   double cooling_normalisation;
   double cooling_bbtot, cooling_bftot, cooling_bf_coltot;
   double cooling_ff, cooling_ff_lofreq;
@@ -1271,15 +1283,6 @@ typedef struct macro_estimators
   double *cooling_bf;
   double *cooling_bf_col;
   double *cooling_bb;
-} macro_estimators;
-
-/**
- * macro_derived: quantities computed during wind updates, broadcast to all ranks.
- */
-typedef struct macro_derived
-{
-  double *matom_emiss; /**< Luminosity from macro atom de-activation in the cell
-     in the frequency range for final spectral synthesis (SS) */
   int kpkt_rates_known;
   double cooling_bb_simple_tot;
   int matrix_rates_known;
@@ -1386,15 +1389,15 @@ typedef struct macro_blocks
   double *gamma_e_block;                /**< NPLASMA * size_gamma_est */
   double *alpha_st_block;               /**< NPLASMA * size_gamma_est */
   double *alpha_st_e_block;             /**< NPLASMA * size_gamma_est */
-  double *recomb_sp_block;              /**< NPLASMA * size_alpha_est */
-  double *recomb_sp_e_block;            /**< NPLASMA * size_alpha_est */
   double *matom_abs_block;              /**< NPLASMA * nlevels_macro */
-  double *cooling_bf_block;             /**< NPLASMA * nphot_total */
-  double *cooling_bf_col_block;         /**< NPLASMA * nphot_total */
-  double *cooling_bb_block;             /**< NPLASMA * nlines */
 
   /* derived arrays (shared in MPI-3 mode) */
   double *matom_emiss_block;            /**< NPLASMA * nlevels_macro */
+  double *recomb_sp_block;              /**< NPLASMA * size_alpha_est */
+  double *recomb_sp_e_block;            /**< NPLASMA * size_alpha_est */
+  double *cooling_bf_block;             /**< NPLASMA * nphot_total */
+  double *cooling_bf_col_block;         /**< NPLASMA * nphot_total */
+  double *cooling_bb_block;             /**< NPLASMA * nlines */
 
   /* matom_matrix flat data (shared in MPI-3 mode when store_matom_matrix is TRUE) */
   double *matom_matrix_block;           /**< NPLASMA * nrows * nrows, nrows = nlevels_macro + 1 */
@@ -1407,6 +1410,7 @@ typedef struct macro_blocks
   MPI_Win win_jbar_old, win_gamma_old, win_gamma_e_old;
   MPI_Win win_alpha_st_old, win_alpha_st_e_old;
   MPI_Win win_matom_emiss;
+  MPI_Win win_recomb_sp, win_recomb_sp_e, win_cooling_bf, win_cooling_bf_col, win_cooling_bb;
   MPI_Win win_matom_matrix;
   int shared_memory_active;             /**< TRUE if using MPI shared memory for this allocation */
 #endif

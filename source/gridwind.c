@@ -651,7 +651,8 @@ calloc_estimators (int nelem)
 
   /* Allocate contiguous blocks for all macro atom dynamic arrays.
    * State and derived arrays use MPI shared memory (one copy per node).
-   * Estimator arrays are always private (each rank accumulates independently). */
+   * Estimator arrays are always private (each rank accumulates independently).
+   * recomb_sp and the k-packet cooling rates are derived from the plasma state and are shared (#1218). */
 
   int use_shared = FALSE;
 #ifdef MPI_ON
@@ -671,15 +672,15 @@ calloc_estimators (int nelem)
   alloc_block_double ((long) nelem * size_gamma_est, &macro_block_ptrs.gamma_e_block, NULL, FALSE);
   alloc_block_double ((long) nelem * size_gamma_est, &macro_block_ptrs.alpha_st_block, NULL, FALSE);
   alloc_block_double ((long) nelem * size_gamma_est, &macro_block_ptrs.alpha_st_e_block, NULL, FALSE);
-  alloc_block_double ((long) nelem * size_alpha_est, &macro_block_ptrs.recomb_sp_block, NULL, FALSE);
-  alloc_block_double ((long) nelem * size_alpha_est, &macro_block_ptrs.recomb_sp_e_block, NULL, FALSE);
   alloc_block_double ((long) nelem * nlevels_macro, &macro_block_ptrs.matom_abs_block, NULL, FALSE);
-  alloc_block_double ((long) nelem * nphot_total, &macro_block_ptrs.cooling_bf_block, NULL, FALSE);
-  alloc_block_double ((long) nelem * nphot_total, &macro_block_ptrs.cooling_bf_col_block, NULL, FALSE);
-  alloc_block_double ((long) nelem * nlines, &macro_block_ptrs.cooling_bb_block, NULL, FALSE);
 
   /* derived arrays — shared across node-local ranks */
   alloc_block_double ((long) nelem * nlevels_macro, &macro_block_ptrs.matom_emiss_block, &MACRO_WIN (win_matom_emiss), use_shared);
+  alloc_block_double ((long) nelem * size_alpha_est, &macro_block_ptrs.recomb_sp_block, &MACRO_WIN (win_recomb_sp), use_shared);
+  alloc_block_double ((long) nelem * size_alpha_est, &macro_block_ptrs.recomb_sp_e_block, &MACRO_WIN (win_recomb_sp_e), use_shared);
+  alloc_block_double ((long) nelem * nphot_total, &macro_block_ptrs.cooling_bf_block, &MACRO_WIN (win_cooling_bf), use_shared);
+  alloc_block_double ((long) nelem * nphot_total, &macro_block_ptrs.cooling_bf_col_block, &MACRO_WIN (win_cooling_bf_col), use_shared);
+  alloc_block_double ((long) nelem * nlines, &macro_block_ptrs.cooling_bb_block, &MACRO_WIN (win_cooling_bb), use_shared);
 
 #ifdef MPI_ON
   macro_block_ptrs.shared_memory_active = use_shared;
@@ -699,12 +700,12 @@ calloc_estimators (int nelem)
     macromain[n].est.gamma_e = macro_block_ptrs.gamma_e_block + n * size_gamma_est;
     macromain[n].est.alpha_st = macro_block_ptrs.alpha_st_block + n * size_gamma_est;
     macromain[n].est.alpha_st_e = macro_block_ptrs.alpha_st_e_block + n * size_gamma_est;
-    macromain[n].est.recomb_sp = macro_block_ptrs.recomb_sp_block + n * size_alpha_est;
-    macromain[n].est.recomb_sp_e = macro_block_ptrs.recomb_sp_e_block + n * size_alpha_est;
+    macromain[n].derived.recomb_sp = macro_block_ptrs.recomb_sp_block + n * size_alpha_est;
+    macromain[n].derived.recomb_sp_e = macro_block_ptrs.recomb_sp_e_block + n * size_alpha_est;
     macromain[n].est.matom_abs = macro_block_ptrs.matom_abs_block + n * nlevels_macro;
-    macromain[n].est.cooling_bf = macro_block_ptrs.cooling_bf_block + n * nphot_total;
-    macromain[n].est.cooling_bf_col = macro_block_ptrs.cooling_bf_col_block + n * nphot_total;
-    macromain[n].est.cooling_bb = macro_block_ptrs.cooling_bb_block + n * nlines;
+    macromain[n].derived.cooling_bf = macro_block_ptrs.cooling_bf_block + n * nphot_total;
+    macromain[n].derived.cooling_bf_col = macro_block_ptrs.cooling_bf_col_block + n * nphot_total;
+    macromain[n].derived.cooling_bb = macro_block_ptrs.cooling_bb_block + n * nlines;
 
     macromain[n].derived.matom_emiss = macro_block_ptrs.matom_emiss_block + n * nlevels_macro;
   }
@@ -715,9 +716,9 @@ calloc_estimators (int nelem)
    * and only when they are stored */
   if (nlevels_macro > 0 || geo.nmacro > 0)
   {
-    double macro_shared_bytes = (double) nelem * sizeof (double) * (size_Jbar_est + 4.0 * size_gamma_est + nlevels_macro);
-    double macro_private_bytes = (double) nelem * sizeof (double) *
-      (size_Jbar_est + 4.0 * size_gamma_est + 2.0 * size_alpha_est + nlevels_macro + 2.0 * nphot_total + nlines);
+    double macro_shared_bytes = (double) nelem * sizeof (double) *
+      (size_Jbar_est + 4.0 * size_gamma_est + nlevels_macro + 2.0 * size_alpha_est + 2.0 * nphot_total + nlines);
+    double macro_private_bytes = (double) nelem * sizeof (double) * (size_Jbar_est + 4.0 * size_gamma_est + nlevels_macro);
     Log
       ("Macro-atom memory per rank: dynamic shared %.1f MB (one copy/node), dynamic private %.1f MB (per rank)\n",
        1.e-6 * macro_shared_bytes, 1.e-6 * macro_private_bytes);
@@ -816,7 +817,8 @@ calloc_dyn_plasma (int nelem)
 
   /* Allocate contiguous blocks for all dynamic plasma arrays.
    * State and derived arrays use MPI shared memory (one copy per node).
-   * Estimator arrays are always private (each rank accumulates independently). */
+   * Estimator arrays are always private (each rank accumulates independently).
+   * recomb_sp and the k-packet cooling rates are derived from the plasma state and are shared (#1218). */
 
   /* state arrays — shared across node-local ranks */
   alloc_block_double (nalloc_ions, &plasma_block_ptrs.density_block, &PLASMA_WIN (win_density), use_shared);

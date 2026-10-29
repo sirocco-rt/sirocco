@@ -99,7 +99,7 @@ broadcast_macro_atom_emissivities (const int n_start, const int n_stop, const in
 
 /**********************************************************/
 /**
- * @brief  Communicate the macro atom recombination properties between ranks
+ * @brief  Communicate the recombination rates for simple ions between ranks
  *
  * @param [in] int n_start       The index of the first cell updated by this rank
  * @param [in] int n_stop        The index of the last cell updated by this rank
@@ -128,7 +128,7 @@ broadcast_macro_atom_recomb (const int n_start, const int n_stop, const int n_ce
 
   d_xsignal (files.root, "%-20s Begin macro atom recombination communication\n", "NOK");
   const int n_cells_max = get_max_cells_per_rank (NPLASMA);
-  const int comm_buffer_size = calculate_comm_buffer_size (1 + n_cells_max, n_cells_max * (2 * size_alpha_est + 2 * nphot_total));
+  const int comm_buffer_size = calculate_comm_buffer_size (1 + n_cells_max, n_cells_max * (2 * nphot_total));
 
   char *const comm_buffer = malloc (comm_buffer_size);
   if (comm_buffer == NULL)
@@ -147,13 +147,6 @@ broadcast_macro_atom_recomb (const int n_start, const int n_stop, const int n_ce
       for (n_plasma = n_start; n_plasma < n_stop; ++n_plasma)
       {
         MPI_Pack (&n_plasma, 1, MPI_INT, comm_buffer, comm_buffer_size, &position, MPI_COMM_WORLD);     // which cell we're working on
-        if (nlevels_macro > 0)
-        {
-          MPI_Pack (macromain[n_plasma].est.recomb_sp, size_alpha_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
-                    MPI_COMM_WORLD);
-          MPI_Pack (macromain[n_plasma].est.recomb_sp_e, size_alpha_est, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
-                    MPI_COMM_WORLD);
-        }
         if (nphot_total > 0)
         {
           MPI_Pack (plasmamain[n_plasma].state.recomb_simple, nphot_total, MPI_DOUBLE, comm_buffer, comm_buffer_size, &position,
@@ -175,13 +168,6 @@ broadcast_macro_atom_recomb (const int n_start, const int n_stop, const int n_ce
       {
         MPI_Unpack (comm_buffer, comm_buffer_size, &position, &n_plasma, 1, MPI_INT, MPI_COMM_WORLD);
 
-        if (nlevels_macro > 0)
-        {
-          MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].est.recomb_sp, size_alpha_est, MPI_DOUBLE,
-                      MPI_COMM_WORLD);
-          MPI_Unpack (comm_buffer, comm_buffer_size, &position, macromain[n_plasma].est.recomb_sp_e, size_alpha_est, MPI_DOUBLE,
-                      MPI_COMM_WORLD);
-        }
         if (nphot_total > 0)
         {
           MPI_Unpack (comm_buffer, comm_buffer_size, &position, plasmamain[n_plasma].state.recomb_simple,
@@ -433,9 +419,23 @@ broadcast_macro_atom_state_matrix (int n_start, int n_stop, int n_cells_rank)
 #define REDUCE_CHUNK (1L << 27)
 
 static void
+sum_block_in_place (double *block, long n, MPI_Comm comm)
+{
+  long start, count;
+
+  for (start = 0; start < n; start += REDUCE_CHUNK)
+  {
+    count = n - start;
+    if (count > REDUCE_CHUNK)
+      count = REDUCE_CHUNK;
+    MPI_Allreduce (MPI_IN_PLACE, block + start, (int) count, MPI_DOUBLE, MPI_SUM, comm);
+  }
+}
+
+static void
 reduce_block_mean_in_place (double *block, long n)
 {
-  long i, start, count;
+  long i;
 
   if (block == NULL || n <= 0)
     return;
@@ -445,13 +445,7 @@ reduce_block_mean_in_place (double *block, long n)
     block[i] /= np_mpi_global;
   }
 
-  for (start = 0; start < n; start += REDUCE_CHUNK)
-  {
-    count = n - start;
-    if (count > REDUCE_CHUNK)
-      count = REDUCE_CHUNK;
-    MPI_Allreduce (MPI_IN_PLACE, block + start, (int) count, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-  }
+  sum_block_in_place (block, n, MPI_COMM_WORLD);
 }
 #endif
 
@@ -466,15 +460,9 @@ reduce_block_mean_in_place (double *block, long n)
  *   The estimator arrays are held in contiguous blocks (see calloc_estimators in
  *   gridwind.c), and each block is averaged in place, so no temporary copies are made.
  *
- *   The cached k-packet rates (cooling_bb, cooling_bf, cooling_bf_col and the cooling
- *   totals) are not averaged. They depend only on the plasma state of the cell, and are
- *   recalculated by fill_kpkt_rates before they are next used, since kpkt_rates_known is
- *   set to FALSE in wind_update and again before the spectral cycles. Averaging them,
- *   with zeros from ranks that had not filled a cell, gave values that were never used.
- *   See issue #1218.
- *
- *   recomb_sp and recomb_sp_e are the same on every rank (see wind_rad_init) but are
- *   still averaged, because the averaged values are used in the spectral cycles.
+ *   recomb_sp, recomb_sp_e and the k-packet cooling rates are not estimators. They are
+ *   calculated from the plasma state at the start of each cycle, are the same on every
+ *   rank, and are held in shared memory (see calc_macro_recomb_and_kpkt_rates and #1218).
  *
  **********************************************************/
 
@@ -526,9 +514,157 @@ reduce_macro_atom_estimators (void)
   reduce_block_mean_in_place (macro_block_ptrs.alpha_st_e_block, (long) NPLASMA * size_gamma_est);
   reduce_block_mean_in_place (macro_block_ptrs.gamma_block, (long) NPLASMA * size_gamma_est);
   reduce_block_mean_in_place (macro_block_ptrs.gamma_e_block, (long) NPLASMA * size_gamma_est);
-  reduce_block_mean_in_place (macro_block_ptrs.recomb_sp_block, (long) NPLASMA * size_alpha_est);
-  reduce_block_mean_in_place (macro_block_ptrs.recomb_sp_e_block, (long) NPLASMA * size_alpha_est);
 
   d_xsignal (files.root, "%-20s Finished reduction of macro atom estimators\n", "OK");
+#endif
+}
+
+/**********************************************************/
+/**
+ * @brief Prepare the shared rate arrays before calc_macro_recomb_and_kpkt_rates fills them
+ *
+ * @details
+ * The arrays recomb_sp, recomb_sp_e, cooling_bf, cooling_bf_col and cooling_bb are filled
+ * by each rank for its own cells, and then completed by summing over the ranks or nodes
+ * (see share_macro_recomb_and_kpkt_rates).  For that the cells calculated elsewhere must
+ * be zero.  With shared memory on a single node nothing needs to be done, since every
+ * cell is written by a rank on the node.  Otherwise the node leader (or, without shared
+ * memory, each rank) sets the arrays to zero.
+ *
+ **********************************************************/
+
+void
+prepare_macro_rate_blocks (void)
+{
+#ifdef MPI_ON
+  int shared = macro_block_ptrs.shared_memory_active;
+  long n_alpha = (long) NPLASMA * size_alpha_est;
+  long n_phot = (long) NPLASMA * nphot_total;
+  long n_lines = (long) NPLASMA * nlines;
+
+  if (np_mpi_global == 1 || macro_block_ptrs.recomb_sp_block == NULL)
+    return;
+
+  if (shared)
+    MPI_Barrier (node_comm);    /* no rank on the node may still be using the arrays */
+
+  if ((shared == FALSE) || (num_nodes > 1 && node_rank == 0))
+  {
+    memset (macro_block_ptrs.recomb_sp_block, 0, n_alpha * sizeof (double));
+    memset (macro_block_ptrs.recomb_sp_e_block, 0, n_alpha * sizeof (double));
+    memset (macro_block_ptrs.cooling_bf_block, 0, n_phot * sizeof (double));
+    memset (macro_block_ptrs.cooling_bf_col_block, 0, n_phot * sizeof (double));
+    memset (macro_block_ptrs.cooling_bb_block, 0, n_lines * sizeof (double));
+  }
+
+  if (shared)
+    MPI_Barrier (node_comm);
+#endif
+}
+
+/**********************************************************/
+/**
+ * @brief Make the spontaneous recombination and k-packet cooling rates known on all ranks
+ *
+ * @param [in] int n_start  The first cell calculated by this rank
+ * @param [in] int n_stop   One more than the last cell calculated by this rank
+ *
+ * @details
+ * calc_macro_recomb_and_kpkt_rates calculates recomb_sp, recomb_sp_e and the k-packet
+ * cooling rates for cells n_start to n_stop - 1 on each rank.
+ *
+ * The arrays are in shared memory, and each rank has written its own cells into its
+ * node's copy.  On a single node a barrier is therefore all that is needed.  With more
+ * than one node, the copies were set to zero beforehand (prepare_macro_rate_blocks), so
+ * the node leaders complete them by summing over leader_comm, in place.  Without shared
+ * memory, every rank sums its private copy over MPI_COMM_WORLD.  As each value comes
+ * from exactly one rank, the sums are exact.
+ *
+ * The cooling totals and kpkt_rates_known are held in each rank's macromain, and are
+ * summed over all ranks in the same way, from a temporary array that is zero except for
+ * the cells this rank calculated.
+ *
+ **********************************************************/
+
+#define NKPKT_SCALARS 10
+
+void
+share_macro_recomb_and_kpkt_rates (const int n_start, const int n_stop)
+{
+#ifdef MPI_ON
+  int n, shared;
+  double *x;
+  long n_alpha = (long) NPLASMA * size_alpha_est;
+  long n_phot = (long) NPLASMA * nphot_total;
+  long n_lines = (long) NPLASMA * nlines;
+
+  if (np_mpi_global == 1 || macro_block_ptrs.recomb_sp_block == NULL)
+    return;
+
+  d_xsignal (files.root, "%-20s Begin sharing of macro atom recombination and k-packet rates\n", "NOK");
+
+  shared = macro_block_ptrs.shared_memory_active;
+
+  /* The arrays */
+  if (shared)
+    MPI_Barrier (node_comm);    /* every rank on the node has written its cells */
+
+  if (shared == FALSE || (num_nodes > 1 && node_rank == 0))
+  {
+    MPI_Comm comm = shared ? leader_comm : MPI_COMM_WORLD;
+    sum_block_in_place (macro_block_ptrs.recomb_sp_block, n_alpha, comm);
+    sum_block_in_place (macro_block_ptrs.recomb_sp_e_block, n_alpha, comm);
+    sum_block_in_place (macro_block_ptrs.cooling_bf_block, n_phot, comm);
+    sum_block_in_place (macro_block_ptrs.cooling_bf_col_block, n_phot, comm);
+    sum_block_in_place (macro_block_ptrs.cooling_bb_block, n_lines, comm);
+  }
+
+  if (shared)
+    MPI_Barrier (node_comm);    /* the leaders have completed the node's copy */
+
+  /* The quantities held in each rank's macromain */
+  x = calloc (sizeof (double), (long) NKPKT_SCALARS * NPLASMA);
+  if (x == NULL)
+  {
+    Error ("share_macro_recomb_and_kpkt_rates: Error allocating memory\n");
+    Exit (EXIT_FAILURE);
+  }
+
+  for (n = n_start; n < n_stop; n++)
+  {
+    x[n * NKPKT_SCALARS] = macromain[n].derived.cooling_normalisation;
+    x[n * NKPKT_SCALARS + 1] = macromain[n].derived.cooling_bbtot;
+    x[n * NKPKT_SCALARS + 2] = macromain[n].derived.cooling_bftot;
+    x[n * NKPKT_SCALARS + 3] = macromain[n].derived.cooling_bf_coltot;
+    x[n * NKPKT_SCALARS + 4] = macromain[n].derived.cooling_ff;
+    x[n * NKPKT_SCALARS + 5] = macromain[n].derived.cooling_ff_lofreq;
+    x[n * NKPKT_SCALARS + 6] = macromain[n].derived.cooling_adiabatic;
+    x[n * NKPKT_SCALARS + 7] = macromain[n].derived.cooling_bb_simple_tot;
+    x[n * NKPKT_SCALARS + 8] = macromain[n].derived.kpkt_rates_known;
+    x[n * NKPKT_SCALARS + 9] = 1.0;     /* a check that each cell was calculated once */
+  }
+
+  sum_block_in_place (x, (long) NKPKT_SCALARS * NPLASMA, MPI_COMM_WORLD);
+
+  for (n = 0; n < NPLASMA; n++)
+  {
+    if (x[n * NKPKT_SCALARS + 9] != 1.0)
+    {
+      Error ("share_macro_recomb_and_kpkt_rates: cell %d was calculated %g times\n", n, x[n * NKPKT_SCALARS + 9]);
+    }
+    macromain[n].derived.cooling_normalisation = x[n * NKPKT_SCALARS];
+    macromain[n].derived.cooling_bbtot = x[n * NKPKT_SCALARS + 1];
+    macromain[n].derived.cooling_bftot = x[n * NKPKT_SCALARS + 2];
+    macromain[n].derived.cooling_bf_coltot = x[n * NKPKT_SCALARS + 3];
+    macromain[n].derived.cooling_ff = x[n * NKPKT_SCALARS + 4];
+    macromain[n].derived.cooling_ff_lofreq = x[n * NKPKT_SCALARS + 5];
+    macromain[n].derived.cooling_adiabatic = x[n * NKPKT_SCALARS + 6];
+    macromain[n].derived.cooling_bb_simple_tot = x[n * NKPKT_SCALARS + 7];
+    macromain[n].derived.kpkt_rates_known = (x[n * NKPKT_SCALARS + 8] > 0.5) ? TRUE : FALSE;
+  }
+
+  free (x);
+
+  d_xsignal (files.root, "%-20s Finished sharing of macro atom recombination and k-packet rates\n", "OK");
 #endif
 }
