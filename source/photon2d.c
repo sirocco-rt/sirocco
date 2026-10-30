@@ -684,10 +684,6 @@ ds_in_cell (int ndom, PhotPtr p)
   {
     smax = spherical_ds_in_cell (ndom, p);
   }
-  else if (zdom[ndom].coord_type == CYLVAR)
-  {
-    smax = cylvar_ds_in_cell (ndom, p);
-  }
   else
   {
     smax = 0;
