@@ -254,7 +254,8 @@ set_domain_outer_edges (int ndom)
 
   if (ndim > 1)
     zdom[ndom].wind_x[ndim] = 2. * zdom[ndom].wind_x[ndim - 1] - zdom[ndom].wind_x[ndim - 2];
-  if (mdim > 1 && (zdom[ndom].coord_type == CYLIND || zdom[ndom].coord_type == RTHETA))
+  if (mdim > 1 && (zdom[ndom].coord_type == CYLIND || zdom[ndom].coord_type == RTHETA
+                   || zdom[ndom].coord_type == CYLIND3D || zdom[ndom].coord_type == SPH3D))
     zdom[ndom].wind_z[mdim] = 2. * zdom[ndom].wind_z[mdim - 1] - zdom[ndom].wind_z[mdim - 2];
 }
 

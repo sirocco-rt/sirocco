@@ -205,6 +205,8 @@ sph3d_wind_complete (int ndom, WindPtr w)
   for (k = 0; k < pdim; k++)
     one_dom->wind_midphi[k] = w[nstart + k].phicen;
 
+  set_domain_outer_edges (ndom);
+
   /* Per-cell boundary data: xmax, rmax, thetamax, phimax, wcone, wcone_max */
   for (i = 0; i < ndim; i++)
   {
