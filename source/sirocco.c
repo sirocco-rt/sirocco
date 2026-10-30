@@ -556,6 +556,7 @@ main (int argc, char *argv[])
 
   geo.matom_radiation = 0;      //initialise for ionization cycles - don't use pre-computed emissivities for macro-atom levels/ k-packets.
   get_standard_care_factors ();
+  get_bf_integration_method ();
   get_meta_params ();
 
 /* Establish limits on the frequency intervals to be used by the ionization cycles and

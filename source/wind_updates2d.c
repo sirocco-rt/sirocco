@@ -213,10 +213,6 @@ wind_update (WindPtr w)
     {
       spherical_extend_density (ndom, w);
     }
-    else if (zdom[ndom].coord_type == CYLVAR)
-    {
-      cylvar_extend_density (ndom, w);
-    }
     else
     {
       Error ("Wind_update2d: Unknown coordinate type %d for domain %d \n", zdom[ndom].coord_type, ndom);
@@ -745,9 +741,6 @@ init_macro_rad_properties (void)
   int n_plasma;
   int k;
   int macro_level;
-  int n_start;
-  int n_stop;
-  int n_cells;
 
   /* Initialising these properties are inexpensive, so is not parallelised */
   for (n_plasma = 0; n_plasma < NPLASMA; ++n_plasma)
@@ -786,8 +779,42 @@ init_macro_rad_properties (void)
     }
   }
 
+  calc_macro_recomb_and_kpkt_rates ();
+}
+
+
+
+/**********************************************************/
+/**
+ * @brief Calculate the spontaneous recombination and k-packet cooling rates for every cell
+ *
+ * @details
+ * recomb_sp, recomb_sp_e (macro atoms), recomb_simple and recomb_simple_upweight (simple
+ * ions) and, in macro-atom mode, the k-packet cooling rates (fill_kpkt_rates) depend only
+ * on the plasma state of a cell.  They are calculated here once per cycle, with the cells
+ * divided among the ranks, and then made known on every rank.  The macro-atom arrays are
+ * in shared memory (#1218).
+ *
+ * This is called at the start of each ionization cycle (from init_macro_rad_properties)
+ * and before the spectral cycles.
+ *
+ **********************************************************/
+
+void
+calc_macro_recomb_and_kpkt_rates (void)
+{
+  int n_plasma;
+  int k;
+  int macro_level;
+  int n_start;
+  int n_stop;
+  int n_cells;
+  int escape;
+  double alpha[3];
+  struct photon pdummy;
+
   /* calculating recomb_sp and recomb_simple is expensive due to calls to
-   * `alpha_sp()` , so we do this part of the initialisation in parallel */
+   * `alpha_sp()` , so this is done in parallel */
 #ifdef MPI_ON
   n_cells = get_parallel_nrange (rank_global, NPLASMA, np_mpi_global, &n_start, &n_stop);
 #else
@@ -795,6 +822,8 @@ init_macro_rad_properties (void)
   n_stop = NPLASMA;
   n_cells = NPLASMA;
 #endif
+
+  prepare_macro_rate_blocks ();
 
   for (n_plasma = n_start; n_plasma < n_stop; ++n_plasma)
   {
@@ -804,15 +833,14 @@ init_macro_rad_properties (void)
       {
         if (plasmamain[n_plasma].state.t_e > 1.0)
         {
-          macromain[n_plasma].est.recomb_sp[xconfig[macro_level].bfd_indx_first + k] =
-            alpha_sp (&phot_top[xconfig[macro_level].bfd_jump[k]], &plasmamain[n_plasma], 0);
-          macromain[n_plasma].est.recomb_sp_e[xconfig[macro_level].bfd_indx_first + k] =
-            alpha_sp (&phot_top[xconfig[macro_level].bfd_jump[k]], &plasmamain[n_plasma], 2);
+          alpha_sp_all (&phot_top[xconfig[macro_level].bfd_jump[k]], &plasmamain[n_plasma], alpha);
+          macromain[n_plasma].derived.recomb_sp[xconfig[macro_level].bfd_indx_first + k] = alpha[0];
+          macromain[n_plasma].derived.recomb_sp_e[xconfig[macro_level].bfd_indx_first + k] = alpha[2];
         }
         else
         {
-          macromain[n_plasma].est.recomb_sp[xconfig[macro_level].bfd_indx_first + k] = 0.0;
-          macromain[n_plasma].est.recomb_sp_e[xconfig[macro_level].bfd_indx_first + k] = 0.0;
+          macromain[n_plasma].derived.recomb_sp[xconfig[macro_level].bfd_indx_first + k] = 0.0;
+          macromain[n_plasma].derived.recomb_sp_e[xconfig[macro_level].bfd_indx_first + k] = 0.0;
         }
       }
     }
@@ -825,15 +853,27 @@ init_macro_rad_properties (void)
       }
       else                      // we want a macro approach, but not for this ion so need recomb_simple instead
       {
-        const double alpha_store = plasmamain[n_plasma].state.recomb_simple[macro_level] =
-          alpha_sp (&phot_top[macro_level], &plasmamain[n_plasma], 2);
-        plasmamain[n_plasma].state.recomb_simple_upweight[macro_level] =
-          alpha_sp (&phot_top[macro_level], &plasmamain[n_plasma], 1) / alpha_store;
+        alpha_sp_all (&phot_top[macro_level], &plasmamain[n_plasma], alpha);
+        plasmamain[n_plasma].state.recomb_simple[macro_level] = alpha[2];
+        plasmamain[n_plasma].state.recomb_simple_upweight[macro_level] = alpha[1] / alpha[2];
       }
     }
   }
 
+  /* The k-packet cooling rates, which use the recombination rates just calculated */
+  if (geo.rt_mode == RT_MODE_MACRO && macro_block_ptrs.cooling_bb_block != NULL)
+  {
+    for (n_plasma = n_start; n_plasma < n_stop; ++n_plasma)
+    {
+      macromain[n_plasma].derived.kpkt_rates_known = FALSE;
+      escape = FALSE;
+      init_dummy_phot (&pdummy);
+      fill_kpkt_rates (&plasmamain[n_plasma], &escape, &pdummy);
+    }
+  }
+
   broadcast_macro_atom_recomb (n_start, n_stop, n_cells);
+  share_macro_recomb_and_kpkt_rates (n_start, n_stop);
 }
 
 /**********************************************************/

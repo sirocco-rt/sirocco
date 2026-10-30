@@ -393,10 +393,10 @@ rank-by-rank pack/unpack cycle.  The key functions are:
 - ``reduce_simple_estimators()`` in ``communicate_plasma.c`` — sums plasma
   ``est`` fields (``j``, ``ave_freq``, ``heat_tot``, etc.) across all ranks
   using ``MPI_Allreduce``.
-- ``reduce_macro_atom_estimators()`` in ``communicate_macro.c`` — sums
-  macro-atom ``est`` fields (``jbar``, ``gamma``, ``cooling_bf``, etc.),
-  with a chunked ``MPI_Allreduce`` for the large ``cooling_bb`` array (see
-  `Chunked Allreduce for cooling_bb`_).
+- ``reduce_macro_atom_estimators()`` in ``communicate_macro.c`` — averages
+  the macro-atom ``est`` fields (``jbar``, ``gamma``, ``matom_abs``, etc.)
+  across all ranks, each contiguous block in place (see
+  `In-place reduction of the macro-atom estimators`_).
 - ``communicate_spectra.c`` — handles the output spectra, which are also
   accumulated independently per rank during spectral cycles.  Each rank
   records photon contributions to the extracted spectra (``xxspec``) for
@@ -503,8 +503,23 @@ The same shared/private split applies to macro-atom dynamic arrays in
 ``calloc_estimators()`` and ``calloc_matom_matrix()`` (both in
 ``gridwind.c``).  State and derived arrays (``jbar_old``, ``gamma_old``,
 ``matom_emiss``, and the transition probability matrix ``matom_matrix``) are
-shared, while estimator arrays (``jbar``, ``gamma``, ``cooling_bf``,
-``cooling_bb``, etc.) are private.
+shared, while estimator arrays (``jbar``, ``gamma``, ``matom_abs``, etc.)
+are private.
+
+The spontaneous recombination rates (``recomb_sp``, ``recomb_sp_e``) and the
+k-packet cooling rates (``cooling_bf``, ``cooling_bf_col``, ``cooling_bb``)
+are also shared, in ``macro_derived``.  They are not estimators: they depend
+only on the plasma state, and are calculated once for every cell at the start
+of each ionization cycle and before the spectral cycles, by
+``calc_macro_recomb_and_kpkt_rates()`` in ``wind_updates2d.c``, with the cells
+divided among the ranks.  Each rank writes its own cells into the node's
+copy.  With one node a barrier then completes the arrays; with several nodes
+the copies are zeroed first (``prepare_macro_rate_blocks()``) and the node
+leaders sum them over ``leader_comm`` (``share_macro_recomb_and_kpkt_rates()``,
+in ``communicate_macro.c``).  The cooling totals, which are scalars in each
+rank's ``macromain``, are summed over all ranks in the same way.  Before
+#1218 every rank filled these arrays itself, privately, for each cell in
+which it created a k-packet.
 
 The ``matom_matrix`` (an *nrows × nrows* transition probability matrix per
 cell, where *nrows = nlevels_macro + 1*) is allocated as a single contiguous
@@ -651,24 +666,22 @@ coherence, skipping the pack/Bcast/unpack cycle entirely.  On a single-node
 run this avoids allocating the comm buffer (~100 KB) and removes latency
 proportional to the number of ranks.
 
-Chunked Allreduce for cooling_bb
----------------------------------
+In-place reduction of the macro-atom estimators
+-----------------------------------------------
 
-``reduce_macro_atom_estimators()`` in ``communicate_macro.c`` uses
-``MPI_Allreduce`` to sum the per-rank ``cooling_bb`` estimator across all
-ranks.  The naive approach allocates two temporary buffers of size
-``NPLASMA × nlines`` doubles each.  For big.pf (12270 cells, 5964 lines)
-this is approximately 2 × 585 MB = 1.17 GB of transient peak memory per rank.
+``reduce_macro_atom_estimators()`` in ``communicate_macro.c`` averages the
+macro-atom estimators over the ranks.  Each estimator is held in one
+contiguous block of ``NPLASMA × size`` doubles (``macro_block_ptrs``), so the
+function divides each block by the number of ranks and sums it with
+``MPI_Allreduce(MPI_IN_PLACE, ...)``, without temporary copies.  The sum is
+done in chunks of 2\ :sup:`27` doubles, so that the count passed to MPI fits
+in an int.
 
-The function instead processes cells in chunks, targeting a peak buffer size
-of ~50 MB.  For each chunk of cells the data is packed into a single
-``chunk_cells × nlines`` buffer, reduced in place with
-``MPI_Allreduce(MPI_IN_PLACE, ...)``, and unpacked back to ``macromain``.
-The chunk size is computed at runtime as
-``chunk_size = 50 MB / (nlines × sizeof(double))``, giving approximately
-1000 cells per chunk and 13 Allreduce calls instead of one for big.pf.
-Peak transient memory is reduced from ~1.17 GB to ~50 MB at the cost of a
-small increase in Allreduce call overhead.
+Earlier versions packed the estimators into two temporary buffers each, and
+also averaged the k-packet cooling rates, including ``cooling_bb``
+(``NPLASMA × nlines`` doubles, reduced in ~50 MB chunks).  Those rates are now
+calculated once per cycle in shared memory (see above), and are not reduced
+(#1218).
 
 Platform differences: macOS vs Linux
 =====================================

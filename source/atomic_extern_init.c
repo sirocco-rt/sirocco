@@ -37,7 +37,7 @@ int nline_min, nline_max, nline_delt;   /* Used to select a range of lines in a 
 
 int n_coll_stren;
 
-Coll_stren coll_stren[NLINES];
+Coll_stren *coll_stren;
 
 int nxphot;                     /*The actual number of ions for which there are VFKY photoionization x-sections */
 double phot_freq_min;           /*The lowest frequency for which photoionization can occur */

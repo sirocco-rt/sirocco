@@ -83,12 +83,6 @@ wind_save (char filename[])
     n += fwrite (zdom[ndom].wind_z, sizeof (double), zdom[ndom].mdim, fptr);
     n += fwrite (zdom[ndom].wind_midx, sizeof (double), zdom[ndom].ndim, fptr);
     n += fwrite (zdom[ndom].wind_midz, sizeof (double), zdom[ndom].mdim, fptr);
-
-    if (zdom[ndom].coord_type == CYLVAR)
-    {
-      n += fwrite (zdom[ndom].wind_z_var, sizeof (double), zdom[ndom].ndim * zdom[ndom].mdim, fptr);
-      n += fwrite (zdom[ndom].wind_midz_var, sizeof (double), zdom[ndom].ndim * zdom[ndom].mdim, fptr);
-    }
   }
 
   n += fwrite (wmain, sizeof (wind_dummy), NDIM2, fptr);
@@ -158,8 +152,8 @@ in the plasma structure */
       n += fwrite (macromain[m].state.alpha_st_old, sizeof (double), size_gamma_est, fptr);
       n += fwrite (macromain[m].est.alpha_st_e, sizeof (double), size_gamma_est, fptr);
       n += fwrite (macromain[m].state.alpha_st_e_old, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].est.recomb_sp, sizeof (double), size_alpha_est, fptr);
-      n += fwrite (macromain[m].est.recomb_sp_e, sizeof (double), size_alpha_est, fptr);
+      n += fwrite (macromain[m].derived.recomb_sp, sizeof (double), size_alpha_est, fptr);
+      n += fwrite (macromain[m].derived.recomb_sp_e, sizeof (double), size_alpha_est, fptr);
       n += fwrite (macromain[m].derived.matom_emiss, sizeof (double), nlevels_macro, fptr);
       n += fwrite (macromain[m].est.matom_abs, sizeof (double), nlevels_macro, fptr);
     }
@@ -302,12 +296,6 @@ wind_read (char filename[])
     n += fread (zdom[ndom].wind_z, sizeof (double), zdom[ndom].mdim, fptr);
     n += fread (zdom[ndom].wind_midx, sizeof (double), zdom[ndom].ndim, fptr);
     n += fread (zdom[ndom].wind_midz, sizeof (double), zdom[ndom].mdim, fptr);
-    if (zdom[ndom].coord_type == CYLVAR)
-    {
-      cylvar_allocate_domain (ndom);
-      n += fread (zdom[ndom].wind_z_var, sizeof (double), zdom[ndom].ndim * zdom[ndom].mdim, fptr);
-      n += fread (zdom[ndom].wind_midz_var, sizeof (double), zdom[ndom].ndim * zdom[ndom].mdim, fptr);
-    }
   }
 
   calloc_wind (NDIM2);
@@ -430,8 +418,8 @@ wind_read (char filename[])
       n += read_or_skip (macromain[m].state.alpha_st_old, sizeof (double), size_gamma_est, fptr, skip_macro);
       n += fread (macromain[m].est.alpha_st_e, sizeof (double), size_gamma_est, fptr);
       n += read_or_skip (macromain[m].state.alpha_st_e_old, sizeof (double), size_gamma_est, fptr, skip_macro);
-      n += fread (macromain[m].est.recomb_sp, sizeof (double), size_alpha_est, fptr);
-      n += fread (macromain[m].est.recomb_sp_e, sizeof (double), size_alpha_est, fptr);
+      n += read_or_skip (macromain[m].derived.recomb_sp, sizeof (double), size_alpha_est, fptr, skip_macro);
+      n += read_or_skip (macromain[m].derived.recomb_sp_e, sizeof (double), size_alpha_est, fptr, skip_macro);
       n += read_or_skip (macromain[m].derived.matom_emiss, sizeof (double), nlevels_macro, fptr, skip_macro);
       n += fread (macromain[m].est.matom_abs, sizeof (double), nlevels_macro, fptr);
 
@@ -513,10 +501,6 @@ wind_complete ()
     else if (zdom[ndom].coord_type == RTHETA)
     {
       rtheta_wind_complete (ndom, wmain);
-    }
-    else if (zdom[ndom].coord_type == CYLVAR)
-    {
-      cylvar_wind_complete (ndom, wmain);
     }
     else
     {
