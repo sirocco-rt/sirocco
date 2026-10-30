@@ -209,7 +209,7 @@ matom (PhotPtr p, int *nres, int *escape)
 
         cont_ptr = &phot_top[xconfig[uplvl].bfd_jump[n]];       //pointer to continuum
 
-        sp_rec_rate = mplasma->est.recomb_sp[xconfig[uplvl].bfd_indx_first + n];
+        sp_rec_rate = mplasma->derived.recomb_sp[xconfig[uplvl].bfd_indx_first + n];
         bf_cont = (sp_rec_rate + q_recomb (cont_ptr, t_e) * ne) * ne;
 
         jprbs_known[uplvl][m] = jprbs[m] = bf_cont * xconfig[phot_top[xconfig[uplvl].bfd_jump[n]].nlev].ex;     //energy of lower state
@@ -437,7 +437,7 @@ matom (PhotPtr p, int *nres, int *escape)
 
     cont_ptr = &phot_top[xconfig[uplvl].bfd_jump[n - nbbd]];
 
-    rad_rate = mplasma->est.recomb_sp[xconfig[uplvl].bfd_indx_first + n - nbbd];        //again using recomb_sp rather than alpha_sp (SS July 04)
+    rad_rate = mplasma->derived.recomb_sp[xconfig[uplvl].bfd_indx_first + n - nbbd];    //again using recomb_sp rather than alpha_sp (SS July 04)
     coll_rate = ne * q_recomb (cont_ptr, t_e);
 
     choice = random_number (0.0, 1.0);
@@ -933,7 +933,8 @@ kpkt (PhotPtr p, int *nres, int *escape, int mode)
    */
 
   cooling_normalisation =
-    mplasma->est.cooling_normalisation - mplasma->est.cooling_adiabatic - mplasma->est.cooling_bbtot - mplasma->est.cooling_bf_coltot;
+    mplasma->derived.cooling_normalisation - mplasma->derived.cooling_adiabatic - mplasma->derived.cooling_bbtot -
+    mplasma->derived.cooling_bf_coltot;
   cooling_adiabatic = 0.0;
 
   /* if kpkt mode is all processes, or continuum + adiabatic, then include adiabatic cooling */
@@ -948,15 +949,15 @@ kpkt (PhotPtr p, int *nres, int *escape, int mode)
     }
     else
     {
-      cooling_adiabatic = mplasma->est.cooling_adiabatic;
+      cooling_adiabatic = mplasma->derived.cooling_adiabatic;
     }
   }
   cooling_normalisation += cooling_adiabatic;
 
   if (mode == KPKT_MODE_ALL)
   {
-    cooling_bbtot = mplasma->est.cooling_bbtot;
-    cooling_bf_coltot = mplasma->est.cooling_bf_coltot;
+    cooling_bbtot = mplasma->derived.cooling_bbtot;
+    cooling_bf_coltot = mplasma->derived.cooling_bf_coltot;
   }
   else
   {
@@ -982,7 +983,7 @@ kpkt (PhotPtr p, int *nres, int *escape, int mode)
    */
 
 
-  if (destruction_choice < mplasma->est.cooling_bftot)
+  if (destruction_choice < mplasma->derived.cooling_bftot)
   {                             //destruction by bf
 
     /* JM 1503 -- we used to loop over ntop_phot here,
@@ -990,7 +991,7 @@ kpkt (PhotPtr p, int *nres, int *escape, int mode)
        see #86, #141 */
     for (i = 0; i < nphot_total; i++)
     {
-      if (destruction_choice < mplasma->est.cooling_bf[i])
+      if (destruction_choice < mplasma->derived.cooling_bf[i])
       {
 
         if (i > nphot_total - 1)
@@ -1028,24 +1029,24 @@ kpkt (PhotPtr p, int *nres, int *escape, int mode)
       }
       else
       {
-        destruction_choice = destruction_choice - mplasma->est.cooling_bf[i];
+        destruction_choice = destruction_choice - mplasma->derived.cooling_bf[i];
       }
     }
   }
-  else if (destruction_choice < (mplasma->est.cooling_bftot + cooling_bbtot))
+  else if (destruction_choice < (mplasma->derived.cooling_bftot + cooling_bbtot))
   {
     /* a collisional destruction has occurred and so, if the line is  associated with
        a macro atom, it  must be excited.
      */
 
-    destruction_choice = destruction_choice - mplasma->est.cooling_bftot;
+    destruction_choice = destruction_choice - mplasma->derived.cooling_bftot;
     for (i = 0; i < nlines; i++)
     {
       /* this is a bit inelegant, but whether we want to consider the contribution
          here depends on the mode and type of line */
       if (mode == KPKT_MODE_ALL || line[i].macro_info == FALSE || geo.macro_simple == TRUE)
       {
-        cooling_bb_use = mplasma->est.cooling_bb[i];
+        cooling_bb_use = mplasma->derived.cooling_bb[i];
       }
       else
       {
@@ -1073,7 +1074,7 @@ kpkt (PhotPtr p, int *nres, int *escape, int mode)
     }
   }
 
-  else if (destruction_choice < (mplasma->est.cooling_bftot + cooling_bbtot + mplasma->est.cooling_ff))
+  else if (destruction_choice < (mplasma->derived.cooling_bftot + cooling_bbtot + mplasma->derived.cooling_ff))
   {
     /* If reached this point, it is a FF destruction event */
     /* consult issues #187, #492 regarding free-free */
@@ -1082,7 +1083,8 @@ kpkt (PhotPtr p, int *nres, int *escape, int mode)
     p->freq = one_ff (xplasma, freqmin, freqmax);
     return (0);
   }
-  else if (destruction_choice < (mplasma->est.cooling_bftot + cooling_bbtot + mplasma->est.cooling_ff + mplasma->est.cooling_ff_lofreq))
+  else if (destruction_choice <
+           (mplasma->derived.cooling_bftot + cooling_bbtot + mplasma->derived.cooling_ff + mplasma->derived.cooling_ff_lofreq))
   {
 /*this is ff at a frequency that is so low frequency that it is not worth tracking further */
     *escape = TRUE;
@@ -1093,7 +1095,8 @@ kpkt (PhotPtr p, int *nres, int *escape, int mode)
 
 
   else if (destruction_choice <
-           (mplasma->est.cooling_bftot + cooling_bbtot + mplasma->est.cooling_ff + mplasma->est.cooling_ff_lofreq + cooling_adiabatic))
+           (mplasma->derived.cooling_bftot + cooling_bbtot + mplasma->derived.cooling_ff + mplasma->derived.cooling_ff_lofreq +
+            cooling_adiabatic))
   {
 /* It is a k-packat that is destroyed by adiabatic cooling */
 
@@ -1113,12 +1116,12 @@ kpkt (PhotPtr p, int *nres, int *escape, int mode)
   {
     /* It is a k-packed destroyed by collisional ionization in a macro atom. */
     destruction_choice =
-      destruction_choice - mplasma->est.cooling_bftot - cooling_bbtot - mplasma->est.cooling_ff - mplasma->est.cooling_ff_lofreq -
-      cooling_adiabatic;
+      destruction_choice - mplasma->derived.cooling_bftot - cooling_bbtot - mplasma->derived.cooling_ff -
+      mplasma->derived.cooling_ff_lofreq - cooling_adiabatic;
 
     for (i = 0; i < nphot_total; i++)
     {
-      if (destruction_choice < mplasma->est.cooling_bf_col[i])
+      if (destruction_choice < mplasma->derived.cooling_bf_col[i])
       {
         if (i > nphot_total - 1)
         {
@@ -1135,7 +1138,7 @@ kpkt (PhotPtr p, int *nres, int *escape, int mode)
       }
       else
       {
-        destruction_choice = destruction_choice - mplasma->est.cooling_bf_col[i];
+        destruction_choice = destruction_choice - mplasma->derived.cooling_bf_col[i];
       }
     }
   }
@@ -1145,8 +1148,8 @@ kpkt (PhotPtr p, int *nres, int *escape, int mode)
   Error ("kpkt: Failed to select a destruction process in kpkt. Abort.\n");
   Error
     ("kpkt: choice %8.4e norm %8.4e cooling_bftot %g, cooling_bbtot %g, cooling_ff %g, cooling_ff_lofreq %g, cooling_bf_coltot %g cooling_adiabatic %g cooling_adiabatic %g\n",
-     destruction_choice, cooling_normalisation, mplasma->est.cooling_bftot, cooling_bbtot, mplasma->est.cooling_ff,
-     mplasma->est.cooling_ff_lofreq, cooling_bf_coltot, mplasma->est.cooling_adiabatic, cooling_adiabatic);
+     destruction_choice, cooling_normalisation, mplasma->derived.cooling_bftot, cooling_bbtot, mplasma->derived.cooling_ff,
+     mplasma->derived.cooling_ff_lofreq, cooling_bf_coltot, mplasma->derived.cooling_adiabatic, cooling_adiabatic);
 
   *escape = TRUE;
   p->istat = P_ERROR_MATOM;
@@ -1407,7 +1410,7 @@ emit_matom (WindPtr w, PhotPtr p, int *nres, int upper, double freq_min, double 
 
     if (cont_ptr->freq[0] < freq_max)
     {
-      sp_rec_rate = mplasma->est.recomb_sp[xconfig[uplvl].bfd_indx_first + n];
+      sp_rec_rate = mplasma->derived.recomb_sp[xconfig[uplvl].bfd_indx_first + n];
 
       eprbs[m] = sp_rec_rate * ne * (xconfig[uplvl].ex - xconfig[phot_top[xconfig[uplvl].bfd_jump[n]].nlev].ex);        //energy difference
       penorm += eprbs[m];
