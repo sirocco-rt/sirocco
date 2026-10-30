@@ -285,8 +285,9 @@ cylind_wind_complete (int ndom, WindPtr w)
     one_dom->wind_midz[j] = 0.5 * (w[nstart + j].x[2] + w[nstart + j + 1].x[2]);
 
   /* Add something plausible for the edges */
-  one_dom->wind_midx[one_dom->ndim - 1] = 2. * one_dom->wind_x[nstart + ndim - 1] - one_dom->wind_midx[nstart + ndim - 2];
-  one_dom->wind_midz[one_dom->mdim - 1] = 2. * one_dom->wind_z[nstart + mdim - 1] - one_dom->wind_midz[nstart + mdim - 2];
+  one_dom->wind_midx[one_dom->ndim - 1] = 2. * one_dom->wind_x[ndim - 1] - one_dom->wind_midx[ndim - 2];
+  one_dom->wind_midz[one_dom->mdim - 1] = 2. * one_dom->wind_z[mdim - 1] - one_dom->wind_midz[mdim - 2];
+  set_domain_outer_edges (ndom);
 
   return (0);
 }

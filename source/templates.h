@@ -577,6 +577,7 @@ double get_disk_params(void);
 /* setup_domains.c */
 int get_domain_params(int ndom);
 void allocate_domain_wind_coords(int ndom);
+void set_domain_outer_edges(int ndom);
 int get_wind_params(int ndom);
 int setup_windcone(void);
 int init_windcone(double r, double z, double dzdr, int allow_negative_dzdr, ConePtr one_windcone);
