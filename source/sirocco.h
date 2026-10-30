@@ -1420,7 +1420,7 @@ extern macro_blocks macro_block_ptrs;
 
 
 //These constants are used in the various routines which compute ionization state
-#define SAHA 4.82907e15         /**<  2* (2.*PI*MELEC*k)**1.5 / h**3  (Calculated in constants) */
+#define SAHA (2. * pow (2. * PI * MELEC * BOLTZMANN / (PLANCK * PLANCK), 1.5))     /**<  2 (2 pi m_e k / h^2)^(3/2), from the constants of constants.h */
 #define MAXITERATIONS	200     /**< /The number of loops to do to try to converge in ne */
 #define FRACTIONAL_ERROR 0.03   /**< The change in n_e which causes a break out of the loop for ne */
 #define THETAMAX	 1e4    /**< Used in initial calculation of n_e */
@@ -1765,6 +1765,13 @@ enum partial_cells_enum
                       */
 };
 
+enum bf_integration_enum
+{ BF_INTEG_EXACT = 0,    /**< Gauss-Legendre over the interpolated cross section (bf_rate_integrals); the default */
+  BF_INTEG_SUM = 1,      /**< 10,000-point sum for alpha_sp; GSL for the band-limited alpha_sp and
+                           * the dilute black-body estimators (the method used before #1219) */
+  BF_INTEG_GSL = 2       /**< GSL (num_int) for all of the integrals */
+};
+
 
 /***********************ADVANCED_MODES STRUCTURE **********************/
 /**
@@ -1854,7 +1861,11 @@ struct advanced_modes
                                   that make it less useful than it might seem. */
   int no_macro_pops_for_ions;     /* if true, then use the ion densities from the ionization mode
                                      for macro-atoms, rather than from macro_pops */
-  int early_stopping;             /**< when TRUE, enables convergence-based early stopping of ionization
+  int bf_integration;             /**< How the integrals over bound-free cross sections for macro atoms
+                                    * (alpha_sp, the band-limited alpha_sp, and the dilute black-body
+                                    * estimators) are done: BF_INTEG_EXACT, BF_INTEG_SUM or BF_INTEG_GSL.
+                                    * Set by @Diag.bf_integration; see #1219 */
+  int early_stopping;            /**< when TRUE, enables convergence-based early stopping of ionization
                                    * cycles. Set by the -early_stopping command line switch. When active,
                                    * sirocco queries the user for @estop parameters in the .pf file.
                                    */
@@ -1931,6 +1942,9 @@ extern struct filenames files;
    imposed on x = hnu/kT terms */
 
 #define ALPHA_MATOM_NUMAX_LIMIT 30      /**< maximum value for h nu / k T to be considered in integrals */
+
+/** 4 pi / c^2 (h^2 / 2 pi m_e k)^(3/2), the factor of the Milne relation for the macro-atom recombination rates */
+#define ALPHA_SP_CONSTANT (4. * PI / (VLIGHT * VLIGHT) * pow (PLANCK * PLANCK / (2. * PI * MELEC * BOLTZMANN), 1.5))
 #define ALPHA_FF 100.           /**< maximum h nu / kT to create the free free CDF
                                   */
 

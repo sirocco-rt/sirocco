@@ -20,6 +20,8 @@
 // If routines are added cproto > atomic_proto.h should be run
 #include "atomic_proto.h"
 
+void alpha_sp_forget (void);    /* matom.c */
+
 #define LINELENGTH 400
 #define MAXWORDS    20
 
@@ -499,6 +501,7 @@ free_xsection_data ()
   phot_top_ptr = NULL;
   free (inner_cross_ptr);
   inner_cross_ptr = NULL;
+  alpha_sp_forget ();           /* its integrals belong to the cross sections just freed */
   return (0);
 }
 

@@ -810,6 +810,7 @@ calc_macro_recomb_and_kpkt_rates (void)
   int n_stop;
   int n_cells;
   int escape;
+  double alpha[3];
   struct photon pdummy;
 
   /* calculating recomb_sp and recomb_simple is expensive due to calls to
@@ -832,10 +833,9 @@ calc_macro_recomb_and_kpkt_rates (void)
       {
         if (plasmamain[n_plasma].state.t_e > 1.0)
         {
-          macromain[n_plasma].derived.recomb_sp[xconfig[macro_level].bfd_indx_first + k] =
-            alpha_sp (&phot_top[xconfig[macro_level].bfd_jump[k]], &plasmamain[n_plasma], 0);
-          macromain[n_plasma].derived.recomb_sp_e[xconfig[macro_level].bfd_indx_first + k] =
-            alpha_sp (&phot_top[xconfig[macro_level].bfd_jump[k]], &plasmamain[n_plasma], 2);
+          alpha_sp_all (&phot_top[xconfig[macro_level].bfd_jump[k]], &plasmamain[n_plasma], alpha);
+          macromain[n_plasma].derived.recomb_sp[xconfig[macro_level].bfd_indx_first + k] = alpha[0];
+          macromain[n_plasma].derived.recomb_sp_e[xconfig[macro_level].bfd_indx_first + k] = alpha[2];
         }
         else
         {
@@ -853,10 +853,9 @@ calc_macro_recomb_and_kpkt_rates (void)
       }
       else                      // we want a macro approach, but not for this ion so need recomb_simple instead
       {
-        const double alpha_store = plasmamain[n_plasma].state.recomb_simple[macro_level] =
-          alpha_sp (&phot_top[macro_level], &plasmamain[n_plasma], 2);
-        plasmamain[n_plasma].state.recomb_simple_upweight[macro_level] =
-          alpha_sp (&phot_top[macro_level], &plasmamain[n_plasma], 1) / alpha_store;
+        alpha_sp_all (&phot_top[macro_level], &plasmamain[n_plasma], alpha);
+        plasmamain[n_plasma].state.recomb_simple[macro_level] = alpha[2];
+        plasmamain[n_plasma].state.recomb_simple_upweight[macro_level] = alpha[1] / alpha[2];
       }
     }
   }
