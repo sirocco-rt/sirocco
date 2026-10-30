@@ -37,8 +37,6 @@
  * ###Notes###
  * 1801 -   Refactored into this file in 1801.  Updates in the
  *          fall of 17 were made to allow for importing models.
- *          Note that cyl_var coordinates are not currently 
- *          working
 ***********************************************************/
 
 
@@ -81,7 +79,7 @@ get_domain_params (int ndom)
     strcpy (answer, "cylindrical");
   }
 
-  zdom[ndom].coord_type = rdchoice ("Wind.coord_system(spherical,cylindrical,polar,cyl_var)", "0,1,2,3", answer);
+  zdom[ndom].coord_type = rdchoice ("Wind.coord_system(spherical,cylindrical,polar)", "0,1,2", answer);
 
   if (zdom[ndom].wind_type == IMPORT)   // Do not define dimensions for imported model
   {
@@ -152,8 +150,6 @@ get_domain_params (int ndom)
  *
  * Memory is allocated for the `wind_x`, `wind_z`, `wind_midx` and `wind_midz`
  * arrays. For a polar coordinate system an additional wind cone is allocated.
- * For cylindrical variable coordinate system `wind_z_var` and `wind_midz_var`
- * are allocated.
  *
  * If allocating fails for anything, the program will exit.
  *
@@ -190,10 +186,6 @@ allocate_domain_wind_coords (int ndom)
       Error ("allocate_domain_wind_coords: Problem allocating memory for the r-theta cone in domain %d\n", ndom);
       Exit (EXIT_FAILURE);
     }
-  }
-  else if (zdom[ndom].coord_type == CYLVAR)
-  {
-    cylvar_allocate_domain (ndom);
   }
 }
 

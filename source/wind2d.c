@@ -59,7 +59,6 @@ int
 where_in_grid (int ndom, double x[])
 {
   int n;
-  double fx, fz;
 
 
   if (wig_x != x[0] || wig_y != x[1] || wig_z != x[2])  // Calculate if new position
@@ -76,10 +75,6 @@ where_in_grid (int ndom, double x[])
     else if (zdom[ndom].coord_type == SPHERICAL)
     {
       n = spherical_where_in_grid (ndom, x);
-    }
-    else if (zdom[ndom].coord_type == CYLVAR)
-    {
-      n = cylvar_where_in_grid (ndom, x, 0, &fx, &fz);
     }
     else
     {
@@ -482,10 +477,6 @@ get_random_location (int n, double x[])
   else if (zdom[ndom].coord_type == SPHERICAL)
   {
     spherical_get_random_location (n, x);
-  }
-  else if (zdom[ndom].coord_type == CYLVAR)
-  {
-    cylvar_get_random_location (n, x);
   }
   else
   {
