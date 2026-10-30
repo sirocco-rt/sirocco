@@ -70,6 +70,8 @@ void broadcast_macro_atom_recomb(const int n_start, const int n_stop, const int 
 int broadcast_updated_macro_atom_properties(const int n_start, const int n_stop, const int n_cells_rank);
 int broadcast_macro_atom_state_matrix(int n_start, int n_stop, int n_cells_rank);
 void reduce_macro_atom_estimators(void);
+void prepare_macro_rate_blocks(void);
+void share_macro_recomb_and_kpkt_rates(const int n_start, const int n_stop);
 /* communicate_plasma.c */
 void broadcast_plasma_grid(const int n_start, const int n_stop, const int n_cells_rank);
 void broadcast_wind_luminosity(const int n_start, const int n_stop, const int n_cells_rank);
@@ -700,6 +702,7 @@ void wind_rad_init(void);
 void check_heating_rates_for_plasma_cell(const int n_plasma);
 void init_plasma_rad_properties(void);
 void init_macro_rad_properties(void);
+void calc_macro_recomb_and_kpkt_rates(void);
 void shell_output_wind_update_diagnostics(double xsum, double psum, double fsum, double csum, double icsum, double lsum, double ausum, double chexsum, double cool_sum, double lum_sum);
 /* wind_util.c */
 int coord_fraction(int ndom, int ichoice, double x[], int ii[], double frac[], int *nelem);

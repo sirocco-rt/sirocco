@@ -231,6 +231,11 @@ free_macro_grid (void)
       MPI_Win_free (&macro_block_ptrs.win_alpha_st_old);
       MPI_Win_free (&macro_block_ptrs.win_alpha_st_e_old);
       MPI_Win_free (&macro_block_ptrs.win_matom_emiss);
+      MPI_Win_free (&macro_block_ptrs.win_recomb_sp);
+      MPI_Win_free (&macro_block_ptrs.win_recomb_sp_e);
+      MPI_Win_free (&macro_block_ptrs.win_cooling_bf);
+      MPI_Win_free (&macro_block_ptrs.win_cooling_bf_col);
+      MPI_Win_free (&macro_block_ptrs.win_cooling_bb);
     }
 #endif
     /* state blocks (shared in MPI mode) */
@@ -246,15 +251,15 @@ free_macro_grid (void)
     free_plasma_block ((void **) &macro_block_ptrs.gamma_e_block, FALSE);
     free_plasma_block ((void **) &macro_block_ptrs.alpha_st_block, FALSE);
     free_plasma_block ((void **) &macro_block_ptrs.alpha_st_e_block, FALSE);
-    free_plasma_block ((void **) &macro_block_ptrs.recomb_sp_block, FALSE);
-    free_plasma_block ((void **) &macro_block_ptrs.recomb_sp_e_block, FALSE);
     free_plasma_block ((void **) &macro_block_ptrs.matom_abs_block, FALSE);
-    free_plasma_block ((void **) &macro_block_ptrs.cooling_bf_block, FALSE);
-    free_plasma_block ((void **) &macro_block_ptrs.cooling_bf_col_block, FALSE);
-    free_plasma_block ((void **) &macro_block_ptrs.cooling_bb_block, FALSE);
 
     /* derived blocks (shared in MPI mode) */
     free_plasma_block ((void **) &macro_block_ptrs.matom_emiss_block, is_shared);
+    free_plasma_block ((void **) &macro_block_ptrs.recomb_sp_block, is_shared);
+    free_plasma_block ((void **) &macro_block_ptrs.recomb_sp_e_block, is_shared);
+    free_plasma_block ((void **) &macro_block_ptrs.cooling_bf_block, is_shared);
+    free_plasma_block ((void **) &macro_block_ptrs.cooling_bf_col_block, is_shared);
+    free_plasma_block ((void **) &macro_block_ptrs.cooling_bb_block, is_shared);
   }
 
   /* matom_matrix flat data block (shared in MPI mode) */

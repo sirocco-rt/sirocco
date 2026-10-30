@@ -158,8 +158,8 @@ in the plasma structure */
       n += fwrite (macromain[m].state.alpha_st_old, sizeof (double), size_gamma_est, fptr);
       n += fwrite (macromain[m].est.alpha_st_e, sizeof (double), size_gamma_est, fptr);
       n += fwrite (macromain[m].state.alpha_st_e_old, sizeof (double), size_gamma_est, fptr);
-      n += fwrite (macromain[m].est.recomb_sp, sizeof (double), size_alpha_est, fptr);
-      n += fwrite (macromain[m].est.recomb_sp_e, sizeof (double), size_alpha_est, fptr);
+      n += fwrite (macromain[m].derived.recomb_sp, sizeof (double), size_alpha_est, fptr);
+      n += fwrite (macromain[m].derived.recomb_sp_e, sizeof (double), size_alpha_est, fptr);
       n += fwrite (macromain[m].derived.matom_emiss, sizeof (double), nlevels_macro, fptr);
       n += fwrite (macromain[m].est.matom_abs, sizeof (double), nlevels_macro, fptr);
     }
@@ -430,8 +430,8 @@ wind_read (char filename[])
       n += read_or_skip (macromain[m].state.alpha_st_old, sizeof (double), size_gamma_est, fptr, skip_macro);
       n += fread (macromain[m].est.alpha_st_e, sizeof (double), size_gamma_est, fptr);
       n += read_or_skip (macromain[m].state.alpha_st_e_old, sizeof (double), size_gamma_est, fptr, skip_macro);
-      n += fread (macromain[m].est.recomb_sp, sizeof (double), size_alpha_est, fptr);
-      n += fread (macromain[m].est.recomb_sp_e, sizeof (double), size_alpha_est, fptr);
+      n += read_or_skip (macromain[m].derived.recomb_sp, sizeof (double), size_alpha_est, fptr, skip_macro);
+      n += read_or_skip (macromain[m].derived.recomb_sp_e, sizeof (double), size_alpha_est, fptr, skip_macro);
       n += read_or_skip (macromain[m].derived.matom_emiss, sizeof (double), nlevels_macro, fptr, skip_macro);
       n += fread (macromain[m].est.matom_abs, sizeof (double), nlevels_macro, fptr);
 
