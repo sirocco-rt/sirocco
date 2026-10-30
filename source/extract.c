@@ -64,7 +64,7 @@
  *
  * The basic choices, some of which can be used in tandom are as follows:
  *
- * *	If s[n].nscat>999; then one obtains the entire spectrum
+ * *	If s[n].nscat >= MAXSCAT (20000), then one obtains the entire spectrum
  * *	if s[n].nscat is a positive number, then the spectrum is composed just
  * 		of photons with that number of scatters
  * *	if s[n].nscat is a negative number, then the spectrum contains all photons
