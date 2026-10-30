@@ -340,7 +340,7 @@ config_overview (int n, int icell)
               (m->state.alpha_st_old[xconfig[n].bfu_indx_first + ii]),
               (m->est.alpha_st_e[xconfig[n].bfu_indx_first + ii]),
               (m->state.alpha_st_e_old[xconfig[n].bfu_indx_first + ii]),
-              (m->est.recomb_sp[xconfig[n].bfd_indx_first + ii]), (m->est.recomb_sp_e[xconfig[n].bfd_indx_first + ii]));
+              (m->derived.recomb_sp[xconfig[n].bfd_indx_first + ii]), (m->derived.recomb_sp_e[xconfig[n].bfd_indx_first + ii]));
     }
 
 
@@ -357,7 +357,7 @@ config_overview (int n, int icell)
               (m->state.alpha_st_old[xconfig[n].bfu_indx_first + ii]),
               (m->est.alpha_st_e[xconfig[n].bfu_indx_first + ii]),
               (m->state.alpha_st_e_old[xconfig[n].bfu_indx_first + ii]),
-              (m->est.recomb_sp[xconfig[n].bfd_indx_first + ii]), (m->est.recomb_sp_e[xconfig[n].bfd_indx_first + ii]));
+              (m->derived.recomb_sp[xconfig[n].bfd_indx_first + ii]), (m->derived.recomb_sp_e[xconfig[n].bfd_indx_first + ii]));
     }
 
 
@@ -419,7 +419,7 @@ depcoef_overview (int icell)
      wmain[x->nwind].xcen[0], wmain[x->nwind].xcen[1], wmain[x->nwind].xcen[2], wmain[x->nwind].vol);
   printf (" Z Ion nden macro  b       fpop    lte_fpop    t_e\n");
 
-  for (n = 0; n < NLEVELS; n++)
+  for (n = 0; n < nlevels; n++)
   {
     p = &xconfig[n];
     if (icell >= 0 && icell < NDIM2 && p->macro_info == 1)

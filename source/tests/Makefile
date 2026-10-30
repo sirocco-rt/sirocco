@@ -10,12 +10,11 @@ SIROCCO_SOURCES = $(sirocco_source) get_models.c
 
 C = gcc
 NVCC =
-MATOM_VER = 1
 TARGET = sirocco_unit_test
 
 I_FLAGS = -I$(SIROCCO)/include
 L_FLAGS = -L$(SIROCCO)/lib
-C_FLAGS = -O3 -Wall -Wno-unused-result -DMATOM_VER=$(MATOM_VER)
+C_FLAGS = -O3 -Wall -Wno-unused-result
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
 	C_FLAGS += -Wno-deprecated-non-prototype
@@ -41,7 +40,8 @@ TEST_SOURCES = \
 	tests/test_translate.c \
 	tests/test_macro_estimators.c \
 	tests/test_coord_fraction.c \
-	tests/test_atomic_data.c
+	tests/test_atomic_data.c \
+	tests/test_alpha_sp.c
 
 # Using absolute paths
 SIROCCO_SOURCES := $(patsubst %,$(SIROCCO)/source/%, $(SIROCCO_SOURCES))

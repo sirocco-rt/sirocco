@@ -13,6 +13,10 @@ TopPhotPtr alloc_phot_top_record(int n, int np);
 TopPhotPtr alloc_inner_cross_record(int n, int np);
 AugerPtr alloc_auger_macro_record(int n);
 int free_xsection_data(void);
+ConfigPtr alloc_level_record(int n);
+LinePtr alloc_line_record(int n);
+Coll_strenptr alloc_coll_stren_record(int n);
+int free_level_line_data(void);
 int init_atomic_data(void);
 /* atomicdata_sub.c */
 int atomicdata2file(void);
@@ -43,8 +47,6 @@ double planck_d(double alpha, void *params);
 double planck_d_2(double alpha, void *params);
 double emittance_bb(double freqmin, double freqmax, double t);
 double check_freq_max(double freq_max, double temp);
-/* bilinear.c */
-int bilin(double x[], double x00[], double x01[], double x10[], double x11[], double *f, double *g);
 /* brem.c */
 double integ_brem(double freq, void *params);
 double brem_d(double alpha, void *params);
@@ -70,6 +72,8 @@ void broadcast_macro_atom_recomb(const int n_start, const int n_stop, const int 
 int broadcast_updated_macro_atom_properties(const int n_start, const int n_stop, const int n_cells_rank);
 int broadcast_macro_atom_state_matrix(int n_start, int n_stop, int n_cells_rank);
 void reduce_macro_atom_estimators(void);
+void prepare_macro_rate_blocks(void);
+void share_macro_recomb_and_kpkt_rates(const int n_start, const int n_stop);
 /* communicate_plasma.c */
 void broadcast_plasma_grid(const int n_start, const int n_stop, const int n_cells_rank);
 void broadcast_wind_luminosity(const int n_start, const int n_stop, const int n_cells_rank);
@@ -146,6 +150,7 @@ void define_wind(void);
 double get_ion_density(int ndom, double x[], int nion);
 /* diag.c */
 int get_standard_care_factors(void);
+int get_bf_integration_method(void);
 int get_extra_diagnostics(void);
 int init_searchlight(void);
 int init_extra_diagnostics(void);
@@ -204,13 +209,9 @@ int bb_simple_heat(PlasmaPtr xplasma, PhotPtr p, double tau_sobolev, int nn);
 int check_stimulated_recomb(PlasmaPtr xplasma);
 int get_dilute_estimators(PlasmaPtr xplasma);
 double get_gamma(struct topbase_phot *cont_ptr, PlasmaPtr xplasma);
-double gamma_integrand(double freq, void *params);
 double get_gamma_e(struct topbase_phot *cont_ptr, PlasmaPtr xplasma);
-double gamma_e_integrand(double freq, void *params);
 double get_alpha_st(struct topbase_phot *cont_ptr, PlasmaPtr xplasma);
-double alpha_st_integrand(double freq, void *params);
 double get_alpha_st_e(struct topbase_phot *cont_ptr, PlasmaPtr xplasma);
-double alpha_st_e_integrand(double freq, void *params);
 int rescale_alpha_st_estimators(PlasmaPtr xplasma, double t_old);
 /* estimators_simple.c */
 int update_banded_estimators(PlasmaPtr xplasma, PhotPtr p, double ds, double w_ave, int ndom);
@@ -376,10 +377,11 @@ void macro_pops_copy_to_xplasma(PlasmaPtr xplasma, int index_element, double *po
 int matom(PhotPtr p, int *nres, int *escape);
 double b12(struct lines *line_ptr);
 double stim_recomb_factor(PlasmaPtr xplasma, struct topbase_phot *cont_ptr);
-double xalpha_sp(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice);
+void bf_rate_integrals(struct topbase_phot *cont_ptr, double freq_min, double freq_max, double beta, double beta_r, double sum[3]);
 double alpha_sp(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice);
+void alpha_sp_all(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, double alpha[3]);
+void alpha_sp_forget(void);
 double scaled_alpha_sp_integral_band_limited(struct topbase_phot *cont_ptr, PlasmaPtr xplasma, int ichoice, double freq_min, double freq_max);
-double alpha_sp_integrand(double freq, void *params);
 int kpkt(PhotPtr p, int *nres, int *escape, int mode);
 int fake_matom_bb(PhotPtr p, int *nres, int *escape);
 int fake_matom_bf(PhotPtr p, int *nres, int *escape);
@@ -519,7 +521,6 @@ int fraction(double value, double array[], int npts, int *ival, double *f, int m
 int linterp(double x, double xarray[], double yarray[], int xdim, double *y, int mode);
 /* recomb.c */
 double fb_topbase_partial(double freq);
-double fb_topbase_partial2(double freq, void *params);
 double integ_fb(double t, double f1, double f2, int nion, int fb_choice, int mode);
 double total_fb(PlasmaPtr xplasma, double t, double f1, double f2, int fb_choice, int mode);
 double one_fb(PlasmaPtr xplasma, double f1, double f2);
@@ -725,11 +726,11 @@ void wind_rad_init(void);
 void check_heating_rates_for_plasma_cell(const int n_plasma);
 void init_plasma_rad_properties(void);
 void init_macro_rad_properties(void);
+void calc_macro_recomb_and_kpkt_rates(void);
 void shell_output_wind_update_diagnostics(double xsum, double psum, double fsum, double csum, double icsum, double lsum, double ausum, double chexsum, double cool_sum, double lum_sum);
 /* wind_util.c */
 int phi_fraction(int ndom, int ichoice, double x[], int *k, int *kk, double *dphi);
 int coord_fraction(int ndom, int ichoice, double x[], int ii[], double frac[], int *nelem);
-int where_in_2dcell(int ichoice, double x[], int n, double *fx, double *fz);
 int wind_n_to_ij(int ndom, int n, int *i, int *j);
 int wind_ij_to_n(int ndom, int i, int j, int *n);
 int wind_x_to_n(double x[], int *n);

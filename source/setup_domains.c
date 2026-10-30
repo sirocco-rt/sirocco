@@ -37,8 +37,6 @@
  * ###Notes###
  * 1801 -   Refactored into this file in 1801.  Updates in the
  *          fall of 17 were made to allow for importing models.
- *          Note that cyl_var coordinates are not currently
- *          working.
  *
  * For CYLIND and RTHETA grids the user specifies the number of z or theta
  * cells per hemisphere.  This routine doubles mdim so that the internal grid

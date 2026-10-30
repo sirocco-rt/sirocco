@@ -25,8 +25,6 @@
 #include "atomic.h"
 #include "sirocco.h"
 
-int ierr_coord_fraction = 0;
-
 
 /**********************************************************/
 /**
@@ -316,107 +314,6 @@ coord_fraction (int ndom, int ichoice, double x[], int ii[], double frac[], int 
   }
 
   return (1);
-
-}
-
-
-
-int ierr_where_in_2dcell = 0;
-
-/**********************************************************/
-/**
- * @brief      calculates the fractional
- * 	location of a position in any 2d grid.
- *
- * @param [in] int  ichoice   interpolate on vertices (0) or centers (1)
- * @param [in] double  x[]   the 3-vector position for which you want
- * the fractinal position
- * @param [inout] int  n   The cell number in wmain
- * @param [out] double *  fx   Fractional position in the x (1st) direction
- * @param [out] double *  fz   fracitionl postion in the z (2nd) direction
- * @return     0 if the positiion is within the cell as defined, non-zero otherwise
- *
- * @details
- *
- * The routine provides the fractions need to interpopolate
- * variables, such as ne, in the wind.  It is called when one
- * already knows what cell one is in.  Like many other routines
- * one can intepolate using the boundaries of the wind cell for
- * values which are defined there (like velocity), and values
- * defined at the cell centeres (like densities)
- *
- *
- * ### Notes ###
- * This routine is general.  It does not rely on the
- * predefined arrays that just contain the grid vertices
- * and centers. On the other hand, it does not calculate
- * which grid cell x lies in. It only tells you that x
- * is not in a particular cell if that is the case.
- *
- * A cell is organized as follows:
- *
- * * x01	x11
- * * x00	x10
- *
- *
- **********************************************************/
-
-int
-where_in_2dcell (int ichoice, double x[], int n, double *fx, double *fz)
-{
-  double *x00, *x01, *x10, *x11;
-  double z[3];
-  int i;
-  int ndom, nstart, nstop, mdim;
-
-  ndom = wmain[n].ndom;
-  nstart = zdom[ndom].nstart;
-  nstop = zdom[ndom].nstop;
-  mdim = zdom[ndom].mdim;
-
-
-  /* First check that n is reasonable. This semems almost impossible */
-  if (n < nstart || n + mdim + 1 >= nstop)
-  {
-    if (ierr_where_in_2dcell < 100)
-    {
-      Error ("where_in_2dcell: Unreasonable n %d This should not happen. Please investigate \n", n);
-      ierr_where_in_2dcell++;
-    }
-    return (n);                 // And hope that calling routine knows how to handle this.
-  }
-
-  /* Assign the corners ot the region we want to determine
-   * the fractional position of
-   */
-
-  if (ichoice == 0)
-  {
-    x00 = wmain[n].x;
-    x01 = wmain[n + 1].x;
-    x10 = wmain[n + mdim].x;
-    x11 = wmain[n + mdim + 1].x;
-  }
-  else
-  {
-    x00 = wmain[n].xcen;
-    x01 = wmain[n + 1].xcen;
-    x10 = wmain[n + mdim].xcen;
-    x11 = wmain[n + mdim + 1].xcen;
-  }
-
-  /* Rotate the input vector onto the xz plane
-   * which is the plane where the grid is defined
-   */
-
-  z[0] = sqrt (x[0] * x[0] + x[1] * x[1]);
-  z[1] = 0.0;
-  z[2] = fabs (x[2]);
-
-  i = bilin (z, x00, x01, x10, x11, fx, fz);
-
-  return (i);
-
 
 }
 
