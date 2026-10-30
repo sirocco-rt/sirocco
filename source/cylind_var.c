@@ -340,6 +340,7 @@ cylvar_wind_complete (int ndom, WindPtr w)
       zdom[ndom].wind_midz_var[i][j] = w[n].xcen[2];
     }
   }
+  set_domain_outer_edges (ndom);
 
   return (0);
 }
