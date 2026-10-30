@@ -748,6 +748,7 @@ init_macro_rad_properties (void)
   int n_start;
   int n_stop;
   int n_cells;
+  double alpha[3];
 
   /* Initialising these properties are inexpensive, so is not parallelised */
   for (n_plasma = 0; n_plasma < NPLASMA; ++n_plasma)
@@ -804,10 +805,9 @@ init_macro_rad_properties (void)
       {
         if (plasmamain[n_plasma].state.t_e > 1.0)
         {
-          macromain[n_plasma].est.recomb_sp[xconfig[macro_level].bfd_indx_first + k] =
-            alpha_sp (&phot_top[xconfig[macro_level].bfd_jump[k]], &plasmamain[n_plasma], 0);
-          macromain[n_plasma].est.recomb_sp_e[xconfig[macro_level].bfd_indx_first + k] =
-            alpha_sp (&phot_top[xconfig[macro_level].bfd_jump[k]], &plasmamain[n_plasma], 2);
+          alpha_sp_all (&phot_top[xconfig[macro_level].bfd_jump[k]], &plasmamain[n_plasma], alpha);
+          macromain[n_plasma].est.recomb_sp[xconfig[macro_level].bfd_indx_first + k] = alpha[0];
+          macromain[n_plasma].est.recomb_sp_e[xconfig[macro_level].bfd_indx_first + k] = alpha[2];
         }
         else
         {
@@ -825,10 +825,9 @@ init_macro_rad_properties (void)
       }
       else                      // we want a macro approach, but not for this ion so need recomb_simple instead
       {
-        const double alpha_store = plasmamain[n_plasma].state.recomb_simple[macro_level] =
-          alpha_sp (&phot_top[macro_level], &plasmamain[n_plasma], 2);
-        plasmamain[n_plasma].state.recomb_simple_upweight[macro_level] =
-          alpha_sp (&phot_top[macro_level], &plasmamain[n_plasma], 1) / alpha_store;
+        alpha_sp_all (&phot_top[macro_level], &plasmamain[n_plasma], alpha);
+        plasmamain[n_plasma].state.recomb_simple[macro_level] = alpha[2];
+        plasmamain[n_plasma].state.recomb_simple_upweight[macro_level] = alpha[1] / alpha[2];
       }
     }
   }
