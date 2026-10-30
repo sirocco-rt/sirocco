@@ -1181,10 +1181,12 @@ scatter (PhotPtr p, int *nres, int *nnscat)
   {
     randvec (z_prime, 1.0);
     stuff_v (z_prime, p->lmn);
+    p->q = p->u = 0;            // Treated as unpolarized
   }
   else
   {
     randwind_thermal_trapping (p, nnscat);
+    p->q = p->u = 0;            // Treated as unpolarized
   }
 
 

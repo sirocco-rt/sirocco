@@ -11,3 +11,4 @@ This page contains documentation intended for developers.
     developer/shared_memory_safety
     developer/cuda
     developer/tests
+    developer/polarization_tests

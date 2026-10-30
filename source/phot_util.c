@@ -53,6 +53,7 @@ init_dummy_phot (PhotPtr p)
   p->origin = p->origin_orig = PTYPE_DUMMY;
   p->np = -1;
   p->tau = p->ds = 0;
+  p->q = p->u = 0;
 
   return (0);
 
@@ -110,6 +111,9 @@ stuff_phot (PhotPtr pin, PhotPtr pout)
   pout->path = pin->path;
 
   pout->ds = pin->ds;
+
+  pout->q = pin->q;
+  pout->u = pin->u;
 
   return (0);
 }

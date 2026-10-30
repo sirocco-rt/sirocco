@@ -37,6 +37,7 @@ History:
 '''
 
 import sys
+import os
 import numpy
 import pylab
 from astropy.io import ascii
@@ -65,7 +66,7 @@ def xsmooth(flux,smooth=21):
 
 
 
-def doit(rootname='sphere',smooth=21,fig_no=2):
+def doit(rootname='sphere',smooth=21,fig_no=2,outdir=''):
     '''
     Plot the spectra contained in the spec_tot 
     file
@@ -75,6 +76,8 @@ def doit(rootname='sphere',smooth=21,fig_no=2):
     191210  ksl
         Modified so that what is ploted is nuL_nu, and
         did a better job at setting limits for the plot
+    261018  ksl
+        The plot is written to outdir, if given
     '''
     # Make sure we only have the rootname
 
@@ -145,7 +148,7 @@ def doit(rootname='sphere',smooth=21,fig_no=2):
 
 
     pylab.draw()
-    pylab.savefig(rootname+'.spec_tot.png')
+    pylab.savefig(os.path.join(outdir,rootname+'.spec_tot.png'))
 
     # Since the total spectra are basically written out as L_nu we need to 
     # integrate over frequency

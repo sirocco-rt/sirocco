@@ -35,4 +35,7 @@ void create_atomic_data_test_suite (void);
 /* test_alpha_sp.c */
 void create_alpha_sp_test_suite (void);
 
+/* test_polarization.c */
+void create_polarization_test_suite (void);
+
 #endif

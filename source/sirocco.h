@@ -1547,6 +1547,9 @@ typedef struct photon
                                    purposes */
   double path;                  /* The total path length of a photon (used for reverberation calcuations) */
   double ds;                    /* the distance a photon has moved since its creation or last interaction */
+  double q, u;                  /**< Linear polarization, Q/I and U/I, measured against the default
+                                  * axis e1 = normalize(z x lmn) (see pol_basis in polarization.c).
+                                  * Zero means unpolarized.  Used only when modes.polarization is TRUE */
 }
 p_dummy, *PhotPtr;
 
@@ -1642,6 +1645,24 @@ spectrum_dummy, *SpecPtr;
 
 
 extern SpecPtr xxspec;
+
+/** Q and U spectra for the observer spectra (xxspec[MSPEC] onward), allocated only when
+ * modes.polarization is TRUE.  xxpol[n - MSPEC] goes with xxspec[n].  Q and U are kept in
+ * the same units as the I arrays in xxspec, and are referred to North on the sky, the
+ * projected +z axis (IAU convention).  They are kept apart from xxspec so that the
+ * format of the spec_save file does not change when polarization is off. */
+typedef struct spec_pol
+{
+  double north[3];              /**< North on the sky for this observer */
+  double *q, *u;                /**< Q and U, linear frequency bins */
+  double *lq, *lu;              /**< Q and U, logarithmic frequency bins */
+  double *q_wind, *u_wind;      /**< Q and U of photons created or scattered in the wind */
+  double *lq_wind, *lu_wind;    /**< The logarithmic versions */
+}
+spec_pol_dummy, *SpecPolPtr;
+
+extern SpecPolPtr xxpol;
+extern int npolspec;           /**< The number of elements in xxpol */
 
 /* Parameters used only by swind
  * swind_projecti	0 -> simply print the various parameters without
@@ -1865,7 +1886,10 @@ struct advanced_modes
                                     * (alpha_sp, the band-limited alpha_sp, and the dilute black-body
                                     * estimators) are done: BF_INTEG_EXACT, BF_INTEG_SUM or BF_INTEG_GSL.
                                     * Set by @Diag.bf_integration; see #1219 */
-  int early_stopping;            /**< when TRUE, enables convergence-based early stopping of ionization
+  int polarization;              /**< when TRUE, follow the linear polarization of photons and
+                                   * construct Q and U spectra for the observers in the spectral
+                                   * cycles.  Set by @Spectrum.polarization */
+  int early_stopping;             /**< when TRUE, enables convergence-based early stopping of ionization
                                    * cycles. Set by the -early_stopping command line switch. When active,
                                    * sirocco queries the user for @estop parameters in the .pf file.
                                    */

@@ -325,6 +325,7 @@ init_advanced_modes ()
   modes.track_resonant_scatters = FALSE;        // track resonant scatters
   modes.save_extract_photons = FALSE;   // save details on extracted photons
   modes.adjust_grid = FALSE;    // the user wants to adjust the grid scale
+  modes.polarization = FALSE;   // follow the polarization of photons in the spectral cycles
   modes.diag_on_off = FALSE;    // extra diagnostics
   modes.use_debug = FALSE;
   modes.print_dvds_info = FALSE;        // print information on velocity gradients
@@ -557,6 +558,13 @@ init_observers ()
 
         }
       }
+    }
+
+    strcpy (answer, "no");
+    modes.polarization = rdchoice ("@Spectrum.polarization(yes,no)", "1,0", answer);
+    if (modes.polarization)
+    {
+      Log ("OK, Q and U spectra will be created for the observers\n");
     }
   }
 

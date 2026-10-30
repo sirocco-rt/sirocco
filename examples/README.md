@@ -29,6 +29,14 @@ we are working on for scientific or development reaasons
 * agn_ss_2010_modela.pf -- AGN model A from Sim et al. (2010).
 * lamp_post.pf -- beta model for testing lamp post geometry
 
+### polarization
+
+Models that use the polarization option (`@Spectrum.polarization yes`, run with `sirocco -d`).
+See the README there.
+
+* torus_wedge.pf -- an AGN torus in X-rays, the wedge torus of Vander Meulen et al. (2024), with
+  make_torus.py, which writes its density structure.
+
 ### regress
 
 This is a standard set of files which are used for regression testing.  They are intended

@@ -1,0 +1,10 @@
+Model                                    wedge               
+R_min                                    1e17                
+R_max                                    1e18                
+Theta_t                                  30                  
+N_H                                      1e24                
+No.Radial.Bins                           30                  
+No.Theta.Bins                            30                  
+Radial.Spacing                           log                 
+M_bh                                     1e8                 
+T_init                                   1e5                 

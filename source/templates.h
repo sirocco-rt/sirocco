@@ -436,6 +436,26 @@ double calc_pi_rate(int nion, PlasmaPtr xplasma, int mode, int type);
 double tb_planck(double freq, void *params);
 double tb_logpow(double freq, void *params);
 double tb_exp(double freq, void *params);
+/* polarization.c */
+int pol_basis(double lmn[], double e1[], double e2[]);
+int pol_rotate(double *q, double *u, double alpha);
+double pol_axis_angle(double lmn[], double t[]);
+int pol_to_axis(PhotPtr p, double t[], double *qt, double *ut);
+int pol_from_axis(PhotPtr p, double t[], double qt, double ut);
+int pol_north(double lmn[], double north[]);
+int pol_spectra_init(int nangle, double angle[], double phase[]);
+int pol_spectra_allocate(void);
+int pol_tally(PhotPtr p, double north[], int nspec, double w, int k, int k1, int iwind);
+int pol_spectra_renormalise(double factor);
+int pol_spectra_write(FILE *fptr);
+int pol_spectra_read(FILE *fptr, int nangle);
+int pol_spectra_reduce(void);
+int pol_active(void);
+double pol_thomson_cos(void);
+double pol_es_matrix(double c, double eps, double q_perp, double u_perp, double *q_out, double *u_out);
+int pol_scatter_es(PhotPtr p, double c, double eps);
+int pol_peel_es(PhotPtr p_in, PhotPtr pp);
+int pol_lorentz(double n_in[], double q, double u, double v[], PhotPtr p_out);
 /* sirocco_extern_init.c */
 /* radiation.c */
 double radiation(PhotPtr p, double ds);
@@ -598,6 +618,7 @@ void spectrum_allocate(int nspec);
 int spectrum_init(double f1, double f2, int nangle, double angle[], double phase[], int scat_select[], int top_bot_select[], int select_extract, double rho_select[], double z_select[], double az_select[], double r_select[]);
 int spectrum_create(PhotPtr p, int nangle, int select_extract);
 int spec_add_one(PhotPtr p, int spec_type);
+double pol_units(double x, double freq, double dfreq, double dd, int select_spectype);
 int spectrum_summary(char filename[], int nspecmin, int nspecmax, int select_spectype, double renorm, int loglin, int iwind);
 int spectrum_restart_renormalise(int nangle);
 /* spectral_estimators.c */
