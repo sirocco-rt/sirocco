@@ -362,6 +362,7 @@ rtheta_wind_complete (int ndom, WindPtr w)
      to allow use to use the cones routines to work out if photonds leave a cell in the theta direction */
 
   rtheta_make_cones (ndom, w);
+  set_domain_outer_edges (ndom);
 
   /* Set xmax, rmax, thetamax, wcone (inner theta cone), and wcone_max (outer theta cone)
      for each cell.  wind_z now stores theta values in degrees over the full 0-180 range.
