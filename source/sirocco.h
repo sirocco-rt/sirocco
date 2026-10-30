@@ -197,8 +197,7 @@ extern int NWAVE_NOW;         /**< Either NWAVE_IONIZ or NWAVE_EXTRACT depending
 enum coord_type_enum
 { SPHERICAL = 0,                //!< Spherical coordinates
   CYLIND = 1,                   //!< Standard cylindirical coordinates
-  RTHETA = 2,                   //!< Polar coordinates
-  CYLVAR = 3                    //!< Cylindrical coordinates but the z axis varies with rho
+  RTHETA = 2                    //!< Polar coordinates
 };
 
 
@@ -306,15 +305,6 @@ typedef struct domain
 
   ConePtr cones_rtheta;         /**< A ptr to the cones that define boundaries of cells in the theta direction
                                    when rtheta coords  are being used */
-/* Next two lines are for cyl_var coordinates.  They are used primarily for locating where a position is
- * in a grid with cyl_var coordinates. See cylvar_where in grid
- */
-
-  double **wind_z_var, **wind_midz_var;
-
-//  double wind_z_var[NDIM_MAX][NDIM_MAX];
-//  double wind_midz_var[NDIM_MAX][NDIM_MAX];
-
 
   /* Generic parameters for the wind */
   double wind_mdot, stellar_wind_mdot;  /**< Mass loss rate in disk and stellar wind */
@@ -881,8 +871,6 @@ typedef struct wind
                                    coordinates. */
   double theta, thetacen;       /**< Angle of coordinate from z axis in degrees  */
   double dtheta, dr;            /**<  widths of bins, used in hydro import mode */
-  struct cone wcone;            /**<  cone structure that defines the bottom edge of the cell in
-                                   CYLVAR coordinates */
   double v[3];                  /**< velocity at inner vertex of cell in the observer frame.  For 2d coordinate systems this
                                    is defined in the xz plane */
   double v_grad[3][3];          /**< velocity gradient tensor  at the inner vertex of the cell in the co-moving frame */
