@@ -28,12 +28,6 @@
 #include "sirocco.h"
 
 
-/* A couple of external things for use in the routines for computing gamma's below. */
-struct topbase_phot *cont_ext_ptr2;     //continuum pointer passed externally
-double temp_ext2;               //temperature passed externally
-double temp_ext_rad;            //radiation temperature passed externally 
-
-#define ALPHA_SP_CONSTANT 5.79618e-36   //
 
 
 /**********************************************************/
@@ -595,6 +589,7 @@ total_fb_matoms (PlasmaPtr xplasma, double t_e, double f1, double f2)
   double t_e_store;
   struct topbase_phot *cont_ptr;
   double total, density;
+  double alpha[3];
   int i, j;
   MacroPtr mplasma;
 
@@ -618,16 +613,14 @@ total_fb_matoms (PlasmaPtr xplasma, double t_e, double f1, double f2)
 
         /* the cooling contribution for each transition is given by 
            density * ne * [(alpha_sp_e - alpha_sp) + (alpha_st_e - alpha_st)]
-           we call alpha_sp() with modes 1 and 0 to get the different
-           versions of the sp. recombination rate coefficient.
-           This is essentially equation (33) of Lucy (2003) */
+           alpha_sp_all gives the different versions of the sp. recombination
+           rate coefficient. This is essentially equation (33) of Lucy (2003) */
 
+        alpha_sp_all (cont_ptr, xplasma, alpha);
         cool_contribution =
-          (mplasma->state.alpha_st_e_old[xconfig[i].bfu_indx_first + j] +
-           alpha_sp (cont_ptr, xplasma, 1)
-           - mplasma->state.alpha_st_old[xconfig[i].bfu_indx_first + j]
-           - alpha_sp (cont_ptr, xplasma,
-                       0)) * PLANCK * phot_top[xconfig[i].bfu_jump[j]].freq[0] * density * xplasma->state.ne * xplasma->state.vol;
+          (mplasma->state.alpha_st_e_old[xconfig[i].bfu_indx_first + j] + alpha[1]
+           - mplasma->state.alpha_st_old[xconfig[i].bfu_indx_first + j] - alpha[0])
+          * PLANCK * phot_top[xconfig[i].bfu_jump[j]].freq[0] * density * xplasma->state.ne * xplasma->state.vol;
 
         /* That's the bf cooling contribution. */
         total += cool_contribution;
@@ -1072,71 +1065,18 @@ get_dilute_estimators (PlasmaPtr xplasma)
 double
 get_gamma (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
 {
-  double gamma_value;
-  double fthresh, flast;
+  double sum[3];
 
-  temp_ext2 = xplasma->state.t_r;       //external temperature
-  cont_ext_ptr2 = cont_ptr;     //external cont pointer
-  fthresh = cont_ptr->freq[0];  //first frequency in list
-  flast = cont_ptr->freq[cont_ptr->np - 1];     //last frequency in list
-  if ((H_OVER_K * (flast - fthresh) / temp_ext2) > ALPHA_MATOM_NUMAX_LIMIT)
-  {
-    //flast is currently very far into the exponential tail: so reduce flast to limit value of h nu / k T.
-    flast = fthresh + temp_ext2 * ALPHA_MATOM_NUMAX_LIMIT / H_OVER_K;
-  }
-
-
-  // gamma_value = qromb (gamma_integrand, fthresh, flast, 1e-4);
-  gamma_value = num_int (gamma_integrand, fthresh, flast, 1e-4);
-
-  gamma_value *= 8 * PI / VLIGHT / VLIGHT * xplasma->state.w;
-
-  return (gamma_value);
-
-}
-
-/**********************************************************/
-/**
- * @brief integrand for the dilute photoionization rate estimator
- *
- * @param [in] double freq
- * @param [in] void  params   An extra (unused) variable to make it paletable for the gsl integrator
- * @return integrand
- *
- * @details
- * integrand for the dilute photoionization rate estimator, for a black body 
- * radiation field with known dilution factor and temperature 
- * see equation 3.64 of Matthews Phd thesis, see also Lucy (2003). 
- *
- **********************************************************/
-
-double
-gamma_integrand (double freq, void *params)
-{
-  double fthresh;
-  double x;
-  double integrand;
-  double tt;
-
-  fthresh = cont_ext_ptr2->freq[0];
-  tt = temp_ext2;
-
-  if (freq < fthresh)
-    return (0.0);               // No photoionization at frequencies lower than the threshold freq occur
-
-  x = sigma_phot (cont_ext_ptr2, freq); //this is the cross-section
-
-  integrand = x * freq * freq / (exp (H_OVER_K * freq / tt) - 1);
-
-  return (integrand);
+  bf_rate_integrals (cont_ptr, cont_ptr->freq[0], cont_ptr->freq[cont_ptr->np - 1], 0, H_OVER_K / xplasma->state.t_r, sum);
+  return (sum[0] * 8 * PI / VLIGHT / VLIGHT * xplasma->state.w);
 }
 
 /**********************************************************/
 /**
  * @brief the dilute energy weighted photoionization rate estimator
  *
- * @param [in, out] struct topbase_phot *  cont_ptr 
- * @param [in, out] PlasmaPtr  xplasma 
+ * @param [in] struct topbase_phot *  cont_ptr 
+ * @param [in] PlasmaPtr  xplasma 
  * @return gamma_e_value
  *
  * @details
@@ -1149,64 +1089,46 @@ gamma_integrand (double freq, void *params)
 double
 get_gamma_e (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
 {
-  double gamma_e_value;
-  double fthresh, flast;
+  double sum[3];
 
-  temp_ext2 = xplasma->state.t_r;       //external temperature
-  cont_ext_ptr2 = cont_ptr;     //external cont pointer
-  fthresh = cont_ptr->freq[0];  //first frequency in list
-  flast = cont_ptr->freq[cont_ptr->np - 1];     //last frequency in list
-  if ((H_OVER_K * (flast - fthresh) / temp_ext2) > ALPHA_MATOM_NUMAX_LIMIT)
-  {
-    //flast is currently very far into the exponential tail: so reduce flast to limit value of h nu / k T.
-    flast = fthresh + temp_ext2 * ALPHA_MATOM_NUMAX_LIMIT / H_OVER_K;
-  }
-
-
-//  gamma_e_value = qromb (gamma_e_integrand, fthresh, flast, 1e-4);
-  gamma_e_value = num_int (gamma_e_integrand, fthresh, flast, 1e-4);
-
-  gamma_e_value *= 8 * PI / VLIGHT / VLIGHT * xplasma->state.w;
-
-  return (gamma_e_value);
-
+  bf_rate_integrals (cont_ptr, cont_ptr->freq[0], cont_ptr->freq[cont_ptr->np - 1], 0, H_OVER_K / xplasma->state.t_r, sum);
+  return (sum[1] * 8 * PI / VLIGHT / VLIGHT * xplasma->state.w);
 }
 
 /**********************************************************/
 /**
- * @brief the integrand for the energy-weighted photoionization rate estimator, 
+ * @brief the stimulated recombination rate estimators, plain and energy weighted
  *
- * @param [in] double  freq 
- * @param [in] void  params   An extra (unused) variable to make it paletable for the gsl integrator
- * @return integrand 
+ * @param [in] struct topbase_phot *  cont_ptr
+ * @param [in] PlasmaPtr  xplasma
+ * @param [out] double rate[2] alpha_st and alpha_st_e
  *
  * @details
- * the integrand for the energy-weighted photoionization rate estimator, 
- * equation 3.66 of Matthews Phd thesis, see also Lucy (2003). 
- *
+ * The integrals of sigma nu^2 exp (h (nu_threshold - nu) / k T_e) / (exp (h nu / k T_r) - 1), times 1 and
+ * nu / nu_threshold, times the constants of alpha_sp and the dilution factor:
+ * equations 3.65 and 3.68 of Matthews Phd thesis, see also Lucy (2003).
  **********************************************************/
 
-double
-gamma_e_integrand (double freq, void *params)
+static void
+stimulated_recombination_rates (struct topbase_phot *cont_ptr, PlasmaPtr xplasma, double rate[2])
 {
-  double fthresh;
-  double x;
-  double integrand;
-  double tt;
+  double sum[3], g_upper, factor;
 
-  fthresh = cont_ext_ptr2->freq[0];
-  tt = temp_ext2;
+  if (cont_ptr->macro_info == TRUE && geo.macro_simple == FALSE)
+  {
+    g_upper = xconfig[cont_ptr->uplev].g;
+  }
+  else                          //case for simple element
+  {
+    g_upper = ion[cont_ptr->nion + 1].g;        //g for next ion up used
+  }
 
-  if (freq < fthresh)
-    return (0.0);               // No photoionization at frequencies lower than the threshold freq occur
-
-  x = sigma_phot (cont_ext_ptr2, freq); //this is the cross-section
-  integrand = x * freq * freq * freq / (exp (H_OVER_K * freq / tt) - 1) / fthresh;
-
-  return (integrand);
+  bf_rate_integrals (cont_ptr, cont_ptr->freq[0], cont_ptr->freq[cont_ptr->np - 1], H_OVER_K / xplasma->state.t_e,
+                     H_OVER_K / xplasma->state.t_r, sum);
+  factor = xconfig[cont_ptr->nlev].g / g_upper * pow (xplasma->state.t_e, -1.5) * ALPHA_SP_CONSTANT * xplasma->state.w;
+  rate[0] = sum[0] * factor;
+  rate[1] = sum[1] * factor;
 }
-
-
 
 /**********************************************************/
 /**
@@ -1225,81 +1147,11 @@ gamma_e_integrand (double freq, void *params)
 double
 get_alpha_st (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
 {
-  double alpha_st_value;
-  double fthresh, flast;
+  double rate[2];
 
-  temp_ext2 = xplasma->state.t_e;       //external for use in integrand
-  temp_ext_rad = xplasma->state.t_r;
-  cont_ext_ptr2 = cont_ptr;     //"
-  fthresh = cont_ptr->freq[0];  //first frequency in list
-  flast = cont_ptr->freq[cont_ptr->np - 1];     //last frequency in list
-
-  if ((H_OVER_K * (flast - fthresh) / temp_ext2) > ALPHA_MATOM_NUMAX_LIMIT)
-  {
-    //flast is currently very far into the exponential tail: so reduce flast to limit value of h nu / k T.
-    flast = fthresh + temp_ext2 * ALPHA_MATOM_NUMAX_LIMIT / H_OVER_K;
-  }
-
-
-  alpha_st_value = num_int (alpha_st_integrand, fthresh, flast, 1e-4);
-
-
-  /* The lines above evaluate the integral in alpha_sp. Now we just want to multiply 
-     through by the appropriate constant. */
-  if (cont_ptr->macro_info == 1 && geo.macro_simple == FALSE)
-  {
-    alpha_st_value = alpha_st_value * xconfig[cont_ptr->nlev].g / xconfig[cont_ptr->uplev].g * pow (xplasma->state.t_e, -1.5);
-  }
-  else                          //case for simple element
-  {
-    alpha_st_value = alpha_st_value * xconfig[cont_ptr->nlev].g / ion[cont_ptr->nion + 1].g * pow (xplasma->state.t_e, -1.5);   //g for next ion up used
-  }
-
-  alpha_st_value = alpha_st_value * ALPHA_SP_CONSTANT * xplasma->state.w;
-
-  return (alpha_st_value);
+  stimulated_recombination_rates (cont_ptr, xplasma, rate);
+  return (rate[0]);
 }
-
-/**********************************************************/
-/**
- * @brief returns the integrand for alpha_st at a chosen frequency
- *
- * @param [in] double  freq 
- * @param [in] void  params   An extra (unused) variable to make it paletable for the gsl integrator
- * @return integrand 
- *
- * @details
- * integrand for the stimulated recombination rate estimator, 
- * in equation 3.65 of Matthews Phd thesis, see also Lucy (2003). 
- *
- **********************************************************/
-
-double
-alpha_st_integrand (double freq, void *params)
-{
-  double fthresh;
-  double x;
-  double integrand;
-  double tt;
-  double ttrr;
-
-  fthresh = cont_ext_ptr2->freq[0];
-  tt = temp_ext2;               //this is the electron temperature
-  /* Also need the radiation temperature here */
-  ttrr = temp_ext_rad;          //will do for now
-
-  if (freq < fthresh)
-    return (0.0);               // No recombination at frequencies lower than the threshold freq occur
-
-  x = sigma_phot (cont_ext_ptr2, freq); //this is the cross-section
-
-  integrand = x * freq * freq * exp (H_OVER_K * (fthresh - freq) / tt) / (exp (H_OVER_K * freq / ttrr) - 1);
-
-  return (integrand);
-}
-
-
-
 
 /**********************************************************/
 /**
@@ -1318,78 +1170,10 @@ alpha_st_integrand (double freq, void *params)
 double
 get_alpha_st_e (struct topbase_phot *cont_ptr, PlasmaPtr xplasma)
 {
-  double alpha_st_e_value;
-  double fthresh, flast;
+  double rate[2];
 
-  temp_ext2 = xplasma->state.t_e;       //external for use in integrand
-  temp_ext_rad = xplasma->state.t_r;    //"
-  cont_ext_ptr2 = cont_ptr;     //"
-  fthresh = cont_ptr->freq[0];  //first frequency in list
-  flast = cont_ptr->freq[cont_ptr->np - 1];     //last frequency in list
-
-  if ((H_OVER_K * (flast - fthresh) / temp_ext2) > ALPHA_MATOM_NUMAX_LIMIT)
-  {
-    //flast is currently very far into the exponential tail: so reduce flast to limit value of h nu / k T.
-    flast = fthresh + temp_ext2 * ALPHA_MATOM_NUMAX_LIMIT / H_OVER_K;
-  }
-
-
-//  alpha_st_e_value = qromb (alpha_st_e_integrand, fthresh, flast, 1e-4);
-  alpha_st_e_value = num_int (alpha_st_e_integrand, fthresh, flast, 1e-4);
-
-  /* The lines above evaluate the integral in alpha_sp. Now we just want to multiply 
-     through by the appropriate constant. */
-  if (cont_ptr->macro_info == TRUE && geo.macro_simple == FALSE)
-  {
-    alpha_st_e_value = alpha_st_e_value * xconfig[cont_ptr->nlev].g / xconfig[cont_ptr->uplev].g * pow (xplasma->state.t_e, -1.5);
-  }
-  else                          //case for simple element
-  {
-    alpha_st_e_value = alpha_st_e_value * xconfig[cont_ptr->nlev].g / ion[cont_ptr->nion + 1].g * pow (xplasma->state.t_e, -1.5);       //g for next ion up used
-  }
-
-  alpha_st_e_value = alpha_st_e_value * ALPHA_SP_CONSTANT * xplasma->state.w;
-
-  return (alpha_st_e_value);
-}
-
-
-/**********************************************************/
-/**
- * @brief the integrand for alpha_st_e at a chosen frequency
- *
- * @param [in, out] double freq 
- * @param [in] void  params   An extra (unused) variable to make it paletable for the gsl integrator
- * @return integrand 
- *
- * @details
- * the integrand for the energy-weighted stimulated recombination estimator 
- * see equation 3.68 of Matthews Phd thesis, see also Lucy (2003). 
- *
- **********************************************************/
-
-double
-alpha_st_e_integrand (double freq, void *params)
-{
-  double fthresh;
-  double x;
-  double integrand;
-  double tt;
-  double ttrr;
-
-  fthresh = cont_ext_ptr2->freq[0];
-  tt = temp_ext2;               //this is the electron temperature
-  /* Also need the radiation temperature here */
-  ttrr = temp_ext_rad;          //will do for now
-
-  if (freq < fthresh)
-    return (0.0);               // No recombination at frequencies lower than the threshold freq occur
-
-  x = sigma_phot (cont_ext_ptr2, freq); //this is the cross-section  
-
-  integrand = x * freq * freq * exp (H_OVER_K * (fthresh - freq) / tt) / (exp (H_OVER_K * freq / ttrr) - 1) * freq / fthresh;
-
-  return (integrand);
+  stimulated_recombination_rates (cont_ptr, xplasma, rate);
+  return (rate[1]);
 }
 
 /**********************************************************/
