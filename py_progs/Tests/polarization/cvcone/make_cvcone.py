@@ -254,6 +254,7 @@ Reverb.type(none,photon,wind,matom)                 none
 ### Other parameters
 Photon_sampling.approach(T_star,cv,yso,AGN,tde_bb,min_max_freq,user_bands,cloudy_test,wide,logarithmic)                    cv
 @Diag.use_standard_care_factors(yes,no)                  yes
+@Diag.bf_integration(exact,sum,gsl)                  exact
 @Diag.extra(yes,no)                              no
 '''
     open(a.root + '.pf', 'w').write(pf)

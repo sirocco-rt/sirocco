@@ -120,6 +120,7 @@ Spectrum.live_or_die(live.or.die,extract)              extract
 @Spectrum.polarization(yes,no)                   yes
 Spectrum.type(flambda,fnu,basic)              flambda
 @Diag.use_standard_care_factors(yes,no)                  yes
+@Diag.bf_integration(exact,sum,gsl)                  exact
 
 ### Parameters for Reverberation Modeling (if needed)
 Reverb.type(none,photon,wind,matom)                 none

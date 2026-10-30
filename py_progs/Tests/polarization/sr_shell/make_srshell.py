@@ -110,6 +110,7 @@ Spectrum.no_observers                      {2*len(angles)}
 @Spectrum.polarization(yes,no)                   yes
 Spectrum.type(flambda,fnu,basic)              flambda
 @Diag.use_standard_care_factors(yes,no)                  yes
+@Diag.bf_integration(exact,sum,gsl)                  exact
 Reverb.type(none,photon,wind,matom)                 none
 Photon_sampling.approach(T_star,cv,yso,AGN,tde_bb,min_max_freq,user_bands,cloudy_test,wide,logarithmic)               t_star
 @Diag.extra(yes,no)                              no
