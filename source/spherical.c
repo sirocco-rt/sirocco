@@ -220,6 +220,7 @@ spherical_wind_complete (int ndom, WindPtr w)
   /* Add something plausible for the edges */
   zdom[ndom].wind_midx[ndim - 1] = 2. * zdom[ndom].wind_x[ndim - 1] - zdom[ndom].wind_midx[ndim - 2];
   zdom[ndom].wind_midz[0] = zdom[ndom].wind_z[0] / 2;
+  set_domain_outer_edges (ndom);
 
   /* Set xmax and rmax for each cell.  For spherical grids xmax follows the same
      45-degree convention as x: xmax[0] = xmax[2] = r_{i+1} * sin(PI/4).

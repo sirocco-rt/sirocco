@@ -200,6 +200,10 @@ get_extra_diagnostics ()
 
   strcpy (answer, "zero_densities");
   n += modes.partial_cells = rdchoice ("@Diag.partial_cells(include,zero_densities,extend_full_cells)", "0,1,2", answer);
+  if (modes.partial_cells == PC_INCLUDE)
+  {
+    Log ("Warning: Including partial cells is deprecated, and may be removed in future versions of Sirocco.\n");
+  }
 
   strcpy (answer, "no");
   n += modes.searchlight = rdchoice ("@Diag.invoke_searchlight_option(yes,no)", "1,0", answer);
