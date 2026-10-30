@@ -379,7 +379,7 @@ cylind_cell_volume (WindPtr w)
       {
         for (z = zmin + dz / 2; z < zmax; z += dz)
         {
-          denom += r * r;
+          denom += r;           /* the volume element is 2 pi r dr dz */
           kk++;
           x[0] = r;
           x[1] = 0;
@@ -387,7 +387,7 @@ cylind_cell_volume (WindPtr w)
 
           if (where_in_wind (x, &dom_check) == W_ALL_INWIND && dom_check == ndom)
           {
-            num += r * r;       /* 0 implies in wind */
+            num += r;
             jj++;
           }
         }
