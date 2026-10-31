@@ -572,9 +572,8 @@ rtheta_cell_volume (WindPtr w)
  * over the full doubled grid so lower-hemisphere photons (theta > 90 deg)
  * are correctly routed to lower-hemisphere cells.
  *
- * For imported models the grid covers the upper hemisphere only (theta
- * 0-90 deg), so lower-hemisphere positions are folded via fabs(x[2]) to
- * preserve bilateral symmetry, as in the pre-doubled-grid code.
+ * Imported models also cover both hemispheres: a file that describes only
+ * the upper hemisphere is mirrored when it is read (mirror_rtheta_import).
  *
  * ### Notes ###
  * Where_in_grid does not tell you whether x is in the wind or not.
@@ -596,16 +595,9 @@ rtheta_where_in_grid (int ndom, double x[])
   mdim = zdom[ndom].mdim;
 
   r = length (x);
-  /* Data-based hemisphere detection: if wind_z[mdim-1] <= 90 the grid only
-     covers the upper hemisphere (imported single-hemisphere file or legacy
-     grid), so fold lower-hemisphere positions via fabs.  If wind_z[mdim-1]
-     > 90 the grid covers both hemispheres (parameterized doubled grid or a
-     two-hemisphere import), so use signed theta over the full 0-180 deg
-     range. */
-  if (zdom[ndom].wind_z[mdim - 1] <= 90.0)
-    theta = acos (fabs (x[2]) / r) * RADIAN;
-  else
-    theta = acos (x[2] / r) * RADIAN;   /* signed: gives 0-180 deg for full doubled grid */
+  /* Every polar grid covers both hemispheres, so use signed theta over the
+     full 0-180 deg range */
+  theta = acos (x[2] / r) * RADIAN;
 
   /* Check to see if x is outside the region of the calculation */
 
@@ -642,7 +634,7 @@ rtheta_where_in_grid (int ndom, double x[])
  * @details
  *
  * The routine generates a random position that is both within the cell and
- * within the wind.  For lower-hemisphere cells (j >= mdim/2) cos(theta) is
+ * within the wind.  For lower-hemisphere cells (wind_z[j] >= 90 deg) cos(theta) is
  * negated directly so x[2] < 0 without any post-generation flip.
  *
  * ### Notes ###
@@ -660,13 +652,14 @@ rtheta_get_random_location (int n, double x[])
   double r, rmin, rmax, sthetamin, sthetamax;
   double s, cos_theta, phi;
   int ndom, ndomain;
-  int mdim_half, is_lower_hemi;
+  int is_lower_hemi;
 
   ndom = wmain[n].ndom;
   wind_n_to_ij (ndom, n, &i, &j);
 
-  mdim_half = zdom[ndom].mdim / 2;
-  is_lower_hemi = (j >= mdim_half);
+  /* Decide the hemisphere from theta rather than from j, since an imported
+     grid need not be split at j = mdim/2 */
+  is_lower_hemi = (zdom[ndom].wind_z[j] >= 90.0);
 
   rmin = zdom[ndom].wind_x[i];
   rmax = zdom[ndom].wind_x[i + 1];

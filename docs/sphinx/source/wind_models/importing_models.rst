@@ -168,15 +168,21 @@ Using polar coordinates, a 2.5D model can be read into SIROCCO.
     The :math:`\theta` range must start near 0° (or have a guard cell at
     the pole).  The range may stop at 90° (**single-hemisphere** file) or
     extend beyond 90° up to 180° (**two-hemisphere** file).  SIROCCO
-    detects which case applies from the data itself:
+    detects which case applies from the data itself, and says which in
+    the log (``import_rtheta: theta runs from ... treating the grid as
+    ...``):
 
-    * If the largest :math:`\theta` value in the file is ≤ 90°, the grid
-      is treated as covering only the upper hemisphere.  Lower-hemisphere
-      photons are automatically folded to their mirrored upper-hemisphere
-      cell, so the file is used symmetrically above and below the disk
-      plane.
-    * If any :math:`\theta` value exceeds 90°, the grid is treated as
-      covering both hemispheres.  Each cell is used for the hemisphere it
+    * If the second-largest :math:`\theta` value in the file is ≤ 90°,
+      the grid is treated as covering only the upper hemisphere.  This
+      allows the usual single guard row just beyond 90° (e.g. 0°–90° in
+      2° steps, then a guard row at 92°).  When the file is read, the
+      rows beyond 90° are dropped and the grid is mirrored into the lower
+      hemisphere (with :math:`v_z` reversed), so the wind is symmetric
+      about the disk plane.  To model a wind on one side of the disk only,
+      write a two-hemisphere file and mark the cells on the other side
+      ``inwind = -1``.
+    * If the second-largest :math:`\theta` value exceeds 90°, the grid is
+      treated as covering both hemispheres.  Each cell is used for the hemisphere it
       explicitly belongs to, allowing asymmetric upper/lower-hemisphere
       winds.  The :math:`\theta` range in the two hemispheres need not be
       symmetric about 90°: a grid running from 0° to 120°, or one whose

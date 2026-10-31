@@ -130,15 +130,9 @@ coord_fraction (int ndom, int ichoice, double x[], int ii[], double frac[], int 
   else if (zdom[ndom].coord_type == RTHETA)
   {
     r = length (x);
-    /* Data-based hemisphere detection: if wind_z[mdim-1] <= 90 the grid only
-       covers the upper hemisphere (imported single-hemisphere file), so fold
-       lower-hemisphere positions.  If wind_z[mdim-1] > 90 the grid covers
-       both hemispheres (parameterized doubled grid or two-hemisphere import),
-       so use signed theta over the full 0-180 deg range. */
-    if (zdom[ndom].wind_z[zdom[ndom].mdim - 1] <= 90.0)
-      z = acos (fabs (x[2]) / r) * RADIAN;
-    else
-      z = acos (x[2] / r) * RADIAN;     /* signed: gives 0-180 deg for full doubled grid */
+    /* Every polar grid covers both hemispheres (imported upper-hemisphere
+       files are mirrored when read), so use signed theta over 0-180 deg */
+    z = acos (x[2] / r) * RADIAN;
   }
   else if (zdom[ndom].coord_type == SPHERICAL)
   {

@@ -167,6 +167,13 @@ import_cylindrical (int ndom, char *filename)
   }
 
 
+  if (imported_model[ndom].wind_z[0] < 0.0)
+    Log ("import_cylindrical: z runs from %.3e to %.3e cm; treating the grid as covering both hemispheres\n",
+         imported_model[ndom].wind_z[0], imported_model[ndom].wind_z[jz - 1]);
+  else
+    Log ("import_cylindrical: z runs from %.3e to %.3e cm; treating the grid as the upper hemisphere, mirrored below the disk plane\n",
+         imported_model[ndom].wind_z[0], imported_model[ndom].wind_z[jz - 1]);
+
   /* Now fill in wind_midx and midz. Given how we construct
    * the mdpts we need to add one more on the end, though it
    * is not entirely obvious that this is needed, given the
