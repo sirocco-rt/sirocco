@@ -36,6 +36,169 @@
 
 /**********************************************************/
 /**
+ * @brief      Mirror an imported upper-hemisphere polar grid into the
+ * lower hemisphere
+ *
+ * @param [in] int  ndom   The domain for the imported model
+ * @return   Always returns 0
+ *
+ * @details
+ * The internal polar grid covers both hemispheres (theta 0-180 deg).  An
+ * import file may instead describe only the upper hemisphere, running from
+ * 0 to 90 deg, normally followed by one or two guard rows beyond 90 deg.
+ * This routine replaces such a grid in imported_model[ndom] by a grid that
+ * covers both hemispheres, with the lower hemisphere the mirror image of
+ * the upper one, so that the rest of Sirocco only ever sees two-hemisphere
+ * grids.
+ *
+ * Let theta[k] be the last vertex at or below 90 deg.  The guard rows
+ * beyond theta[k] are discarded.  The new vertices are theta[0..k]
+ * followed by 180-theta[k-1], ..., 180-theta[0] if theta[k] is 90 deg,
+ * or by 180-theta[k], ..., 180-theta[0] otherwise.  In the second case
+ * cell k becomes an equatorial cell running from theta[k] to 180-theta[k],
+ * which takes the values of the original cell k.  The last vertex, at
+ * 180 deg, starts a guard cell that is not in the wind.
+ *
+ * Velocities are given at the vertices, so a lower-hemisphere vertex takes
+ * the velocity of its mirror vertex with v_z reversed.  Densities,
+ * temperatures and inwind are given for cells, so a lower-hemisphere cell
+ * takes the values of its mirror cell.
+ *
+ * ### Notes ###
+ * The routine assumes the cells are ordered as i * mdim + j, as
+ * import_rtheta requires.
+ *
+ **********************************************************/
+
+static int
+mirror_rtheta_import (int ndom)
+{
+  int ndim, mdim, mdim_new, k, kk, i, j, n, nv, nc, nn;
+  int band;
+  double theta_v;
+  struct Import old;
+  struct Import *mod = &imported_model[ndom];
+
+  ndim = mod->ndim;
+  mdim = mod->mdim;
+
+  /* theta[j] is the same for every i, so use the i = 0 rows */
+  k = 0;
+  while (k + 1 < mdim && mod->theta[k + 1] <= 90.0 + 1e-6)
+    k++;
+  band = (fabs (mod->theta[k] - 90.0) > 1e-6);
+  mdim_new = band ? 2 * k + 2 : 2 * k + 1;
+
+  if (mdim_new > NDIM_MAX || ndim * mdim_new > NDIM_MAX2D)
+  {
+    Error ("import_rtheta: mirroring the grid into the lower hemisphere needs %d theta cells, more than allowed (%d)\n", mdim_new,
+           NDIM_MAX);
+    Exit (EXIT_FAILURE);
+  }
+
+  /* Keep a copy of the arrays read from the file */
+  old.inwind = calloc (ndim * mdim, sizeof (int));
+  old.r = calloc (ndim * mdim, sizeof (double));
+  old.theta = calloc (ndim * mdim, sizeof (double));
+  old.v_x = calloc (ndim * mdim, sizeof (double));
+  old.v_y = calloc (ndim * mdim, sizeof (double));
+  old.v_z = calloc (ndim * mdim, sizeof (double));
+  old.mass_rho = calloc (ndim * mdim, sizeof (double));
+  old.t_e = calloc (ndim * mdim, sizeof (double));
+  old.t_r = calloc (ndim * mdim, sizeof (double));
+  if (old.inwind == NULL || old.r == NULL || old.theta == NULL || old.v_x == NULL || old.v_y == NULL || old.v_z == NULL
+      || old.mass_rho == NULL || old.t_e == NULL || old.t_r == NULL)
+  {
+    Error ("import_rtheta: unable to allocate memory to mirror the grid\n");
+    Exit (EXIT_FAILURE);
+  }
+  for (n = 0; n < ndim * mdim; n++)
+  {
+    old.inwind[n] = mod->inwind[n];
+    old.r[n] = mod->r[n];
+    old.theta[n] = mod->theta[n];
+    old.v_x[n] = mod->v_x[n];
+    old.v_y[n] = mod->v_y[n];
+    old.v_z[n] = mod->v_z[n];
+    old.mass_rho[n] = mod->mass_rho[n];
+    old.t_e[n] = mod->t_e[n];
+    old.t_r[n] = mod->t_r[n];
+  }
+
+  for (i = 0; i < ndim; i++)
+  {
+    for (j = 0; j < mdim_new; j++)
+    {
+      nn = i * mdim_new + j;
+      /* nv is the old vertex supplying the position and velocity, nc the old cell supplying
+         the density, temperatures and inwind (-1 for the guard cell at 180 deg) */
+      if (j <= k)
+      {
+        nv = i * mdim + j;
+        theta_v = old.theta[nv];
+      }
+      else
+      {
+        kk = band ? 2 * k + 1 - j : 2 * k - j;  /* the mirror vertex */
+        nv = i * mdim + kk;
+        theta_v = 180.0 - old.theta[nv];
+      }
+
+      /* Cells 0..k-1 are in the upper hemisphere, as is the equatorial cell k if there is
+         one; the others are mirrors (cell j covers theta_v to the next vertex) */
+      if (j < k || (band && j == k))
+        nc = i * mdim + j;
+      else
+      {
+        kk = band ? 2 * k + 1 - j : 2 * k - j;
+        nc = (kk > 0) ? i * mdim + kk - 1 : -1;
+      }
+
+      mod->i[nn] = i;
+      mod->j[nn] = j;
+      mod->r[nn] = old.r[nv];
+      mod->theta[nn] = theta_v;
+      mod->v_x[nn] = old.v_x[nv];
+      mod->v_y[nn] = old.v_y[nv];
+      mod->v_z[nn] = (j <= k) ? old.v_z[nv] : -old.v_z[nv];
+      if (nc >= 0)
+      {
+        mod->inwind[nn] = old.inwind[nc];
+        mod->mass_rho[nn] = old.mass_rho[nc];
+        mod->t_e[nn] = old.t_e[nc];
+        mod->t_r[nn] = old.t_r[nc];
+      }
+      else
+      {
+        mod->inwind[nn] = W_NOT_INWIND;
+        mod->mass_rho[nn] = 0.0;
+        mod->t_e[nn] = old.t_e[nv];
+        mod->t_r[nn] = old.t_r[nv];
+      }
+    }
+  }
+
+  zdom[ndom].mdim = mod->mdim = mdim_new;
+  mod->ncell = ndim * mdim_new;
+  zdom[ndom].ndim2 = zdom[ndom].ndim * zdom[ndom].mdim;
+
+  free (old.inwind);
+  free (old.r);
+  free (old.theta);
+  free (old.v_x);
+  free (old.v_y);
+  free (old.v_z);
+  free (old.mass_rho);
+  free (old.t_e);
+  free (old.t_r);
+
+  return (0);
+}
+
+
+
+/**********************************************************/
+/**
  * @brief      Read the an arbitrary wind model in polar coordinates
  *
  * @param [in] int  ndom   The domain for the imported model
@@ -161,6 +324,22 @@ import_polar (int ndom, char *filename)
     exit (1);
   }
 
+  /* The internal grid covers both hemispheres.  A file whose second-to-last theta vertex is
+     at most 90 deg describes only the upper hemisphere (the last vertex may be a guard row
+     just beyond 90 deg), and is mirrored into the lower hemisphere here. */
+
+  if (imported_model[ndom].mdim >= 2 && imported_model[ndom].theta[imported_model[ndom].mdim - 2] <= 90.0)
+  {
+    Log ("import_rtheta: theta runs from %.1f to %.1f deg; treating the grid as the upper hemisphere, mirrored below the disk plane\n",
+         imported_model[ndom].theta[0], imported_model[ndom].theta[imported_model[ndom].mdim - 1]);
+    mirror_rtheta_import (ndom);
+  }
+  else
+  {
+    Log ("import_rtheta: theta runs from %.1f to %.1f deg; treating the grid as covering both hemispheres\n",
+         imported_model[ndom].theta[0], imported_model[ndom].theta[imported_model[ndom].mdim - 1]);
+  }
+
 
   jz = jx = 0;
   for (n = 0; n < imported_model[ndom].ncell; n++)
@@ -177,17 +356,9 @@ import_polar (int ndom, char *filename)
     }
   }
 
-  /* Determine whether the imported grid covers both hemispheres (theta > 90
-     present in the file) or only the upper hemisphere. */
-  int both_hemi_import = (imported_model[ndom].wind_z[jz - 1] > 90.0);
-
   for (n = 0; n < jz - 1; n++)
   {
     mid_z = 0.5 * (imported_model[ndom].wind_z[n] + imported_model[ndom].wind_z[n + 1]);
-    /* Cap at 90 only for single-hemisphere imports; two-hemisphere imports
-       may legitimately have mid_z > 90. */
-    if (!both_hemi_import && mid_z > 90)
-      mid_z = 90;
     imported_model[ndom].wind_midz[n] = mid_z;
   }
 
@@ -365,12 +536,6 @@ polar_make_grid_import (WindPtr w, int ndom)
 {
   int n, nn;
   double theta;
-  int both_hemi_import;
-
-  /* Determine whether the imported grid covers both hemispheres.  If the
-     last theta value exceeds 90 deg the file contains lower-hemisphere cells;
-     otherwise only upper-hemisphere data are present. */
-  both_hemi_import = (imported_model[ndom].wind_z[imported_model[ndom].mdim - 1] > 90.0);
 
   /* As in the case of other models we assume that the grid has been
    * read in correctly and so now that the WindPtrs have been generated
@@ -394,10 +559,6 @@ polar_make_grid_import (WindPtr w, int ndom)
     w[nn].inwind = imported_model[ndom].inwind[n];
 
     w[nn].thetacen = imported_model[ndom].wind_midz[imported_model[ndom].j[n]];
-    /* Cap at 90 only for single-hemisphere imports; two-hemisphere imports
-       may have thetacen > 90 for lower-hemisphere cells. */
-    if (!both_hemi_import && w[nn].thetacen > 90)
-      w[nn].thetacen = 90;
     theta = w[nn].thetacen / RADIAN;
 
     w[nn].rcen = imported_model[ndom].wind_midx[imported_model[ndom].i[n]];
@@ -536,12 +697,9 @@ rho_polar (int ndom, double *x)
 
   r = length (x);
 
-  /* For single-hemisphere imports fold lower-hemisphere positions; for
-     two-hemisphere imports use signed theta over the full 0-180 deg range. */
-  if (imported_model[ndom].wind_z[imported_model[ndom].mdim - 1] <= 90.0)
-    z = fabs (x[2]);
-  else
-    z = x[2];
+  /* The imported grid covers both hemispheres (see mirror_rtheta_import),
+     so use signed theta over the full 0-180 deg range */
+  z = x[2];
   ctheta = z / r;
   angle = acos (ctheta) * RADIAN;
 
@@ -601,12 +759,9 @@ temperature_polar (int ndom, double *x, int return_t_e)
   else
   {
     r = length (x);
-    /* For single-hemisphere imports fold lower-hemisphere positions; for
-       two-hemisphere imports use signed theta over the full 0-180 deg range. */
-    if (imported_model[ndom].wind_z[imported_model[ndom].mdim - 1] <= 90.0)
-      z = fabs (x[2]);
-    else
-      z = x[2];
+    /* The imported grid covers both hemispheres (see mirror_rtheta_import),
+       so use signed theta over the full 0-180 deg range */
+    z = x[2];
 
     ctheta = z / r;
     angle = acos (ctheta) * RADIAN;

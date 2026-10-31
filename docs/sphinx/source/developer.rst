@@ -13,3 +13,4 @@ This page contains documentation intended for developers.
     developer/tests
     developer/regression
     developer/meta
+    developer/polarization_tests

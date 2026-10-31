@@ -130,9 +130,20 @@ A 2.5-D model on a (r, theta) grid.
 
 .. admonition:: Hemisphere coverage
 
-   If the maximum theta value in the file is ≤ 90°, the grid covers only the
-   upper hemisphere and SIROCCO folds lower-hemisphere photons symmetrically.
-   If any theta exceeds 90°, the grid covers both hemispheres explicitly.
+   SIROCCO decides from the data whether the file covers one hemisphere or
+   both, and says which in the log (``import_rtheta: theta runs from ...
+   treating the grid as ...``).
+
+   * If the second-largest theta value in the file is ≤ 90°, the file
+     describes only the upper hemisphere; the usual single guard row just
+     beyond 90° (e.g. 0°–90° in 2° steps, then a guard row at 92°) is
+     allowed.  When the file is read, the rows beyond 90° are dropped and the
+     grid is mirrored into the lower hemisphere (with ``v_z`` reversed), so
+     the wind is symmetric about the disk plane.
+   * Otherwise the grid covers both hemispheres explicitly, and each cell is
+     used for the hemisphere it belongs to.  To model a wind on one side of
+     the disk only, write a two-hemisphere file and mark the cells on the
+     other side ``inwind = -1``.
 
 .. admonition:: Guard cells
 

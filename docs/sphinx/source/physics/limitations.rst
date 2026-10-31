@@ -51,7 +51,7 @@ SIROCCO self-consistently carries out the special relativistic frame transformat
 
 - **Polarization**
 
-In principle, polarization can be included quite naturally in Monte-Carlo radiative transfer, but the current version of SIROCCO does not include a treatment of polarization.
+SIROCCO can follow the linear polarization produced by electron scattering in the spectral cycles (see :doc:`polarization`). Line scattering and all other emission processes are treated as unpolarized, so the intrinsic polarization of resonance-line scattering is not included.
 
 - **Thermal and statistical equilibrium**
 

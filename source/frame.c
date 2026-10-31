@@ -697,9 +697,15 @@ lorentz_transform (PhotPtr p_in, PhotPtr p_out, double v[])
   double x;
   double vel;
   double gamma;
+  double n_in[3], q_in, u_in;
   int i, ierr;
 
   ierr = FALSE;
+
+  /* Save what is needed to follow the polarization, since p_in and p_out may be the same */
+  stuff_v (p_in->lmn, n_in);
+  q_in = p_in->q;
+  u_in = p_in->u;
 
 
   vel = dot (p_in->lmn, v);
@@ -734,6 +740,8 @@ lorentz_transform (PhotPtr p_in, PhotPtr p_out, double v[])
   }
 
   p_out->w *= (f_out / f_in);
+
+  pol_lorentz (n_in, q_in, u_in, v, p_out);
 
 
   return (ierr);

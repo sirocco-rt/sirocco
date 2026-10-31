@@ -201,6 +201,8 @@ spectrum_init (double f1, double f2, int nangle, double angle[], double observer
     }
   }
 
+  pol_spectra_init (nangle, angle, observer_phi);
+
   strcpy (xxspec[SPEC_CREATED].name, "Created");
   strcpy (xxspec[SPEC_CWIND].name, "WCreated");
   strcpy (xxspec[SPEC_EMITTED].name, "Emitted");
@@ -386,6 +388,7 @@ spectrum_create (PhotPtr p, int nangle, int select_extract)
   int nspec, nwave, spectype;
   double freqmin, freqmax, dfreq, ldfreq;
   double x1;
+  double north[3];
   int mscat, mtopbot;
   double delta;
   double nlow, nhigh;
@@ -596,6 +599,11 @@ spectrum_create (PhotPtr p, int nangle, int select_extract)
                 xxspec[n].f_wind[k] += p[nphot].w;
                 xxspec[n].lf_wind[k1] += p[nphot].w;
               }
+              if (modes.polarization)
+              {
+                pol_north (p[nphot].lmn, north);
+                pol_tally (&p[nphot], north, n, p[nphot].w, k, k1, iwind);
+              }
             }
           }
         }
@@ -787,6 +795,43 @@ spec_add_one (PhotPtr p, int spec_type)
 
 /**********************************************************/
 /**
+ * @brief      Convert a Q or U spectrum bin to the units of the output spectra
+ *
+ * @param [in] double  x   The (renormalized) value in a bin
+ * @param [in] double  freq   The frequency of the bin
+ * @param [in] double  dfreq   The width of the bin
+ * @param [in] double  dd   4 pi D^2 for the distance D_SOURCE
+ * @param [in] int  select_spectype   The type of spectrum being written
+ * @return     The converted value
+ *
+ * @details
+ * This does exactly what spectrum_summary does to the I spectra,
+ * so that Q/I and U/I are unaffected by the units
+ *
+ **********************************************************/
+
+double
+pol_units (double x, double freq, double dfreq, double dd, int select_spectype)
+{
+  if (select_spectype == SPECTYPE_FLAMBDA)
+  {
+    x *= (freq * freq * 1e-8) / (dfreq * dd * VLIGHT);
+  }
+  else if (select_spectype == SPECTYPE_FNU)
+  {
+    x /= (dfreq * dd);
+  }
+  else if (select_spectype == SPECTYPE_RAW)
+  {
+    x /= (dfreq);
+  }
+  return (x);
+}
+
+
+
+/**********************************************************/
+/**
  * @brief      writes out the spectra to a file
  *
  * @param [in] char  filename[]   The name of the file to write
@@ -839,8 +884,8 @@ int
 spectrum_summary (char filename[], int nspecmin, int nspecmax, int select_spectype, double renorm, int loglin, int iwind)
 {
   FILE *fptr;
-  int i, n;
-  int nwave;
+  int i, n, m;
+  int nwave, npolmin;
   char string[LINELENGTH];
   double freq, freqmin, dfreq, freq1;
   double lfreqmin, ldfreq;
@@ -907,6 +952,21 @@ spectrum_summary (char filename[], int nspecmin, int nspecmax, int select_specty
     fprintf (fptr, " %-10s", xxspec[n].name);
   }
 
+  /* When polarization is on, Q and U for each observer follow all of the existing columns */
+  npolmin = (nspecmin > MSPEC) ? nspecmin : MSPEC;
+  if (modes.polarization == FALSE || xxpol == NULL)
+  {
+    npolmin = nspecmax + 1;
+  }
+
+  for (n = npolmin; n <= nspecmax; n++)
+  {
+    sprintf (string, "%s_Q", xxspec[n].name);
+    fprintf (fptr, " %-10s", string);
+    sprintf (string, "%s_U", xxspec[n].name);
+    fprintf (fptr, " %-10s", string);
+  }
+
 
   fprintf (fptr, "\n");
 
@@ -948,6 +1008,15 @@ spectrum_summary (char filename[], int nspecmin, int nspecmax, int select_specty
         fprintf (fptr, " %10.5g", x * renorm);
       }
 
+      for (n = npolmin; n <= nspecmax; n++)
+      {
+        m = n - MSPEC;
+        x = (iwind ? xxpol[m].q_wind[i] : xxpol[m].q[i]) * xxspec[n].renorm;
+        fprintf (fptr, " %10.5g", pol_units (x, freq, dfreq, dd, select_spectype) * renorm);
+        x = (iwind ? xxpol[m].u_wind[i] : xxpol[m].u[i]) * xxspec[n].renorm;
+        fprintf (fptr, " %10.5g", pol_units (x, freq, dfreq, dd, select_spectype) * renorm);
+      }
+
       fprintf (fptr, "\n");
     }
   }
@@ -982,6 +1051,15 @@ spectrum_summary (char filename[], int nspecmin, int nspecmax, int select_specty
           x /= (dfreq);
         }
         fprintf (fptr, " %10.5g", x * renorm);
+      }
+
+      for (n = npolmin; n <= nspecmax; n++)
+      {
+        m = n - MSPEC;
+        x = (iwind ? xxpol[m].lq_wind[i] : xxpol[m].lq[i]) * xxspec[n].renorm;
+        fprintf (fptr, " %10.5g", pol_units (x, freq, dfreq, dd, select_spectype) * renorm);
+        x = (iwind ? xxpol[m].lu_wind[i] : xxpol[m].lu[i]) * xxspec[n].renorm;
+        fprintf (fptr, " %10.5g", pol_units (x, freq, dfreq, dd, select_spectype) * renorm);
       }
 
       fprintf (fptr, "\n");
@@ -1067,6 +1145,8 @@ spectrum_restart_renormalise (int nangle)
       xxspec[n].lf[m] *= renorm_factor;
     }
   }
+
+  pol_spectra_renormalise (renorm_factor);
 
   return (0);
 }
