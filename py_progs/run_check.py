@@ -28,6 +28,13 @@ Description:
     In all cases the routine checks to see if the appropriate wind_save file
     exists before attempting to run.
 
+    The html file, root.html, is written in the current directory.  Plots
+    of the wind go in diag_root, and plots of the spectra in Figs.  If the
+    run was made with @Spectrum.polarization yes, the plot of the detailed
+    spectra is replaced by plots made with plot_pol.py, one for each
+    inclination, of the spectrum, its linear polarization and the position
+    angle.
+
     -h delivers this documentation
 
 Primary routines:
@@ -35,6 +42,9 @@ Primary routines:
     steer  - processes the command line and calls doit for each file.
 
 Notes:
+
+History:
+    261018 ksl Plots of the spectra in Figs; polarization plots when a run has Q and U
 '''
 
 import sys
@@ -50,6 +60,7 @@ import plot_wind
 import plot_wind_1d
 import plot_spec
 import plot_tot
+import plot_pol
 import numpy as np
 
 
@@ -353,12 +364,21 @@ This plot is from the .spec file, and shows the expected spectra (at 100 pc) as 
 that the y-axis scale varies for different inclination angles.
 '''
 
+pol_plot_description='''
+The run was made with @Spectrum.polarization yes, so these plots, from the .spec file, replace the plot of the detailed
+spectra.  There is one for each inclination, showing the spectrum (in coarse bins, with the unbinned spectrum in grey), the degree of
+linear polarization P, and the position angle of the electric vector, measured from the projected symmetry axis (0 or 180:
+E along the axis; 90: E parallel to the disk).  The P panel also shows the noise, estimated from U, which should be zero
+in an axisymmetric model.  If there are spectra selected by the number of scatters, they are drawn in colour with the
+spectrum of all the photons, and their P is shown in a separate panel.  See py_progs/plot_pol.py.
+'''
+
 ne_plot_description='''
 This plot shows the electron density (ne) throughout the wind. The electron density traces the density structure of the outflow and is 
 directly related to the optical depth of the wind.
 '''
     
-def make_html(root,converge_plot,te_plot,tr_plot,ne_plot,spec_tot_plot,spec_plot,nspectra=3,complete_message=['test'],errors=['test','test2']):
+def make_html(root,converge_plot,te_plot,tr_plot,ne_plot,spec_tot_plot,spec_plot,nspectra=3,complete_message=['test'],errors=['test','test2'],pol_plot='None'):
     '''
     Make an html file that collates all the results
     '''
@@ -404,14 +424,20 @@ def make_html(root,converge_plot,te_plot,tr_plot,ne_plot,spec_tot_plot,spec_plot
         string+=xhtml.paragraph('There is no total spectrum plot. OK if no ionization cycles')
 
     string+=xhtml.hline()
-    string+=xhtml.h2('What do the final spectra look like (somewhat smoothed)?')
-    if spec_plot != 'None':
+    if pol_plot != 'None':
+        string+=xhtml.h2('What do the final spectra and their polarization look like?')
+        string+=xhtml.paragraph(pol_plot_description)
+        for one in pol_plot:
+            string+=xhtml.image('file:%s' % (one),width=900,height=0)
+    elif spec_plot != 'None':
+        string+=xhtml.h2('What do the final spectra look like (somewhat smoothed)?')
         if nspectra==1:
             string+=xhtml.image('file:%s' % (spec_plot),width=900,height=600)
         else:
             string+=xhtml.image('file:%s' % (spec_plot),width=900,height=nspectra*300)
         string+=xhtml.paragraph(spec_plot_description)
     else:
+        string+=xhtml.h2('What do the final spectra look like (somewhat smoothed)?')
         string+=xhtml.paragraph('There is no plot of a detailed spectrum, probably because detailed spectra were not created')
     string+=xhtml.hline()
 
@@ -520,22 +546,35 @@ def doit(root='ixvel',outputfile='out.txt'):
     else:
         print('There were not enough cycles to plot the convergence by cycle')
 
-    plot_tot.doit(root)
-    spec_tot_plot=root+'.spec_tot.png'
+    # the plots of the spectra go in a subdirectory, Figs
+    fig_dir='Figs'
+    os.makedirs(fig_dir,exist_ok=True)
 
-    try:
-        spec_plot,nspectra=plot_spec.do_mosaic(root,wmin=0,wmax=0)
-    except:
-        print('Could not construct detailed spectrum plot')
-        spec_plot='none'
-        nspectra=0
+    plot_tot.doit(root,outdir=fig_dir)
+    spec_tot_plot=os.path.join(fig_dir,root+'.spec_tot.png')
 
-    # spec_plot=root+'.png'
+    # if there is polarization, its plot, which includes the spectra, replaces the plot of the detailed spectra
+    pol_plot='None'
+    if plot_pol.has_pol(root+'.spec'):
+        try:
+            pol_plot=plot_pol.doit(root,max_obs=0,outfile=os.path.join(fig_dir,root+'_pol.png'),separate=True)
+        except:
+            print('Could not construct the polarization plot')
+
+    spec_plot='None'
+    nspectra=0
+    if pol_plot=='None':
+        try:
+            spec_plot,nspectra=plot_spec.do_mosaic(root,wmin=0,wmax=0,outdir=fig_dir)
+        except:
+            print('Could not construct detailed spectrum plot')
+            spec_plot='None'
+            nspectra=0
 
     errors=py_error(root)
      
 
-    make_html(root,converge_plot,te_plot,tr_plot,ne_plot,spec_tot_plot,spec_plot,nspectra,complete_message,errors)
+    make_html(root,converge_plot,te_plot,tr_plot,ne_plot,spec_tot_plot,spec_plot,nspectra,complete_message,errors,pol_plot)
 
 
     return
