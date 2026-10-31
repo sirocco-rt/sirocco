@@ -218,13 +218,9 @@ coord_fraction (int ndom, int ichoice, double x[], int ii[], double frac[], int 
   else if (zdom[ndom].coord_type == SPH3D)
   {
     r = length (x);
-    /* Same hemisphere detection as sph3d_where_in_grid: if wind_z[mdim-1] <= 90
-       the grid only covers the upper hemisphere (imported single-hemisphere
-       file), so fold lower-hemisphere positions. */
-    if (zdom[ndom].wind_z[zdom[ndom].mdim - 1] <= 90.0)
-      z = acos (fabs (x[2]) / r) * RADIAN;
-    else
-      z = acos (x[2] / r) * RADIAN;     /* signed: gives 0-180 deg for full doubled grid */
+    /* As for RTHETA: every SPH3D grid covers both hemispheres, so use
+       signed theta over 0-180 deg */
+    z = acos (x[2] / r) * RADIAN;
   }
   else if (zdom[ndom].coord_type == SPHERICAL)
   {

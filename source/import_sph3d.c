@@ -11,7 +11,9 @@
  *
  * where:
  *   r     is the inner radial boundary of the cell (cm)
- *   theta is the inner polar-angle boundary (degrees, 0-180)
+ *   theta is the inner polar-angle boundary (degrees, 0-180); a file that
+ *         covers only 0-90 (plus perhaps one guard row) is mirrored into
+ *         the lower hemisphere when it is read
  *   phi   is the inner azimuthal boundary (degrees, 0-360)
  *   v_x, v_y, v_z are the local cylindrical components (v_rho, v_phi, v_z)
  *         of the velocity at the cell's own phi (cm/s), not Cartesian ones
@@ -32,6 +34,178 @@
 
 #include "atomic.h"
 #include "sirocco.h"
+
+
+
+/**********************************************************/
+/**
+ * @brief      Mirror an upper-hemisphere SPH3D model into the lower hemisphere
+ *
+ * @param [in] ndom   The domain for the imported model
+ * @return   Always returns 0
+ *
+ * @details
+ * The SPH3D grid covers both hemispheres, so a file that describes only the
+ * upper hemisphere (theta from 0 to 90 deg, perhaps with one guard row
+ * beyond 90) is extended here: the rows beyond 90 deg are dropped and the
+ * grid is reflected in the disk plane.  The reflected vertices are at
+ * 180 - theta and have v_z reversed; v_x and v_y are the local v_rho and
+ * v_phi, which do not change.  Cells take their density, temperatures and
+ * inwind from the cell they mirror, and the last cell (beyond 180 deg) is
+ * a guard cell.  This is the same as mirror_rtheta_import, done for each
+ * phi slice.
+ *
+ * The cells are assumed to be in row-major order (k fastest, then j, then i),
+ * as the import format requires.
+ *
+ **********************************************************/
+
+static int
+mirror_sph3d_import (int ndom)
+{
+  int ndim, mdim, pdim, mdim_new, ncell_new, kv, kk, i, j, k, nv, nc, nn;
+  int band;
+  double theta_v;
+  struct Import *m = &imported_model[ndom];
+  int *new_i, *new_j, *new_k, *new_inwind;
+  double *new_r, *new_theta, *new_phi, *new_v_x, *new_v_y, *new_v_z, *new_rho, *new_t_e, *new_t_r;
+
+  ndim = m->ndim;
+  mdim = m->mdim;
+  pdim = m->pdim;
+
+  /* wind_z holds the theta vertices; kv is the last one at or above the disk plane */
+  kv = 0;
+  while (kv + 1 < mdim && m->wind_z[kv + 1] <= 90.0 + 1e-6)
+    kv++;
+  band = (fabs (m->wind_z[kv] - 90.0) > 1e-6);
+  mdim_new = band ? 2 * kv + 2 : 2 * kv + 1;
+  ncell_new = ndim * mdim_new * pdim;
+
+  new_i = calloc (ncell_new, sizeof (int));
+  new_j = calloc (ncell_new, sizeof (int));
+  new_k = calloc (ncell_new, sizeof (int));
+  new_inwind = calloc (ncell_new, sizeof (int));
+  new_r = calloc (ncell_new, sizeof (double));
+  new_theta = calloc (ncell_new, sizeof (double));
+  new_phi = calloc (ncell_new, sizeof (double));
+  new_v_x = calloc (ncell_new, sizeof (double));
+  new_v_y = calloc (ncell_new, sizeof (double));
+  new_v_z = calloc (ncell_new, sizeof (double));
+  new_rho = calloc (ncell_new, sizeof (double));
+  new_t_e = calloc (ncell_new, sizeof (double));
+  new_t_r = calloc (ncell_new, sizeof (double));
+  if (!new_i || !new_j || !new_k || !new_inwind || !new_r || !new_theta || !new_phi
+      || !new_v_x || !new_v_y || !new_v_z || !new_rho || !new_t_e || !new_t_r)
+  {
+    Error ("import_sph3d: unable to allocate memory to mirror the grid\n");
+    Exit (EXIT_FAILURE);
+  }
+
+  for (i = 0; i < ndim; i++)
+  {
+    for (j = 0; j < mdim_new; j++)
+    {
+      for (k = 0; k < pdim; k++)
+      {
+        nn = (i * mdim_new + j) * pdim + k;
+        /* nv is the old vertex supplying the position and velocity, nc the old cell supplying
+           the density, temperatures and inwind (-1 for the guard cell at 180 deg) */
+        if (j <= kv)
+        {
+          nv = (i * mdim + j) * pdim + k;
+          theta_v = m->theta[nv];
+        }
+        else
+        {
+          kk = band ? 2 * kv + 1 - j : 2 * kv - j;      /* the mirror vertex */
+          nv = (i * mdim + kk) * pdim + k;
+          theta_v = 180.0 - m->theta[nv];
+        }
+
+        /* Cells 0..kv-1 are in the upper hemisphere, as is the equatorial cell kv if there is
+           one; the others are mirrors (cell j covers theta_v to the next vertex) */
+        if (j < kv || (band && j == kv))
+          nc = (i * mdim + j) * pdim + k;
+        else
+        {
+          kk = band ? 2 * kv + 1 - j : 2 * kv - j;
+          nc = (kk > 0) ? (i * mdim + kk - 1) * pdim + k : -1;
+        }
+
+        new_i[nn] = i;
+        new_j[nn] = j;
+        new_k[nn] = k;
+        new_r[nn] = m->r[nv];
+        new_theta[nn] = theta_v;
+        new_phi[nn] = m->phi[nv];
+        new_v_x[nn] = m->v_x[nv];
+        new_v_y[nn] = m->v_y[nv];
+        new_v_z[nn] = (j <= kv) ? m->v_z[nv] : -m->v_z[nv];
+        if (nc >= 0)
+        {
+          new_inwind[nn] = m->inwind[nc];
+          new_rho[nn] = m->mass_rho[nc];
+          new_t_e[nn] = m->t_e[nc];
+          new_t_r[nn] = m->t_r[nc];
+        }
+        else
+        {
+          new_inwind[nn] = W_NOT_INWIND;
+          new_rho[nn] = 0.0;
+          new_t_e[nn] = m->t_e[nv];
+          new_t_r[nn] = m->t_r[nv];
+        }
+      }
+    }
+  }
+
+  free (m->i);
+  free (m->j);
+  free (m->k);
+  free (m->inwind);
+  free (m->r);
+  free (m->theta);
+  free (m->phi);
+  free (m->v_x);
+  free (m->v_y);
+  free (m->v_z);
+  free (m->mass_rho);
+  free (m->t_e);
+  free (m->t_r);
+
+  m->i = new_i;
+  m->j = new_j;
+  m->k = new_k;
+  m->inwind = new_inwind;
+  m->r = new_r;
+  m->theta = new_theta;
+  m->phi = new_phi;
+  m->v_x = new_v_x;
+  m->v_y = new_v_y;
+  m->v_z = new_v_z;
+  m->mass_rho = new_rho;
+  m->t_e = new_t_e;
+  m->t_r = new_t_r;
+
+  m->mdim = mdim_new;
+  m->ncell = ncell_new;
+
+  /* The theta arrays have to grow with mdim */
+  free (m->wind_z);
+  free (m->wind_midz);
+  m->wind_z = calloc (mdim_new + 1, sizeof (double));
+  m->wind_midz = calloc (mdim_new, sizeof (double));
+  if (!m->wind_z || !m->wind_midz)
+  {
+    Error ("import_sph3d: unable to allocate memory to mirror the grid\n");
+    Exit (EXIT_FAILURE);
+  }
+  for (j = 0; j < mdim_new; j++)
+    m->wind_z[j] = m->theta[j * pdim];
+
+  return (0);
+}
 
 
 /**********************************************************/
@@ -211,6 +385,21 @@ import_sph3d (int ndom, char *filename)
       m->wind_phi[m->k[n]] = m->phi[n];
   }
 
+  /* The SPH3D grid covers both hemispheres.  A file whose second-largest theta
+     is at most 90 deg describes the upper hemisphere (with perhaps one guard
+     row beyond 90), and is mirrored into the lower one; otherwise the file
+     covers both hemispheres and is used as it is. */
+  if (m->mdim >= 2 && m->wind_z[m->mdim - 2] <= 90.0)
+  {
+    Log ("import_sph3d: theta runs from %.1f to %.1f deg; treating the grid as the upper hemisphere, mirrored below the disk plane\n",
+         m->wind_z[0], m->wind_z[m->mdim - 1]);
+    mirror_sph3d_import (ndom);
+    ncell = m->ncell;
+  }
+  else
+    Log ("import_sph3d: theta runs from %.1f to %.1f deg; treating the grid as covering both hemispheres\n",
+         m->wind_z[0], m->wind_z[m->mdim - 1]);
+
   /* Closing boundaries */
   {
     double delta;
@@ -219,8 +408,7 @@ import_sph3d (int ndom, char *filename)
     delta = m->wind_x[nd - 1] - m->wind_x[nd - 2];
     m->wind_x[nd] = m->wind_x[nd - 1] + delta;
 
-    /* Theta closing boundary: for a full (0-180) grid this extrapolates to 180;
-     * for an upper-hemisphere-only grid it extrapolates to 90+delta. */
+    /* Theta closing boundary: one more step beyond the last vertex */
     delta = m->wind_z[md - 1] - m->wind_z[md - 2];
     m->wind_z[md] = m->wind_z[md - 1] + delta;
 

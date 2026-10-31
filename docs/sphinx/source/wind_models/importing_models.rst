@@ -239,10 +239,15 @@ present.
 
 .. admonition:: Hemisphere coverage
 
-   As for the 2-D polar case: if the maximum theta in the file is ≤ 90°,
-   only upper-hemisphere cells are present and lower-hemisphere photons are
-   folded symmetrically.  If theta extends beyond 90°, both hemispheres are
-   covered explicitly.
+   As for the 2-D polar case.  If the second-largest theta value in the
+   file is ≤ 90°, the file describes only the upper hemisphere (a single
+   guard row just beyond 90° is allowed); when it is read, the rows beyond
+   90° are dropped and every phi slice is mirrored into the lower hemisphere
+   (with ``v_z`` reversed).  Otherwise the grid covers both hemispheres
+   explicitly.  The log says which (``import_sph3d: theta runs from ...
+   treating the grid as ...``).  To model a wind on one side of the disk
+   only, write a two-hemisphere file and mark the cells on the other side
+   ``inwind = -1``.
 
 .. admonition:: Guard cells
 

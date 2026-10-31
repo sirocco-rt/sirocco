@@ -183,8 +183,9 @@ def _doit_sph3d(data, outputfile):
     ndim = int(np.max(out['i'])) + 1
     mdim = int(np.max(out['j'])) + 1
     pdim = int(np.max(out['k'])) + 1
-    theta_max = float(np.max(data['theta']))
-    two_hemi = theta_max > 90.0
+    # As in import_sph3d: single hemisphere if the second-largest theta is <= 90
+    theta = np.unique(data['theta'])
+    two_hemi = len(theta) >= 2 and float(theta[-2]) > 90.0
 
     guard_mask = (
         (out['i'] >= ndim - 2) |

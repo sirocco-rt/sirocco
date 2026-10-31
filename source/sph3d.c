@@ -255,10 +255,10 @@ sph3d_wind_complete (int ndom, WindPtr w)
  *
  * @details
  * Converts x to (r, theta, phi) then binary-searches wind_x, wind_z,
- * and wind_phi independently.  Uses signed theta (0-180 deg) so
- * lower-hemisphere photons (theta > 90 deg) are routed correctly,
- * unless the grid only covers the upper hemisphere, in which case
- * lower positions are folded via fabs(x[2]).
+ * and wind_phi independently.  Uses signed theta (0-180 deg): every
+ * SPH3D grid covers both hemispheres (imported upper-hemisphere files
+ * are mirrored when read), so lower-hemisphere photons (theta > 90 deg)
+ * are routed to lower-hemisphere cells.
  *
  **********************************************************/
 
@@ -274,11 +274,7 @@ sph3d_where_in_grid (int ndom, double x[])
 
   r = length (x);
 
-  /* Hemisphere detection: same logic as rtheta_where_in_grid */
-  if (one_dom->wind_z[one_dom->mdim - 1] <= 90.0)
-    theta = acos (fabs (x[2]) / r) * RADIAN;
-  else
-    theta = acos (x[2] / r) * RADIAN;
+  theta = acos (x[2] / r) * RADIAN;
 
   phi = atan2 (x[1], x[0]);
   if (phi < 0.0)
@@ -524,13 +520,14 @@ sph3d_get_random_location (int n, double x[])
   double r, rmin, rmax;
   double s, cos_theta, phi, phi_lo, phi_hi;
   double sthetamin, sthetamax;
-  int ndom, mdim_half, is_lower_hemi;
+  int ndom, is_lower_hemi;
 
   ndom = wmain[n].ndom;
   wind_n_to_ijk (ndom, n, &i, &j, &k);
 
-  mdim_half = zdom[ndom].mdim / 2;
-  is_lower_hemi = (j >= mdim_half);
+  /* Decided by theta, not by j, since an imported grid need not have
+     the same number of theta cells in each hemisphere */
+  is_lower_hemi = (zdom[ndom].wind_z[j] >= 90.0);
 
   rmin = zdom[ndom].wind_x[i];
   rmax = zdom[ndom].wind_x[i + 1];

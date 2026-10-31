@@ -112,13 +112,11 @@ def _print_basic_info(data, coord):
 
 
 def _two_hemi(data, coord):
-    if coord == 'polar':
-        # As in import_rtheta: single hemisphere if the second-largest theta
-        # is <= 90, which allows one guard row beyond 90 deg
+    if coord in ('polar', 'sph3d'):
+        # As in import_rtheta and import_sph3d: single hemisphere if the
+        # second-largest theta is <= 90, which allows one guard row beyond 90 deg
         theta = np.unique(data['theta'])
         return len(theta) >= 2 and float(theta[-2]) > 90.0
-    if coord == 'sph3d':
-        return float(np.max(data['theta'])) > 90.0
     if coord in ('cylindrical', 'cyl3d'):
         return float(np.min(data['z'])) < 0.0
     return False
