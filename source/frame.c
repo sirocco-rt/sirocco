@@ -580,8 +580,13 @@ local_to_observer_frame_ruler_transform (double v[], double dx_cmf[], double dx_
 
 
   speed = length (v);
+  if (speed == 0.0)
+  {
+    stuff_v (dx_cmf, dx_obs);
+    return (0);
+  }
   beta = speed / VLIGHT;
-  gamma = 1. / (1. - beta * beta);
+  gamma = 1. / sqrt (1. - beta * beta);
 
 
   rescale (v, 1. / speed, lmn);
@@ -642,8 +647,13 @@ observer_to_local_frame_ruler_transform (double v[], double dx_obs[], double dx_
 
 
   speed = length (v);
+  if (speed == 0.0)
+  {
+    stuff_v (dx_obs, dx_cmf);
+    return (0);
+  }
   beta = speed / VLIGHT;
-  gamma = 1. / (1. - beta * beta);
+  gamma = 1. / sqrt (1. - beta * beta);
 
 
   rescale (v, 1. / speed, lmn);
