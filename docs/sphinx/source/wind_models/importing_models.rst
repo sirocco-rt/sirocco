@@ -28,8 +28,8 @@ General rules for all import formats
   g/cm\ :sup:`3`, temperatures in K) unless stated otherwise.
 * Cell position coordinates are supplied at the **inner corner** (lower-left)
   of each cell, not at cell centres.
-* Guard cells **must** be included at the outer edges of the grid and at the
-  poles (for polar-type grids).  Guard cells should carry a plausible velocity
+* Guard cells **must** be included at the outer edges of the grid, and at the
+  poles of 3-D spherical (SPH3D) grids.  Guard cells should carry a plausible velocity
   but have density and temperature set to zero.
 * The ``inwind`` flag marks whether a cell is in the wind:
 
@@ -147,8 +147,10 @@ A 2.5-D model on a (r, theta) grid.
 
 .. admonition:: Guard cells
 
-   One guard cell at the north pole (theta near 0°).  For two-hemisphere files,
-   two guard cells at the south pole (theta near 180°) are also required.
+   No guard cells are needed at the poles: in a 2-D polar grid the axis is not
+   an edge (a photon crossing it re-enters the same row of cells), so the wind
+   may extend to the axis, as in a biconical outflow.  Guard cells are needed
+   at the outer radial edge and in the last theta row of the file.
 
 3-D Cylindrical Grids (CYLIND3D)
 ---------------------------------
@@ -244,8 +246,10 @@ present.
 
 .. admonition:: Guard cells
 
-   Same rules as the 2-D polar case applied in (r, theta).  No guard cells are
-   required in the phi direction.
+   Guard cells are required at the outer radial edge and at the north pole
+   (theta near 0°), and for two-hemisphere files at the south pole (theta
+   near 180°), where all the phi cells meet.  No guard cells are required in
+   the phi direction.
 
 .. admonition:: Single phi-slice (axisymmetric)
 
@@ -382,9 +386,10 @@ spherical, cylindrical, polar, cyl3d, and sph3d.
   on import, so this produces a cleaner file without loss of information.
   Pass ``--keep-partial`` to preserve the original ``inwind = 1`` values.
 
-* Enforces guard cells at all required boundaries (outer radial rows,
-  north- and south-pole rows for polar-type grids), correcting any cells that
-  were not already marked ``inwind = -1``.
+* Enforces guard cells at all required boundaries (outer radial rows; the
+  last theta row for 2-D polar grids; the north- and south-pole rows for
+  SPH3D grids), correcting any cells that were not already marked
+  ``inwind = -1``.
 
 * Automatically runs ``check_import_model.py`` on the output file and prints a
   validation summary.

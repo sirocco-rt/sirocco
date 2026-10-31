@@ -112,7 +112,12 @@ def _print_basic_info(data, coord):
 
 
 def _two_hemi(data, coord):
-    if coord in ('polar', 'sph3d'):
+    if coord == 'polar':
+        # As in import_rtheta: single hemisphere if the second-largest theta
+        # is <= 90, which allows one guard row beyond 90 deg
+        theta = np.unique(data['theta'])
+        return len(theta) >= 2 and float(theta[-2]) > 90.0
+    if coord == 'sph3d':
         return float(np.max(data['theta'])) > 90.0
     if coord in ('cylindrical', 'cyl3d'):
         return float(np.min(data['z'])) < 0.0
@@ -128,7 +133,12 @@ def _guard_masks(data, coord, ndim, mdim, two_hemi_flag):
     else:
         guards.append((data['i'] >= ndim - 2,
                        'Outer radial (i=%d,%d)' % (ndim - 2, ndim - 1)))
-        if coord in ('polar', 'sph3d') and mdim is not None:
+        if coord == 'polar' and mdim is not None:
+            # The axis is not an edge in a 2-D polar grid, so no pole guards;
+            # the last theta row has no upper boundary
+            guards.append((data['j'] == mdim - 1,
+                           'Outer theta row (j=%d)' % (mdim - 1)))
+        elif coord == 'sph3d' and mdim is not None:
             guards.append((data['j'] <= 1, 'North pole (j=0,1)'))
             if two_hemi_flag:
                 guards.append((data['j'] >= mdim - 2,

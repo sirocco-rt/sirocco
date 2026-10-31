@@ -117,13 +117,13 @@ def _doit_polar(data, outputfile):
 
     ndim = int(np.max(out['i'])) + 1
     mdim = int(np.max(out['j'])) + 1
-    theta_max = float(np.max(data['theta']))
-    two_hemi = theta_max > 90.0
 
+    # No guard cells at the poles: in a 2-D polar grid the axis is not an
+    # edge, so the wind may extend to it.  The last theta row has no upper
+    # boundary and must be a guard.
     guard_mask = (
         (out['i'] >= ndim - 2) |
-        (out['j'] <= 1) |
-        (two_hemi & (out['j'] >= mdim - 2))
+        (out['j'] == mdim - 1)
     )
     n_forced = int(np.sum(guard_mask & (out['inwind'] != -1)))
     if n_forced:

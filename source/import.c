@@ -180,10 +180,14 @@ import_set_wind_boundaries (int ndom)
  * Boundaries checked by coordinate system:
  *   SPHERICAL  -- skipped (import_1d forces guard cells programmatically)
  *   CYLIND     -- outer rho (i=ndim-1), outer z (j=mdim-1)
- *   RTHETA     -- outer r  (i=ndim-1), pole (j=0)
+ *   RTHETA     -- outer r  (i=ndim-1)
  *   CYLIND3D   -- outer rho (i=ndim-1), outer z (j=mdim-1)
  *   SPH3D      -- outer r  (i=ndim-1), pole (j=0)
  * The phi direction never requires guard cells.
+ *
+ * The pole is not checked for RTHETA: in a 2-D polar grid the axis is not
+ * an edge, since a photon crossing it simply re-enters the same row of
+ * cells, so wind may extend to the axis (e.g. a biconical outflow).
  *
  **********************************************************/
 
@@ -258,30 +262,18 @@ check_import_guard_cells (int ndom, WindPtr w)
     nbad_total += nbad;
   }
 
-  /* Polar boundary: j = 0  (RTHETA and SPH3D only) */
-  if (one_dom->coord_type == RTHETA || one_dom->coord_type == SPH3D)
+  /* Polar boundary: j = 0  (SPH3D only) */
+  if (one_dom->coord_type == SPH3D)
   {
     nbad = 0;
     j = 0;
-    if (one_dom->coord_type == RTHETA)
-    {
-      for (i = 0; i < ndim; i++)
-        if (w[nstart + i * mdim + j].inwind == W_ALL_INWIND)
+    for (i = 0; i < ndim; i++)
+      for (k = 0; k < pdim; k++)
+        if (w[nstart + i * mdim * pdim + j * pdim + k].inwind == W_ALL_INWIND)
           nbad++;
-      if (nbad)
-        Error ("check_import_guard_cells: domain %d polar boundary (j=0, theta~0) has %d/%d active cells; guard cells (inwind=-1) required\n",
-               ndom, nbad, ndim);
-    }
-    else
-    {
-      for (i = 0; i < ndim; i++)
-        for (k = 0; k < pdim; k++)
-          if (w[nstart + i * mdim * pdim + j * pdim + k].inwind == W_ALL_INWIND)
-            nbad++;
-      if (nbad)
-        Error ("check_import_guard_cells: domain %d polar boundary (j=0, theta~0) has %d/%d active cells; guard cells (inwind=-1) required\n",
-               ndom, nbad, ndim * pdim);
-    }
+    if (nbad)
+      Error ("check_import_guard_cells: domain %d polar boundary (j=0, theta~0) has %d/%d active cells; guard cells (inwind=-1) required\n",
+             ndom, nbad, ndim * pdim);
     nbad_total += nbad;
   }
 
