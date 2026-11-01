@@ -366,7 +366,7 @@ that the y-axis scale varies for different inclination angles.
 
 pol_plot_description='''
 The run was made with @Spectrum.polarization yes, so these plots, from the .spec file, replace the plot of the detailed
-spectra.  There is one for each inclination, showing the spectrum (in coarse bins, with the unbinned spectrum in grey), the degree of
+spectra.  There is one for each inclination, showing the spectrum (black line, lightly smoothed, with dots for its mean in the coarse bins used for the polarization), the degree of
 linear polarization P, and the position angle of the electric vector, measured from the projected symmetry axis (0 or 180:
 E along the axis; 90: E parallel to the disk).  The P panel also shows the noise, estimated from U, which should be zero
 in an axisymmetric model.  If there are spectra selected by the number of scatters, they are drawn in colour with the
