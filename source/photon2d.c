@@ -161,7 +161,7 @@ translate_in_space (PhotPtr pp)
      */
 
     double qmin, qmax, qval;
-    if (zdom[ndom].coord_type == RTHETA || zdom[ndom].coord_type == SPHERICAL)
+    if (zdom[ndom].coord_type == RTHETA || zdom[ndom].coord_type == SPHERICAL || zdom[ndom].coord_type == SPH3D)
     {
       qval = (pp->x[0] * pp->x[0]) + (pp->x[1] * pp->x[1]) + (pp->x[2] * pp->x[2]);
       qmin = zdom[ndom].rmin * zdom[ndom].rmin;
