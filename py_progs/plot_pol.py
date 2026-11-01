@@ -20,8 +20,10 @@ Command line usage (if any):
         -wmax       longest wavelength (A) to plot (default: all)
         -emin       lowest energy (keV) to plot; sets -wmax
         -emax       highest energy (keV) to plot; sets -wmin
-        -nbin       combine this many wavelength bins for the polarization
-                    (default: about 100 bins across the plot)
+        -nbin       make the coarse bins for the polarization contain this
+                    many spectrum bins on average (default: 100 coarse bins
+                    across the plot); the coarse bins are equal in log
+                    wavelength
         -max_obs    plot at most this many inclinations, spread evenly over
                     those in the file (default 4; 0 for all)
         -out        name of the plot (default rootname_pol.png)
@@ -46,14 +48,17 @@ Description:
     the projected symmetry axis of the model.
 
     For each observer the plot has three panels: the spectrum F_lambda
-    (logarithmic unless -linear),
+    (logarithmic unless -linear; a black line, lightly smoothed, with dots
+    showing its mean in each of the coarse bins used for the polarization),
     the degree of polarization P = sqrt(Q^2 + U^2)/I in per cent, and the
     position angle PA = 0.5 atan2(U, Q) of the electric vector, measured
     from the projected symmetry axis (PA = 0 or 180: E along the axis;
     PA = 90: E parallel to the disk).  The polarization is much noisier
-    than the spectrum, so it is calculated in coarse bins, each combining
-    nbin bins of the spectrum.  P and PA integrated over the plotted band
-    are given in the top panel.
+    than the spectrum, so it is calculated in coarse bins, equal in log
+    wavelength (about 100 across the plot unless -nbin is given).  P and
+    PA integrated over the plotted band are given in the top panel.  If
+    the longest wavelength plotted is more than 3 times the shortest, the
+    wavelength axis is logarithmic.
 
     Sirocco's models are axisymmetric, so U should be zero to within the
     noise.  The rms of u = U/I about zero is a measure of the noise in each
@@ -107,6 +112,9 @@ History:
     spectra at the same inclination drawn together; -separate
 
     261019 ksl Plots against energy for X-rays (-xray, -optical, -emin, -emax)
+
+    261101 ksl Coarse bins equal in log wavelength; logarithmic wavelength
+    axis for broad ranges; spectrum as a line with the coarse bins as dots
 
 '''
 
@@ -269,13 +277,18 @@ def doit(root, wmin=0, wmax=0, nbin=0, max_obs=4, outfile='', logflux=True, sepa
     if len(idx) == 0:
         print('plot_pol: no wavelengths between %g and %g' % (wmin, wmax))
         return 'None'
-    if nbin <= 0:
-        nbin = max(1, len(idx) // 100)
-    nkeep = (len(idx) // nbin) * nbin
-    idx = idx[:nkeep]
+    # the coarse bins for the polarization are equal in log wavelength: about 100 across the plot,
+    # or one for every nbin spectrum bins on average; any that contain no spectrum bins are dropped
+    ncoarse = max(1, len(idx) // nbin) if nbin > 0 else min(100, len(idx))
+    lw = np.log10(wave[idx])
+    dex = (lw.max() - lw.min()) / ncoarse
+    edges = np.linspace(lw.min(), lw.max(), ncoarse + 1)
+    ib = np.clip(np.digitize(lw, edges) - 1, 0, ncoarse - 1)
+    ib = np.unique(ib, return_inverse=True)[1]
+    count = np.bincount(ib)
 
     def comb(x):
-        return x[idx].reshape(-1, nbin).sum(axis=1)
+        return np.bincount(ib, weights=x[idx])
 
     obs = groups(cols)
     if max_obs > 0 and len(obs) > max_obs:
@@ -291,8 +304,10 @@ def doit(root, wmin=0, wmax=0, nbin=0, max_obs=4, outfile='', logflux=True, sepa
     nsel = max(len(variants) for name, variants in obs)
     fig = plt.figure(figsize=(9, (4.6 if nsel == 1 else 5.8) * nobs))
     outer = fig.add_gridspec(nobs, 1, hspace=0.22)
-    nsmooth = max(1, nbin // 10)
-    wb = xval[idx].reshape(-1, nbin).mean(axis=1)
+    nsmooth = max(1, int(np.median(count)) // 10)
+    wb = comb(xval) / count
+    # a logarithmic wavelength axis when the plotted range is broad
+    logx = xray or xval[idx].max() / xval[idx].min() > 3
 
     for k, (name, variants) in enumerate(obs):
         I = comb(cols[name] * fac)
@@ -332,14 +347,14 @@ def doit(root, wmin=0, wmax=0, nbin=0, max_obs=4, outfile='', logflux=True, sepa
         ax3 = fig.add_subplot(gs[-1], sharex=ax1)
 
         flux = np.convolve(cols[name] * fscale, np.ones(nsmooth) / nsmooth, mode='same')
-        ax1.plot(xval[idx], flux[idx], color='0.65', lw=0.5)
-        ax1.plot(wb, comb(cols[name] * fscale) / nbin, color='k', lw=1.0, label=selection(name))
+        ax1.plot(xval[idx], flux[idx], color='k', lw=0.6, label=selection(name))
+        ax1.plot(wb, comb(cols[name] * fscale) / count, '.', color='C0', ms=4)
         for j, v in enumerate(others):
-            ax1.plot(wb, comb(cols[v] * fscale) / nbin, color='C%d' % (j + 1), lw=0.9, label=selection(v))
+            ax1.plot(wb, comb(cols[v] * fscale) / count, color='C%d' % (j + 1), lw=0.9, label=selection(v))
         if others:
             ax1.legend(loc='upper left', fontsize=7, ncol=len(variants))
         if logflux:
-            fb = np.concatenate([comb(cols[v] * fscale) / nbin for v in variants])
+            fb = np.concatenate([comb(cols[v] * fscale) / count for v in variants])
             top = np.nanmax(fb[fb > 0]) if np.any(fb > 0) else 1.0
             ax1.set_yscale('log')
             ax1.set_ylim(max(np.nanmin(fb[fb > 0]) / 2, top / 1e4), top * 2)
@@ -349,7 +364,6 @@ def doit(root, wmin=0, wmax=0, nbin=0, max_obs=4, outfile='', logflux=True, sepa
             ax1.yaxis.set_major_locator(MaxNLocator(nbins=5, prune='lower'))
         if xray:
             ax1.set_ylabel('E F$_E$ ($\\nu$ F$_\\nu$)')
-            ax1.set_xscale('log')
         else:
             ax1.set_ylabel('F$_\\lambda$' if units == 'flambda' else 'flux')
         ax1.text(0.98, 0.92, label(name.split('_')[0]), transform=ax1.transAxes, ha='right', va='top')
@@ -387,10 +401,11 @@ def doit(root, wmin=0, wmax=0, nbin=0, max_obs=4, outfile='', logflux=True, sepa
         pc = 45 * np.round(paband / 45) if abs(paband - 45 * np.round(paband / 45)) < 10 else np.round(paband)
         ax3.set_yticks([pc - 45, pc, pc + 45])
         ax3.set_xlim(xval[idx].min(), xval[idx].max())      # the actual range; shared by this observer's panels
-        if xray:
-            # plain numbers (0.5, 1, 2, ... keV) rather than powers of ten on the log axis
+        if logx:
+            # plain numbers (0.5, 1, 2, ... keV or 1000, 2000, 5000 ... A) rather than powers of ten on the log axis
+            ax3.set_xscale('log')
             lo, hi = ax3.get_xlim()
-            ticks = [t for t in (0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500) if lo <= t <= hi]
+            ticks = [m * 10.0 ** e for e in range(-3, 7) for m in (1, 2, 5) if lo <= m * 10.0 ** e <= hi]
             ax3.set_xticks(ticks)
             ax3.set_xticklabels(['%g' % t for t in ticks])
             ax3.xaxis.set_minor_formatter(NullFormatter())
@@ -410,8 +425,8 @@ def doit(root, wmin=0, wmax=0, nbin=0, max_obs=4, outfile='', logflux=True, sepa
                       % (selection(v), 100 * np.hypot(Qv, Uv) / Iv, 100 * Qv / Iv, 100 * Uv / Iv))
 
     ax3.set_xlabel('Energy (keV)' if xray else 'Wavelength ($\\AA$)')
-    fig.axes[0].set_title('%s: spectrum, polarization and position angle (%d bins per point; grey: P < 3$\\sigma$)'
-                          % (os.path.basename(fname), nbin), fontsize=10)
+    fig.axes[0].set_title('%s: spectrum, polarization and position angle (%.3f dex per point; grey: P < 3$\\sigma$)'
+                          % (os.path.basename(fname), dex), fontsize=10)
     fig.savefig(outfile, dpi=100, bbox_inches='tight')
     plt.close(fig)
     return outfile
