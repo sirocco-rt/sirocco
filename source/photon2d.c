@@ -138,10 +138,21 @@ translate_in_space (PhotPtr pp)
 {
   //OLD double ds, delta, s, smax, prhosq;
   double ds, delta, s, smax;
-  int ndom, ndom_next;
+  int ndom, ndom_next, ndom_here;
   struct photon ptest;
 
   ds = ds_to_wind (pp, &ndom);
+
+  /* ds_to_wind returns the domain of the next boundary, which is -1 when that boundary
+   * is the outer edge of the wind, since geo.rmax is then the rmax of the wind itself.
+   * For a photon in an empty cell (W_IGNORE) inside an imported wind, use the domain the
+   * photon is in, so that it is stepped through the empty cells below rather than being
+   * moved straight to the edge of the wind past any wind cells further out. */
+
+  if (where_in_wind (pp->x, &ndom_here) == W_IGNORE && ndom_here >= 0)
+  {
+    ndom = ndom_here;
+  }
 
   /* For IMPORT, although we have reached the edge of the wind, we may be in a cell that is
    * not really in the wind, so we have to address this situtation here.  The first problem
