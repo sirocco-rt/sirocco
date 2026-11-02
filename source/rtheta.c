@@ -857,7 +857,10 @@ rtheta_is_cell_in_wind (int n)
     int mdim_half = mdim / 2;
     int is_lower = (j >= mdim_half);
     int j_hemi = is_lower ? (j - mdim_half) : j;
-    if (j_hemi <= 1 || (is_lower && j_hemi >= (mdim_half - 2)))
+    /* j_hemi counts from the equator in the lower hemisphere, so the north-pole test must
+       be restricted to the upper hemisphere; otherwise the two lower-hemisphere cells next
+       to the equator are excluded */
+    if ((!is_lower && j_hemi <= 1) || (is_lower && j_hemi >= (mdim_half - 2)))
     {
       return (W_NOT_INWIND);
     }
