@@ -1,14 +1,13 @@
 Coordinate grids
 ----------------
 
-SIROCCO supports 3 main coordinate gridding schemes, as well as one that is
-tailored to handle vertically extended disks. These schemes are
+SIROCCO supports 3 coordinate gridding schemes. These schemes are
 
 * 1-d spherical
 * 2-d cylindrical
 * 2-d polar or r-theta coordinates
 
-These options are controlled by the :doc:`/input/parameters/wind/Wind/Wind.coord_system` keyword. For vertically extended disks, a modified version of the a cylindrical schme is provided where the cells viewed along the x,z plane are parallelograms, so that the grid follows the disk surface.
+These options are controlled by the :doc:`/input/parameters/wind/Wind/Wind.coord_system` keyword.
 
 Although SIROCCO incorporates several models, such as the SV model for disk winds, that are continuous, the velocities and other proporites are placed on a grid, as part of the setup that goes on at the beginining of program execution.
 
