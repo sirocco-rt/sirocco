@@ -75,10 +75,14 @@ def link(text='here',href='foo.txt'):
 
 def image(image='test.png',alt='Thumbnails',width=400,height=400):
 	'''
-	Add a centered image to a page 
+	Add a centered image to a page.  If height is 0, it is left out, so the
+	image keeps its own aspect ratio at the given width.
 	'''
 	string='''\n<div style="text-align: center;">'''
-	string=string+'''\n	<img alt="%s" src="%s" width="%d" height="%d"> \n''' % (alt,image,width,height)
+	if height>0:
+		string=string+'''\n	<img alt="%s" src="%s" width="%d" height="%d"> \n''' % (alt,image,width,height)
+	else:
+		string=string+'''\n	<img alt="%s" src="%s" width="%d"> \n''' % (alt,image,width)
 	string=string+'''</div>\n'''
 
 	return string 
