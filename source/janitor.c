@@ -304,8 +304,7 @@ free_atomic_data (void)
 {
   free (ele);
   free (ion);
-  free (xconfig);
-  free (line);
+  free_level_line_data ();
   free (auger_macro);
   free_xsection_data ();
 }

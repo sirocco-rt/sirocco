@@ -307,7 +307,7 @@ typedef struct coll_stren
                                           */
 } Coll_stren, *Coll_strenptr;
 
-extern Coll_stren coll_stren[NLINES];
+extern Coll_stren *coll_stren;   /**< Grown as the data are read (#1223) */
 
 
 
