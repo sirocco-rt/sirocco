@@ -162,8 +162,9 @@ get_domain_params (int ndom)
 void
 allocate_domain_wind_coords (int ndom)
 {
-  /* Allocate x dimensions */
-  zdom[ndom].wind_x = calloc (zdom[ndom].ndim, sizeof (double));
+  /* Allocate x dimensions; wind_x and wind_z have one extra entry, the outer
+     edge of the outermost cells, see set_domain_outer_edges */
+  zdom[ndom].wind_x = calloc (zdom[ndom].ndim + 1, sizeof (double));
   zdom[ndom].wind_midx = calloc (zdom[ndom].ndim, sizeof (double));
   if (zdom[ndom].wind_x == NULL || zdom[ndom].wind_midx == NULL)
   {
@@ -172,7 +173,7 @@ allocate_domain_wind_coords (int ndom)
   }
 
   /* Allocate z dimensions */
-  zdom[ndom].wind_z = calloc (zdom[ndom].mdim, sizeof (double));
+  zdom[ndom].wind_z = calloc (zdom[ndom].mdim + 1, sizeof (double));
   zdom[ndom].wind_midz = calloc (zdom[ndom].mdim, sizeof (double));
   if (zdom[ndom].wind_z == NULL || zdom[ndom].wind_midz == NULL)
   {
@@ -194,6 +195,36 @@ allocate_domain_wind_coords (int ndom)
   {
     cylvar_allocate_domain (ndom);
   }
+}
+
+
+
+/**********************************************************/
+/**
+ * @brief      Set the outer edge of the outermost cells of a domain
+ *
+ * @param [in] int  ndom   The domain
+ *
+ * @details
+ * wind_x and wind_z hold the inner edges of the cells, with one extra entry
+ * (see allocate_domain_wind_coords), so that the outer edge of cell i is always
+ * wind_x[i + 1] (and of cell j, wind_z[j + 1]).  The outermost cells are guard
+ * cells, whose outer edge the grid does not define; it is set here by extending
+ * the spacing of the previous cell, as the *_wind_complete routines do for the
+ * mid-points.  Called at the end of each *_wind_complete routine.  See #1214.
+ *
+***********************************************************/
+
+void
+set_domain_outer_edges (int ndom)
+{
+  const int ndim = zdom[ndom].ndim;
+  const int mdim = zdom[ndom].mdim;
+
+  if (ndim > 1)
+    zdom[ndom].wind_x[ndim] = 2. * zdom[ndom].wind_x[ndim - 1] - zdom[ndom].wind_x[ndim - 2];
+  if (mdim > 1 && (zdom[ndom].coord_type == CYLIND || zdom[ndom].coord_type == RTHETA))
+    zdom[ndom].wind_z[mdim] = 2. * zdom[ndom].wind_z[mdim - 1] - zdom[ndom].wind_z[mdim - 2];
 }
 
 /**********************************************************/

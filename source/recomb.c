@@ -619,7 +619,7 @@ one_fb (PlasmaPtr xplasma, double f1, double f2)
     while (n < (ARRAY_PDF) && nnn < NCDF)       //We keep going until n=ARRAY_PDF-1, which will give the maximum required frequency
     {
       freq = f1 + dfreq * n;    //The frequency of the array element we would make in the normal run of things
-      if (freq > fb_jumps[nn] && nn < fb_njumps)        //The element we were going to make has a frequency abouve the jump
+      if (nn < fb_njumps && freq > fb_jumps[nn])        //The element we were going to make has a frequency abouve the jump
       {
         fb_x[nnn] = fb_jumps[nn] * (1. - DELTA_V / (2. * VLIGHT));      //We make one frequency point DELTA_V cm/s below the jump
         fb_y[nnn] = fb (xplasma, xplasma->state.t_e, fb_x[nnn], nions, FB_FULL);        //And the flux for that point
@@ -631,7 +631,7 @@ one_fb (PlasmaPtr xplasma, double f1, double f2)
       }
       else                      //We haven't hit a jump
       {
-        if (freq > fb_x[nnn - 1])       //Deal with the unusual case where the upper point in our 'jump' pair is above the next regular point
+        if (nnn == 0 || freq > fb_x[nnn - 1])   //Deal with the unusual case where the upper point in our 'jump' pair is above the next regular point
         {
           fb_x[nnn] = freq;     //Set the next array element frequency
           fb_y[nnn] = fb (xplasma, xplasma->state.t_e, fb_x[nnn], nions, FB_FULL);      //And the flux

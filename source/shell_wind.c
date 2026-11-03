@@ -46,7 +46,7 @@
 static int
 allocate_shell_domain (int ndom)
 {
-  zdom[ndom].wind_x = calloc (zdom[ndom].ndim, sizeof (double));
+  zdom[ndom].wind_x = calloc (zdom[ndom].ndim + 1, sizeof (double));    /* one extra edge, see set_domain_outer_edges */
   zdom[ndom].wind_midx = calloc (zdom[ndom].ndim, sizeof (double));
   if (zdom[ndom].wind_x == NULL || zdom[ndom].wind_midx == NULL)
   {
@@ -55,7 +55,7 @@ allocate_shell_domain (int ndom)
   }
 
   /* Allocate z dimensions */
-  zdom[ndom].wind_z = calloc (zdom[ndom].mdim, sizeof (double));
+  zdom[ndom].wind_z = calloc (zdom[ndom].mdim + 1, sizeof (double));
   zdom[ndom].wind_midz = calloc (zdom[ndom].mdim, sizeof (double));
   if (zdom[ndom].wind_z == NULL || zdom[ndom].wind_midz == NULL)
   {

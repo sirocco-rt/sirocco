@@ -337,6 +337,7 @@ rtheta_wind_complete (int ndom, WindPtr w)
      to allow use to use the cones routines to work out if photonds leave a cell in the theta direction */
 
   rtheta_make_cones (ndom, w);
+  set_domain_outer_edges (ndom);
 
 
   return (0);
