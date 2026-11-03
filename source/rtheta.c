@@ -649,40 +649,32 @@ rtheta_get_random_location (int n, double x[])
 {
   int i, j;
   int inwind;
-  double r, rmin, rmax, sthetamin, sthetamax;
+  double r, rmin, rmax, cthetamin, cthetamax;
   double s, cos_theta, phi;
   int ndom, ndomain;
-  int is_lower_hemi;
 
   ndom = wmain[n].ndom;
   wind_n_to_ij (ndom, n, &i, &j);
 
-  /* Decide the hemisphere from theta rather than from j, since an imported
-     grid need not be split at j = mdim/2 */
-  is_lower_hemi = (zdom[ndom].wind_z[j] >= 90.0);
-
   rmin = zdom[ndom].wind_x[i];
   rmax = zdom[ndom].wind_x[i + 1];
 
-  /* sin(theta) is symmetric about 90°, so sthetamin/sthetamax work for both
-     hemispheres.  We use sin(theta) directly as the sampling variable and
-     derive cos(theta) = sqrt(1 - sin²); the sign of cos(theta) is set by the
-     hemisphere so x[2] has the correct sign without any post-generation flip. */
-  sthetamin = sin (zdom[ndom].wind_z[j] / RADIAN);
-  sthetamax = sin (zdom[ndom].wind_z[j + 1] / RADIAN);
+  /* For a position uniform in the volume of the cell, r is uniform in r^3 and
+     cos(theta) is uniform between the cos of the cell's theta edges.  This also
+     gives the right sign of cos(theta) in the lower hemisphere. */
+  cthetamin = cos (zdom[ndom].wind_z[j] / RADIAN);
+  cthetamax = cos (zdom[ndom].wind_z[j + 1] / RADIAN);
 
   /* Generate a position which is both in the cell and in the wind */
 
   inwind = W_NOT_INWIND;
   while (inwind != W_ALL_INWIND)
   {
-    r = sqrt (rmin * rmin + random_number (0.0, 1.0) * (rmax * rmax - rmin * rmin));
+    r = pow (rmin * rmin * rmin + random_number (0.0, 1.0) * (rmax * rmax * rmax - rmin * rmin * rmin), 1.0 / 3.0);
     phi = 2. * PI * random_number (0.0, 1.0);
 
-    s = sthetamin + random_number (0.0, 1.0) * (sthetamax - sthetamin);
-    cos_theta = sqrt (1.0 - s * s);
-    if (is_lower_hemi)
-      cos_theta = -cos_theta;
+    cos_theta = cthetamin + random_number (0.0, 1.0) * (cthetamax - cthetamin);
+    s = sqrt (1.0 - cos_theta * cos_theta);
 
     x[0] = r * cos (phi) * s;
     x[1] = r * sin (phi) * s;

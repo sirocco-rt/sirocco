@@ -11,6 +11,7 @@
  * ****************************************************************************************************************** */
 
 #include <errno.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -552,6 +553,164 @@ test_spherical_star_wind (void)
 
 /** *******************************************************************************************************************
  *
+ * @brief Check that random positions in the cells of an r-theta or sph3d model are uniform in volume
+ *
+ * @param [in] root_name  the model in test_data/define_wind
+ *
+ * @details
+ *
+ * Positions are drawn with `get_random_location` in the cell of the model nearest the pole, the one nearest the disk
+ * and the innermost one, choosing cells that are entirely in the wind. For a position uniform in the volume of a cell,
+ * (r^3 - rmin^3) / (rmax^3 - rmin^3), (cos theta - cos theta_max) / (cos theta_min - cos theta_max) and, for sph3d,
+ * (phi - phi_min) / (phi_max - phi_min) are uniform between 0 and 1, so their means should be 1/2 and their mean
+ * squares 1/3.
+ *
+ * ****************************************************************************************************************** */
+
+static void
+check_random_location (const char *root_name)
+{
+  const int n_sample = 100000;
+  const double tolerance = 5.0 / sqrt (12.0 * n_sample);        /* 5 sigma for the mean of a uniform variable */
+  int n, i, j, k, n_test, nwind, is_3d;
+  int cells[3];
+  double x[3], r, cos_theta, phi, u_r, u_c, u_p;
+  double rmin, rmax, cmin, cmax;
+  double sum_r, sum_rr, sum_c, sum_cc, sum_p, sum_pp;
+  double zmin, zmax, rlow;
+
+  const int init_error = setup_model_grid (root_name, ATOMIC_DATA_DEST);
+  if (init_error)
+  {
+    cleanup_model (root_name);
+    CU_FAIL_FATAL ("Unable to initialise model for random locations");
+  }
+
+  define_wind ();
+  init_rand (1237);
+  is_3d = (zdom[0].coord_type == SPH3D);
+
+  /* Find the cells entirely in the wind with the smallest theta, the largest theta and the smallest r */
+  cells[0] = cells[1] = cells[2] = -1;
+  zmin = rlow = VERY_BIG;
+  zmax = -VERY_BIG;
+  for (nwind = zdom[0].nstart; nwind < zdom[0].nstop; ++nwind)
+  {
+    if (wmain[nwind].inwind != W_ALL_INWIND)
+    {
+      continue;
+    }
+    if (is_3d)
+    {
+      wind_n_to_ijk (0, nwind, &i, &j, &k);
+    }
+    else
+    {
+      wind_n_to_ij (0, nwind, &i, &j);
+    }
+    if (zdom[0].wind_z[j] < zmin)
+    {
+      zmin = zdom[0].wind_z[j];
+      cells[0] = nwind;
+    }
+    if (zdom[0].wind_z[j] > zmax)
+    {
+      zmax = zdom[0].wind_z[j];
+      cells[1] = nwind;
+    }
+    if (zdom[0].wind_x[i] < rlow)
+    {
+      rlow = zdom[0].wind_x[i];
+      cells[2] = nwind;
+    }
+  }
+
+  for (n_test = 0; n_test < 3; ++n_test)
+  {
+    CU_ASSERT_FATAL (cells[n_test] >= 0);
+    nwind = cells[n_test];
+    if (is_3d)
+    {
+      wind_n_to_ijk (0, nwind, &i, &j, &k);
+    }
+    else
+    {
+      wind_n_to_ij (0, nwind, &i, &j);
+    }
+    rmin = zdom[0].wind_x[i];
+    rmax = zdom[0].wind_x[i + 1];
+    cmin = cos (zdom[0].wind_z[j + 1] / RADIAN);
+    cmax = cos (zdom[0].wind_z[j] / RADIAN);
+
+    sum_r = sum_rr = sum_c = sum_cc = sum_p = sum_pp = 0.0;
+    for (n = 0; n < n_sample; ++n)
+    {
+      get_random_location (nwind, x);
+      r = sqrt (x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
+      cos_theta = x[2] / r;
+      if (zdom[0].wind_z[j + 1] <= 90.0)
+      {
+        cos_theta = fabs (cos_theta);   /* a grid of one hemisphere puts positions below the disk half the time */
+      }
+      u_r = (r * r * r - rmin * rmin * rmin) / (rmax * rmax * rmax - rmin * rmin * rmin);
+      u_c = (cos_theta - cmin) / (cmax - cmin);
+      sum_r += u_r;
+      sum_rr += u_r * u_r;
+      sum_c += u_c;
+      sum_cc += u_c * u_c;
+      if (is_3d)
+      {
+        phi = atan2 (x[1], x[0]);
+        if (phi < 0.0)
+        {
+          phi += 2.0 * M_PI;
+        }
+        u_p = (phi - wmain[nwind].phi) / (wmain[nwind].phimax - wmain[nwind].phi);
+        sum_p += u_p;
+        sum_pp += u_p * u_p;
+      }
+    }
+
+    CU_ASSERT_DOUBLE_EQUAL (sum_r / n_sample, 0.5, tolerance);
+    CU_ASSERT_DOUBLE_EQUAL (sum_rr / n_sample, 1.0 / 3.0, tolerance);
+    CU_ASSERT_DOUBLE_EQUAL (sum_c / n_sample, 0.5, tolerance);
+    CU_ASSERT_DOUBLE_EQUAL (sum_cc / n_sample, 1.0 / 3.0, tolerance);
+    if (is_3d)
+    {
+      CU_ASSERT_DOUBLE_EQUAL (sum_p / n_sample, 0.5, tolerance);
+      CU_ASSERT_DOUBLE_EQUAL (sum_pp / n_sample, 1.0 / 3.0, tolerance);
+    }
+  }
+
+  cleanup_model (root_name);
+}
+
+/** *******************************************************************************************************************
+ *
+ * @brief Test that random positions in polar (r-theta) cells are uniform in volume
+ *
+ * ****************************************************************************************************************** */
+
+static void
+test_polar_random_location (void)
+{
+  check_random_location ("cv_polar");
+}
+
+/** *******************************************************************************************************************
+ *
+ * @brief Test that random positions in sph3d cells are uniform in volume
+ *
+ * ****************************************************************************************************************** */
+
+static void
+test_sph3d_random_location (void)
+{
+  check_random_location ("cv_sph3d");
+}
+
+/** *******************************************************************************************************************
+ *
  * @brief Clean up after the `define_wind` tests have run.
  *
  * @details
@@ -680,7 +839,9 @@ create_define_wind_test_suite (void)
   if ((CU_add_test (suite, "Shell wind", test_shell_wind) == NULL) ||
       (CU_add_test (suite, "Spherical: Supernova", test_spherical_star_wind) == NULL) ||
       (CU_add_test (suite, "SV: Cataclysmic Variable", test_sv_cv_wind) == NULL) ||
-      (CU_add_test (suite, "SV: AGN Macro", test_sv_agn_macro_wind) == NULL))
+      (CU_add_test (suite, "SV: AGN Macro", test_sv_agn_macro_wind) == NULL) ||
+      (CU_add_test (suite, "Polar: random locations in cells", test_polar_random_location) == NULL) ||
+      (CU_add_test (suite, "SPH3D: random locations in cells", test_sph3d_random_location) == NULL))
   {
     fprintf (stderr, "Failed to add tests to `Define Wind` suite\n");
     CU_cleanup_registry ();

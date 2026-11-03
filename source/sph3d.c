@@ -521,22 +521,19 @@ sph3d_get_random_location (int n, double x[])
   int inwind, ndomain;
   double r, rmin, rmax;
   double s, cos_theta, phi, phi_lo, phi_hi;
-  double sthetamin, sthetamax;
-  int ndom, is_lower_hemi;
+  double cthetamin, cthetamax;
+  int ndom;
 
   ndom = wmain[n].ndom;
   wind_n_to_ijk (ndom, n, &i, &j, &k);
 
-  /* Decided by theta, not by j, since an imported grid need not have
-     the same number of theta cells in each hemisphere */
-  is_lower_hemi = (zdom[ndom].wind_z[j] >= 90.0);
-
   rmin = zdom[ndom].wind_x[i];
   rmax = zdom[ndom].wind_x[i + 1];
-
-  sthetamin = sin (zdom[ndom].wind_z[j] / RADIAN);
-  sthetamax = sin (zdom[ndom].wind_z[j + 1] / RADIAN);
-
+  /* For a position uniform in the volume of the cell, cos(theta) is uniform between
+     the cos of the cell's theta edges; this also gives the right sign in the lower
+     hemisphere */
+  cthetamin = cos (zdom[ndom].wind_z[j] / RADIAN);
+  cthetamax = cos (zdom[ndom].wind_z[j + 1] / RADIAN);
   phi_lo = wmain[n].phi;
   phi_hi = wmain[n].phimax;
 
@@ -545,19 +542,13 @@ sph3d_get_random_location (int n, double x[])
   {
     r = pow (rmin * rmin * rmin + random_number (0.0, 1.0) * (rmax * rmax * rmax - rmin * rmin * rmin), 1.0 / 3.0);
     phi = phi_lo + random_number (0.0, 1.0) * (phi_hi - phi_lo);
-
-    s = sthetamin + random_number (0.0, 1.0) * (sthetamax - sthetamin);
-    cos_theta = sqrt (1.0 - s * s);
-    if (is_lower_hemi)
-      cos_theta = -cos_theta;
-
+    cos_theta = cthetamin + random_number (0.0, 1.0) * (cthetamax - cthetamin);
+    s = sqrt (1.0 - cos_theta * cos_theta);
     x[0] = r * cos (phi) * s;
     x[1] = r * sin (phi) * s;
     x[2] = r * cos_theta;
-
     inwind = where_in_wind (x, &ndomain);
   }
-
   return (inwind);
 }
 
