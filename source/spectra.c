@@ -103,7 +103,7 @@ spectrum_allocate (int nspec)
  * specific angles.  angle[0], phase[0], and scat_select[0] all affect spec[3]
  *
  * scat_select allows one to select spectra with a specific number of scattere or range og
- * scatters.  If nscat > 999 select all.  This is the normal case. The rest are used
+ * scatters.  If nscat >= MAXSCAT select all.  This is the normal case. The rest are used
  * largely for diagnostic purposes.  If 0 <nscat < MAXScat selected only photons which
  * have scattered nscat times.  If nscat is negattive, then all photons with more than |nscat| re
  * included.
@@ -1068,6 +1068,8 @@ spectrum_restart_renormalise (int nangle)
     {
       xxspec[n].f[m] *= renorm_factor;
       xxspec[n].lf[m] *= renorm_factor;
+      xxspec[n].f_wind[m] *= renorm_factor;
+      xxspec[n].lf_wind[m] *= renorm_factor;
     }
   }
 
