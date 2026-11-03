@@ -214,6 +214,7 @@ spherical_wind_complete (int ndom, WindPtr w)
   /* Add something plausible for the edges */
   zdom[ndom].wind_midx[ndim - 1] = 2. * zdom[ndom].wind_x[ndim - 1] - zdom[ndom].wind_midx[ndim - 2];
   zdom[ndom].wind_midz[0] = zdom[ndom].wind_z[0] / 2;
+  set_domain_outer_edges (ndom);
 
   return (0);
 }

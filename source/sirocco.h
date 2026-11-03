@@ -1616,7 +1616,7 @@ typedef struct spectrum
                                   * 1.0 otherwise */
   int nphot[NSTAT];             /**<  Used to help define what happened to photons when trying
                                   * to construct this particular spectrum */
-  int nscat;                    /**<  nscat>MAXSCAT -> select everything
+  int nscat;                    /**<  nscat>=MAXSCAT -> select everything
                                   *  0 < nscat < MAXScat select only those photons which have
                                   *  scattered nscat times, number of scattering photons in
                                   * spectrum, if nscat is negative

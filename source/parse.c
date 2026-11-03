@@ -205,6 +205,7 @@ parse_command_line (int argc, char *argv[])
       {
         modes.partial_cells = PC_INCLUDE;
         Log ("Cells partially in the wind will be included.\n");
+        Log ("Warning: Including partial cells is deprecated, and may be removed in future versions of Sirocco.\n");
         j = i;
       }
       else if (strcmp (argv[i], "-ignore_partial_cells") == 0)
