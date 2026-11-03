@@ -159,8 +159,8 @@ index_lines ()
   int n;
 
   /* Allocate memory for some modestly large arrays */
-  freqs = calloc (sizeof (foo), NLINES + 2);
-  index = calloc (sizeof (ioo), NLINES + 2);
+  freqs = calloc (sizeof (foo), nlines + 2);
+  index = calloc (sizeof (ioo), nlines + 2);
 
   freqs[0] = 0;
   for (n = 0; n < nlines; n++)
