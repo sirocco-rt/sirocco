@@ -78,7 +78,6 @@ set(PYTHON_SOURCE
     source/anisowind.c
     source/bands.c
     source/bb.c
-    source/bilinear.c
     source/brem.c
     source/cdf.c
     source/charge_exchange.c
@@ -87,7 +86,6 @@ set(PYTHON_SOURCE
     source/cooling.c
     source/corona.c
     source/cv.c
-    source/cylind_var.c
     source/cylindrical.c
     source/density.c
     source/diag.c
