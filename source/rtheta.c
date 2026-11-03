@@ -564,7 +564,7 @@ rtheta_get_random_location (int n, double x[])
 {
   int i, j;
   int inwind;
-  double r, rmin, rmax, sthetamin, sthetamax;
+  double r, rmin, rmax, cthetamin, cthetamax;
   double theta, phi;
   double zz;
   int ndom, ndomain;
@@ -574,17 +574,19 @@ rtheta_get_random_location (int n, double x[])
 
   rmin = zdom[ndom].wind_x[i];
   rmax = zdom[ndom].wind_x[i + 1];
-  sthetamin = sin (zdom[ndom].wind_z[j] / RADIAN);
-  sthetamax = sin (zdom[ndom].wind_z[j + 1] / RADIAN);
+  cthetamin = cos (zdom[ndom].wind_z[j] / RADIAN);
+  cthetamax = cos (zdom[ndom].wind_z[j + 1] / RADIAN);
 
-  /* Generate a position which is both in the cell and in the wind */
+  /* Generate a position which is both in the cell and in the wind.  For a position
+     uniform in the volume of the cell, r is uniform in r^3 and cos(theta) is uniform
+     between the cos of the cell's theta edges */
 
   inwind = W_NOT_INWIND;
   while (inwind != W_ALL_INWIND)
   {
-    r = sqrt (rmin * rmin + random_number (0.0, 1.0) * (rmax * rmax - rmin * rmin));
+    r = pow (rmin * rmin * rmin + random_number (0.0, 1.0) * (rmax * rmax * rmax - rmin * rmin * rmin), 1.0 / 3.0);
 
-    theta = asin (sthetamin + random_number (0.0, 1.0) * (sthetamax - sthetamin));
+    theta = acos (cthetamin + random_number (0.0, 1.0) * (cthetamax - cthetamin));
 
 
     phi = 2. * PI * random_number (0.0, 1.0);
