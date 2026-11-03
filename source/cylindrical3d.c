@@ -147,7 +147,7 @@ cylind3d_make_grid (int ndom, WindPtr w)
 
   Log ("cylind3d_make_grid: Making 3D cylindrical grid %d (pdim=%d)\n", ndom, one_dom->pdim);
 
-  dphi = 2.0 * PI / one_dom->pdim;
+  dphi = 2.0 * M_PI / one_dom->pdim;    /* exact pi, as in cylind3d_where_in_grid */
 
   for (i = 0; i < one_dom->ndim; i++)
   {
@@ -365,7 +365,7 @@ cylind3d_where_in_grid (int ndom, double x[])
 
   phi = atan2 (x[1], x[0]);
   if (phi < 0.0)
-    phi += 2.0 * PI;
+    phi += 2.0 * M_PI;          /* exact pi: PI (constants.h) is rounded */
 
   /* Bounds check */
   if (rho > one_dom->wind_x[one_dom->ndim - 1] || z > one_dom->wind_z[one_dom->mdim - 1] || z < one_dom->wind_z[0])

@@ -64,17 +64,18 @@ phi_fraction (int ndom, int ichoice, double x[], int *k, int *kk, double *dphi)
   /* Put phi in [pp[0], pp[0] + 2 pi) */
   plo = pp[0];
   phi = atan2 (x[1], x[0]);
+  /* exact pi: PI (constants.h) is rounded, and the phi edges are exact */
   while (phi < plo)
-    phi += 2. * PI;
-  while (phi >= plo + 2. * PI)
-    phi -= 2. * PI;
+    phi += 2. * M_PI;
+  while (phi >= plo + 2. * M_PI)
+    phi -= 2. * M_PI;
 
   if (phi >= pp[pdim - 1])
   {
     /* Between the last slice and the first one, which wraps round */
     *k = pdim - 1;
     *kk = 0;
-    phi_hi = pp[0] + 2. * PI;
+    phi_hi = pp[0] + 2. * M_PI;
   }
   else
   {

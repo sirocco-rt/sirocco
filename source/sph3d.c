@@ -82,7 +82,7 @@ sph3d_make_grid (int ndom, WindPtr w)
   mdim_half = mdim / 2;
 
   dtheta = 90.0 / mdim_half;
-  dphi = 2.0 * PI / pdim;
+  dphi = 2.0 * M_PI / pdim;     /* exact pi: the phi edges must agree with atan2 in sph3d_where_in_grid */
 
   for (i = 0; i < ndim; i++)
   {
@@ -278,7 +278,7 @@ sph3d_where_in_grid (int ndom, double x[])
 
   phi = atan2 (x[1], x[0]);
   if (phi < 0.0)
-    phi += 2.0 * PI;
+    phi += 2.0 * M_PI;          /* exact pi: PI (constants.h) is rounded, which put photons just past a phi edge in the wrong cell */
 
   if (r > one_dom->wind_x[one_dom->ndim - 1])
     return (-2);
