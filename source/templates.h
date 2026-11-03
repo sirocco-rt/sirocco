@@ -13,6 +13,10 @@ TopPhotPtr alloc_phot_top_record(int n, int np);
 TopPhotPtr alloc_inner_cross_record(int n, int np);
 AugerPtr alloc_auger_macro_record(int n);
 int free_xsection_data(void);
+ConfigPtr alloc_level_record(int n);
+LinePtr alloc_line_record(int n);
+Coll_strenptr alloc_coll_stren_record(int n);
+int free_level_line_data(void);
 int init_atomic_data(void);
 /* atomicdata_sub.c */
 int atomicdata2file(void);
@@ -43,8 +47,6 @@ double planck_d(double alpha, void *params);
 double planck_d_2(double alpha, void *params);
 double emittance_bb(double freqmin, double freqmax, double t);
 double check_freq_max(double freq_max, double temp);
-/* bilinear.c */
-int bilin(double x[], double x00[], double x01[], double x10[], double x11[], double *f, double *g);
 /* brem.c */
 double integ_brem(double freq, void *params);
 double brem_d(double alpha, void *params);
@@ -116,16 +118,6 @@ double wdrad(double m);
 double diskrad(double m1, double m2, double period);
 double roche2(double q, double a);
 double logg(double mass, double rwd);
-/* cylind_var.c */
-double cylvar_ds_in_cell(int ndom, PhotPtr p);
-int cylvar_make_grid(int ndom, WindPtr w);
-int cylvar_wind_complete(int ndom, WindPtr w);
-int cylvar_cell_volume(WindPtr w);
-int cylvar_where_in_grid(int ndom, double x[], int ichoice, double *fx, double *fz);
-int cylvar_get_random_location(int n, double x[]);
-int cylvar_extend_density(int ndom, WindPtr w);
-int cylvar_coord_fraction(int ndom, int ichoice, double x[], int ii[], double frac[], int *nelem);
-void cylvar_allocate_domain(int ndom);
 /* cylindrical.c */
 double cylind_ds_in_cell(int ndom, PhotPtr p);
 int cylind_make_grid(int ndom, WindPtr w);
@@ -574,6 +566,7 @@ double get_disk_params(void);
 /* setup_domains.c */
 int get_domain_params(int ndom);
 void allocate_domain_wind_coords(int ndom);
+void set_domain_outer_edges(int ndom);
 int get_wind_params(int ndom);
 int setup_windcone(void);
 int init_windcone(double r, double z, double dzdr, int allow_negative_dzdr, ConePtr one_windcone);
@@ -699,7 +692,6 @@ void init_macro_rad_properties(void);
 void shell_output_wind_update_diagnostics(double xsum, double psum, double fsum, double csum, double icsum, double lsum, double ausum, double chexsum, double cool_sum, double lum_sum);
 /* wind_util.c */
 int coord_fraction(int ndom, int ichoice, double x[], int ii[], double frac[], int *nelem);
-int where_in_2dcell(int ichoice, double x[], int n, double *fx, double *fz);
 int wind_n_to_ij(int ndom, int n, int *i, int *j);
 int wind_ij_to_n(int ndom, int i, int j, int *n);
 int wind_x_to_n(double x[], int *n);

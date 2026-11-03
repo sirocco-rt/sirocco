@@ -76,13 +76,6 @@ free_domains (void)
     {
       free (zdom[i].cones_rtheta);
     }
-    else if (zdom[i].coord_type == CYLVAR)
-    {
-      free (zdom[i].wind_z_var[0]);
-      free (zdom[i].wind_z_var);
-      free (zdom[i].wind_midz_var[0]);
-      free (zdom[i].wind_midz_var);
-    }
   }
 
   free (zdom);
@@ -311,8 +304,7 @@ free_atomic_data (void)
 {
   free (ele);
   free (ion);
-  free (xconfig);
-  free (line);
+  free_level_line_data ();
   free (auger_macro);
   free_xsection_data ();
 }
