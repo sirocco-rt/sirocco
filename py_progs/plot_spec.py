@@ -53,6 +53,30 @@ from scipy.optimize import leastsq
 # from ksl import io
 from astropy.io import ascii
 
+
+def single_azimuth(colnames):
+    '''
+    True if all the observer columns (A<inclination>P<azimuth>...) have the
+    same azimuth, so that the azimuth can be left out of the labels
+    '''
+    phis=set()
+    for one in colnames:
+        if one[0]=='A' and 'P' in one and not one.endswith(('_Q','_U')):
+            phis.add(one.split('_')[0].split('P',1)[1])
+    return len(phis)<=1
+
+
+def short_name(one, drop_phi=True):
+    '''
+    A short label for an observer column: A45P0.50 (or A45P180.0, as
+    written by x3d) becomes 45, or 45P180.0 if the azimuth is kept; a
+    suffix such as _sc:1 is kept
+    '''
+    main, sep, suffix=one.partition('_')
+    angle, p, phi=main[1:].partition('P')
+    name=angle if (drop_phi or not p) else angle+'P'+phi
+    return name+sep+suffix
+
 def read_file(filename,char=''):
     '''
     Read a file and split it into words, eliminating comments
@@ -153,6 +177,7 @@ def do_all_angles_ev(rootname='sv',smooth=21,emin=1000,emax=9000,fmax=0,fig_no=1
 
     # Now determine what the columns containing real spectra are
     # while makeing the manes simpler
+    drop_phi=single_azimuth(data.colnames)
     # Find where to start
     i=0
     while i<len(data.colnames):
@@ -167,8 +192,7 @@ def do_all_angles_ev(rootname='sv',smooth=21,emin=1000,emax=9000,fmax=0,fig_no=1
             i=i+1
             continue
         # print 'gotcha',one 
-        new_name=one.replace('P0.50','')
-        new_name=new_name.replace('A','')
+        new_name=short_name(one, drop_phi)
         data.rename_column(one,new_name)
         cols.append(new_name)
         i=i+1
@@ -186,7 +210,7 @@ def do_all_angles_ev(rootname='sv',smooth=21,emin=1000,emax=9000,fmax=0,fig_no=1
     for col in cols:
         flux=data[col]
         # print(flux)
-        xlabel=col+'$^{\circ}$'
+        xlabel=col+'$^{\\circ}$'
         q=convolve(flux,boxcar(smooth)/float(smooth),mode='same')
         print (q*data['Freq.'])
         pylab.semilogx(data['Freq.']*HEV,q*data['Freq.'],'-',label=xlabel)
@@ -236,6 +260,7 @@ def do_all_angles(rootname='sv',smooth=21,wmin=850,wmax=1850,fmax=0,fig_no=1, ti
     # Now determine what the coluns containing real spectra are
     # while makeing the manes simpler
     cols=[]
+    drop_phi=single_azimuth(data.colnames)
     # Find where to start
     i=0
     while i<len(data.colnames):
@@ -250,8 +275,7 @@ def do_all_angles(rootname='sv',smooth=21,wmin=850,wmax=1850,fmax=0,fig_no=1, ti
             i=i+1
             continue
         # print 'gotcha',one 
-        new_name=one.replace('P0.50','')
-        new_name=new_name.replace('A','')
+        new_name=short_name(one, drop_phi)
         data.rename_column(one,new_name)
         cols.append(new_name)
         i=i+1
@@ -282,7 +306,7 @@ def do_all_angles(rootname='sv',smooth=21,wmin=850,wmax=1850,fmax=0,fig_no=1, ti
     for col in cols:
         flux=data[col]
         # print(flux)
-        xlabel=col+'$^{\circ}$'
+        xlabel=col+'$^{\\circ}$'
         q=convolve(flux,boxcar(smooth)/float(smooth),mode='same')
         pylab.plot(data['Lambda'],q,'-',label=xlabel)
     pylab.xlabel(r'Wavelength ($\AA$)',size=16)
@@ -335,6 +359,7 @@ def do_mosaic(rootname='sv',smooth=21,wmin=850,wmax=1850,fmax=0,fig_no=1, title=
     # Now determine what the coluns containing real spectra are
     # while makeing the manes simpler
     cols=[]
+    drop_phi=single_azimuth(data.colnames)
     # Find where to start
     i=0
     while i<len(data.colnames):
@@ -349,8 +374,7 @@ def do_mosaic(rootname='sv',smooth=21,wmin=850,wmax=1850,fmax=0,fig_no=1, title=
             i=i+1
             continue
         # print 'gotcha',one 
-        new_name=one.replace('P0.50','')
-        new_name=new_name.replace('A','')
+        new_name=short_name(one, drop_phi)
         data.rename_column(one,new_name)
         cols.append(new_name)
         i=i+1
@@ -416,9 +440,9 @@ def do_mosaic(rootname='sv',smooth=21,wmin=850,wmax=1850,fmax=0,fig_no=1, title=
             flux=data[col]
             # print(flux)
             if len(group)==1:
-                xlabel=col+'$^{\circ}$'
+                xlabel=col+'$^{\\circ}$'
             else:
-                xlabel=key+'$^{\circ}$ '+(col.split('_',1)[1] if '_' in col else 'all')
+                xlabel=key+'$^{\\circ}$ '+(col.split('_',1)[1] if '_' in col else 'all')
             q=convolve(flux,boxcar(smooth)/float(smooth),mode='same')
             pylab.plot(data['Lambda'],q,'-',label=xlabel)
         z=pylab.axis()

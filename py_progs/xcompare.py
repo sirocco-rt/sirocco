@@ -107,17 +107,28 @@ def add_lines():
     return
     
 
+
+def observer45(table):
+    '''
+    The column of the observer at 45 deg, whatever its azimuth
+    (A45P0.50, or A45P180.0 as written by x3d)
+    '''
+    for one in table.colnames:
+        if one.startswith('A45P') and not one.endswith(('_Q','_U')):
+            return one
+    raise KeyError('no observer at 45 deg in this spectrum')
+
 def plot_spec(root='star',root2='star5',wmin=850,wmax=1850,smooth=21):
     '''
     Multi-panel plot comparing a CMFGen and Python model
     in the UV
     '''
     star=ascii.read(root+'.spec')
-    star['nuFnu']=star['Lambda']*star['A45P0.50']
+    star['nuFnu']=star['Lambda']*star[observer45(star)]
     star_nufnu=convolve(star['nuFnu'],boxcar(smooth)/float(smooth),mode='same')
     
     star2=ascii.read(root2+'.spec')
-    star2['nuFnu']=star2['Lambda']*star2['A45P0.50']
+    star2['nuFnu']=star2['Lambda']*star2[observer45(star2)]
     star2_nufnu=convolve(star2['nuFnu'],boxcar(smooth)/float(smooth),mode='same')
     plt.figure(1,(8,12))
     
