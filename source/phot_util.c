@@ -415,9 +415,17 @@ quadratic (double a, double b, double c, double r[])
   /* Numerically stable form: the textbook (-b +- sqrt(b^2 - 4ac)) / 2a loses all precision
      in one root when |a| is tiny compared with b (e.g. a ray almost parallel to a cone). */
   q = sqrt (q);
-  q = (b >= 0.0) ? -0.5 * (b + q) : -0.5 * (b - q);
+  if (b >= 0.0)
+    q = -0.5 * (b + q);
+  else
+    q = -0.5 * (b - q);
+
   r[0] = q / a;
-  r[1] = (q != 0.0) ? c / q : r[0];
+
+  if (q != 0.0)
+    r[1] = c / q;
+  else
+    r[1] = r[0];
 
 
   if (r[0] > 0.0 && (r[0] < r[1] || r[1] <= 0.0))
