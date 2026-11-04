@@ -320,6 +320,9 @@ init_advanced_modes ()
   modes.iadvanced = FALSE;      // this is controlled by the -d flag, global mode control.
   modes.extra_diagnostics = FALSE;      //  when set, want to save some extra diagnostic info
   modes.save_cell_stats = FALSE;        // save photons statistics by cell
+  modes.ion_band_rule = ION_BANDS_GENERATION;   // cell ionization bands are the generation bands (old behaviour)
+  modes.ion_band_n = 20;        // number of ionization bands for the edges and hist rules
+  modes.direct_ground_only = FALSE;     // direct PI estimators include excited levels
   modes.keep_ioncycle_windsaves = FALSE;        // save wind file each ionization cycle
   modes.keep_ioncycle_spectra = FALSE;  // to save spectrum file each ionization cycle
   modes.track_resonant_scatters = FALSE;        // track resonant scatters
@@ -735,8 +738,9 @@ init_ionization ()
 
   strcpy (answer, "matrix_bb");
   geo.ioniz_mode =
-    rdchoice ("Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,LTE_iterate,fixed,matrix_bb,matrix_pow,matrix_est,matrix_multishot)",
-              "0,3,1,4,5,2,8,9,10,11", answer);
+    rdchoice
+    ("Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,LTE_iterate,fixed,matrix_bb,matrix_pow,matrix_est,matrix_multishot,matrix_direct)",
+     "0,3,1,4,5,2,8,9,10,11,12", answer);
 
   if (geo.ioniz_mode == IONMODE_FIXED)
   {
@@ -764,7 +768,7 @@ fixed concentration file. \n\
   get_line_transfer_mode ();
 
   /* we don't allow the user to use matrix_est ionization mode and macro-atom line transfer, see #875 */
-  if ((geo.ioniz_mode == IONMODE_MATRIX_ESTIMATORS) && (geo.rt_mode == RT_MODE_MACRO))
+  if ((geo.ioniz_mode == IONMODE_MATRIX_ESTIMATORS || geo.ioniz_mode == IONMODE_MATRIX_DIRECT) && (geo.rt_mode == RT_MODE_MACRO))
   {
     Error ("matrix_est ionization mode cannot be used with macro-atom line transfer. Exiting.\n");
     Exit (EXIT_FAILURE);

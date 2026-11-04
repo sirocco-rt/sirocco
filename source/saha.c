@@ -69,7 +69,8 @@ nebular_concentrations (PlasmaPtr xplasma, int mode)
 
     m = lucy (xplasma);         // Main routine for running Lucy Mazzali
   }
-  else if (mode == NEBULARMODE_MATRIX_BB || mode == NEBULARMODE_MATRIX_SPECTRALMODEL || mode == NEBULARMODE_MATRIX_ESTIMATORS)
+  else if (mode == NEBULARMODE_MATRIX_BB || mode == NEBULARMODE_MATRIX_SPECTRALMODEL || mode == NEBULARMODE_MATRIX_ESTIMATORS
+           || mode == NEBULARMODE_MATRIX_DIRECT)
   {
     /*
      * Use rate matrices based on pairwise bb approximations (matrix_bb) or

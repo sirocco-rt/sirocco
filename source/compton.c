@@ -288,7 +288,7 @@ total_comp (WindPtr one, double t_e)
   {
     if (geo.spec_mod)           //Check to see if we have generated a spectral model
     {
-      for (j = 0; j < geo.nxfreq; j++)
+      for (j = 0; j < xplasma->state.nbands; j++)       /* banding26: was geo.nxfreq */
       {
         if (xplasma->state.spec_mod_type[j] != SPEC_MOD_FAIL)   //Only bother doing the integrals if we have a model in this band
         {

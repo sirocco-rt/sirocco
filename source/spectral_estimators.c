@@ -97,7 +97,7 @@ spectral_estimators (PlasmaPtr xplasma)
   }
 
   /* We loop over all of the bands, the first band is band number 0, and the last is band nxfreq-1 */
-  for (n = 0; n < geo.nxfreq; n++)
+  for (n = 0; n < xplasma->state.nbands; n++)
 
   {
     Log_silent
@@ -674,4 +674,43 @@ exp_stddev (double exp_temp, double numin, double numax)
 
 
   return (answer);
+}
+
+
+
+/**********************************************************/
+/**
+ * @brief      Constant-J_nu (histogram) model of the cell spectrum (banding26)
+ *
+ * @param [in,out] PlasmaPtr  xplasma   The plasma cell
+ * @return     Always 0
+ *
+ * @details
+ * Used by matrix_direct.  For each ionization band of the cell, J_nu is
+ * taken to be constant: the band-integrated mean intensity xj (already
+ * normalised in normalise_simple_estimators) divided by the band width.
+ * The value is stored in exp_w with spec_mod_type SPEC_MOD_HIST, so that
+ * mean_intensity_from_models and the Compton routines can use it without
+ * any further changes.  Bands with no photons get J_nu = 0.
+ **********************************************************/
+
+int
+hist_estimators (PlasmaPtr xplasma)
+{
+  int n;
+  double df;
+
+  for (n = 0; n < xplasma->state.nbands; n++)
+  {
+    df = xplasma->state.f2[n] - xplasma->state.f1[n];
+    xplasma->state.spec_mod_type[n] = SPEC_MOD_HIST;
+    xplasma->state.fmin_mod[n] = xplasma->state.f1[n];
+    xplasma->state.fmax_mod[n] = xplasma->state.f2[n];
+    xplasma->state.exp_w[n] = (df > 0 && xplasma->est.nxtot[n] > 0) ? xplasma->est.xj[n] / df : 0.0;
+    xplasma->state.exp_temp[n] = 0.0;
+    xplasma->state.pl_alpha[n] = 0.0;
+    xplasma->state.pl_log_w[n] = -999.;
+  }
+  geo.spec_mod = TRUE;
+  return (0);
 }

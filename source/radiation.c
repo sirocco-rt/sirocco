@@ -274,7 +274,10 @@ radiation (PhotPtr p, double ds)
               }
 
               frac_ion[nion] += z;
-              kappa_ion[nion] += x;
+              /* banding26: optionally count only ground-state photoionization in the direct PI rate estimators
+                 (calc_pi_rate uses only the ground state); the heating above still includes all levels */
+              if (modes.direct_ground_only == FALSE || ion[nion].phot_info == 0 || x_top_ptr == &phot_top[ion[nion].ntop_ground])
+                kappa_ion[nion] += x;
             }
 
           }
@@ -796,7 +799,8 @@ mean_intensity (PlasmaPtr xplasma, double freq, int mode)
 {
   double j_bar;
 
-  if (geo.ioniz_mode == IONMODE_MATRIX_SPECTRALMODEL || geo.ioniz_mode == IONMODE_MATRIX_ESTIMATORS)
+  if (geo.ioniz_mode == IONMODE_MATRIX_SPECTRALMODEL || geo.ioniz_mode == IONMODE_MATRIX_ESTIMATORS
+      || geo.ioniz_mode == IONMODE_MATRIX_DIRECT)
   {
     j_bar = mean_intensity_from_models (xplasma, freq, mode);
   }
@@ -858,6 +862,10 @@ mean_intensity_from_models (PlasmaPtr xplasma, double freq, int mode)
             else if (xplasma->state.spec_mod_type[i] == SPEC_MOD_EXP)
             {
               j_bar = xplasma->state.exp_w[i] * exp ((-1 * PLANCK * freq) / (BOLTZMANN * xplasma->state.exp_temp[i]));
+            }
+            else if (xplasma->state.spec_mod_type[i] == SPEC_MOD_HIST)
+            {
+              j_bar = xplasma->state.exp_w[i];  /* banding26: constant J_nu in the band */
             }
             else
             {

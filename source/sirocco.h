@@ -592,7 +592,7 @@ struct geometry
      are a finer set of frequency intervals used for the fine spectra.  The spectra themselves can be found in the
      Plasma structure for each cell */
 
-#define  NXBANDS 20             /**<  the maximum number of bands (frequency intervals that can be defined for
+#define  NXBANDS 50             /**<  the maximum number of bands (frequency intervals that can be defined for
                                    storing coarse spectra for each plasma cell */
 
   int nxfreq;                   /**<  the number of frequency intervals actually used */
@@ -950,6 +950,7 @@ enum spec_mod_type_enum
 {
   SPEC_MOD_PL = 1,
   SPEC_MOD_EXP = 2,
+  SPEC_MOD_HIST = 3,            /**< constant J_nu in the band (matrix_direct); value stored in exp_w */
   SPEC_MOD_FAIL = -1
 };
 
@@ -1436,6 +1437,9 @@ extern macro_blocks macro_block_ptrs;
 #define IONMODE_MATRIX_ESTIMATORS 10    /**<  matrix solver spectral model based on pi rates from photons passing trhough cell */
 #define IONMODE_MATRIX_MULTISHOT       11    /**<  A test mode, based on power lawo, but allowing for multiple attempts to 
                                                * get the ion balance and t_e.  This is under development */
+#define IONMODE_MATRIX_DIRECT       12    /**<  matrix solver with PI rates from direct estimators and a
+                                               * histogram (constant J_nu per ionization band) for J_nu at a given
+                                               * frequency.  Under development (banding26) */
 
 #define MAX_MULTISHOT  10  /**< Maximum number of iterations in MULTISHOT Mode */
 #define DELTA_MULTISHOT  0.01  /**<Fractional change in temperarute to stop interations in MULTISHOT Mode*/
@@ -1456,6 +1460,13 @@ extern macro_blocks macro_block_ptrs;
                                           * updates T_e multiple times before arriving at a final
                                           * solution 
                                           */
+#define NEBULARMODE_MATRIX_DIRECT   12    /**<  matrix solver, PI rates from direct estimators, histogram for J_nu */
+
+// rules for setting the ionization bands in each cell (modes.ion_band_rule)
+#define ION_BANDS_GENERATION 0  /**< cell bands are the photon generation bands (behaviour before banding26) */
+#define ION_BANDS_DEFAULT    1  /**< cell bands are the bands from ion_bands_init (geo.xfreq) */
+#define ION_BANDS_EDGES      2  /**< cell bands placed on photoionization edges (priority list), then filled */
+#define ION_BANDS_HIST       3  /**< log-spaced bins with the nearest boundaries moved onto the main edges */
 
 // modes for the wind_luminosity routine
 #define MODE_OBSERVER_FRAME_TIME 0
@@ -1785,6 +1796,9 @@ struct advanced_modes
                                   * write out
                                   */
   int save_cell_stats;          /**< when TRUE,save photons statistics by cell */
+  int ion_band_rule;            /**< how the ionization bands in each cell are set (ION_BANDS_*) */
+  int ion_band_n;               /**< number of ionization bands for ION_BANDS_EDGES and ION_BANDS_HIST */
+  int direct_ground_only;       /**< when TRUE, the direct PI rate estimators count only ground-state photoionization */
   int keep_ioncycle_windsaves;  /**< when TRUE, saves wind files for each ionization cycle */
   int keep_ioncycle_spectra;    /**< when TRUE, saves the total spectra for each ionization cycle */
   int make_tables;              /**< when TRUE, create tables showing various parameters for each cycle */

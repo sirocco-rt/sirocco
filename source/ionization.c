@@ -200,6 +200,17 @@ ion_abundances (PlasmaPtr xplasma, int mode)
 
     convergence (xplasma);
   }
+  else if (mode == IONMODE_MATRIX_DIRECT)
+  {
+/*  banding26: J_nu at a given frequency from a histogram (constant J_nu per ionization band);
+    PI rates come from the direct estimators in matrix_ion_populations */
+
+    hist_estimators (xplasma);
+    update_old_plasma_variables (xplasma);
+    ireturn = one_shot (xplasma, mode);
+
+    convergence (xplasma);
+  }
   else if (mode == IONMODE_MATRIX_MULTISHOT)
   {
 /*  This is a new development mode

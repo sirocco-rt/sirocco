@@ -131,7 +131,7 @@ calc_pi_rate (int nion, PlasmaPtr xplasma, int mode, int type)
 
   if (mode == 1)                //Modelled version of J
   {
-    for (j = 0; j < geo.nxfreq; j++)    //We loop over all the bands
+    for (j = 0; j < xplasma->state.nbands; j++) //We loop over all the bands (banding26: was geo.nxfreq)
     {
       xpl_alpha = xplasma->state.pl_alpha[j];   //set the various model parameters to those for this model
       xpl_logw = xplasma->state.pl_log_w[j];

@@ -126,7 +126,7 @@ matrix_ion_populations (PlasmaPtr xplasma, int mode)
       {
         pi_rates[mm] = calc_pi_rate (mm, xplasma, 1, 1);        // PI rate for an explicit spectral model
       }
-      else if (mode == NEBULARMODE_MATRIX_ESTIMATORS)
+      else if (mode == NEBULARMODE_MATRIX_ESTIMATORS || mode == NEBULARMODE_MATRIX_DIRECT)
       {
         pi_rates[mm] = xplasma->est.ioniz[mm] / xplasma->state.density[mm];     // PI rate logged during the photon passage
       }
@@ -166,7 +166,7 @@ matrix_ion_populations (PlasmaPtr xplasma, int mode)
       {
         inner_rates[mm] = calc_pi_rate (mm, xplasma, 1, 2);
       }
-      else if (mode == NEBULARMODE_MATRIX_ESTIMATORS)   //We are using estimators - so we will need to reorder the rates from freq order to cross section order to match the electron yields. This takes time, so we only do it if we need to.
+      else if (mode == NEBULARMODE_MATRIX_ESTIMATORS || mode == NEBULARMODE_MATRIX_DIRECT)      //We are using estimators - so we will need to reorder the rates from freq order to cross section order to match the electron yields. This takes time, so we only do it if we need to.
       {
         for (nn = 0; nn < n_inner_tot; nn++)
         {

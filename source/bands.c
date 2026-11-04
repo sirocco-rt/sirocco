@@ -662,6 +662,179 @@ bands_init (int imode, struct xbands *band)
  * used to create photons.  
  *
  **********************************************************/
+
+/**********************************************************/
+/**
+ * @brief      Photoionization edges used to place ionization bands (banding26)
+ *
+ * The priority lists give, in order of importance, the ions whose
+ * ground-state photoionization thresholds should be band boundaries.
+ * A z of -1 means a fixed energy in eV (the Balmer edge).  The hard
+ * list is used when photons are generated above 1 keV.
+ **********************************************************/
+
+static int edge_soft[][2] = { {1, 1}, {2, 1}, {2, 2}, {-1, 0}, {6, 3}, {6, 4}, {14, 4}, {7, 5}, {8, 6}, {7, 4},
+{8, 5}, {6, 2}, {8, 3}, {14, 3}, {26, 3}
+};
+
+static int edge_hard[][2] = { {1, 1}, {2, 1}, {2, 2}, {8, 7}, {8, 8}, {6, 5}, {6, 6}, {7, 6}, {7, 7}, {10, 9},
+{10, 10}, {12, 11}, {14, 13}, {14, 14}, {16, 15}, {26, 25}, {26, 26}, {-1, 0}, {6, 3}, {6, 4}, {7, 5}, {8, 6},
+{14, 4}
+};
+
+#define BALMER_EV 3.40
+#define EDGE_MERGE_DEX 0.02
+
+/* Ground-state photoionization threshold (Hz) of ion (z, istate), or -1 if not in the atomic data */
+
+static double
+ion_edge_freq (int z, int istate)
+{
+  int nion;
+  if (z < 0)
+    return (BALMER_EV / HEV);
+  for (nion = 0; nion < nions; nion++)
+  {
+    if (ion[nion].z == z && ion[nion].istate == istate)
+    {
+      if (ion[nion].phot_info > 0 && ion[nion].ntop_ground >= 0)
+        return (phot_top[ion[nion].ntop_ground].freq[0]);
+      else if (ion[nion].phot_info == 0 && ion[nion].nxphot >= 0)
+        return (phot_top[ion[nion].nxphot].freq[0]);
+      else
+        return (-1.0);
+    }
+  }
+  return (-1.0);
+}
+
+static int
+cmp_edge_freq (const void *a, const void *b)
+{
+  double x = *(const double *) a, y = *(const double *) b;
+  return (x > y) - (x < y);
+}
+
+/* Add nu to e[] (n entries) if inside (lo,hi) and not within EDGE_MERGE_DEX of an existing entry */
+
+static int
+edge_add (double *e, int n, double nu, double lo, double hi)
+{
+  int i;
+  if (nu <= lo || nu >= hi)
+    return (n);
+  for (i = 0; i < n; i++)
+    if (fabs (log10 (e[i] / nu)) < EDGE_MERGE_DEX)
+      return (n);
+  e[n] = nu;
+  return (n + 1);
+}
+
+/**********************************************************/
+/**
+ * @brief      Set geo.xfreq to ionization bands placed on edges (banding26)
+ *
+ * @param [in] double freqmin, freqmax  the range of the bands
+ * @param [in] int nbands   the number of bands wanted
+ * @param [in] int hist     FALSE: edges rule (priority edges, then halve the widest band);
+ *                          TRUE: hist rule (log bins, nearest boundaries moved onto the
+ *                          first max(3, nbands/4) priority edges)
+ **********************************************************/
+
+int
+ion_bands_edges (double freqmin, double freqmax, int nbands, int hist)
+{
+  double e[NXBANDS + 1], nu, w, wmax;
+  int (*pri)[2];
+  int npri, n, i, k, kmax, ntarget;
+
+  if (freqmax * HEV > 1000.)
+  {
+    pri = edge_hard;
+    npri = sizeof (edge_hard) / sizeof (edge_hard[0]);
+  }
+  else
+  {
+    pri = edge_soft;
+    npri = sizeof (edge_soft) / sizeof (edge_soft[0]);
+  }
+
+  if (hist == FALSE)
+  {
+    e[0] = freqmin;
+    e[1] = freqmax;
+    n = 2;
+    for (i = 0; i < npri && n - 1 < nbands; i++)
+    {
+      nu = ion_edge_freq (pri[i][0], pri[i][1]);
+      if (nu > 0)
+        n = edge_add (e, n, nu, freqmin, freqmax);
+    }
+    qsort (e, n, sizeof (double), cmp_edge_freq);
+    while (n - 1 < nbands)      /* halve the widest band in log */
+    {
+      wmax = -1;
+      kmax = 0;
+      for (k = 0; k < n - 1; k++)
+      {
+        w = log (e[k + 1] / e[k]);
+        if (w > wmax)
+        {
+          wmax = w;
+          kmax = k;
+        }
+      }
+      for (k = n; k > kmax + 1; k--)
+        e[k] = e[k - 1];
+      e[kmax + 1] = sqrt (e[kmax] * e[kmax + 2]);
+      n++;
+    }
+  }
+  else
+  {
+    for (k = 0; k <= nbands; k++)
+      e[k] = freqmin * pow (freqmax / freqmin, (double) k / nbands);
+    n = nbands + 1;
+    ntarget = nbands / 4;
+    if (ntarget < 3)
+      ntarget = 3;
+    for (i = 0; i < npri && i < ntarget; i++)
+    {
+      nu = ion_edge_freq (pri[i][0], pri[i][1]);
+      if (nu <= freqmin || nu >= freqmax)
+        continue;
+      kmax = 1;
+      wmax = 1e99;
+      for (k = 1; k < n - 1; k++)
+      {
+        w = fabs (log (e[k] / nu));
+        if (w < wmax)
+        {
+          wmax = w;
+          kmax = k;
+        }
+      }
+      e[kmax] = nu;
+    }
+    qsort (e, n, sizeof (double), cmp_edge_freq);
+    /* remove any duplicates that moving boundaries might have created */
+    k = 1;
+    for (i = 1; i < n; i++)
+      if (e[i] > e[k - 1] * (1. + 1e-6))
+        e[k++] = e[i];
+    n = k;
+  }
+
+  geo.nxfreq = n - 1;
+  for (k = 0; k < n; k++)
+    geo.xfreq[k] = e[k];
+
+  Log ("ion_bands_edges: %d ionization bands (%s rule) from %.3e to %.3e Hz\n", geo.nxfreq, hist ? "hist" : "edges", freqmin, freqmax);
+  for (k = 0; k < geo.nxfreq; k++)
+    Log ("ion_bands_edges: band %2d %10.4g - %10.4g eV\n", k, geo.xfreq[k] * HEV, geo.xfreq[k + 1] * HEV);
+  return (0);
+}
+
 #define MIN_N_IONBANDS 7
 
 int
@@ -670,6 +843,12 @@ ion_bands_init (int mode, double freqmin, double freqmax, struct xbands *band)
   int i, n, ngood, good[NXBANDS];
   double xfreq[NXBANDS];
   int nxfreq, nband;
+
+  /* banding26: ionization bands placed on edges, chosen on the command line */
+  if (modes.ion_band_rule == ION_BANDS_EDGES || modes.ion_band_rule == ION_BANDS_HIST)
+  {
+    return (ion_bands_edges (freqmin, freqmax, modes.ion_band_n, modes.ion_band_rule == ION_BANDS_HIST));
+  }
 
 
 /* At present set up a single energy band for 2 - 10 keV */

@@ -1186,7 +1186,7 @@ rdline (char question[], char answer[])
  **********************************************************/
 
 
-#define MAX_CHOICES 10
+#define MAX_CHOICES 20          // banding26: was 10; Wind.ionization now has 11 choices
 int
 string2int (char *word, char *string_choices, char *string_values, char *string_answer)
 {
@@ -1259,9 +1259,21 @@ string2int (char *word, char *string_choices, char *string_values, char *string_
   check_and_fix_string (choices);
   check_and_fix_string (values);
 
-  nchoices = sscanf (choices, "%s %s %s %s %s %s %s %s %s %s", xs[0], xs[1], xs[2], xs[3], xs[4], xs[5], xs[6], xs[7], xs[8], xs[9]);
-  nchoices =
-    sscanf (values, "%d %d %d %d %d %d %d %d %d %d", &xv[0], &xv[1], &xv[2], &xv[3], &xv[4], &xv[5], &xv[6], &xv[7], &xv[8], &xv[9]);
+  /* banding26: tokenise up to MAX_CHOICES entries (the sscanf calls here were limited to 10) */
+  {
+    char *tok;
+    char tmp[LINELEN];
+    int nv;
+    nchoices = 0;
+    strcpy (tmp, choices);
+    for (tok = strtok (tmp, " \t\n"); tok != NULL && nchoices < MAX_CHOICES; tok = strtok (NULL, " \t\n"))
+      strcpy (xs[nchoices++], tok);
+    nv = 0;
+    strcpy (tmp, values);
+    for (tok = strtok (tmp, " \t\n"); tok != NULL && nv < MAX_CHOICES; tok = strtok (NULL, " \t\n"))
+      xv[nv++] = atoi (tok);
+    nchoices = nv;
+  }
 
 
   /* Check that one of the values is not one of the values that is an error return value, -9998 or -9999.  If

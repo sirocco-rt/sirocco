@@ -250,6 +250,51 @@ parse_command_line (int argc, char *argv[])
         modes.quit_after_inputs = 1;
         j = i;
       }
+      else if (strcmp (argv[i], "-ion_bands") == 0)
+      {
+        /* banding26: -ion_bands rule [n]  where rule is generation, default, edges or hist */
+        if (i + 1 >= argc)
+        {
+          Error ("parse_command_line: -ion_bands needs a rule (generation, default, edges, hist)\n");
+          exit (1);
+        }
+        if (strcmp (argv[i + 1], "generation") == 0)
+          modes.ion_band_rule = ION_BANDS_GENERATION;
+        else if (strcmp (argv[i + 1], "default") == 0)
+          modes.ion_band_rule = ION_BANDS_DEFAULT;
+        else if (strcmp (argv[i + 1], "edges") == 0)
+          modes.ion_band_rule = ION_BANDS_EDGES;
+        else if (strcmp (argv[i + 1], "hist") == 0)
+          modes.ion_band_rule = ION_BANDS_HIST;
+        else
+        {
+          Error ("parse_command_line: unknown -ion_bands rule %s\n", argv[i + 1]);
+          exit (1);
+        }
+        i++;
+        if (modes.ion_band_rule == ION_BANDS_EDGES || modes.ion_band_rule == ION_BANDS_HIST)
+        {
+          if (i + 1 >= argc || sscanf (argv[i + 1], "%d", &modes.ion_band_n) != 1)
+          {
+            Error ("parse_command_line: -ion_bands %s needs a number of bands\n", argv[i]);
+            exit (1);
+          }
+          if (modes.ion_band_n < 2 || modes.ion_band_n > NXBANDS)
+          {
+            Error ("parse_command_line: number of ionization bands must be 2-%d\n", NXBANDS);
+            exit (1);
+          }
+          i++;
+        }
+        Log ("parse_command_line: ionization bands rule %d with %d bands\n", modes.ion_band_rule, modes.ion_band_n);
+        j = i;
+      }
+      else if (strcmp (argv[i], "-direct_ground_only") == 0)
+      {
+        modes.direct_ground_only = TRUE;
+        Log ("parse_command_line: direct PI estimators count ground-state photoionization only\n");
+        j = i;
+      }
       else if (strcmp (argv[i], "-cell_spec_dim") == 0)
       {
         if (sscanf (argv[i + 1], "%d", &geo.nbins_in_cell_spec) != 1)
@@ -437,6 +482,10 @@ These are largely diagnostic or for special cases. These include\n\
  -no-matrix-storage     Do not store macro-atom transition matrices if using the macro-atom line transfer and the matrix matom_transition_mode.\n\
  -no-shared-memory      Give every MPI process its own copy of the wind, plasma and macro-atom grids instead of sharing one\n\
                         copy per node.  Results are identical; only memory use changes.  Use if shared memory causes problems.\n\
+ -ion_bands rule [n]    (development) How the ionization bands in each cell are set: generation (the photon\n\
+                        generation bands, the default), default (the bands from ion_bands_init), edges n (n bands\n\
+                        placed on photoionization edges), hist n (n log bins with the main edges on bin boundaries)\n\
+ -direct_ground_only    (development) Direct photoionization estimators count only ground-state photoionization\n\
  -early_stopping        Enable convergence-based early stopping of ionization cycles. Sirocco will then query\n\
                         the user for @estop parameters controlling when to stop early.\n\
 \n\

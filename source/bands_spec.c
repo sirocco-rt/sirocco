@@ -59,6 +59,29 @@ void
 band_copy ()
 {
   int n, nband;
+
+  /* banding26: unless the old behaviour is requested, the cells get the ionization
+     bands (geo.xfreq) rather than the photon generation bands */
+  if (modes.ion_band_rule != ION_BANDS_GENERATION)
+  {
+    for (n = 0; n < NPLASMA; n++)
+    {
+      plasmamain[n].state.nbands = geo.nxfreq;
+      for (nband = 0; nband < geo.nxfreq; nband++)
+      {
+        plasmamain[n].state.f1[nband] = geo.xfreq[nband];
+        plasmamain[n].state.f2[nband] = geo.xfreq[nband + 1];
+      }
+      for (nband = geo.nxfreq; nband < NXBANDS + 1; nband++)
+      {
+        plasmamain[n].state.f1[nband] = 0.0;
+        plasmamain[n].state.f2[nband] = 0.0;
+      }
+    }
+    Log ("band_copy: cells use %d ionization bands (rule %d)\n", geo.nxfreq, modes.ion_band_rule);
+    return;
+  }
+
   for (n = 0; n < NPLASMA; n++)
   {
     plasmamain[n].state.nbands = xband.nbands;

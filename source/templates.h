@@ -30,6 +30,7 @@ void skiplines(FILE *fptr, int nskip);
 /* bands.c */
 int bands_init(int imode, struct xbands *band);
 int ion_bands_init(int mode, double freqmin, double freqmax, struct xbands *band);
+int ion_bands_edges(double freqmin, double freqmax, int nbands, int hist);
 void check_appropriate_banding(struct xbands *band, int mode);
 /* bands_spec.c */
 void band_copy(void);
@@ -610,6 +611,7 @@ int spectrum_summary(char filename[], int nspecmin, int nspecmax, int select_spe
 int spectrum_restart_renormalise(int nangle);
 /* spectral_estimators.c */
 int spectral_estimators(PlasmaPtr xplasma);
+int hist_estimators(PlasmaPtr xplasma);
 double pl_alpha_func_log(double alpha);
 double pl_alpha_func_log2(double alpha, void *params);
 double pl_logmean(double alpha, double lnumin, double lnumax);
