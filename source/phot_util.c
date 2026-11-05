@@ -388,7 +388,7 @@ ds_to_sphere2 (double x[], double r, struct photon *p)
 int
 quadratic (double a, double b, double c, double r[])
 {
-  double q, z;
+  double q;
 
   if (a == 0.0)
   {                             /* Then it's not really a quadratic but we can solve it
@@ -412,11 +412,20 @@ quadratic (double a, double b, double c, double r[])
     r[0] = r[1] = -99.;
     return (-1);                /* both roots are imaginary */
   }
+  /* Numerically stable form: the textbook (-b +- sqrt(b^2 - 4ac)) / 2a loses all precision
+     in one root when |a| is tiny compared with b (e.g. a ray almost parallel to a cone). */
   q = sqrt (q);
-  z = 0.5 / a;
+  if (b >= 0.0)
+    q = -0.5 * (b + q);
+  else
+    q = -0.5 * (b - q);
 
-  r[0] = (-b - q) * z;
-  r[1] = (-b + q) * z;
+  r[0] = q / a;
+
+  if (q != 0.0)
+    r[1] = c / q;
+  else
+    r[1] = r[0];
 
 
   if (r[0] > 0.0 && (r[0] < r[1] || r[1] <= 0.0))
