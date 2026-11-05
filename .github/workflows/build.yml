@@ -93,3 +93,35 @@ jobs:
         cd $SIROCCO/examples/gh-workflow/
         $SIROCCO/bin/sirocco -f -v 1 balmer_test
         python $SIROCCO/py_progs/balmer_decrement.py balmer_test
+
+    # Rebuild sirocco with mpicc, replacing the gcc build used above.
+    # A macro-atom model run with and without shared memory 
+    # (-no-shared-memory) must give bitwise-identical results 
+    - name: Building Sirocco with MPI
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq openmpi-bin libopenmpi-dev
+        cd $SIROCCO/source
+        make clean
+        make CC=mpicc INDENT=no sirocco
+
+    - name: Running an MPI macro-atom model with and without shared memory
+      run: |
+        cd $SIROCCO/examples/gh-workflow/
+        # A short version of the regression model: 2 ionization cycles, 1 spectral cycle, fewer photons
+        sed -e 's/^Photons_per_cycle .*/Photons_per_cycle 100000/' \
+            -e 's/^Ionization_cycles .*/Ionization_cycles 2/' \
+            -e 's/^Spectrum_cycles .*/Spectrum_cycles 1/' \
+            $SIROCCO/examples/regress/agn_macro_matrix.pf > mpi_check_shm.pf
+
+        
+        cp mpi_check_shm.pf mpi_check_noshm.pf
+        mpirun --oversubscribe -n 4 $SIROCCO/bin/sirocco mpi_check_shm > run_shm.txt
+        mpirun --oversubscribe -n 4 $SIROCCO/bin/sirocco -no-shared-memory mpi_check_noshm > run_noshm.txt
+        $SIROCCO/bin/windsave2table mpi_check_shm
+        $SIROCCO/bin/windsave2table mpi_check_noshm
+
+    - name: Checking the MPI runs are bitwise identical
+      run: |
+        cd $SIROCCO/examples/gh-workflow/
+        python $SIROCCO/py_progs/compare_runs.py mpi_check_shm mpi_check_noshm
