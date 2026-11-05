@@ -83,6 +83,7 @@ Spectrum.angle(0=pole)                     80
 Spectrum.live_or_die(live.or.die,extract)              extract
 @Spectrum.select_specific_no_of_scatters_in_spectra(yes,no)                   no
 @Spectrum.select_photons_by_position(yes,no)                   no
+@Spectrum.polarization(yes,no)                     no
 Spectrum.type(flambda,fnu,basic)              flambda
 @Diag.use_standard_care_factors(yes,no)                   no
 @Diag.fractional_distance_photon_may_travel   0.5
