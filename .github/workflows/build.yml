@@ -105,7 +105,7 @@ jobs:
         make clean
         make CC=mpicc INDENT=no sirocco
 
-    - name: Running an MPI macro-atom model with and without shared memory
+    - name: Running MPI macro-atom model with and without shared memory
       run: |
         cd $SIROCCO/examples/gh-workflow/
         # A short version of the regression model: 2 ionization cycles, 1 spectral cycle, fewer photons
@@ -114,14 +114,30 @@ jobs:
             -e 's/^Spectrum_cycles .*/Spectrum_cycles 1/' \
             $SIROCCO/examples/regress/agn_macro_matrix.pf > mpi_check_shm.pf
 
-        
+        # we run the same model with and without shared memory, and repeat the shared run
+        # this is (try to) to catch races that are intermittent
         cp mpi_check_shm.pf mpi_check_noshm.pf
+        cp mpi_check_shm.pf mpi_check_shm2.pf
+
+        # run models and print out some progress info
         mpirun --oversubscribe -n 4 $SIROCCO/bin/sirocco mpi_check_shm > run_shm.txt
+        tail -n 10 run_shm.txt
+        echo "  run_shm.txt: done"
         mpirun --oversubscribe -n 4 $SIROCCO/bin/sirocco -no-shared-memory mpi_check_noshm > run_noshm.txt
+        tail -n 10 run_noshm.txt
+        echo "  run_noshm.txt: done"
+        mpirun --oversubscribe -n 4 $SIROCCO/bin/sirocco mpi_check_shm2 > run_shm2.txt
+        tail -n 10 run_shm2.txt
+        echo "  run_shm2.txt: done"
+
+    - name: Run windsave2table on MPI runs
+      run: |
         $SIROCCO/bin/windsave2table mpi_check_shm
         $SIROCCO/bin/windsave2table mpi_check_noshm
+        $SIROCCO/bin/windsave2table mpi_check_shm2
 
     - name: Checking the MPI runs are bitwise identical
       run: |
         cd $SIROCCO/examples/gh-workflow/
         python $SIROCCO/py_progs/compare_runs.py mpi_check_shm mpi_check_noshm
+        python $SIROCCO/py_progs/compare_runs.py mpi_check_shm mpi_check_shm2
