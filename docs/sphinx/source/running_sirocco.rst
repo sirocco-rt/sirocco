@@ -112,6 +112,8 @@ which may be useful in certain special cases.  These include:
 
 -no-matrix-storage
   Do not store macro-atom transition matrices if using the macro-atom line transfer and the matrix matom_transition_mode.
+  This saves memory, but each matrix is then recomputed whenever it is needed, which is slow for large
+  atoms; for those, ``Matom_transition_mode`` ``mc_jumps`` is usually the better choice.
 
 -no-shared-memory
   Give every MPI process its own copy of the wind, plasma and macro-atom grids instead of
