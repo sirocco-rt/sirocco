@@ -138,7 +138,7 @@ calc_matom_matrix (PlasmaPtr xplasma, double **matom_matrix)
 
       cont_ptr = &phot_top[xconfig[uplvl].bfd_jump[n]]; //pointer to continuum
 
-      sp_rec_rate = mplasma->est.recomb_sp[xconfig[uplvl].bfd_indx_first + n];  //need this twice so store it
+      sp_rec_rate = mplasma->derived.recomb_sp[xconfig[uplvl].bfd_indx_first + n];      //need this twice so store it
       bf_cont = (sp_rec_rate + q_recomb (cont_ptr, t_e) * ne) * ne;
 
       target_level = phot_top[xconfig[uplvl].bfd_jump[n]].nlev;
@@ -215,14 +215,14 @@ calc_matom_matrix (PlasmaPtr xplasma, double **matom_matrix)
     if (line[i].macro_info == 1 && geo.macro_simple == 0)       //line is for a macro atom
     {
       target_level = line[i].nconfigu;
-      Q_matrix[nlevels_macro][target_level] += Qcont = mplasma->est.cooling_bb[i];
+      Q_matrix[nlevels_macro][target_level] += Qcont = mplasma->derived.cooling_bb[i];
       Q_norm[nlevels_macro] += Qcont;
     }
     else
     {
       /* the idea here is that if it is a simple line then it *must* create an r-packet eventually, so this is essentially
          a k->r transition */
-      kpacket_to_rpacket_rate += mplasma->est.cooling_bb[i];
+      kpacket_to_rpacket_rate += mplasma->derived.cooling_bb[i];
     }
   }
 
@@ -231,22 +231,22 @@ calc_matom_matrix (PlasmaPtr xplasma, double **matom_matrix)
     if (phot_top[i].macro_info == 1 && geo.macro_simple == 0)   //part of macro atom
     {
       target_level = phot_top[i].uplev;
-      Q_matrix[nlevels_macro][target_level] += Qcont = mplasma->est.cooling_bf_col[i];
+      Q_matrix[nlevels_macro][target_level] += Qcont = mplasma->derived.cooling_bf_col[i];
       Q_norm[nlevels_macro] += Qcont;
 
     }
     else
     {
       /* XXX - ask stuart about this! */
-      kpacket_to_rpacket_rate += mplasma->est.cooling_bf_col[i];
+      kpacket_to_rpacket_rate += mplasma->derived.cooling_bf_col[i];
     }
   }
 
   /* Cooling due to other processes will always contribute to k-packet -> r-packet channel */
 
-  kpacket_to_rpacket_rate += mplasma->est.cooling_bftot;
-  kpacket_to_rpacket_rate += mplasma->est.cooling_adiabatic;
-  kpacket_to_rpacket_rate += mplasma->est.cooling_ff + mplasma->est.cooling_ff_lofreq;
+  kpacket_to_rpacket_rate += mplasma->derived.cooling_bftot;
+  kpacket_to_rpacket_rate += mplasma->derived.cooling_adiabatic;
+  kpacket_to_rpacket_rate += mplasma->derived.cooling_ff + mplasma->derived.cooling_ff_lofreq;
   R_matrix[nlevels_macro][nlevels_macro] += Rcont = kpacket_to_rpacket_rate;
   Q_norm[nlevels_macro] += Rcont;
 
@@ -417,14 +417,14 @@ fill_kpkt_rates (PlasmaPtr xplasma, int *escape, PhotPtr p)
       if (cont_ptr->macro_info == TRUE && geo.macro_simple == FALSE)
       {
         upper_density = den_config (xplasma, ulvl);
-        cooling_bf[i] = mplasma->est.cooling_bf[i] =
-          upper_density * PLANCK * cont_ptr->freq[0] * (mplasma->est.recomb_sp_e[xconfig[ulvl].bfd_indx_first + cont_ptr->down_index]);
+        cooling_bf[i] = mplasma->derived.cooling_bf[i] =
+          upper_density * PLANCK * cont_ptr->freq[0] * (mplasma->derived.recomb_sp_e[xconfig[ulvl].bfd_indx_first + cont_ptr->down_index]);
       }
       else
       {
         upper_density = xplasma->state.density[cont_ptr->nion + 1];
 
-        cooling_bf[i] = mplasma->est.cooling_bf[i] = upper_density * PLANCK * cont_ptr->freq[0] * (xplasma->state.recomb_simple[i]);
+        cooling_bf[i] = mplasma->derived.cooling_bf[i] = upper_density * PLANCK * cont_ptr->freq[0] * (xplasma->state.recomb_simple[i]);
       }
 
       if (cooling_bf[i] < 0)
@@ -434,7 +434,7 @@ fill_kpkt_rates (PlasmaPtr xplasma, int *escape, PhotPtr p)
         Error ("i, ulvl, nphot_total, nion %d %d %d %d\n", i, ulvl, nphot_total, cont_ptr->nion);
         Error ("nlev, z, istate %d %d %d \n", cont_ptr->nlev, cont_ptr->z, cont_ptr->istate);
         Error ("freq[0] %g\n", cont_ptr->freq[0]);
-        cooling_bf[i] = mplasma->est.cooling_bf[i] = 0.0;
+        cooling_bf[i] = mplasma->derived.cooling_bf[i] = 0.0;
       }
       else
       {
@@ -448,7 +448,7 @@ fill_kpkt_rates (PlasmaPtr xplasma, int *escape, PhotPtr p)
         /* Include collisional ionization as a cooling term in macro atoms, but not simple atoms.  */
 
         lower_density = den_config (xplasma, cont_ptr->nlev);
-        cooling_bf_col[i] = mplasma->est.cooling_bf_col[i] =
+        cooling_bf_col[i] = mplasma->derived.cooling_bf_col[i] =
           lower_density * PLANCK * cont_ptr->freq[0] * q_ioniz (cont_ptr, electron_temperature);
 
         cooling_bf_coltot += cooling_bf_col[i];
@@ -467,7 +467,7 @@ fill_kpkt_rates (PlasmaPtr xplasma, int *escape, PhotPtr p)
       line_ptr = &line[i];
       if (line_ptr->macro_info == TRUE && geo.macro_simple == FALSE)
       {
-        cooling_bb[i] = mplasma->est.cooling_bb[i] =
+        cooling_bb[i] = mplasma->derived.cooling_bb[i] =
           den_config (xplasma, line_ptr->nconfigl) * q12 (line_ptr, electron_temperature) * line_ptr->freq * PLANCK;
 
       }
@@ -488,13 +488,13 @@ fill_kpkt_rates (PlasmaPtr xplasma, int *escape, PhotPtr p)
            it makes another k-packet for us! (SS May 04) */
 
         cooling_bb[i] *= rad_rate / (rad_rate + (coll_rate * xplasma->state.ne));
-        mplasma->est.cooling_bb[i] = cooling_bb[i];
+        mplasma->derived.cooling_bb[i] = cooling_bb[i];
         mplasma->derived.cooling_bb_simple_tot += cooling_bb[i];
       }
 
       if (cooling_bb[i] < 0)
       {
-        cooling_bb[i] = mplasma->est.cooling_bb[i] = 0.0;
+        cooling_bb[i] = mplasma->derived.cooling_bb[i] = 0.0;
       }
       else
       {
@@ -508,17 +508,17 @@ fill_kpkt_rates (PlasmaPtr xplasma, int *escape, PhotPtr p)
 
     if (one->inwind >= 0)
     {
-//Old      cooling_ff = mplasma->est.cooling_ff = total_free (xplasma, xplasma->state.t_e, freqmin, freqmax) / xplasma->state.vol / xplasma->state.ne;
-//Old      cooling_ff += mplasma->est.cooling_ff_lofreq = total_free (xplasma, xplasma->state.t_e, 0.0, freqmin) / xplasma->state.vol / xplasma->state.ne;
+//Old      cooling_ff = mplasma->derived.cooling_ff = total_free (xplasma, xplasma->state.t_e, freqmin, freqmax) / xplasma->state.vol / xplasma->state.ne;
+//Old      cooling_ff += mplasma->derived.cooling_ff_lofreq = total_free (xplasma, xplasma->state.t_e, 0.0, freqmin) / xplasma->state.vol / xplasma->state.ne;
 //   Next lines reset cooling_ff_lofreq to 0.
-      cooling_ff = mplasma->est.cooling_ff =
+      cooling_ff = mplasma->derived.cooling_ff =
         total_free (xplasma, xplasma->state.t_e, 0.0, freqmax) / xplasma->state.vol / xplasma->state.ne;
-      mplasma->est.cooling_ff_lofreq = 0.0;
+      mplasma->derived.cooling_ff_lofreq = 0.0;
     }
     else
     {
       /* This should never happen */
-      cooling_ff = mplasma->est.cooling_ff = mplasma->est.cooling_ff_lofreq = 0.0;
+      cooling_ff = mplasma->derived.cooling_ff = mplasma->derived.cooling_ff_lofreq = 0.0;
       Error ("kpkt: np %d A scattering event in cell %d with vol = 0???\n", p->np, one->nwind);
       *escape = TRUE;
       p->istat = P_ERROR_MATOM;
@@ -567,11 +567,11 @@ fill_kpkt_rates (PlasmaPtr xplasma, int *escape, PhotPtr p)
 
     cooling_normalisation += cooling_adiabatic;
 
-    mplasma->est.cooling_bbtot = cooling_bbtot;
-    mplasma->est.cooling_bftot = cooling_bftot;
-    mplasma->est.cooling_bf_coltot = cooling_bf_coltot;
-    mplasma->est.cooling_adiabatic = cooling_adiabatic;
-    mplasma->est.cooling_normalisation = cooling_normalisation;
+    mplasma->derived.cooling_bbtot = cooling_bbtot;
+    mplasma->derived.cooling_bftot = cooling_bftot;
+    mplasma->derived.cooling_bf_coltot = cooling_bf_coltot;
+    mplasma->derived.cooling_adiabatic = cooling_adiabatic;
+    mplasma->derived.cooling_normalisation = cooling_normalisation;
     mplasma->derived.kpkt_rates_known = TRUE;
 
   }
@@ -819,11 +819,11 @@ f_kpkt_emit_accelerate (PlasmaPtr xplasma, double freq_min, double freq_max)
     /* If the edge is above the frequency range we are interested in then we need not consider this
        bf process. */
 
-    eprbs = mplasma->est.cooling_bf[i];
+    eprbs = mplasma->derived.cooling_bf[i];
     penorm += eprbs;
     if (cont_ptr->freq[0] < freq_max && cont_ptr->freq[cont_ptr->np - 1] > freq_min)    //means that it may contribute
     {
-      eprbs_band = mplasma->est.cooling_bf[i];
+      eprbs_band = mplasma->derived.cooling_bf[i];
       fthresh = cont_ptr->freq[0];      //first frequency in list
       flast = cont_ptr->freq[cont_ptr->np - 1]; //last frequency in list
       bf_int_full = scaled_alpha_sp_integral_band_limited (cont_ptr, xplasma, 0, fthresh, flast);
@@ -860,7 +860,7 @@ f_kpkt_emit_accelerate (PlasmaPtr xplasma, double freq_min, double freq_max)
     }
     else                        //line is not for a macro atom - use simple method
     {
-      penorm += eprbs = mplasma->est.cooling_bb[i];
+      penorm += eprbs = mplasma->derived.cooling_bb[i];
       if ((line[i].freq > freq_min) && (line[i].freq < freq_max))       // correct range
       {
         penorm_band += eprbs_band = eprbs;
@@ -871,7 +871,7 @@ f_kpkt_emit_accelerate (PlasmaPtr xplasma, double freq_min, double freq_max)
 
 
   /* consult issues #187, #492 regarding free-free */
-  penorm += eprbs = mplasma->est.cooling_ff + mplasma->est.cooling_ff_lofreq;
+  penorm += eprbs = mplasma->derived.cooling_ff + mplasma->derived.cooling_ff_lofreq;
 
   total_ff_lofreq = total_free (xplasma, xplasma->state.t_e, 0, ff_freq_min);
   total_ff = total_free (xplasma, xplasma->state.t_e, ff_freq_min, ff_freq_max);
@@ -883,28 +883,28 @@ f_kpkt_emit_accelerate (PlasmaPtr xplasma, double freq_min, double freq_max)
   if (freq_min > ff_freq_min)
   {
     if (total_ff > 0)
-      penorm_band += total_free (xplasma, xplasma->state.t_e, freq_min, freq_max) / total_ff * mplasma->est.cooling_ff;
+      penorm_band += total_free (xplasma, xplasma->state.t_e, freq_min, freq_max) / total_ff * mplasma->derived.cooling_ff;
   }
   else if (freq_max > ff_freq_min)
   {
     if (total_ff > 0)
-      penorm_band += total_free (xplasma, xplasma->state.t_e, ff_freq_min, freq_max) / total_ff * mplasma->est.cooling_ff;
+      penorm_band += total_free (xplasma, xplasma->state.t_e, ff_freq_min, freq_max) / total_ff * mplasma->derived.cooling_ff;
     if (total_ff_lofreq > 0)
-      penorm_band += total_free (xplasma, xplasma->state.t_e, freq_min, ff_freq_min) / total_ff_lofreq * mplasma->est.cooling_ff_lofreq;
+      penorm_band += total_free (xplasma, xplasma->state.t_e, freq_min, ff_freq_min) / total_ff_lofreq * mplasma->derived.cooling_ff_lofreq;
   }
   else
   {
     if (total_ff_lofreq > 0)
-      penorm_band += total_free (xplasma, xplasma->state.t_e, freq_min, freq_max) / total_ff_lofreq * mplasma->est.cooling_ff_lofreq;
+      penorm_band += total_free (xplasma, xplasma->state.t_e, freq_min, freq_max) / total_ff_lofreq * mplasma->derived.cooling_ff_lofreq;
   }
 
-  penorm += eprbs = mplasma->est.cooling_adiabatic;
+  penorm += eprbs = mplasma->derived.cooling_adiabatic;
 
   for (i = 0; i < nphot_total; i++)
   {
     if (phot_top[i].macro_info == 0 || geo.macro_simple == 1)
     {
-      penorm += eprbs = mplasma->est.cooling_bf_col[i];
+      penorm += eprbs = mplasma->derived.cooling_bf_col[i];
     }
   }
 

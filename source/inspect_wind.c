@@ -315,7 +315,7 @@ main (int argc, char *argv[])
 
     for (i = 0; i < nlevels_macro; i++)
     {
-      fprintf (fptr, "%8.2e ", macromain[n].est.recomb_sp[i]);
+      fprintf (fptr, "%8.2e ", macromain[n].derived.recomb_sp[i]);
     }
     fprintf (fptr, "\n");
   }

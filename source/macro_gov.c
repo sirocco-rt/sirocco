@@ -719,9 +719,9 @@ macro_pops_fill_rate_matrix (MacroPtr mplasma, PlasmaPtr xplasma, double xne, in
         cont_ptr = &phot_top[xconfig[index_lvl].bfd_jump[index_bfd]];
         /* Get new values of the recombination rates and store them. */
         alpha_sp_all (cont_ptr, xplasma, alpha);
-        mplasma->est.recomb_sp[xconfig[index_lvl].bfd_indx_first + index_bfd] = alpha[0];
-        mplasma->est.recomb_sp_e[xconfig[index_lvl].bfd_indx_first + index_bfd] = alpha[2];
-        rate = mplasma->est.recomb_sp[xconfig[index_lvl].bfd_indx_first + index_bfd] * xne;
+        mplasma->derived.recomb_sp[xconfig[index_lvl].bfd_indx_first + index_bfd] = alpha[0];
+        mplasma->derived.recomb_sp_e[xconfig[index_lvl].bfd_indx_first + index_bfd] = alpha[2];
+        rate = mplasma->derived.recomb_sp[xconfig[index_lvl].bfd_indx_first + index_bfd] * xne;
         rate += q_recomb (cont_ptr, xplasma->state.t_e) * xne * xne;
 
         /* This is the rate out of the level in question. We need to add it
