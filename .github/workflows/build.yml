@@ -11,24 +11,18 @@ on:
 env:
   SIROCCO: ${{ github.workspace }}
 jobs:
-  greeting:
-    name: Greeting job
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: "Print out environment variables"
-      run: |
-        echo "WORKSPACE IS $GITHUB_WORKSPACE"
-        echo "SIROCCO ENV VARIABLE IS: $SIROCCO"
-
   build_and_test:
     name: Build Sirocco and run tests
     runs-on: ubuntu-latest
-    needs: greeting
     steps:
     - uses: actions/checkout@v4
     #- name: "Installing build dependencies"
     #  run: sudo apt update && apt install -y build-essential cmake
+
+    - name: Installing MPI
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq openmpi-bin libopenmpi-dev
 
     - name: Configuring Sirocco
       run: ./configure
@@ -45,13 +39,13 @@ jobs:
 
     - name: Build libraries and Sirocco (cache miss)
       if: steps.libcache.outputs.cache-hit != 'true'
-      run: make gh_workflow_install
+      run: make gh_workflow_install # this looks for mpicc and also builds GSL and CUnit
 
-    - name: Build Sirocco only (cache hit)
+    - name: Build Sirocco source only (cache hit)
       if: steps.libcache.outputs.cache-hit == 'true'
       run: |
         cd $SIROCCO/source
-        make CC=gcc INDENT=no all
+        make CC=mpicc INDENT=no all
 
     - uses: actions/setup-python@v5
       with:
@@ -62,11 +56,6 @@ jobs:
         pip install wheel
         cd $SIROCCO/examples/gh-workflow/
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-#    - name: Compile programs, again
-#      run: |
-#        cd $SIROCCO/source
-#        make CC=gcc INDENT=no all
 
     - name: Checking Sirocco compiled and can read in inputs correctly
       run: |
@@ -86,24 +75,13 @@ jobs:
     - name: Running unit tests
       run: |
         cd $SIROCCO/source/tests
-        make check CC=gcc
+        make check CC=mpicc
 
     - name: Running Balmer test case
       run: |
         cd $SIROCCO/examples/gh-workflow/
         $SIROCCO/bin/sirocco -f -v 1 balmer_test
         python $SIROCCO/py_progs/balmer_decrement.py balmer_test
-
-    # Rebuild sirocco with mpicc, replacing the gcc build used above.
-    # A macro-atom model run with and without shared memory 
-    # (-no-shared-memory) must give bitwise-identical results 
-    - name: Building Sirocco with MPI
-      run: |
-        sudo apt-get update -qq
-        sudo apt-get install -y -qq openmpi-bin libopenmpi-dev
-        cd $SIROCCO/source
-        make clean
-        make CC=mpicc INDENT=no sirocco
 
     - name: Running MPI macro-atom model with and without shared memory
       run: |
@@ -132,6 +110,7 @@ jobs:
 
     - name: Run windsave2table on MPI runs
       run: |
+        cd $SIROCCO/examples/gh-workflow/
         $SIROCCO/bin/windsave2table mpi_check_shm
         $SIROCCO/bin/windsave2table mpi_check_noshm
         $SIROCCO/bin/windsave2table mpi_check_shm2
@@ -141,3 +120,11 @@ jobs:
         cd $SIROCCO/examples/gh-workflow/
         python $SIROCCO/py_progs/compare_runs.py mpi_check_shm mpi_check_noshm
         python $SIROCCO/py_progs/compare_runs.py mpi_check_shm mpi_check_shm2
+
+    - name: Checking Sirocco still compiles without MPI
+      run: |
+        cd $SIROCCO/source
+        make clean
+        make CC=gcc INDENT=no sirocco
+
+    
