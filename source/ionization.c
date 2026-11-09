@@ -510,13 +510,25 @@ static double lte_heat_ch_ex_orig;
  *
  **********************************************************/
 
+#define COUPLED_TE_MIN_FRAC 0.5 
+
 int
 one_shot (PlasmaPtr xplasma, int mode)
 {
   double te_old, te_new;
   double gain;
   int ions_done = FALSE;
+  int use_coupled_te = FALSE;
+  double heat_coll_tot; 
 
+  heat_coll_tot = xplasma->est.heat_lines_macro + xplasma->est.heat_qrecomb_macro;
+
+  /* we use a coupled t_e call when collisional rates dominate the heating, or when 
+     this mode re-solves the level populations at each new temperature for 
+     macro-atom mode (see #1152). modes.coupled_te forces use of this mode for all cells */
+  if ((geo.rt_mode == RT_MODE_MACRO && xplasma->est.heat_tot > 0.0 && 
+  	  heat_coll_tot > COUPLED_TE_MIN_FRAC * xplasma->est.heat_tot) || modes.coupled_te)
+    use_coupled_te  = TRUE;
 
   gain = xplasma->derived.gain;
 
@@ -529,7 +541,8 @@ one_shot (PlasmaPtr xplasma, int mode)
     xxxplasma = xplasma;
     zero_emit (te_old);
   }
-  else if (modes.coupled_te == TRUE)
+
+  else if (use_coupled_te == TRUE)
   {
     /* Find the temperature where heating and cooling match with the ionization and macro-atom
        level populations re-solved at each trial temperature. calc_te_coupled leaves the cell
@@ -573,9 +586,6 @@ one_shot (PlasmaPtr xplasma, int mode)
 
   return (0);
 }
-
-
-
 
 
 /**********************************************************/
