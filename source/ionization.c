@@ -275,12 +275,25 @@ ion_abundances (PlasmaPtr xplasma, int mode)
  *
  **********************************************************/
 
+#define COUPLED_TE_MIN_FRAC 0.5 /* used by convergence and one_shot to decide when to use coupled_te mode */
+
+
 int
 convergence (PlasmaPtr xplasma)
 {
   int trcheck, techeck, hccheck, whole_check;
   double min_gain, gain_damp, max_gain, gain_amp, cyc_frac;
   double epsilon;
+  double heat_coll_tot;
+  int use_coupled_te = FALSE;
+  heat_coll_tot = xplasma->est.heat_lines_macro + xplasma->est.heat_qrecomb_macro;
+
+  /* we use a coupled t_e call when collisional rates dominate the heating, or when 
+     this mode re-solves the level populations at each new temperature for 
+     macro-atom mode (see #1152). modes.coupled_te forces use of this mode for all cells */
+  if ((geo.rt_mode == RT_MODE_MACRO && xplasma->est.heat_tot > 0.0 &&
+       heat_coll_tot > COUPLED_TE_MIN_FRAC * xplasma->est.heat_tot) || modes.coupled_te)
+    use_coupled_te = TRUE;
 
   // TODO: are these values optimal?
   min_gain = 0.1;
@@ -288,7 +301,8 @@ convergence (PlasmaPtr xplasma)
   epsilon = 0.05;
 
   trcheck = techeck = hccheck = CONVERGENCE_CHECK_PASS;
-  xplasma->derived.trcheck = xplasma->derived.techeck = xplasma->derived.hccheck = CONVERGENCE_CHECK_PASS;      // NSH 70g - zero the global variables
+  xplasma->derived.trcheck = xplasma->derived.techeck = xplasma->derived.hccheck = CONVERGENCE_CHECK_PASS;
+  // NSH 70g - zero the global variables
 
   /*
    * Check the convergence of the radiation temperature
@@ -347,12 +361,12 @@ convergence (PlasmaPtr xplasma)
 
   /*
    * The cell is converging as the electron temperature is oscillating and the change in temperature is decreasing.
-   * For LTE_ITERATE mode, any oscillation triggers damping because the ionization-opacity feedback
+   * For LTE_ITERATE or coupled_te mode, any oscillation triggers damping because the ionization-opacity feedback
    * can cause self-reinforcing oscillations where increasing the gain makes things worse.
    */
   if (xplasma->derived.dt_e_old * xplasma->derived.dt_e < 0
       && (fabs (xplasma->derived.dt_e) < fabs (xplasma->derived.dt_e_old) || geo.ioniz_mode == IONMODE_LTE_ITERATE
-          || modes.coupled_te == TRUE))
+          || use_coupled_te == TRUE))
   {
     xplasma->derived.converging = CELL_CONVERGING;
 
@@ -510,8 +524,6 @@ static double lte_heat_ch_ex_orig;
  *
  **********************************************************/
 
-#define COUPLED_TE_MIN_FRAC 0.5 
-
 int
 one_shot (PlasmaPtr xplasma, int mode)
 {
@@ -519,16 +531,16 @@ one_shot (PlasmaPtr xplasma, int mode)
   double gain;
   int ions_done = FALSE;
   int use_coupled_te = FALSE;
-  double heat_coll_tot; 
+  double heat_coll_tot;
 
   heat_coll_tot = xplasma->est.heat_lines_macro + xplasma->est.heat_qrecomb_macro;
 
   /* we use a coupled t_e call when collisional rates dominate the heating, or when 
      this mode re-solves the level populations at each new temperature for 
      macro-atom mode (see #1152). modes.coupled_te forces use of this mode for all cells */
-  if ((geo.rt_mode == RT_MODE_MACRO && xplasma->est.heat_tot > 0.0 && 
-  	  heat_coll_tot > COUPLED_TE_MIN_FRAC * xplasma->est.heat_tot) || modes.coupled_te)
-    use_coupled_te  = TRUE;
+  if ((geo.rt_mode == RT_MODE_MACRO && xplasma->est.heat_tot > 0.0 &&
+       heat_coll_tot > COUPLED_TE_MIN_FRAC * xplasma->est.heat_tot) || modes.coupled_te)
+    use_coupled_te = TRUE;
 
   gain = xplasma->derived.gain;
 
@@ -850,7 +862,8 @@ zero_emit_coupled (double t)
 
   xxxplasma->est.heat_lines = coupled_heat_lines_mc + xxxplasma->est.heat_lines_macro;
   xxxplasma->est.heat_photo = coupled_heat_photo_mc + xxxplasma->est.heat_photo_macro + xxxplasma->est.heat_qrecomb_macro;
-  xxxplasma->est.heat_tot = coupled_heat_tot_mc + xxxplasma->est.heat_lines_macro + xxxplasma->est.heat_photo_macro + xxxplasma->est.heat_qrecomb_macro;
+  xxxplasma->est.heat_tot =
+    coupled_heat_tot_mc + xxxplasma->est.heat_lines_macro + xxxplasma->est.heat_photo_macro + xxxplasma->est.heat_qrecomb_macro;
 
   cooling (xxxplasma, t);
 
@@ -904,7 +917,8 @@ calc_te_coupled (PlasmaPtr xplasma, double tmin, double tmax, int mode)
 
   xplasma->est.heat_tot += xplasma->est.heat_ch_ex;
 
-  coupled_heat_tot_mc = xplasma->est.heat_tot - xplasma->est.heat_lines_macro - xplasma->est.heat_photo_macro - xplasma->est.heat_qrecomb_macro;
+  coupled_heat_tot_mc =
+    xplasma->est.heat_tot - xplasma->est.heat_lines_macro - xplasma->est.heat_photo_macro - xplasma->est.heat_qrecomb_macro;
   coupled_heat_lines_mc = xplasma->est.heat_lines - xplasma->est.heat_lines_macro;
   coupled_heat_photo_mc = xplasma->est.heat_photo - xplasma->est.heat_photo_macro - xplasma->est.heat_qrecomb_macro;
 
