@@ -9,3 +9,4 @@ sirocco agn_simple.pf
 # sirocco star.pf
 # sirocco two.pf
 # sirocco cv_standard_import.pf
+sirocco -d pol_cone.pf

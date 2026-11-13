@@ -459,8 +459,15 @@ compton_dir (PhotPtr p)
 
   if (x1 < 0.0001)              //If the photon energy is low, we use the diple approximation            
   {
-    randvdipole (lmn, p->lmn);
-    stuff_v (lmn, p->lmn);
+    if (pol_active ())
+    {
+      pol_scatter_es (p, pol_thomson_cos (), 1.0);      // Polarized Thomson scattering
+    }
+    else
+    {
+      randvdipole (lmn, p->lmn);
+      stuff_v (lmn, p->lmn);
+    }
   }
   else
   {
@@ -485,6 +492,15 @@ compton_dir (PhotPtr p)
   to obtain the angle cosine n=cos(\theta)	for the scattering direction*/
 
     n = (1. - ((f - 1.) / x1)); //This is the angle cosine of the new direction in the frame of reference of the photon - this gives a 2D scattering angle
+
+    if (pol_active ())
+    {
+      /* The polarization changes only the distribution of the azimuth, which pol_scatter_es draws */
+      pol_scatter_es (p, n, 1. / f);
+      p->freq = p->freq / f;
+      p->w = p->w / f;
+      return (0);
+    }
 
     if (isfinite (len = sqrt (1. - (n * n))) == 0)      //Compute the length of the other angle cosines - the isfinite is to take care of the very rare occasion where n=1!
       len = 0.0;                // If n=1, then the photon has either been undeflected or bounced straight back. Both are vanishingly unlikely but need to be treated.

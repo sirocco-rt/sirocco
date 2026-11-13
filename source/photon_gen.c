@@ -196,6 +196,7 @@ define_phot (PhotPtr p, double f1, double f2, long nphot_tot, int ioniz_or_extra
     p[n].ds = 0;
     p[n].line_res = NRES_NOT_SET;
     p[n].frame = F_OBSERVER;
+    p[n].q = p[n].u = 0;        // All sources emit unpolarized light
     if (geo.reverb != REV_NONE && p[n].path < 0.0)      // SWM - Set path lengths for disk, star etc.
       simple_paths_gen_phot (&p[n]);
   }
