@@ -275,12 +275,24 @@ ion_abundances (PlasmaPtr xplasma, int mode)
  *
  **********************************************************/
 
+#define COUPLED_TE_MIN_FRAC 0.5 /* used by convergence and one_shot to decide when to use coupled_te mode */
+
+
 int
 convergence (PlasmaPtr xplasma)
 {
   int trcheck, techeck, hccheck, whole_check;
   double min_gain, gain_damp, max_gain, gain_amp, cyc_frac;
   double epsilon;
+  double heat_coll_tot;
+  int use_coupled_te = FALSE;
+  heat_coll_tot = xplasma->est.heat_lines_macro + xplasma->est.heat_qrecomb_macro;
+
+  /* Use the coupled t_e solve where macro-atom collisional heating dominates (see the notes
+     to one_shot); modes.coupled_te forces it in all cells */
+  if ((geo.rt_mode == RT_MODE_MACRO && xplasma->est.heat_tot > 0.0 &&
+       heat_coll_tot > COUPLED_TE_MIN_FRAC * xplasma->est.heat_tot) || modes.coupled_te)
+    use_coupled_te = TRUE;
 
   // TODO: are these values optimal?
   min_gain = 0.1;
@@ -288,7 +300,8 @@ convergence (PlasmaPtr xplasma)
   epsilon = 0.05;
 
   trcheck = techeck = hccheck = CONVERGENCE_CHECK_PASS;
-  xplasma->derived.trcheck = xplasma->derived.techeck = xplasma->derived.hccheck = CONVERGENCE_CHECK_PASS;      // NSH 70g - zero the global variables
+  xplasma->derived.trcheck = xplasma->derived.techeck = xplasma->derived.hccheck = CONVERGENCE_CHECK_PASS;
+  // NSH 70g - zero the global variables
 
   /*
    * Check the convergence of the radiation temperature
@@ -347,11 +360,12 @@ convergence (PlasmaPtr xplasma)
 
   /*
    * The cell is converging as the electron temperature is oscillating and the change in temperature is decreasing.
-   * For LTE_ITERATE mode, any oscillation triggers damping because the ionization-opacity feedback
+   * For LTE_ITERATE or coupled_te mode, any oscillation triggers damping because the ionization-opacity feedback
    * can cause self-reinforcing oscillations where increasing the gain makes things worse.
    */
   if (xplasma->derived.dt_e_old * xplasma->derived.dt_e < 0
-      && (fabs (xplasma->derived.dt_e) < fabs (xplasma->derived.dt_e_old) || geo.ioniz_mode == IONMODE_LTE_ITERATE))
+      && (fabs (xplasma->derived.dt_e) < fabs (xplasma->derived.dt_e_old) || geo.ioniz_mode == IONMODE_LTE_ITERATE
+          || use_coupled_te == TRUE))
   {
     xplasma->derived.converging = CELL_CONVERGING;
 
@@ -499,9 +513,15 @@ static double lte_heat_ch_ex_orig;
  * in xplasma are updated.
  *
  * ### Notes ###
- *
- *
  * Special exceptions are made for Zeus; it is not clear why this is necessary
+ *
+ * In macro-atom mode, cells where macro-atom collisional heating (collisional de-excitation
+ * and three-body recombination) is more than COUPLED_TE_MIN_FRAC of the total heating use
+ * calc_te_coupled. This mode re-solves the ionization and level populations at each trial
+ * temperature. With the populations held fixed these collisional terms cancel the matching
+ * cooling at the old temperature and t_e barely moves (see #1152). The -coupled_te switch
+ * (modes.coupled_te) forces use of  calc_te_coupled in every cell. 
+ * convergence() uses the same test to damp the gain on any oscillation in these cells.
  *
  * Some of the complication in this routine reflects the fact that we have
  * two sets of definitions, one for IONMODES and one for NEBULARMODES. 
@@ -514,7 +534,17 @@ one_shot (PlasmaPtr xplasma, int mode)
 {
   double te_old, te_new;
   double gain;
+  int ions_done = FALSE;
+  int use_coupled_te = FALSE;
+  double heat_coll_tot;
 
+  heat_coll_tot = xplasma->est.heat_lines_macro + xplasma->est.heat_qrecomb_macro;
+
+  /* Use the coupled t_e solve where macro-atom collisional heating dominates (see the notes
+     above); modes.coupled_te forces it in all cells */
+  if ((geo.rt_mode == RT_MODE_MACRO && xplasma->est.heat_tot > 0.0 &&
+       heat_coll_tot > COUPLED_TE_MIN_FRAC * xplasma->est.heat_tot) || modes.coupled_te)
+    use_coupled_te = TRUE;
 
   gain = xplasma->derived.gain;
 
@@ -526,6 +556,22 @@ one_shot (PlasmaPtr xplasma, int mode)
     te_new = te_old;
     xxxplasma = xplasma;
     zero_emit (te_old);
+  }
+
+  else if (use_coupled_te == TRUE)
+  {
+    /* Find the temperature where heating and cooling match with the ionization and macro-atom
+       level populations re-solved at each trial temperature. calc_te_coupled leaves the cell
+       at te_new, so solve again at the gain-damped temperature. See issue #1152. */
+    te_new = calc_te_coupled (xplasma, 0.7 * te_old, 1.3 * te_old, mode);
+    xplasma->state.t_e = (1 - gain) * te_old + gain * te_new;
+
+    if (xplasma->state.t_e > TMAX)
+    {
+      xplasma->state.t_e = TMAX;
+    }
+    zero_emit_coupled (xplasma->state.t_e);
+    ions_done = TRUE;
   }
   else                          //Find a new teperature where heating and cooling match
   {
@@ -541,7 +587,8 @@ one_shot (PlasmaPtr xplasma, int mode)
   }
 
 
-  if (nebular_concentrations (xplasma, mode))
+  /* With coupled_te the ion densities have already been computed at the new temperature */
+  if (ions_done == FALSE && nebular_concentrations (xplasma, mode))
   {
     Error ("one_shot: nebular_concentrations failed to converge\n");
     Error ("one_shot: j %8.2e t_e %8.2e t_r %8.2e w %8.2e nphot %i\n", xplasma->est.j, xplasma->state.t_e, xplasma->state.t_r,
@@ -555,9 +602,6 @@ one_shot (PlasmaPtr xplasma, int mode)
 
   return (0);
 }
-
-
-
 
 
 /**********************************************************/
@@ -617,8 +661,10 @@ calc_te (PlasmaPtr xplasma, double tmin, double tmax)
     }
 
   }
-  else if (fabs (z1) < fabs (z2))
+  else if (z1 < 0.0)
   {
+    /* Net cooling at both ends: move to the low T end. We used to choose the end with the smaller
+       |H-C|, but this can push a net-cooling cell up to very high T at high density */
     xplasma->state.t_e = tmin;
   }
   else
@@ -774,6 +820,139 @@ double
 zero_emit2 (double t, void *params)
 {
   return (zero_emit (t));
+}
+
+
+/* Storage used by zero_emit_coupled: the ionization mode, and the parts of the
+   heating that were tallied during the MC phase, i.e. everything except the
+   macro-atom collisional terms which are recomputed at each trial temperature */
+static int coupled_mode;
+static double coupled_heat_tot_mc, coupled_heat_lines_mc, coupled_heat_photo_mc;
+
+
+/**********************************************************/
+/**
+ * @brief      Calculate heating - cooling for a trial temperature, re-solving
+ * the ionization and macro-atom level populations at that temperature.
+ *
+ * @param [in] double  t   A trial temperature
+ * @return     The difference between heating and cooling at temperature t
+ *
+ * @details
+ * In a dense plasma the macro-atom collisional terms (collisional de-excitation
+ * and three-body recombination heating, collisional excitation and ionization
+ * cooling) are much larger than the radiative terms. If the level populations
+ * are held fixed, these terms cancel exactly at the temperature for which the
+ * populations were computed, so zero_emit returns a root at the old temperature
+ * whatever the radiative heating is (issue #1152). Here the populations are
+ * re-solved at each trial temperature, so the collisional terms cancel at every
+ * temperature and the root is set by the radiative heating and cooling.
+ *
+ * The heating tallied in the MC phase is held fixed, as in zero_emit.
+ *
+ **********************************************************/
+
+double
+zero_emit_coupled (double t)
+{
+  xxxplasma->state.t_e = t;
+
+  if (nebular_concentrations (xxxplasma, coupled_mode))
+  {
+    Error ("zero_emit_coupled: nebular_concentrations failed to converge at t_e %8.2e in cell %d\n", t, xxxplasma->nplasma);
+  }
+
+  xxxplasma->est.heat_lines_macro = macro_bb_heating (xxxplasma, t);
+  xxxplasma->est.heat_photo_macro = macro_photo_heating (xxxplasma, t);
+  xxxplasma->est.heat_qrecomb_macro = macro_qrecomb_heating (xxxplasma, t);
+
+  xxxplasma->est.heat_lines = coupled_heat_lines_mc + xxxplasma->est.heat_lines_macro;
+  xxxplasma->est.heat_photo = coupled_heat_photo_mc + xxxplasma->est.heat_photo_macro + xxxplasma->est.heat_qrecomb_macro;
+  xxxplasma->est.heat_tot =
+    coupled_heat_tot_mc + xxxplasma->est.heat_lines_macro + xxxplasma->est.heat_photo_macro + xxxplasma->est.heat_qrecomb_macro;
+
+  cooling (xxxplasma, t);
+
+  return (xxxplasma->est.heat_tot + xxxplasma->derived.heat_shock - xxxplasma->est.cool_tot);
+}
+
+
+/**********************************************************/
+/**
+ * @brief     A wrapper function for zero_emit_coupled used by zero_find
+ *
+ * @param [in] double  t   A trial temperature
+ * @param [in] void *params   Not used
+ * @return     The difference between heating and cooling
+ *
+ **********************************************************/
+
+double
+zero_emit_coupled2 (double t, void *params)
+{
+  return (zero_emit_coupled (t));
+}
+
+
+/**********************************************************/
+/**
+ * @brief  Find the electron temperature where heating and cooling match,
+ * re-solving the ionization and level populations at each trial temperature
+ *
+ * @param [in] PlasmaPtr  xplasma   A plasma cell in the wind
+ * @param [in] double  tmin   A bracketing minimum temperature
+ * @param [in] double  tmax   A bracketing maximum temperature
+ * @param [in] int  mode   The nebular mode passed to nebular_concentrations
+ * @return     The temperature where heating and cooling match
+ *
+ * @details
+ * This is calc_te with zero_emit_coupled in place of zero_emit. Unlike
+ * calc_te, it modifies the ion densities and level populations, which are
+ * left at the values for the returned temperature.
+ *
+ **********************************************************/
+
+double
+calc_te_coupled (PlasmaPtr xplasma, double tmin, double tmax, int mode)
+{
+  double z1, z2;
+  int ierr = FALSE;
+
+  xxxplasma = xplasma;
+  coupled_mode = mode;
+
+  xplasma->est.heat_tot += xplasma->est.heat_ch_ex;
+
+  coupled_heat_tot_mc =
+    xplasma->est.heat_tot - xplasma->est.heat_lines_macro - xplasma->est.heat_photo_macro - xplasma->est.heat_qrecomb_macro;
+  coupled_heat_lines_mc = xplasma->est.heat_lines - xplasma->est.heat_lines_macro;
+  coupled_heat_photo_mc = xplasma->est.heat_photo - xplasma->est.heat_photo_macro - xplasma->est.heat_qrecomb_macro;
+
+  z1 = zero_emit_coupled (tmin);
+  z2 = zero_emit_coupled (tmax);
+
+  if (z1 * z2 < 0.0)
+  {
+    xplasma->state.t_e = zero_find (zero_emit_coupled2, tmin, tmax, 50., &ierr);
+    if (ierr)
+    {
+      Error ("calc_te_coupled: zero_find failed to find a temperature\n");
+    }
+  }
+  else if (z1 < 0.0)
+  {
+    /* Net cooling at both ends: move to the cold end. Choosing the end with the smaller
+       |H-C| can walk a net-cooling cell up to very high T at high density */
+    xplasma->state.t_e = tmin;
+  }
+  else
+  {
+    xplasma->state.t_e = tmax;
+  }
+
+  zero_emit_coupled (xplasma->state.t_e);
+
+  return (xplasma->state.t_e);
 }
 
 
@@ -991,16 +1170,16 @@ calc_te_lte (PlasmaPtr xplasma, double tmin, double tmax)
     Error ("calc_te_lte:   At tmin=%.0f K: heat=%.2e cool=%.2e diff=%.2e\n", tmin, heat1, cool1, z1);
     Error ("calc_te_lte:   At tmax=%.0f K: heat=%.2e cool=%.2e diff=%.2e\n", tmax, heat2, cool2, z2);
 
-    /* Choose the temperature that minimizes |heat - cool| */
-    if (fabs (z1) < fabs (z2))
+    /* Move towards the root: to tmin if the cell is net cooling at both ends, otherwise to tmax */
+    if (z1 < 0.0)
     {
       xplasma->state.t_e = tmin;
-      Error ("calc_te_lte:   Using tmin=%.0f K (smaller imbalance)\n", tmin);
+      Error ("calc_te_lte:   Using tmin=%.0f K (net cooling at both ends)\n", tmin);
     }
     else
     {
       xplasma->state.t_e = tmax;
-      Error ("calc_te_lte:   Using tmax=%.0f K (smaller imbalance)\n", tmax);
+      Error ("calc_te_lte:   Using tmax=%.0f K (net heating at both ends)\n", tmax);
     }
   }
 

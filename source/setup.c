@@ -351,6 +351,7 @@ init_advanced_modes ()
 
   modes.no_macro_pops_for_ions = FALSE; /* use the ion densities from macro_pops where applicable */
   modes.early_stopping = FALSE; /* convergence-based early stopping of ionization cycles */
+  modes.coupled_te = FALSE;     /* solve for t_e with ionization and level populations held fixed */
 
   return (0);
 }

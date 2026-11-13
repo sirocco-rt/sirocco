@@ -625,6 +625,10 @@ xmake_phot (PhotPtr p, double f1, double f2, int ioniz_or_extract, int iwind, do
       nbl += (nphotons - nphot);
     else if (nagn > 0)
       nagn += (nphotons - nphot);
+    else if (nkpkt > 0 && geo.matom_radiation)   
+      nkpkt += (nphotons - nphot);               
+    else if (nmatom > 0)                         
+      nmatom += (nphotons - nphot);              
     else
       nstar += (nphotons - nphot);
   }

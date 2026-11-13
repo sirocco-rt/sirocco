@@ -127,6 +127,16 @@ which may be useful in certain special cases.  These include:
 -include_partial_cells
   Include wind cells that are only partially filled by the wind
 
+-coupled_te
+  Use the coupled temperature solve in every cell. In macro-atom mode the electron temperature
+  is normally found with the ion and level populations held fixed. In dense cells, where macro-atom
+  collisional de-excitation and three-body recombination dominate the heating, the collisional
+  heating and cooling then cancel at the old temperature, so the temperature hardly changes. 
+  The coupled mode re-solves the macro-atom  populations at each trial temperature. 
+  It is always used in cells where these collisional terms are more than half of the
+  total heating. This switch extends it to all cells; can cause a factor ~2 slow down in ionization 
+  calculation.
+
 -xtest
   Instead of running sirocco, call the routine xtest so that one can diagnose issues associted with the 
   setup.  This is only useful to developers.
