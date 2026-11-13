@@ -124,7 +124,7 @@ matrix_ion_populations (PlasmaPtr xplasma, int mode)
       }
       else if (mode == NEBULARMODE_MATRIX_SPECTRALMODEL)
       {
-        pi_rates[mm] = calc_pi_rate (mm, xplasma, 1, 1);        // PI rate for an explicit spectral model
+        pi_rates[mm] = pi_rate_matrix_pow (mm, xplasma);        // PI rate for an explicit spectral model (the band models, or the cell spectrum with band model cell_spectrum)
       }
       else if (mode == NEBULARMODE_MATRIX_ESTIMATORS)
       {
@@ -164,7 +164,7 @@ matrix_ion_populations (PlasmaPtr xplasma, int mode)
       }
       else if (mode == NEBULARMODE_MATRIX_SPECTRALMODEL)
       {
-        inner_rates[mm] = calc_pi_rate (mm, xplasma, 1, 2);
+        inner_rates[mm] = inner_rate_matrix_pow (mm, xplasma);
       }
       else if (mode == NEBULARMODE_MATRIX_ESTIMATORS)   //We are using estimators - so we will need to reorder the rates from freq order to cross section order to match the electron yields. This takes time, so we only do it if we need to.
       {

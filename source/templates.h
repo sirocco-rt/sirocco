@@ -12,11 +12,11 @@ int get_atomic_data(char masterfile[]);
 TopPhotPtr alloc_phot_top_record(int n, int np);
 TopPhotPtr alloc_inner_cross_record(int n, int np);
 AugerPtr alloc_auger_macro_record(int n);
-int free_xsection_data(void);
 ConfigPtr alloc_level_record(int n);
 LinePtr alloc_line_record(int n);
 Coll_strenptr alloc_coll_stren_record(int n);
 int free_level_line_data(void);
+int free_xsection_data(void);
 int init_atomic_data(void);
 /* atomicdata_sub.c */
 int atomicdata2file(void);
@@ -33,6 +33,8 @@ double upsilon(int n_coll, double u0);
 void skiplines(FILE *fptr, int nskip);
 /* bands.c */
 int bands_init(int imode, struct xbands *band);
+int cell_spec_on_thresholds(void);
+int cell_spec_threshold_grid(void);
 int ion_bands_init(int mode, double freqmin, double freqmax, struct xbands *band);
 void check_appropriate_banding(struct xbands *band, int mode);
 /* bands_spec.c */
@@ -213,6 +215,7 @@ double mean_frequency_nu_range(double T, double nu_min, double nu_max);
 double estimate_temperature_from_mean_frequency(double mean_nu_target, double nu_min, double nu_max, double initial_guess);
 int normalise_simple_estimators(PlasmaPtr xplasma);
 void update_persistent_directional_flux_estimators(int nplasma, double flux_persist_scale);
+int cell_spec_bin(double freq);
 /* extract.c */
 int extract(WindPtr w, PhotPtr p, int itype);
 int extract_one(WindPtr w, PhotPtr pp, int nspec);
@@ -245,6 +248,7 @@ int calloc_estimators(int nelem);
 int calloc_dyn_plasma(int nelem);
 int calloc_matom_matrix(int nelem);
 void allocate_macro_matrix(double ***matrix_addr, int matrix_size);
+int resize_cell_spec_flux(int nbins);
 /* homologous.c */
 int get_homologous_params(int ndom);
 double homologous_velocity(int ndom, double x[], double v[]);
@@ -373,9 +377,9 @@ int populate_ion_rate_matrix(double rate_matrix[nions][nions], double pi_rates[n
 /* models_extern_init.c */
 /* para_update.c */
 int get_parallel_nrange(int rank, int ntotal, int nproc, int *my_nmin, int *my_nmax);
-int no_shared_memory_requested(int argc, char *argv[]);
 int get_max_cells_per_rank(const int n_total);
 int calculate_comm_buffer_size(const int num_ints, const int num_doubles);
+int no_shared_memory_requested(int argc, char *argv[]);
 /* parse.c */
 int parse_command_line(int argc, char *argv[]);
 void help(void);
@@ -438,6 +442,12 @@ double calc_pi_rate(int nion, PlasmaPtr xplasma, int mode, int type);
 double tb_planck(double freq, void *params);
 double tb_logpow(double freq, void *params);
 double tb_exp(double freq, void *params);
+double *pi_rate_bin_integrals(int n, int type);
+double pi_rate_hist_integral(PlasmaPtr xplasma, int type);
+double pi_rate_direct(int nion, PlasmaPtr xplasma);
+double pi_rate_matrix_pow(int nion, PlasmaPtr xplasma);
+double inner_rate_matrix_pow(int n, PlasmaPtr xplasma);
+int pi_rate_table_write(PlasmaPtr xplasma);
 /* sirocco_extern_init.c */
 /* radiation.c */
 double radiation(PhotPtr p, double ds);
@@ -448,6 +458,7 @@ double pop_kappa_ff_array(void);
 double mean_intensity(PlasmaPtr xplasma, double freq, int mode);
 double mean_intensity_from_models(PlasmaPtr xplasma, double freq, int mode);
 double mean_intensity_bb_estimate(double freq, double t_r, double w);
+int is_ground_pi_xsection(struct topbase_phot *xs);
 /* random.c */
 int randvec(double a[], double r);
 int randvcos(double lmn[], double north[]);
@@ -564,6 +575,7 @@ int init_advanced_modes(void);
 int init_observers(void);
 PhotPtr init_photons(void);
 int init_ionization(void);
+int get_user_ion_bands(void);
 double setup_dfudge(void);
 void setup_atomic_data(const char *atomic_filename);
 /* setup_disk.c */

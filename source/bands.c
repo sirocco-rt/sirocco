@@ -34,13 +34,14 @@
  * edges, but not so fine that one cannot characterize the slope of the
  * spectrum in each interval.  
  *
- * The routines init_bands in this file sets up the bands to for creating
- * photons based on various user inputs; it then calls freqs_init that 
- * sets up the frequency boundaries for recording the spectra.
+ * The routine bands_init in this file sets up the bands for creating
+ * photons based on various user inputs; it then calls ion_bands_init,
+ * which sets up the frequency boundaries for recording the spectra.
  *
- * The two tasks are only loosely related, and in fact while there
- * is a lot of flexibility in for stratified sampling, the spectra
- * in the cells are recorded largely on the basis of the system type.
+ * The two tasks are only loosely related.  The bands in which the
+ * spectra in the cells are recorded are chosen separately, with
+ * Wind.ionization.band_model, and are the photon generation bands
+ * only if that is set to photon_bands.
  *
  *
  ***********************************************************/
@@ -121,10 +122,11 @@ xband;
  * to get the ionization structure wrong.  Evidently, option 4 allows 
  * the user the most flexibility.
  *
- * This routine also calls the routine freqs_init which initializes the
+ * This routine also calls the routine ion_bands_init which initializes the
  * boundaries for recording coarse versions of the spectra in each
  * cell. This process is also sometimes referred to (confusingly) as
- * banding.  At present this is more or less hardwired.
+ * banding.  How those boundaries are chosen is set by
+ * Wind.ionization.band_model.
  *
  **********************************************************/
 
@@ -604,6 +606,13 @@ bands_init (int imode, struct xbands *band)
   /* Now define the freqquency boundaries for the cell spectra */
   geo.cell_log_freq_min = log10 (band->f1[0]);
   geo.cell_log_freq_max = log10 (band->f2[band->nbands - 1]);
+
+  if (cell_spec_on_thresholds ())
+  {
+    cell_spec_threshold_grid ();
+    return (0);
+  }
+
   geo.cell_delta_lfreq = (geo.cell_log_freq_max - geo.cell_log_freq_min) / geo.nbins_in_cell_spec;
 
   if (geo.cell_freq != NULL)
@@ -619,6 +628,592 @@ bands_init (int imode, struct xbands *band)
 }
 
 
+/**********************************************************/
+/**
+ * @brief      Whether the cell spectra have bin boundaries at every
+ * photoionization threshold
+ *
+ * @return     TRUE if the boundaries include the thresholds
+ *
+ * @details
+ * The cell spectra (cell_spec_flux) are binned on a uniform log grid,
+ * except when they are used to calculate photoionization rates: with
+ * band model cell_spectrum, and for the development table written with
+ * -pi_rate_table.  Then every ground-state and inner-shell threshold is
+ * also a bin boundary, so that no ion's own edge falls inside a bin.
+ **********************************************************/
+
+int
+cell_spec_on_thresholds ()
+{
+  if (geo.band_model == BAND_MODEL_CELL_SPECTRUM || modes.pi_rate_table == TRUE)
+  {
+    return (TRUE);
+  }
+  return (FALSE);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Compare two doubles, for qsort
+ *
+ * @param [in] const void *a   The first double
+ * @param [in] const void *b   The second double
+ * @return     -1, 0 or 1 as the first is less than, equal to or greater than the second
+ **********************************************************/
+
+static int
+cmp_double (const void *a, const void *b)
+{
+  double x;
+  double y;
+
+  x = *(const double *) a;
+  y = *(const double *) b;
+  if (x < y)
+  {
+    return (-1);
+  }
+  if (x > y)
+  {
+    return (1);
+  }
+  return (0);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      The photoionization thresholds inside the range of
+ * the cell spectra
+ *
+ * @param [out] double *thresh   The thresholds, sorted, or NULL just to count them
+ * @return     The number of distinct thresholds
+ *
+ * @details
+ * The thresholds are those of the ground-state cross section of each ion
+ * (as used by calc_pi_rate) and of every inner-shell cross section, that
+ * lie strictly inside the range of the cell spectra.  Thresholds within
+ * 1e-6 dex of each other count as one.  The number depends only on the
+ * atomic data and the frequency range.
+ **********************************************************/
+
+static int
+cell_spec_thresholds (double *thresh)
+{
+  double *t;
+  double freq;
+  double fmin;
+  double fmax;
+  int nt;
+  int nion;
+  int n;
+  int nunique;
+
+  fmin = pow (10., geo.cell_log_freq_min);
+  fmax = pow (10., geo.cell_log_freq_max);
+
+  t = calloc (nions + n_inner_tot + 1, sizeof (double));
+  nt = 0;
+
+  for (nion = 0; nion < nions; nion++)
+  {
+    freq = -1.0;
+    if (ion[nion].phot_info > 0 && ion[nion].ntop_ground >= 0)
+    {
+      freq = phot_top[ion[nion].ntop_ground].freq[0];
+    }
+    else if (ion[nion].phot_info == 0 && ion[nion].nxphot >= 0)
+    {
+      freq = phot_top[ion[nion].nxphot].freq[0];
+    }
+    if (freq > fmin && freq < fmax)
+    {
+      t[nt] = freq;
+      nt++;
+    }
+  }
+
+  for (n = 0; n < n_inner_tot; n++)
+  {
+    freq = inner_cross[n].freq[0];
+    if (freq > fmin && freq < fmax)
+    {
+      t[nt] = freq;
+      nt++;
+    }
+  }
+
+  qsort (t, nt, sizeof (double), cmp_double);
+
+  nunique = 0;
+  for (n = 0; n < nt; n++)
+  {
+    if (nunique == 0 || log10 (t[n] / t[nunique - 1]) > 1e-6)
+    {
+      t[nunique] = t[n];
+      nunique++;
+    }
+  }
+
+  if (thresh != NULL)
+  {
+    for (n = 0; n < nunique; n++)
+    {
+      thresh[n] = t[n];
+    }
+  }
+
+  free (t);
+  return (nunique);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Set the cell spectrum bins to a log grid with every
+ * photoionization threshold added as a boundary
+ *
+ * @return     Always 0
+ *
+ * @details
+ * For a new run, geo.nbins_in_cell_spec is the number of log bins
+ * (-cell_spec_dim, or 1000 with band model cell_spectrum); the thresholds
+ * are added to these.  On a restart, geo.nbins_in_cell_spec is the total
+ * number of bins (read from the wind save, or as reset by -cell_spec_dim or
+ * band model cell_spectrum), and the number of log bins is that total less
+ * the number of thresholds.  The program stops if that leaves no log bins,
+ * or if the total exceeds NBINS_IN_CELL_SPEC.
+ **********************************************************/
+
+int
+cell_spec_threshold_grid ()
+{
+  double *thresh;
+  double *logbins;
+  int nthresh;
+  int nlog;
+  int ntot;
+  int i;
+  int j;
+  int k;
+
+  nthresh = cell_spec_thresholds (NULL);
+
+  if (geo.run_type == RUN_TYPE_NEW)
+  {
+    nlog = geo.nbins_in_cell_spec;
+  }
+  else
+  {
+    nlog = geo.nbins_in_cell_spec - nthresh;
+  }
+
+  ntot = nlog + nthresh;
+  if (nlog < 1 || ntot > NBINS_IN_CELL_SPEC)
+  {
+    Error
+      ("cell_spec_threshold_grid: %d log bins and %d thresholds do not fit (maximum %d bins in all). A restart with band model cell_spectrum or -pi_rate_table needs a saved run that used one of them\n",
+       nlog, nthresh, NBINS_IN_CELL_SPEC);
+    Exit (1);
+  }
+
+  thresh = calloc (nthresh + 1, sizeof (double));
+  cell_spec_thresholds (thresh);
+
+  geo.cell_delta_lfreq = (geo.cell_log_freq_max - geo.cell_log_freq_min) / nlog;
+  logbins = calloc (nlog + 1, sizeof (double));
+  for (i = 0; i <= nlog; i++)
+  {
+    logbins[i] = pow (10., (geo.cell_log_freq_min + i * geo.cell_delta_lfreq));
+  }
+
+  if (geo.cell_freq != NULL)
+  {
+    free (geo.cell_freq);
+  }
+  geo.cell_freq = calloc (ntot + 1, sizeof (double));
+
+  /* merge the log boundaries and the thresholds, which are both sorted */
+  i = 0;
+  j = 0;
+  k = 0;
+  while (k <= ntot)
+  {
+    if (j >= nthresh || (i <= nlog && logbins[i] <= thresh[j]))
+    {
+      geo.cell_freq[k] = logbins[i];
+      i++;
+    }
+    else
+    {
+      geo.cell_freq[k] = thresh[j];
+      j++;
+    }
+    k++;
+  }
+
+  geo.nbins_in_cell_spec = ntot;
+
+  Log ("cell_spec_threshold_grid: cell spectra have %d bins: %d log bins plus %d photoionization thresholds\n", ntot, nlog, nthresh);
+
+  free (logbins);
+  free (thresh);
+  return (0);
+}
+
+
+#define MIN_N_IONBANDS 7
+
+/* Edges used to place ionization band boundaries when there are fewer
+   than MIN_N_IONBANDS photon generation bands.  Each entry is (z, istate)
+   of the ion whose ground-state threshold is the edge; (-1, 0) is the
+   Balmer edge.  The order is the order of priority: an edge is used only
+   if it lies inside the photon range, and edges are added until there are
+   MIN_N_IONBANDS bands. */
+
+static int ion_band_edge_list[][2] = {
+  {1, 1}, {2, 1}, {2, 2}, {-1, 0},      /* H I, He I, He II, Balmer */
+  {6, 3}, {6, 4}, {8, 6}, {7, 5}, {14, 4},      /* C III, C IV, O VI, N V, Si IV */
+  {8, 7}, {8, 8}, {6, 5}, {6, 6}, {7, 6}, {7, 7},       /* O VII, O VIII, C V, C VI, N VI, N VII */
+  {10, 9}, {10, 10}, {12, 11}, {14, 13}, {14, 14}, {16, 15},    /* Ne IX, Ne X, Mg XI, Si XIII, Si XIV, S XV */
+  {26, 25}, {26, 26}            /* Fe XXV, Fe XXVI */
+};
+
+#define BALMER_EDGE_EV 3.40
+#define ION_BAND_MIN_DEX 0.05   /* no edge is added closer than this (in log nu) to an existing boundary */
+
+
+/**********************************************************/
+/**
+ * @brief      The ground-state photoionization threshold of an ion
+ *
+ * @param [in] int  z   The element, or -1 for the Balmer edge
+ * @param [in] int  istate   The ionization state
+ * @return     The threshold frequency in Hz, or -1 if the ion, or its
+ * photoionization cross section, is not in the atomic data
+ **********************************************************/
+
+static double
+ion_band_edge_freq (int z, int istate)
+{
+  int nion;
+  int n;
+
+  if (z < 0)
+  {
+    return (BALMER_EDGE_EV / HEV);
+  }
+
+  for (nion = 0; nion < nions; nion++)
+  {
+    if (ion[nion].z == z && ion[nion].istate == istate)
+    {
+      /* For macro-atom ions, find the cross section whose lower level is the ground
+         level directly from the levels, so that the result does not depend on
+         ion[].ntop_ground (which was wrong for macro-atom ions before the fix in
+         get_atomic_data) */
+      if (ion[nion].macro_info == 1)
+      {
+        for (n = 0; n < nphot_total; n++)
+        {
+          if (phot_top[n].nion == nion && phot_top[n].nlev == ion[nion].first_nlte_level)
+          {
+            return (phot_top[n].freq[0]);
+          }
+        }
+        return (-1.0);
+      }
+      if (ion[nion].phot_info > 0 && ion[nion].ntop_ground >= 0)
+      {
+        return (phot_top[ion[nion].ntop_ground].freq[0]);
+      }
+      if (ion[nion].phot_info == 0 && ion[nion].nxphot >= 0)
+      {
+        return (phot_top[ion[nion].nxphot].freq[0]);
+      }
+      return (-1.0);
+    }
+  }
+  return (-1.0);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Add a band boundary, keeping the boundaries in order
+ *
+ * @param [in, out] double *edges   The boundaries, in increasing order
+ * @param [in] int  nedges   The number of boundaries
+ * @param [in] double  freq   The boundary to add
+ * @return     The new number of boundaries
+ *
+ * @details
+ * The boundary is not added if it lies outside the first and last
+ * boundaries, or within ION_BAND_MIN_DEX of an existing boundary.
+ **********************************************************/
+
+static int
+ion_band_add_edge (double *edges, int nedges, double freq)
+{
+  int i;
+  int k;
+
+  if (freq <= edges[0] || freq >= edges[nedges - 1])
+  {
+    return (nedges);
+  }
+
+  for (i = 0; i < nedges; i++)
+  {
+    if (fabs (log10 (edges[i] / freq)) < ION_BAND_MIN_DEX)
+    {
+      return (nedges);
+    }
+  }
+
+  k = nedges;
+  while (k > 0 && edges[k - 1] > freq)
+  {
+    edges[k] = edges[k - 1];
+    k--;
+  }
+  edges[k] = freq;
+
+  return (nedges + 1);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Halve the widest band until there are enough bands
+ *
+ * @param [in, out] double *xfreq   The band boundaries, in increasing order
+ * @param [in] int  nedges   The number of boundaries
+ * @param [in] int  nbands   The number of bands wanted
+ * @return     The new number of boundaries, nbands + 1
+ *
+ * @details
+ * The widest band, measured in log nu, is split at its geometric mean
+ * frequency, and this is repeated until there are nbands bands.
+ **********************************************************/
+
+static int
+ion_band_split_to (double *xfreq, int nedges, int nbands)
+{
+  int k;
+  int kmax;
+  double freq;
+  double width;
+  double wmax;
+
+  while (nedges - 1 < nbands)
+  {
+    wmax = -1.0;
+    kmax = 0;
+    for (k = 0; k < nedges - 1; k++)
+    {
+      width = log (xfreq[k + 1] / xfreq[k]);
+      if (width > wmax)
+      {
+        wmax = width;
+        kmax = k;
+      }
+    }
+    freq = sqrt (xfreq[kmax] * xfreq[kmax + 1]);
+    for (k = nedges; k > kmax + 1; k--)
+    {
+      xfreq[k] = xfreq[k - 1];
+    }
+    xfreq[kmax + 1] = freq;
+    nedges++;
+  }
+
+  return (nedges);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Ionization bands from the generation bands and the
+ * important photoionization edges
+ *
+ * @param [in] struct xbands *band   The photon generation bands
+ * @param [out] double *xfreq   The band boundaries
+ * @return     The number of bands
+ *
+ * @details
+ * Used when there are fewer than MIN_N_IONBANDS generation bands.
+ * The boundaries of the generation bands are kept, since photons are
+ * generated in each of them.  Boundaries are then added at the edges in
+ * ion_band_edge_list, in order of priority, if they lie inside the photon
+ * range, until there are MIN_N_IONBANDS bands.  If there are still too few
+ * bands, the widest band (in log nu) is halved until there are enough.
+ *
+ * Placing the boundaries on edges matters because the spectrum in
+ * each band is described by a smooth model, which cannot follow a sharp
+ * edge inside a band (#1084, #1169).
+ **********************************************************/
+
+static int
+ion_bands_from_edges (struct xbands *band, double *xfreq)
+{
+  int nedges;
+  int nband;
+  int i;
+  int nlist;
+  double freq;
+
+  nedges = 0;
+  xfreq[nedges] = band->f1[0];
+  nedges++;
+  for (nband = 0; nband < band->nbands; nband++)
+  {
+    xfreq[nedges] = band->f2[nband];
+    nedges++;
+  }
+
+  nlist = sizeof (ion_band_edge_list) / sizeof (ion_band_edge_list[0]);
+  for (i = 0; i < nlist && nedges - 1 < MIN_N_IONBANDS; i++)
+  {
+    freq = ion_band_edge_freq (ion_band_edge_list[i][0], ion_band_edge_list[i][1]);
+    if (freq > 0)
+    {
+      nedges = ion_band_add_edge (xfreq, nedges, freq);
+    }
+  }
+
+  nedges = ion_band_split_to (xfreq, nedges, MIN_N_IONBANDS);
+
+  return (nedges - 1);
+}
+
+
+/* The elements whose ground-state thresholds become band boundaries in
+   ion_bands_from_elements, in order of priority (roughly the order of
+   their abundance): H, He, O, C, N.  Each element's ions are taken from
+   the neutral up. */
+
+static int ion_band_elements[] = { 1, 2, 8, 6, 7 };
+
+#define ION_BANDS_MAX_THRESH (NXBANDS / 2)      /* at most this many boundaries are placed on thresholds */
+
+
+/**********************************************************/
+/**
+ * @brief      Ionization bands from the boundaries given by the user
+ * (Wind.ionization.band_model user_bands)
+ *
+ * @param [in] struct xbands *band   The photon generation bands
+ * @param [out] double *xfreq   The band boundaries
+ * @return     The number of bands
+ *
+ * @details
+ * The bands run from the bottom of the first generation band to the top
+ * of the last, with the user's inner boundaries (geo.band_user_freq)
+ * between.  A boundary outside that range is dropped with a warning.
+ * There is no splitting: the user gets the bands asked for.
+ **********************************************************/
+
+static int
+ion_bands_from_user (struct xbands *band, double *xfreq)
+{
+  int n;
+  int nedges;
+  double fmin, fmax;
+
+  fmin = band->f1[0];
+  fmax = band->f2[band->nbands - 1];
+  nedges = 0;
+  xfreq[nedges] = fmin;
+  nedges++;
+  for (n = 0; n < geo.band_user_n - 1; n++)
+  {
+    if (geo.band_user_freq[n] > fmin && geo.band_user_freq[n] < fmax)
+    {
+      xfreq[nedges] = geo.band_user_freq[n];
+      nedges++;
+    }
+    else
+    {
+      Error ("ion_bands_from_user: band boundary %.3f eV is outside the photon range %.3f to %.3f eV, so it is dropped\n",
+             geo.band_user_freq[n] * HEV, fmin * HEV, fmax * HEV);
+    }
+  }
+  xfreq[nedges] = fmax;
+  Log ("ion_bands_from_user: %d bands from the boundaries given\n", nedges);
+  return (nedges);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Ionization bands from the thresholds of the abundant
+ * elements, with the remaining bands made by splitting the widest bands
+ *
+ * @param [in] struct xbands *band   The photon generation bands
+ * @param [out] double *xfreq   The band boundaries
+ * @return     The number of bands, NXBANDS
+ *
+ * @details
+ * The bands cover the whole photon generation range, from the bottom of
+ * the first generation band to the top of the last; the generation band
+ * boundaries themselves are not kept.
+ *
+ * Boundaries are first placed on the ground-state photoionization
+ * thresholds of H, He, O, C and N, element by element and within each
+ * element from the neutral ion up, skipping any threshold outside the
+ * range or within ION_BAND_MIN_DEX of a boundary already placed, until
+ * there are ION_BANDS_MAX_THRESH of them or the list is used up.  The
+ * widest band (in log nu) is then halved until there are NXBANDS bands.
+ *
+ * This is the rule "elem+split" of the banding study (Sirocco-2611-Banding):
+ * offline, against the fine cell histograms of an AGN shell, a star and a
+ * CV, it gave photoionization rates of the H, He, C, N and O ions within
+ * 0.1 dex (90th percentile), against up to 3 dex for the generation bands.
+ * The bands are global and fixed for the whole run, and need no knowledge
+ * of the spectrum in the cells.
+ **********************************************************/
+
+static int
+ion_bands_from_elements (struct xbands *band, double *xfreq)
+{
+  int nedges;
+  int nelem;
+  int i;
+  int istate;
+  double freq;
+
+  nedges = 0;
+  xfreq[nedges] = band->f1[0];
+  nedges++;
+  xfreq[nedges] = band->f2[band->nbands - 1];
+  nedges++;
+
+  nelem = sizeof (ion_band_elements) / sizeof (ion_band_elements[0]);
+  for (i = 0; i < nelem; i++)
+  {
+    for (istate = 1; istate <= ion_band_elements[i]; istate++)
+    {
+      if (nedges - 2 >= ION_BANDS_MAX_THRESH)
+      {
+        break;
+      }
+      freq = ion_band_edge_freq (ion_band_elements[i], istate);
+      if (freq > 0)
+      {
+        nedges = ion_band_add_edge (xfreq, nedges, freq);
+      }
+    }
+  }
+
+  Log ("ion_bands_from_elements: %d boundaries on photoionization thresholds of H, He, O, C and N\n", nedges - 2);
+
+  nedges = ion_band_split_to (xfreq, nedges, NXBANDS);
+
+  return (nedges - 1);
+}
 
 
 /**********************************************************/
@@ -650,9 +1245,15 @@ bands_init (int imode, struct xbands *band)
  *
  * ### Notes ###
  *
- * At present everything is hardwired.  In the case of SPECTYPE_CL_TAB,
- * a special broken power law used for comparisons, a different set
- * of bands are used.
+ * How the bands are chosen is set by geo.band_model
+ * (Wind.ionization.band_model): on the thresholds of H, He, O, C and N
+ * with the rest made by splitting (ion_bands_from_elements; the default,
+ * and also used with cell_spectrum), the photon generation bands (with
+ * edges added if there are fewer than MIN_N_IONBANDS,
+ * ion_bands_from_edges), or the boundaries given by the user
+ * (ion_bands_from_user).  In the case of SPECTYPE_CL_TAB, a special
+ * broken power law used for comparisons, a different set of bands is
+ * used.
  *
  * freqmin and freqmax are used in order to limit the total range of
  * the spectral bands.
@@ -662,13 +1263,11 @@ bands_init (int imode, struct xbands *band)
  * used to create photons.  
  *
  **********************************************************/
-#define MIN_N_IONBANDS 7
-
 int
 ion_bands_init (int mode, double freqmin, double freqmax, struct xbands *band)
 {
   int i, n, ngood, good[NXBANDS];
-  double xfreq[NXBANDS];
+  double xfreq[NXBANDS + 1];
   int nxfreq, nband;
 
 
@@ -693,7 +1292,17 @@ ion_bands_init (int mode, double freqmin, double freqmax, struct xbands *band)
     xfreq[2] = geo.agn_cltab_hi / HEV;
     xfreq[3] = 100000000 / HEV;
   }
-  /* if we have a sufficient number of user-selected bands, then just use those band boundaries */
+  /* band model user_bands: the boundaries given by the user, within the range of the generation bands */
+  else if (geo.band_model == BAND_MODEL_USER_BANDS)
+  {
+    nxfreq = ion_bands_from_user (band, xfreq);
+  }
+  /* the default: boundaries on the thresholds of the abundant elements, the rest by splitting */
+  else if (geo.band_model != BAND_MODEL_PHOTON_BANDS)
+  {
+    nxfreq = ion_bands_from_elements (band, xfreq);
+  }
+  /* band model photon_bands: if there are enough photon generation bands, use their boundaries */
   else if (band->nbands >= MIN_N_IONBANDS)
   {
     for (nband = 0; nband < band->nbands; nband++)
@@ -704,24 +1313,12 @@ ion_bands_init (int mode, double freqmin, double freqmax, struct xbands *band)
     xfreq[band->nbands] = band->f2[band->nbands - 1];
   }
 
-  /* if we don't have enough bands, then use the old hardwired bands */
+  /* if we don't have enough generation bands, place the ionization bands on the important edges */
   else
   {
-    nxfreq = 10;
-    xfreq[0] = freqmin;         //We need the whole range to be modelled for induced compton heating to work
-    xfreq[1] = 1e15;            //This should be below the lowest threshold frequency of any element in our model
-    xfreq[2] = 3.162e15;
-    xfreq[3] = 1e16;
-    xfreq[4] = 3.162e16;
-    xfreq[5] = 1e17;
-    xfreq[6] = 3.162e17;
-    xfreq[7] = 1e18;
-    xfreq[8] = 3.162e18;
-    xfreq[9] = 1.2e19;          //This is the highest frequency defined in our ionization data
-    xfreq[10] = freqmax;
+    nxfreq = ion_bands_from_edges (band, xfreq);
 
-    Log ("ion_bands_init: only %d generation bands, so adopting default 10 ionization bands from %8.4e Hz to %8.4e Hz\n", band->nbands,
-         freqmin, freqmax);
+    Log ("ion_bands_init: only %d generation bands, so adding boundaries at photoionization edges\n", band->nbands);
   }
 
   Log ("ion_bands_init: %d ionization bands from %8.2feV (%8.2eHz) to %8.2feV (%8.2eHz)\n", nxfreq, freqmin * HEV, freqmin, freqmax * HEV,
@@ -775,11 +1372,10 @@ ion_bands_init (int mode, double freqmin, double freqmax, struct xbands *band)
   }
 
 
-  Log_silent ("ion_bands_init: There were %d final intervals\n", geo.nxfreq);
+  Log ("ion_bands_init: There were %d final intervals\n", geo.nxfreq);
   for (n = 0; n < geo.nxfreq; n++)
   {
-    Log_silent ("ion_bands_init: %8.2f (%8.2e)    %8.2f (%8.2e)  \n", geo.xfreq[n] * HEV, geo.xfreq[n], geo.xfreq[n + 1] * HEV,
-                geo.xfreq[n + 1]);
+    Log ("ion_bands_init: %8.2f (%8.2e)    %8.2f (%8.2e)  \n", geo.xfreq[n] * HEV, geo.xfreq[n], geo.xfreq[n + 1] * HEV, geo.xfreq[n + 1]);
   }
 
 

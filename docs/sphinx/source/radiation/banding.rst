@@ -8,6 +8,14 @@ generated at the beginning of each cycle and can either be generated uniformly
 over the entire frequency range, or can be generated in pre-defined frequency
 bands, where certain frequency bands are biased to have more photons.
 
+.. admonition :: Photon bands and ionization bands are different
+
+    The bands described here are used only to generate photons.  The photons that pass
+    through each wind cell are recorded in a separate set of bands, in which a model of
+    the mean intensity is fitted and used to calculate photoionization rates.  Those
+    bands are chosen with :ref:`Wind.ionization.band_model`, and are not the same as the
+    photon generation bands unless that parameter is set to photon_bands.
+
 Uniform Sampling
 ================
 

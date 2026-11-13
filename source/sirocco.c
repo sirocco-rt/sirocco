@@ -226,9 +226,9 @@ main (int argc, char *argv[])
     //OLD w = wmain;
 
     /* Restore command-line cell_spec_dim or validate the value read from windsave */
-    if (cmd_nbins_in_cell_spec > 0)
+    if (cmd_nbins_in_cell_spec > 0 && cmd_nbins_in_cell_spec <= NBINS_IN_CELL_SPEC)
     {
-      geo.nbins_in_cell_spec = cmd_nbins_in_cell_spec;
+      resize_cell_spec_flux (cmd_nbins_in_cell_spec);
     }
     if (geo.nbins_in_cell_spec < 1 || geo.nbins_in_cell_spec > NBINS_IN_CELL_SPEC)
     {
@@ -302,9 +302,9 @@ main (int argc, char *argv[])
       }
 
       /* Restore command-line cell_spec_dim or validate the value read from windsave */
-      if (cmd_nbins_in_cell_spec > 0)
+      if (cmd_nbins_in_cell_spec > 0 && cmd_nbins_in_cell_spec <= NBINS_IN_CELL_SPEC)
       {
-        geo.nbins_in_cell_spec = cmd_nbins_in_cell_spec;
+        resize_cell_spec_flux (cmd_nbins_in_cell_spec);
       }
       if (geo.nbins_in_cell_spec < 1 || geo.nbins_in_cell_spec > NBINS_IN_CELL_SPEC)
       {

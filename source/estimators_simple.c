@@ -144,8 +144,15 @@ update_banded_estimators (PlasmaPtr xplasma, PhotPtr p, double ds, double w_ave,
 
   /* Increment the cell spectra  */
 
-  log_freq = log10 (p->freq);
-  i = (log_freq - geo.cell_log_freq_min) / geo.cell_delta_lfreq;
+  if (cell_spec_on_thresholds ())
+  {
+    i = cell_spec_bin (p->freq);
+  }
+  else
+  {
+    log_freq = log10 (p->freq);
+    i = (log_freq - geo.cell_log_freq_min) / geo.cell_delta_lfreq;
+  }
   if (i < 0)
     i = 0;
   if (i > geo.nbins_in_cell_spec - 1)
@@ -706,11 +713,25 @@ normalise_simple_estimators (PlasmaPtr xplasma)
 
   for (i = 0; i < geo.nbins_in_cell_spec; i++)
   {
-    freq_min = geo.cell_log_freq_min + (i) * geo.cell_delta_lfreq;
-    freq_max = freq_min + geo.cell_delta_lfreq;
-    dfreq = pow (10., freq_max) - pow (10., freq_min);
+    if (cell_spec_on_thresholds ())
+    {
+      dfreq = geo.cell_freq[i + 1] - geo.cell_freq[i];
+    }
+    else
+    {
+      freq_min = geo.cell_log_freq_min + (i) * geo.cell_delta_lfreq;
+      freq_max = freq_min + geo.cell_delta_lfreq;
+      dfreq = pow (10., freq_max) - pow (10., freq_min);
+    }
 
-    xplasma->est.cell_spec_flux[i] /= (4 * PI * invariant_volume_time * dfreq);
+    if (dfreq > 0)
+    {
+      xplasma->est.cell_spec_flux[i] /= (4 * PI * invariant_volume_time * dfreq);
+    }
+    else
+    {
+      xplasma->est.cell_spec_flux[i] = 0.0;
+    }
 
   }
 
@@ -831,4 +852,52 @@ update_persistent_directional_flux_estimators (int nplasma, double flux_persist_
   plasmamain[nplasma].derived.F_Xray_persistent[3] = length (plasmamain[nplasma].derived.F_Xray_persistent);
   plasmamain[nplasma].derived.rad_force_bf_persist[3] = length (plasmamain[nplasma].derived.rad_force_bf_persist);
 
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Find the cell spectrum bin that contains a frequency,
+ * for bins that are not uniform in log frequency
+ *
+ * @param [in] double  freq   The frequency
+ * @return     The bin number; -1 below the first boundary and
+ * geo.nbins_in_cell_spec above the last
+ *
+ * @details
+ * Used when the bin boundaries include the photoionization thresholds
+ * (see cell_spec_threshold_grid).  A bisection search of geo.cell_freq.
+ **********************************************************/
+
+int
+cell_spec_bin (double freq)
+{
+  int lo;
+  int hi;
+  int mid;
+
+  if (freq < geo.cell_freq[0])
+  {
+    return (-1);
+  }
+  if (freq >= geo.cell_freq[geo.nbins_in_cell_spec])
+  {
+    return (geo.nbins_in_cell_spec);
+  }
+
+  lo = 0;
+  hi = geo.nbins_in_cell_spec;
+  while (hi - lo > 1)
+  {
+    mid = (lo + hi) / 2;
+    if (geo.cell_freq[mid] <= freq)
+    {
+      lo = mid;
+    }
+    else
+    {
+      hi = mid;
+    }
+  }
+  return (lo);
 }
