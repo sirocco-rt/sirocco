@@ -24,7 +24,7 @@ Wind.coord_system(spherical,cylindrical,polar,cyl_var)          cylindrical
 Wind.dim.in.x_or_r.direction               30
 Wind.dim.in.z_or_theta.direction           30
 Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,LTE_iterate,fixed,matrix_bb,matrix_pow,matrix_est,matrix_multishot)           matrix_pow
-Wind.ionization.band_model(hhe_cno_edges,photon_bands,cell_spectrum)           hhe_cno_edges
+Wind.ionization.band_model(hhe_cno_edges,photon_bands,cell_spectrum,user_bands)           hhe_cno_edges
 Line_transfer(pure_abs,pure_scat,sing_scat,escape_prob,thermal_trapping,macro_atoms_escape_prob,macro_atoms_thermal_trapping) macro_atoms_thermal_trapping
 Matom_transition_mode(mc_jumps,matrix)             mc_jumps
 Surface.reflection.or.absorption(reflect,absorb,thermalized.rerad)               absorb

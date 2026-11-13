@@ -31,7 +31,7 @@ Photons_per_cycle                          2e7
 Ionization_cycles                          20.0
 Spectrum_cycles                            5.0
 Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,fixed,matrix_bb,matrix_pow,matrix_est)           matrix_pow
-Wind.ionization.band_model(hhe_cno_edges,photon_bands,cell_spectrum)           hhe_cno_edges
+Wind.ionization.band_model(hhe_cno_edges,photon_bands,cell_spectrum,user_bands)           hhe_cno_edges
 Line_transfer(pure_abs,pure_scat,sing_scat,escape_prob,thermal_trapping,macro_atoms_escape_prob,macro_atoms_thermal_trapping) macro_atoms_thermal_trapping
 Matom_transition_mode(mc_jumps,matrix)               matrix
 Atomic_data                                data/h10_hetop_lohe1_standard80.dat
