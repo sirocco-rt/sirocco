@@ -34,13 +34,14 @@
  * edges, but not so fine that one cannot characterize the slope of the
  * spectrum in each interval.  
  *
- * The routines init_bands in this file sets up the bands to for creating
- * photons based on various user inputs; it then calls freqs_init that 
- * sets up the frequency boundaries for recording the spectra.
+ * The routine bands_init in this file sets up the bands for creating
+ * photons based on various user inputs; it then calls ion_bands_init,
+ * which sets up the frequency boundaries for recording the spectra.
  *
- * The two tasks are only loosely related, and in fact while there
- * is a lot of flexibility in for stratified sampling, the spectra
- * in the cells are recorded largely on the basis of the system type.
+ * The two tasks are only loosely related.  The bands in which the
+ * spectra in the cells are recorded are chosen separately, with
+ * Wind.ionization.band_model, and are the photon generation bands
+ * only if that is set to photon_bands.
  *
  *
  ***********************************************************/
@@ -121,10 +122,11 @@ xband;
  * to get the ionization structure wrong.  Evidently, option 4 allows 
  * the user the most flexibility.
  *
- * This routine also calls the routine freqs_init which initializes the
+ * This routine also calls the routine ion_bands_init which initializes the
  * boundaries for recording coarse versions of the spectra in each
  * cell. This process is also sometimes referred to (confusingly) as
- * banding.  At present this is more or less hardwired.
+ * banding.  How those boundaries are chosen is set by
+ * Wind.ionization.band_model.
  *
  **********************************************************/
 
