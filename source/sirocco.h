@@ -510,6 +510,14 @@ struct geometry
   int ioniz_mode;               /**<  describes the type of ionization calculation which will
                                    be carried out.  The various ioniz_modes are defined by #defines IONMODE_MATRIX_BB
                                    etc.  See the documentation in this file for what these mean. */
+#define BAND_MODEL_HHE_CNO_EDGES  0     /**< band boundaries at up to NXBANDS/2 thresholds of H, He, O, C and N, then the widest bands split */
+#define BAND_MODEL_PHOTON_BANDS   1     /**< the photon generation bands (edges added if there are too few) */
+#define BAND_MODEL_CELL_SPECTRUM  2     /**< the fine cell spectrum, with no band models, for the photoionization rates */
+#define BAND_MODEL_USER_BANDS     3     /**< band boundaries given by the user (Wind.ionization.band_model.band_boundary) */
+  int band_model;               /**<  How J_nu in each cell is described for the matrix ionization modes:
+                                   BAND_MODEL_HHE_CNO_EDGES (the default), BAND_MODEL_PHOTON_BANDS,
+                                   BAND_MODEL_CELL_SPECTRUM or BAND_MODEL_USER_BANDS.  Set by
+                                   Wind.ionization.band_model */
 #define MACRO_IONIZ_MODE_NO_ESTIMATORS  0
 #define MACRO_IONIZ_MODE_ESTIMATORS     1
   int macro_ioniz_mode;         /**<  Controls the use of macro atom populations and
@@ -587,8 +595,11 @@ struct geometry
 
   int nxfreq;                   /**<  the number of frequency intervals actually used */
   double xfreq[NXBANDS + 1];    /**<  the frequency boundaries for the coarse spectra  */
+  int band_user_n;              /**<  BAND_MODEL_USER_BANDS: the number of bands requested */
+  double band_user_freq[NXBANDS + 1];   /**<  BAND_MODEL_USER_BANDS: the inner band boundaries requested (Hz),
+                                   band_user_n - 1 of them, increasing */
 
-#define NBINS_IN_CELL_SPEC   1000       /**< The maximum number of bins in the cell spectra  */
+#define NBINS_IN_CELL_SPEC   4000       /**< The maximum number of bins in the cell spectra  */
 
   int nbins_in_cell_spec;             /**< Runtime number of bins in cell spectra (default 100, max NBINS_IN_CELL_SPEC) */
   double cell_log_freq_min, cell_log_freq_max, cell_delta_lfreq;        /**< Parameters defining freqency intervals for cell spectra.
@@ -1846,7 +1857,15 @@ struct advanced_modes
                                    * cycles. Set by the -early_stopping command line switch. When active,
                                    * sirocco queries the user for @estop parameters in the .pf file.
                                    */
+  int direct_ground_only;        /**< (development) when TRUE, the direct photoionization estimators count
+                                   * only ground-state photoionization, as calc_pi_rate does. Set by
+                                   * -direct_ground_only */
+  int pi_rate_table;             /**< (development) when TRUE, write the band, histogram and direct
+                                   * photoionization rates of every cell and ion each ionization cycle.
+                                   * Set by -pi_rate_table */
+  int cell_spec_dim_given;       /**< TRUE if the number of log bins in the cell spectra was set by -cell_spec_dim */
 };
+
 
 extern struct advanced_modes modes;
 

@@ -1059,9 +1059,9 @@ described as macro-levels. */
             /* next line sees if the topbase level just read in is the ground state -
                if it is, the ion structure element ntop_ground is set to that topbase level number
                note that m is the lower level here */
-            if (m == xconfig[ion[xconfig[n].nion].first_nlte_level].ilv)
+            if (m == ion[xconfig[m].nion].first_nlte_level)
             {
-              ion[xconfig[n].nion].ntop_ground = ntop_phot;
+              ion[xconfig[m].nion].ntop_ground = ntop_phot;
             }
 
             ion[xconfig[m].nion].ntop++;

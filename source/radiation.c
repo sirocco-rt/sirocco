@@ -274,7 +274,12 @@ radiation (PhotPtr p, double ds)
               }
 
               frac_ion[nion] += z;
-              kappa_ion[nion] += x;
+              /* development (-direct_ground_only): count only ground-state photoionization in the
+                 direct rate estimators, as calc_pi_rate does; the heating above still includes all levels */
+              if (modes.direct_ground_only == FALSE || is_ground_pi_xsection (x_top_ptr))
+              {
+                kappa_ion[nion] += x;
+              }
             }
 
           }
@@ -934,4 +939,32 @@ mean_intensity_bb_estimate (double freq, double t_r, double w)
   j_bar *= w;
 
   return j_bar;
+}
+
+
+
+/**********************************************************/
+/**
+ * @brief      Whether a photoionization cross section is the
+ * ground-state one of its ion
+ *
+ * @param [in] struct topbase_phot *xs   The cross section
+ * @return     TRUE if it is the cross section calc_pi_rate uses for the ion
+ **********************************************************/
+
+int
+is_ground_pi_xsection (struct topbase_phot *xs)
+{
+  int nion;
+
+  nion = xs->nion;
+  if (ion[nion].phot_info == 0)
+  {
+    return (TRUE);
+  }
+  if (ion[nion].ntop_ground >= 0 && xs == &phot_top[ion[nion].ntop_ground])
+  {
+    return (TRUE);
+  }
+  return (FALSE);
 }

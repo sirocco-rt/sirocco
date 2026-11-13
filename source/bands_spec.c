@@ -43,32 +43,46 @@ xband;
 
 /**********************************************************/
 /** 
- * @brief copy frequencies from the from the photon generation
- * banding structure to the spectrum charcaterization bands
- * in each plasma cell.
+ * @brief copy the ionization bands to the spectrum
+ * characterization bands in each plasma cell.
  *
  *
  * @details
  * 
- * This is just a simple routine to initialize the spectrl
- * charateriztion band frequences to the same bands that
- * are being used for photon generation.  
+ * The bands in which the spectrum in each cell is
+ * characterized (the band sums and the power-law or
+ * exponential models fitted to them) are the ionization
+ * bands set up by ion_bands_init (geo.xfreq, geo.nxfreq),
+ * not the photon generation bands (xband).  The two
+ * sets are the same only with band model photon_bands
+ * and at least MIN_N_IONBANDS generation bands.
+ *
+ * Each cell has its own copy of the band edges, so that
+ * cells could in future have different bands, but at
+ * present every cell gets the same ones.
  **********************************************************/
 
 void
 band_copy ()
 {
   int n, nband;
+
+  if (geo.nxfreq < 1 || geo.nxfreq > NXBANDS)
+  {
+    Error ("band_copy: number of ionization bands %d is not between 1 and NXBANDS (%d)\n", geo.nxfreq, NXBANDS);
+    Exit (1);
+  }
+
   for (n = 0; n < NPLASMA; n++)
   {
-    plasmamain[n].state.nbands = xband.nbands;
-    for (nband = 0; nband < xband.nbands; nband++)
+    plasmamain[n].state.nbands = geo.nxfreq;
+    for (nband = 0; nband < geo.nxfreq; nband++)
     {
-      plasmamain[n].state.f1[nband] = xband.f1[nband];
-      plasmamain[n].state.f2[nband] = xband.f2[nband];
+      plasmamain[n].state.f1[nband] = geo.xfreq[nband];
+      plasmamain[n].state.f2[nband] = geo.xfreq[nband + 1];
     }
     /* Initialize remaining unused band frequencies to safe values */
-    for (nband = xband.nbands; nband < NXBANDS + 1; nband++)
+    for (nband = geo.nxfreq; nband < NXBANDS + 1; nband++)
     {
       plasmamain[n].state.f1[nband] = 0.0;
       plasmamain[n].state.f2[nband] = 0.0;

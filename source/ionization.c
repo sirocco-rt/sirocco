@@ -195,6 +195,10 @@ ion_abundances (PlasmaPtr xplasma, int mode)
 /*  spectral_estimators does the work of getting banded W and alpha. Then oneshot gets called. */
 
     spectral_estimators (xplasma);
+    if (modes.pi_rate_table == TRUE)
+    {
+      pi_rate_table_write (xplasma);
+    }
     update_old_plasma_variables (xplasma);
     ireturn = one_shot (xplasma, mode);
 

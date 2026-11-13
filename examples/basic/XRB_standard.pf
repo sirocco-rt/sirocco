@@ -31,6 +31,7 @@ Photons_per_cycle                          100000000
 Ionization_cycles                          20
 Spectrum_cycles                            10
 Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,fixed,matrix_bb,matrix_pow)           matrix_pow
+Wind.ionization.band_model(hhe_cno_edges,photon_bands,cell_spectrum)           hhe_cno_edges
 Line_transfer(pure_abs,pure_scat,sing_scat,escape_prob,thermal_trapping,macro_atoms,macro_atoms_thermal_trapping)     thermal_trapping
 Wind.radiation(yes,no)                          yes
 Atomic_data                                data/standard80.dat
