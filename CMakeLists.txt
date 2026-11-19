@@ -9,7 +9,7 @@
 # and build for debugging. But isn't complex enough to fully emulate the
 # behaviour of the Makefile in $PYTHON/source.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.6)
 project(Python LANGUAGES C)
 
 # The C standard is being set to 90. The compiler is being set to mpicc
