@@ -93,7 +93,6 @@ nebular_concentrations (PlasmaPtr xplasma, int mode)
 
 
 
-//#define SAHA 4.82907e15               /* 2* (2.*PI*MELEC*k)**1.5 / h**3  (Calculated in constants) */
 //#define MAXITERATIONS 200
 //#define FRACTIONAL_ERROR 0.03
 //#define THETAMAX       1e4

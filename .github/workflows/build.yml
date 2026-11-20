@@ -10,6 +10,8 @@ on:
       - "main"
 env:
   SIROCCO: ${{ github.workspace }}
+  OMPI_MCA_osc: ^ucx
+
 jobs:
   build_and_test:
     name: Build Sirocco and run tests
@@ -82,6 +84,13 @@ jobs:
         cd $SIROCCO/examples/gh-workflow/
         $SIROCCO/bin/sirocco -f -v 1 balmer_test
         python $SIROCCO/py_progs/balmer_decrement.py balmer_test
+
+    - name: Running ionization test case
+      run: |
+        mkdir -p $SIROCCO/examples/gh-workflow/ion_test
+        cd $SIROCCO/examples/gh-workflow/ion_test
+        python $SIROCCO/py_progs/Test/ion_test.py
+
 
     - name: Running MPI macro-atom model with and without shared memory
       run: |

@@ -7,7 +7,7 @@ bin/windsave2table*
 bin/rad_hydro*
 bin/inspect_wind*
 bin/modify_wind*
-
+bin/hydro2sirocco*
 
 # Run files
 *.spec*
@@ -81,6 +81,7 @@ wiki/
 *~
 *.DS_Store
 **/*foo.txt
+*.ipynb_checkpoints*
 
 # some gsl files
 *.Plo
@@ -102,9 +103,9 @@ source/templates.h.old
 # sirocco output files
 *.diag
 *.spec
-*.log_spec
+*.log_spec*
 *.spec_tot
-*.log_spec_tot
+*.spec_wind
 *.rdpar
 *.sig
 *.out.pf
@@ -121,4 +122,4 @@ scratch/
 # files from sed or other -e modifier
 *-e 
 
-
+*.gcno

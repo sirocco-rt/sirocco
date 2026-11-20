@@ -89,23 +89,24 @@ num_int (double (*func) (double, void *), double a, double b, double eps)
   {
     gsl_integration_workspace *w = gsl_integration_workspace_alloc (1000);
     status = gsl_integration_qags (&F, a, b, 0, eps, 1000, w, &result, &error);
-    if (status)
+    gsl_integration_workspace_free (w);
+    if (status == GSL_EROUND)   //The rounding error has been triggered - try a different integrator
     {
-      if (status == GSL_EROUND) //The rounding error has been triggered - try a different integrator
+      gsl_integration_romberg_workspace *wr = gsl_integration_romberg_alloc (30);
+      status2 = gsl_integration_romberg (&F, a, b, 0, eps, &result2, &neval, wr);
+      gsl_integration_romberg_free (wr);
+      if (status2)
       {
-        gsl_integration_workspace_free (w);
-        gsl_integration_romberg_workspace *w = gsl_integration_romberg_alloc (30);
-        status2 = gsl_integration_romberg (&F, a, b, 0, eps, &result2, &neval, w);
-        gsl_integration_romberg_free (w);
-        if (status2)
-        {
-          Error ("num_init: some kind of error in romberg and qags integration\n");
-        }
+        Error ("num_int: some kind of error in romberg and qags integration\n");
+      }
+      else
+      {
+        result = result2;
       }
     }
-    else
+    else if (status)
     {
-      gsl_integration_workspace_free (w);
+      Error ("num_int: qags integration from %e to %e failed (%s)\n", a, b, gsl_strerror (status));
     }
   }
   else

@@ -294,7 +294,7 @@ compute_qrecomb_coeffs (double T)
  *
  * @details
  * This equation comes from considering TE and getting the expression
- * q_recomb = 2.07e-16 * gl/gu * exp(E/kT) * q_ioniz
+ * q_recomb = gl/gu * exp(E/kT) * q_ioniz / SAHA, with 1 / SAHA = 2.07e-16
  * then substituting the above expression for q_ioniz. We get the
  * ionization threshold from the supplied PI cross section.
  *
@@ -325,7 +325,7 @@ q_recomb_dere (struct topbase_phot *cont_ptr, double electron_temperature)
   if (ion[nion].dere_di_flag == 1 && xconfig[cont_ptr->nlev].ilv == 1)
   {
     root_etemp = sqrt (electron_temperature);
-    coeff = 2.07e-16 / (root_etemp * root_etemp * root_etemp);
+    coeff = 1. / SAHA / (root_etemp * root_etemp * root_etemp);
 
     /* We now multiply by the ratio of the multiplicity of the ground states.
        Dere's data comes from a vast range of sources, some PI cross sections
@@ -424,7 +424,7 @@ q_ioniz (struct topbase_phot *cont_ptr, double electron_temperature)
  *
  * @details
  * This equation comes from considering TE and getting the expression
- * q_recomb = 2.07e-16 * gl/gu * exp(E/kT) * (T_e**-3/2) * q_ioniz
+ * q_recomb = gl/gu * exp(E/kT) * (T_e**-3/2) * q_ioniz / SAHA, with 1 / SAHA = 2.07e-16
  * then substituting the above expression for q_ioniz.
  *
  * ### Notes ###

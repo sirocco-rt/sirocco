@@ -88,6 +88,7 @@ Spectrum.type(flambda,fnu,basic)              flambda
 @Diag.fractional_distance_photon_may_travel   0.5
 @Diag.lowest_ion_density_for_photoabs      1e-10
 @Diag.keep_photoabs_in_final_spectra(yes,no)                   no
+@Diag.bf_integration(exact,sum,gsl)                  exact
 
 ### Parameters for Reverberation Modeling (if needed)
 Reverb.type(none,photon,wind,matom)                 none
