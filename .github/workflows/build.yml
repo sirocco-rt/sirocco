@@ -118,8 +118,8 @@ jobs:
     - name: Checking the MPI runs are bitwise identical
       run: |
         cd $SIROCCO/examples/gh-workflow/
-        python $SIROCCO/py_progs/compare_runs.py mpi_check_shm mpi_check_noshm
-        python $SIROCCO/py_progs/compare_runs.py mpi_check_shm mpi_check_shm2
+        python $SIROCCO/py_progs/Test/compare_runs.py mpi_check_shm mpi_check_noshm
+        python $SIROCCO/py_progs/Test/compare_runs.py mpi_check_shm mpi_check_shm2
 
     - name: Checking Sirocco still compiles without MPI
       run: |
