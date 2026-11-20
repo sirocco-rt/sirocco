@@ -90,11 +90,11 @@ mpirun -n 4 sirocco parameter_file.pf       # parallel with MPI
 - `examples/` — parameter files (`.pf`) organized by type: `basic/`, `extended/`, `regress/`, `gh-workflow/`
 
 ### Python Utilities (`py_progs/`)
-Support scripts for data processing, visualization, and code maintenance:
+Support scripts for data processing, visualization, and code maintenance. Subfolders: `Atomic/` (atomic data generation), `Docs/` (doc generation), `Test/` (CI test helpers), `Util/` (development utilities), `Legacy/` (unmaintained scripts kept for reference):
 - `run_indent.py` — enforces GNU indent code style on changed C files
-- `MakeMacro.py` — generates macro-atom data from Chianti/Topbase databases
+- `Atomic/MakeMacro.py` — generates macro-atom data from Chianti/Topbase databases
 - `plot_spec.py`, `plot_wind.py`, `plot_tot.py` — visualization
-- `hydro_2_python.py` — parse hydro simulation output for use with Sirocco's hydro import facility
+- `Legacy/hydro_2_python.py` (legacy) — parse hydro simulation output for use with Sirocco's hydro import facility
 - `import_model.py` — unified import-file generator for all coordinate systems (spherical, cylindrical, polar, cyl3d, sph3d)
 - `balmer_decrement.py` — physics validation test
 - `regression.py` — regression testing utilities

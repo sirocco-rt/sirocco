@@ -1588,21 +1588,22 @@ get_one (int ndom, char variable_name[])
       {
         x[n] = plasmamain[nplasma].derived.bf_simple_ionpool_out;
       }
+      /* Note that v_grad[i][j] is dv_j/dx_i, so dv_a_db is v_grad[b][a] */
       else if (strcmp (variable_name, "dv_x_dx") == 0)
       {
         x[n] = wmain[n].v_grad[0][0];
       }
       else if (strcmp (variable_name, "dv_x_dy") == 0)
       {
-        x[n] = wmain[n].v_grad[0][1];
+        x[n] = wmain[n].v_grad[1][0];
       }
       else if (strcmp (variable_name, "dv_x_dz") == 0)
       {
-        x[n] = wmain[n].v_grad[0][2];
+        x[n] = wmain[n].v_grad[2][0];
       }
       else if (strcmp (variable_name, "dv_y_dx") == 0)
       {
-        x[n] = wmain[n].v_grad[1][0];
+        x[n] = wmain[n].v_grad[0][1];
       }
       else if (strcmp (variable_name, "dv_y_dy") == 0)
       {
@@ -1610,15 +1611,15 @@ get_one (int ndom, char variable_name[])
       }
       else if (strcmp (variable_name, "dv_y_dz") == 0)
       {
-        x[n] = wmain[n].v_grad[1][2];
+        x[n] = wmain[n].v_grad[2][1];
       }
       else if (strcmp (variable_name, "dv_z_dx") == 0)
       {
-        x[n] = wmain[n].v_grad[2][0];
+        x[n] = wmain[n].v_grad[0][2];
       }
       else if (strcmp (variable_name, "dv_z_dy") == 0)
       {
-        x[n] = wmain[n].v_grad[2][1];
+        x[n] = wmain[n].v_grad[1][2];
       }
       else if (strcmp (variable_name, "dv_z_dz") == 0)
       {

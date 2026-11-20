@@ -52,6 +52,11 @@ import os
 import sys
 # sys.path.insert(0, os.path.abspath('../../../'))
 sys.path.insert(0, os.path.abspath('../../../py_progs/'))
+sys.path.insert(0, os.path.abspath('../../../py_progs/Atomic'))
+sys.path.insert(0, os.path.abspath('../../../py_progs/Docs'))
+sys.path.insert(0, os.path.abspath('../../../py_progs/Legacy'))
+sys.path.insert(0, os.path.abspath('../../../py_progs/Test'))
+sys.path.insert(0, os.path.abspath('../../../py_progs/Util'))
 sys.path.insert(0, os.path.abspath('../../../py_progs/py4py'))
 
 # == Options for the varous plugins =======================================
