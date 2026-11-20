@@ -10,6 +10,8 @@ on:
       - "main"
 env:
   SIROCCO: ${{ github.workspace }}
+  OMPI_MCA_osc: ^ucx
+  
 jobs:
   build_and_test:
     name: Build Sirocco and run tests
