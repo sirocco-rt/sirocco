@@ -196,7 +196,8 @@ total_di (WindPtr one, double t_e)
 
   for (n = 0; n < nions; n++)
   {
-    if (ion[n].dere_di_flag)
+    /* macro ions' collisional ionization cooling is already in cool_di_macro */
+    if (ion[n].dere_di_flag && !(geo.rt_mode == RT_MODE_MACRO && ion[n].macro_info == TRUE))
     {
       cooling_rate +=
         xplasma->state.vol * xplasma->state.ne * xplasma->state.density[n] * di_coeffs[n] * dere_di_rate[ion[n].nxderedi].xi * EV2ERGS;

@@ -214,6 +214,12 @@ parse_command_line (int argc, char *argv[])
         Log ("Cells partially in the wind will be ingnored.\n");
         j = i;
       }
+      else if (strcmp (argv[i], "-coupled_te") == 0)
+      {
+        modes.coupled_te = TRUE;
+        Log ("Re-solving ionization and level populations at each trial temperature in all cells\n");
+        j = i;
+      }
       else if (strcmp (argv[i], "-f") == 0)
       {
         modes.fixed_temp = 1;
@@ -434,6 +440,8 @@ These are largely diagnostic or for special cases. These include\n\
                         effects.\n\
  -ignore_partial_cells  Ignore wind cells that are only partially filled by the wind (This is now the default)  \n\
  -include_partial_cells Include wind cells that are only partially filled by the wind   \n\
+ -coupled_te            Re-solve the ionization and macro-atom level populations at each trial temperature in all cells,\n\
+                        not only in cells where macro-atom collisional heating dominates (where this is always done).\n\
  -no-matrix-storage     Do not store macro-atom transition matrices if using the macro-atom line transfer and the matrix matom_transition_mode.\n\
  -no-shared-memory      Give every MPI process its own copy of the wind, plasma and macro-atom grids instead of sharing one\n\
                         copy per node.  Results are identical; only memory use changes.  Use if shared memory causes problems.\n\

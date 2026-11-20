@@ -305,6 +305,9 @@ double zero_emit2(double t, void *params);
 double zero_emit_lte(double t);
 double zero_emit_lte2(double t, void *params);
 double calc_te_lte(PlasmaPtr xplasma, double tmin, double tmax);
+double zero_emit_coupled(double t);
+double zero_emit_coupled2(double t, void *params);
+double calc_te_coupled(PlasmaPtr xplasma, double tmin, double tmax, int mode);
 /* janitor.c */
 void free_domains(void);
 void free_wind_grid(void);
