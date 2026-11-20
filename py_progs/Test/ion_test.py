@@ -170,9 +170,9 @@ def main():
     # parse the command line
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("roots", nargs="*", default=list(MODELS), help="models to run (default: all)")
-    parser.add_argument("-sirocco", default=os.path.join(sirocco_bin, "sirocco"),
+    parser.add_argument("-sirocco", default=os.path.join(sirocco_bin_dir, "sirocco"),
                         help="the sirocco executable (default: %(default)s)")
-    parser.add_argument("-windsave2table", default=os.path.join(sirocco_bin, "windsave2table"),
+    parser.add_argument("-windsave2table", default=os.path.join(sirocco_bin_dir, "windsave2table"),
                         help="the windsave2table executable (default: %(default)s)")
     parser.add_argument("-tol", type=float, default=0.05, help="tolerance in chi (default: %(default)s)")
     parser.add_argument("-check_only", action="store_true", help="only check existing windsave2table outputs")
@@ -184,7 +184,7 @@ def main():
 
     if not args.check_only: 
         if not os.path.exists("data"):
-            if not sirocco_bin:
+            if not sirocco_bin_dir:
                 sys.exit("ERROR: no data link here and $SIROCCO is not set")
 
             os.symlink(os.path.join(os.environ["SIROCCO"], "xdata"), "data")
