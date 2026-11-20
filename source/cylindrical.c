@@ -285,8 +285,9 @@ cylind_wind_complete (int ndom, WindPtr w)
     one_dom->wind_midz[j] = 0.5 * (w[nstart + j].x[2] + w[nstart + j + 1].x[2]);
 
   /* Add something plausible for the edges */
-  one_dom->wind_midx[one_dom->ndim - 1] = 2. * one_dom->wind_x[nstart + ndim - 1] - one_dom->wind_midx[nstart + ndim - 2];
-  one_dom->wind_midz[one_dom->mdim - 1] = 2. * one_dom->wind_z[nstart + mdim - 1] - one_dom->wind_midz[nstart + mdim - 2];
+  one_dom->wind_midx[one_dom->ndim - 1] = 2. * one_dom->wind_x[ndim - 1] - one_dom->wind_midx[ndim - 2];
+  one_dom->wind_midz[one_dom->mdim - 1] = 2. * one_dom->wind_z[mdim - 1] - one_dom->wind_midz[mdim - 2];
+  set_domain_outer_edges (ndom);
 
   return (0);
 }
@@ -379,7 +380,7 @@ cylind_cell_volume (WindPtr w)
       {
         for (z = zmin + dz / 2; z < zmax; z += dz)
         {
-          denom += r * r;
+          denom += r;           /* the volume element is 2 pi r dr dz */
           kk++;
           x[0] = r;
           x[1] = 0;
@@ -387,7 +388,7 @@ cylind_cell_volume (WindPtr w)
 
           if (where_in_wind (x, &dom_check) == W_ALL_INWIND && dom_check == ndom)
           {
-            num += r * r;       /* 0 implies in wind */
+            num += r;
             jj++;
           }
         }

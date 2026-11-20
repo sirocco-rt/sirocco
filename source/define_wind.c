@@ -410,10 +410,6 @@ make_coordinate_grid (void)
     {
       rtheta_make_grid (ndom, wmain);
     }
-    else if (zdom[ndom].coord_type == CYLVAR)
-    {
-      cylvar_make_grid (ndom, wmain);
-    }
     else
     {
       Error ("make_coordinate_grid: unknown wind or coordinate type\n");
@@ -447,10 +443,6 @@ calculate_cell_volume (WindPtr cell)
   else if (zdom[ndom].coord_type == CYLIND)
   {
     cylind_cell_volume (cell);
-  }
-  else if (zdom[ndom].coord_type == CYLVAR)
-  {
-    cylvar_cell_volume (cell);
   }
   else if (zdom[ndom].coord_type == RTHETA)
   {

@@ -434,16 +434,27 @@ velocity_cylindrical (int ndom, double *x, double *v)
   {
     vv[j] = 0;
     for (nn = 0; nn < nelem; nn++)
-      vv[j] += wmain[zdom[ndom].nstart + nnn[nn]].v[j] * frac[nn];
+      vv[j] += wmain[nnn[nn]].v[j] * frac[nn];
   }
 
   speed = length (vv);
 
-  /* Now copy the result into v, which is very necessary if refilling wmain.v */
+  /* Now copy the result into v, which is very necessary if refilling wmain.v.
+     The interpolated vector is (v_rho, v_phi, v_z) as it would be in the xz plane,
+     so if x is not in the xz plane rotate it to cartesian coordinates at x, as is
+     done for analytic winds, e.g. in sv_velocity.  Without this, velocity gradients
+     in the y direction (and so div_v and dv/ds) are wrong for imported models */
 
-  v[0] = vv[0];
-  v[1] = vv[1];
-  v[2] = vv[2];
+  if (x[1] != 0.0)
+  {
+    project_from_cyl_xyz (x, vv, v);
+  }
+  else
+  {
+    v[0] = vv[0];
+    v[1] = vv[1];
+    v[2] = vv[2];
+  }
 
   return (speed);
 }

@@ -143,3 +143,4 @@ Example files are in `examples/basic/`, `examples/extended/`, and `examples/gh-w
 - MPI code guarded by `#ifdef MPI_ON` preprocessor directives
 - CUDA code guarded by `#ifdef CUDA_ON`
 - Logging via `xlog.c` functions (Log, Error, Debug)
+- Use explicit, readable C rather than compact syntax: e.g., use `if`/`else` rather than the ternary operator (`a ? b : c`), and avoid putting multiple operations on one line.

@@ -83,7 +83,7 @@ spherical_ds_in_cell (int ndom, PhotPtr p)
      * does not help because a tangential nudge leaves r unchanged in floating point.
      * Instead return the distance to a sphere just outside the boundary; this is always
      * finite for a photon at r <= rmax and moves it cleanly into the next cell. */
-    Error ("spherical: ds_in_cell: s and smax returning VERY_BIG in cell %i for photon %d; pushing past outer boundary\n", p->grid, p->np);
+    Debug ("spherical: ds_in_cell: s and smax returning VERY_BIG in cell %i for photon %d; pushing past outer boundary\n", p->grid, p->np);
     return (ds_to_sphere (zdom[ndom].wind_x[ix + 1] + DFUDGE, p));
   }
 
@@ -214,6 +214,7 @@ spherical_wind_complete (int ndom, WindPtr w)
   /* Add something plausible for the edges */
   zdom[ndom].wind_midx[ndim - 1] = 2. * zdom[ndom].wind_x[ndim - 1] - zdom[ndom].wind_midx[ndim - 2];
   zdom[ndom].wind_midz[0] = zdom[ndom].wind_z[0] / 2;
+  set_domain_outer_edges (ndom);
 
   return (0);
 }

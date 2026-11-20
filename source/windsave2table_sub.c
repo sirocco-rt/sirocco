@@ -532,8 +532,16 @@ create_heat_table (int ndom, char rootname[])
   c[33] = get_one (ndom, "energy_out_macro");
   strcpy (column_name[33], "e_out_macro");
 
+  /* Emission in the band of the spectral cycles by k-packets and macro atoms
+     (summed over levels); zero for models without macro atoms */
+  c[34] = get_one (ndom, "kpkt_emiss");
+  strcpy (column_name[34], "kpkt_lum");
+
+  c[35] = get_one (ndom, "matom_emiss");
+  strcpy (column_name[35], "matom_lum");
+
   /* This should be the maximum number above +1 */
-  ncols = 34;
+  ncols = 36;
 
 
   converge = get_one (ndom, "converge");
@@ -1555,6 +1563,19 @@ get_one (int ndom, char variable_name[])
         if (macromain != NULL)
           x[n] = macromain[nplasma].est.energy_flow_out;
       }
+      else if (strcmp (variable_name, "kpkt_emiss") == 0)
+      {
+        x[n] = plasmamain[nplasma].derived.kpkt_emiss;
+      }
+      else if (strcmp (variable_name, "matom_emiss") == 0)
+      {
+        if (macromain != NULL)
+        {
+          int m;
+          for (m = 0; m < nlevels_macro; m++)
+            x[n] += macromain[nplasma].derived.matom_emiss[m];
+        }
+      }
       else if (strcmp (variable_name, "gain") == 0)
       {
         x[n] = plasmamain[nplasma].derived.gain;
@@ -1567,21 +1588,22 @@ get_one (int ndom, char variable_name[])
       {
         x[n] = plasmamain[nplasma].derived.bf_simple_ionpool_out;
       }
+      /* Note that v_grad[i][j] is dv_j/dx_i, so dv_a_db is v_grad[b][a] */
       else if (strcmp (variable_name, "dv_x_dx") == 0)
       {
         x[n] = wmain[n].v_grad[0][0];
       }
       else if (strcmp (variable_name, "dv_x_dy") == 0)
       {
-        x[n] = wmain[n].v_grad[0][1];
+        x[n] = wmain[n].v_grad[1][0];
       }
       else if (strcmp (variable_name, "dv_x_dz") == 0)
       {
-        x[n] = wmain[n].v_grad[0][2];
+        x[n] = wmain[n].v_grad[2][0];
       }
       else if (strcmp (variable_name, "dv_y_dx") == 0)
       {
-        x[n] = wmain[n].v_grad[1][0];
+        x[n] = wmain[n].v_grad[0][1];
       }
       else if (strcmp (variable_name, "dv_y_dy") == 0)
       {
@@ -1589,15 +1611,15 @@ get_one (int ndom, char variable_name[])
       }
       else if (strcmp (variable_name, "dv_y_dz") == 0)
       {
-        x[n] = wmain[n].v_grad[1][2];
+        x[n] = wmain[n].v_grad[2][1];
       }
       else if (strcmp (variable_name, "dv_z_dx") == 0)
       {
-        x[n] = wmain[n].v_grad[2][0];
+        x[n] = wmain[n].v_grad[0][2];
       }
       else if (strcmp (variable_name, "dv_z_dy") == 0)
       {
-        x[n] = wmain[n].v_grad[2][1];
+        x[n] = wmain[n].v_grad[1][2];
       }
       else if (strcmp (variable_name, "dv_z_dz") == 0)
       {

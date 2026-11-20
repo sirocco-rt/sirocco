@@ -109,9 +109,7 @@ calc_pi_rate (int nion, PlasmaPtr xplasma, int mode, int type)
     }
     else
     {
-      Error
-        ("calc_pi_rate: No inner shell xsection for record %d (element %d, ion state %d)\n",
-         nion, inner_cross[nion].z, inner_cross[nion].istate);
+      Error ("calc_pi_rate: No inner shell xsection for record %d (there are %d)\n", nion, n_inner_tot);
       Exit (0);
     }
   }

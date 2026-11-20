@@ -103,10 +103,6 @@ write_array (char filename[], int choice)
   {
     fprintf (fptr, "# Coord_Sys RTHETA\n");
   }
-  else if (zdom[ndom].coord_type == CYLVAR)
-  {
-    fprintf (fptr, "# Coord_Sys CYLVAR\n");
-  }
   else
   {
     Error ("write_array: Unknown coordinaate system type: %d\n", zdom[ndom].coord_type);

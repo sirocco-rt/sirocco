@@ -9,7 +9,7 @@
 # and build for debugging. But isn't complex enough to fully emulate the
 # behaviour of the Makefile in $PYTHON/source.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.6)
 project(Python LANGUAGES C)
 
 # The C standard is being set to 90. The compiler is being set to mpicc
@@ -78,7 +78,6 @@ set(PYTHON_SOURCE
     source/anisowind.c
     source/bands.c
     source/bb.c
-    source/bilinear.c
     source/brem.c
     source/cdf.c
     source/charge_exchange.c
@@ -87,7 +86,6 @@ set(PYTHON_SOURCE
     source/cooling.c
     source/corona.c
     source/cv.c
-    source/cylind_var.c
     source/cylindrical.c
     source/density.c
     source/diag.c

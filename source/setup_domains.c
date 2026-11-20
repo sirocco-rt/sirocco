@@ -37,8 +37,6 @@
  * ###Notes###
  * 1801 -   Refactored into this file in 1801.  Updates in the
  *          fall of 17 were made to allow for importing models.
- *          Note that cyl_var coordinates are not currently 
- *          working
 ***********************************************************/
 
 
@@ -81,7 +79,7 @@ get_domain_params (int ndom)
     strcpy (answer, "cylindrical");
   }
 
-  zdom[ndom].coord_type = rdchoice ("Wind.coord_system(spherical,cylindrical,polar,cyl_var)", "0,1,2,3", answer);
+  zdom[ndom].coord_type = rdchoice ("Wind.coord_system(spherical,cylindrical,polar)", "0,1,2", answer);
 
   if (zdom[ndom].wind_type == IMPORT)   // Do not define dimensions for imported model
   {
@@ -152,8 +150,6 @@ get_domain_params (int ndom)
  *
  * Memory is allocated for the `wind_x`, `wind_z`, `wind_midx` and `wind_midz`
  * arrays. For a polar coordinate system an additional wind cone is allocated.
- * For cylindrical variable coordinate system `wind_z_var` and `wind_midz_var`
- * are allocated.
  *
  * If allocating fails for anything, the program will exit.
  *
@@ -162,8 +158,9 @@ get_domain_params (int ndom)
 void
 allocate_domain_wind_coords (int ndom)
 {
-  /* Allocate x dimensions */
-  zdom[ndom].wind_x = calloc (zdom[ndom].ndim, sizeof (double));
+  /* Allocate x dimensions; wind_x and wind_z have one extra entry, the outer
+     edge of the outermost cells, see set_domain_outer_edges */
+  zdom[ndom].wind_x = calloc (zdom[ndom].ndim + 1, sizeof (double));
   zdom[ndom].wind_midx = calloc (zdom[ndom].ndim, sizeof (double));
   if (zdom[ndom].wind_x == NULL || zdom[ndom].wind_midx == NULL)
   {
@@ -172,7 +169,7 @@ allocate_domain_wind_coords (int ndom)
   }
 
   /* Allocate z dimensions */
-  zdom[ndom].wind_z = calloc (zdom[ndom].mdim, sizeof (double));
+  zdom[ndom].wind_z = calloc (zdom[ndom].mdim + 1, sizeof (double));
   zdom[ndom].wind_midz = calloc (zdom[ndom].mdim, sizeof (double));
   if (zdom[ndom].wind_z == NULL || zdom[ndom].wind_midz == NULL)
   {
@@ -190,10 +187,36 @@ allocate_domain_wind_coords (int ndom)
       Exit (EXIT_FAILURE);
     }
   }
-  else if (zdom[ndom].coord_type == CYLVAR)
-  {
-    cylvar_allocate_domain (ndom);
-  }
+}
+
+
+
+/**********************************************************/
+/**
+ * @brief      Set the outer edge of the outermost cells of a domain
+ *
+ * @param [in] int  ndom   The domain
+ *
+ * @details
+ * wind_x and wind_z hold the inner edges of the cells, with one extra entry
+ * (see allocate_domain_wind_coords), so that the outer edge of cell i is always
+ * wind_x[i + 1] (and of cell j, wind_z[j + 1]).  The outermost cells are guard
+ * cells, whose outer edge the grid does not define; it is set here by extending
+ * the spacing of the previous cell, as the *_wind_complete routines do for the
+ * mid-points.  Called at the end of each *_wind_complete routine.  See #1214.
+ *
+***********************************************************/
+
+void
+set_domain_outer_edges (int ndom)
+{
+  const int ndim = zdom[ndom].ndim;
+  const int mdim = zdom[ndom].mdim;
+
+  if (ndim > 1)
+    zdom[ndom].wind_x[ndim] = 2. * zdom[ndom].wind_x[ndim - 1] - zdom[ndom].wind_x[ndim - 2];
+  if (mdim > 1 && (zdom[ndom].coord_type == CYLIND || zdom[ndom].coord_type == RTHETA))
+    zdom[ndom].wind_z[mdim] = 2. * zdom[ndom].wind_z[mdim - 1] - zdom[ndom].wind_z[mdim - 2];
 }
 
 /**********************************************************/

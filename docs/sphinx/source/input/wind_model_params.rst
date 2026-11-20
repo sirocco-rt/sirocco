@@ -8,7 +8,7 @@ SIROCCO allows for various types of wind models, which are defined by the follow
   ### Parameters describing the various winds or coronae in the system
   Wind.number_of_components                         1
   Wind.type(SV,star,hydro,corona,kwd,homologous,shell,imported)                   SV
-  Wind.coord_system(spherical,cylindrical,polar,cyl_var)          cylindrical
+  Wind.coord_system(spherical,cylindrical,polar)          cylindrical
   Wind.dim.in.x_or_r.direction                     30
   Wind.dim.in.z_or_theta.direction                   30
 

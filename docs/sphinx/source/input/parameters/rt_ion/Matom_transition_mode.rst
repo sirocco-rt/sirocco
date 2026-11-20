@@ -1,7 +1,9 @@
 Matom_transition_mode
 ================================
 
-This option allows the user to determine which mode to use for the macro-atom transition probabilities. The macro atom is not a single atom; it represents an ensemble of atoms of a particular type. The mc_jumps method is a stochastic treatment and the matrix method is a state machine. The default is set to mc_jumping. More information on macro atoms can be found in the :ref:`macro atoms` section. Be wary of using matrix mode due to the high memory requirements.
+This option allows the user to determine which mode to use for the macro-atom transition probabilities. The macro atom is not a single atom; it represents an ensemble of atoms of a particular type. The mc_jumps method is a stochastic treatment and the matrix method is a state machine. The default is set to mc_jumping. More information on macro atoms can be found in the :ref:`macro atoms` section.
+
+Matrix mode stores one matrix per wind cell, with :math:`(N+1)^2` entries for :math:`N` macro-atom levels in total, so its memory grows quickly with the size of the atomic data. The matrices are shared by the processes on a node, but even so, for 1000 cells they take about 60 MB with the 85-level H/He data (``h20_hetop_standard80``) and about 1.1 GB with the 377-level CNO data (``master_cno``). For large atoms or large grids, use ``mc_jumps``. The command-line option ``-no-matrix-storage`` avoids the memory, but then the matrix is recomputed every time a macro atom is activated, which is usually much slower than ``mc_jumps``.
 
 Type
   Enumerator

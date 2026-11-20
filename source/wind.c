@@ -635,7 +635,7 @@ wind_check (WindPtr www, int n)
         }
       }
     }
-    else if (zdom[ndom].coord_type == CYLIND || zdom[ndom].coord_type == CYLVAR)
+    else if (zdom[ndom].coord_type == CYLIND)
     {
       dxmin = 1e99;
       dzmin = 1e99;

@@ -417,7 +417,8 @@ calculate_ionization (int restart_stat)
         {
           Log
             ("!!Early_stop: Convergence stabilised at cycle %d of %d (converged=%.1f%% >= floor %.1f%%, avg_change=%.4f%% < tolerance=%.1f%%)\n",
-             geo.wcycle, geo.wcycles, geo.fraction_converged * 100.0, geo.convergence_fraction, avg_change * 100.0, geo.convergence_tolerance);
+             geo.wcycle, geo.wcycles, geo.fraction_converged * 100.0, geo.convergence_fraction, avg_change * 100.0,
+             geo.convergence_tolerance);
           xsignal (files.root, "%-20s Ionization converged early at cycle %3d of %3d\n", "OK", geo.wcycle, geo.wcycles);
           Log_flush ();
           break;
@@ -511,7 +512,9 @@ make_spectra (int restart_stat)
 
   kbf_need (freqmin, freqmax);
 
-  /* force recalculation of kpacket rates and matrices, if applicable */
+  /* force recalculation of kpacket rates and matrices, if applicable.  The recombination
+   * and k-packet rates are calculated here for every cell, since the plasma state has
+   * changed in the last wind update (#1218) */
   if (geo.rt_mode == RT_MODE_MACRO)
   {
     for (n = 0; n < NPLASMA; n++)
@@ -519,6 +522,7 @@ make_spectra (int restart_stat)
       macromain[n].derived.kpkt_rates_known = FALSE;
       macromain[n].derived.matrix_rates_known = FALSE;
     }
+    calc_macro_recomb_and_kpkt_rates ();
   }
 
   /* BEGIN CYCLES TO CREATE THE DETAILED SPECTRUM */
