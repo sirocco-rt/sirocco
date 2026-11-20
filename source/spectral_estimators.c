@@ -96,8 +96,8 @@ spectral_estimators (PlasmaPtr xplasma)
     }
   }
 
-  /* We loop over all of the bands, the first band is band number 0, and the last is band nxfreq-1 */
-  for (n = 0; n < geo.nxfreq; n++)
+  /* We loop over all of the bands in this cell, the first band is band number 0, and the last is band nbands-1 */
+  for (n = 0; n < xplasma->state.nbands; n++)
 
   {
     Log_silent

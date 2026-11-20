@@ -64,6 +64,7 @@ Values
     abundances are provided differ from the elements to be used as described in the
     elements/ions portion of the atomic data, then one should not expect the calculated
     electron density to be that that comes simply from the fixd concetnrations file.)
+    The file is given by :ref:`Wind.fixed_concentrations_file`.
 
   matrix_bb
     Estimate photoionization rates by approximating the spectrum in
@@ -75,11 +76,17 @@ Values
     approximation, usually a power law.  Invert the rate matrix equation to
     calculate the ionization. (This is the preferred ionization mode for most
     calculations)
+    How the spectrum in each cell is divided into bands, or whether the detailed cell
+    spectrum is used instead, is set by :ref:`Wind.ionization.band_model`.
 
   matrix_est
     Estimate photoionization rates by calculating rates directly from the photons that pass
     through a cell.  There is no attempt to model the spectrum. Invert the rate matrix equation to
     calculate the ionization.
+    The photoionization rates do not use a model of the spectrum, but other quantities
+    (the populations of the levels of simple-atom lines, induced Compton scattering and
+    Compton cooling) do; how the spectrum in each cell is divided into bands for these
+    is set by :ref:`Wind.ionization.band_model`.
 
   matrix_multi
     Similar to matrix_pow, except in this case a more aggessive approach to reaching
@@ -90,6 +97,8 @@ Values
     times. Currently number of iterations is fixed and set by the parameter NEBULARMODE_MATRIX_MULTISHOT
     which can be found in sirrocco.h.  This mode was developed to accelerate convergence in
     dense plasmas, but is still regarded as somewhat experimental as of 2025 Sept.  
+    As for matrix_pow, how the spectrum in each cell is divided into bands is set by
+    :ref:`Wind.ionization.band_model`.
 
 
 File
@@ -98,4 +107,6 @@ File
 
 Child(ren)
   * :ref:`Wind.fixed_concentrations_file`
+
+  * :ref:`Wind.ionization.band_model`
 

@@ -32,7 +32,7 @@
    for working with cfitsio */
 
 char inroot[LINELENGTH], outroot[LINELENGTH], model_file[LINELENGTH], folder[LINELENGTH];
-int model_flag, ksl_flag, cmf2obs_flag, obs2cmf_flag;
+int model_flag, ksl_flag, cmf2obs_flag, obs2cmf_flag, thresh_flag;
 
 double line_matom_lum_single (double lum[], PlasmaPtr xplasma, int uplvl);
 int line_matom_lum (int uplvl);
@@ -401,6 +401,203 @@ write_spectra_model_table (fitsfile *fptr)
 
 
 
+/**********************************************************/
+/**
+ * @brief      Set geo.cell_freq, the edges of the cell spectrum bins
+ *
+ * @return     Always 0
+ *
+ * @details
+ * With -thresh, the saved cell spectra were made by a run with
+ * band model cell_spectrum or -pi_rate_table, whose bins are log bins with every
+ * photoionization threshold added (cell_spec_threshold_grid).  The grid is
+ * rebuilt from the atomic data, as on a restart.  Otherwise the bins are
+ * uniform in log frequency.
+ **********************************************************/
+
+int
+set_cell_freq ()
+{
+  int i;
+  int run_type;
+
+  if (thresh_flag)
+  {
+    run_type = geo.run_type;
+    geo.run_type = RUN_TYPE_RESTART;
+    cell_spec_threshold_grid ();
+    geo.run_type = run_type;
+  }
+  else
+  {
+    if (geo.cell_freq != NULL)
+    {
+      free (geo.cell_freq);
+    }
+    geo.cell_freq = calloc (geo.nbins_in_cell_spec + 1, sizeof (double));
+    for (i = 0; i <= geo.nbins_in_cell_spec; i++)
+    {
+      geo.cell_freq[i] = pow (10., geo.cell_log_freq_min + i * geo.cell_delta_lfreq);
+    }
+  }
+  return (0);
+}
+
+
+/**********************************************************/
+/**
+ * @brief      Write what is needed to compute photoionization rates from
+ * the cell spectra outside Sirocco
+ *
+ * @param [in] fitsfile *fptr   The open FITS file
+ * @return     The cfitsio status (0 if all went well)
+ *
+ * @details
+ * Extensions:
+ * - nu_edges: the nbins+1 bin edges (Hz), in double precision
+ * - ions: table of z, istate and phot_info for every ion
+ * - sigma_outer: nions x nbins, the integral of sigma/nu over each bin for
+ *   the ground-state cross section calc_pi_rate uses (0 if none)
+ * - inner: table of nion, z, istate for every inner-shell cross section
+ * - sigma_inner: n_inner_tot x nbins, the same for the inner shells
+ * - density: NPLASMA x nions ion densities (cm^-3)
+ *
+ * The photoionization rate per ion of a cell is then
+ * 4 pi / h * sum over bins of Jnu * sigma, which is what band model cell_spectrum uses.
+ **********************************************************/
+
+int
+write_rate_extensions (fitsfile *fptr)
+{
+  int status = 0;
+  int i, j, n;
+  int nbins;
+  long naxes[2];
+  double *s;
+  double *edges;
+  double *sig;
+  double *dens;
+  int *col_a, *col_b, *col_c;
+  char *ttype_ions[] = { "z", "istate", "phot_info" };
+  char *ttype_inner[] = { "nion", "z", "istate" };
+  char *tform[] = { "J", "J", "J" };
+  char *tunit[] = { "", "", "" };
+
+  nbins = geo.nbins_in_cell_spec;
+
+  /* bin edges, in double precision */
+  edges = calloc (nbins + 1, sizeof (double));
+  for (i = 0; i <= nbins; i++)
+  {
+    edges[i] = geo.cell_freq[i];
+  }
+  naxes[0] = nbins + 1;
+  fits_create_img (fptr, DOUBLE_IMG, 1, naxes, &status);
+  fits_update_key (fptr, TSTRING, "EXTNAME", "nu_edges", NULL, &status);
+  fits_write_img (fptr, TDOUBLE, 1, nbins + 1, edges, &status);
+  free (edges);
+
+  /* the ions */
+  col_a = calloc (nions, sizeof (int));
+  col_b = calloc (nions, sizeof (int));
+  col_c = calloc (nions, sizeof (int));
+  for (n = 0; n < nions; n++)
+  {
+    col_a[n] = ion[n].z;
+    col_b[n] = ion[n].istate;
+    col_c[n] = ion[n].phot_info;
+  }
+  fits_create_tbl (fptr, BINARY_TBL, nions, 3, ttype_ions, tform, tunit, "ions", &status);
+  fits_write_col (fptr, TINT, 1, 1, 1, nions, col_a, &status);
+  fits_write_col (fptr, TINT, 2, 1, 1, nions, col_b, &status);
+  fits_write_col (fptr, TINT, 3, 1, 1, nions, col_c, &status);
+  free (col_a);
+  free (col_b);
+  free (col_c);
+
+  /* outer-shell integrals */
+  sig = calloc ((size_t) nions * nbins, sizeof (double));
+  for (n = 0; n < nions; n++)
+  {
+    s = pi_rate_bin_integrals (n, 1);
+    if (s != NULL)
+    {
+      for (i = 0; i < nbins; i++)
+      {
+        sig[(size_t) n * nbins + i] = s[i];
+      }
+    }
+  }
+  naxes[0] = nbins;
+  naxes[1] = nions;
+  fits_create_img (fptr, DOUBLE_IMG, 2, naxes, &status);
+  fits_update_key (fptr, TSTRING, "EXTNAME", "sigma_outer", NULL, &status);
+  fits_write_img (fptr, TDOUBLE, 1, (long) nions * nbins, sig, &status);
+  free (sig);
+
+  /* inner-shell cross sections */
+  if (n_inner_tot > 0)
+  {
+    col_a = calloc (n_inner_tot, sizeof (int));
+    col_b = calloc (n_inner_tot, sizeof (int));
+    col_c = calloc (n_inner_tot, sizeof (int));
+    for (n = 0; n < n_inner_tot; n++)
+    {
+      col_a[n] = inner_cross[n].nion;
+      col_b[n] = ion[inner_cross[n].nion].z;
+      col_c[n] = ion[inner_cross[n].nion].istate;
+    }
+    fits_create_tbl (fptr, BINARY_TBL, n_inner_tot, 3, ttype_inner, tform, tunit, "inner", &status);
+    fits_write_col (fptr, TINT, 1, 1, 1, n_inner_tot, col_a, &status);
+    fits_write_col (fptr, TINT, 2, 1, 1, n_inner_tot, col_b, &status);
+    fits_write_col (fptr, TINT, 3, 1, 1, n_inner_tot, col_c, &status);
+    free (col_a);
+    free (col_b);
+    free (col_c);
+
+    sig = calloc ((size_t) n_inner_tot * nbins, sizeof (double));
+    for (n = 0; n < n_inner_tot; n++)
+    {
+      s = pi_rate_bin_integrals (n, 2);
+      if (s != NULL)
+      {
+        for (i = 0; i < nbins; i++)
+        {
+          sig[(size_t) n * nbins + i] = s[i];
+        }
+      }
+    }
+    naxes[1] = n_inner_tot;
+    fits_create_img (fptr, DOUBLE_IMG, 2, naxes, &status);
+    fits_update_key (fptr, TSTRING, "EXTNAME", "sigma_inner", NULL, &status);
+    fits_write_img (fptr, TDOUBLE, 1, (long) n_inner_tot * nbins, sig, &status);
+    free (sig);
+  }
+
+  /* ion densities */
+  dens = calloc ((size_t) NPLASMA * nions, sizeof (double));
+  for (j = 0; j < NPLASMA; j++)
+  {
+    for (n = 0; n < nions; n++)
+    {
+      dens[(size_t) j * nions + n] = plasmamain[j].state.density[n];
+    }
+  }
+  naxes[0] = nions;
+  naxes[1] = NPLASMA;
+  fits_create_img (fptr, DOUBLE_IMG, 2, naxes, &status);
+  fits_update_key (fptr, TSTRING, "EXTNAME", "density", NULL, &status);
+  fits_write_img (fptr, TDOUBLE, 1, (long) NPLASMA * nions, dens, &status);
+  free (dens);
+
+  if (status)
+  {
+    fits_report_error (stderr, status);
+  }
+  return (status);
+}
+
+
 int
 make_spec (char *inroot)
 {
@@ -435,6 +632,8 @@ make_spec (char *inroot)
   printf ("Plasma  %d \n", NPLASMA);
   printf ("NBINS in spec %d \n", geo.nbins_in_cell_spec);
 
+
+  set_cell_freq ();
 
   Spectra spectra;
   spectra.num_spectra = NPLASMA;
@@ -477,7 +676,7 @@ make_spec (char *inroot)
 
   for (int i = 0; i < geo.nbins_in_cell_spec; i++)
   {
-    freq.data[0][i] = (float) pow (10., geo.cell_log_freq_min + i * geo.cell_delta_lfreq);
+    freq.data[0][i] = (float) geo.cell_freq[i];
   }
 
 
@@ -523,6 +722,8 @@ make_spec (char *inroot)
 
   write_spectra_model_table (fptr);
 
+  write_rate_extensions (fptr);
+
   if (fits_close_file (fptr, &status))
   {
     fits_report_error (stderr, status);
@@ -567,6 +768,7 @@ xparse_command_line (int argc, char *argv[])
   sprintf (outroot, "%s", "new");
 
   model_flag = ksl_flag = obs2cmf_flag = cmf2obs_flag = 0;
+  thresh_flag = 0;
 
   if (argc == 1)
   {
@@ -618,6 +820,11 @@ xparse_command_line (int argc, char *argv[])
       else if (strcmp (argv[i], "--dry-run") == 0)
       {
         modes.quit_after_inputs = 1;
+        j = i;
+      }
+      else if (strcmp (argv[i], "-thresh") == 0)
+      {
+        thresh_flag = 1;
         j = i;
       }
       else if (strcmp (argv[i], "-cmf") == 0)

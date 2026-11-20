@@ -1114,3 +1114,43 @@ allocate_macro_matrix (double ***matrix_addr, int matrix_size)
     (*matrix_addr)[row] = (*matrix_addr)[row - 1] + matrix_size;
   }
 }
+
+/**********************************************************/
+/**
+ * @brief      Resize the cell spectra (cell_spec_flux) of every plasma cell
+ *
+ * @param [in] int  nbins   The new number of bins per cell
+ * @return     0
+ *
+ * @details
+ * The block is allocated when the wind save is read, with the number of
+ * bins of the saved run.  A restart with a different number of bins
+ * (-cell_spec_dim, or band model cell_spectrum) must reallocate it, or
+ * the cells overwrite each other.  The contents are not
+ * kept; the cell spectra are zeroed at the start of every cycle.
+ **********************************************************/
+
+int
+resize_cell_spec_flux (int nbins)
+{
+  int n;
+  int nelem_alloc;
+
+  if (nbins == geo.nbins_in_cell_spec)
+  {
+    return (0);
+  }
+
+  Log ("resize_cell_spec_flux: cell spectra changed from %d to %d bins\n", geo.nbins_in_cell_spec, nbins);
+
+  free_block ((void **) &plasma_block_ptrs.cell_spec_flux_block, NULL, FALSE);
+  geo.nbins_in_cell_spec = nbins;
+  nelem_alloc = NPLASMA + 1;
+  alloc_block_double ((long) nelem_alloc * nbins, &plasma_block_ptrs.cell_spec_flux_block, NULL, FALSE);
+  for (n = 0; n < nelem_alloc; n++)
+  {
+    plasmamain[n].est.cell_spec_flux = plasma_block_ptrs.cell_spec_flux_block + n * nbins;
+  }
+
+  return (0);
+}

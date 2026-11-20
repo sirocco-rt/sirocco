@@ -94,6 +94,7 @@ init_geo ()
 
   geo.run_type = 0;             // Not a restart of a previous run
   geo.nbins_in_cell_spec = 100; // Default number of bins for cell spectra (max NBINS_IN_CELL_SPEC)
+  geo.band_model = BAND_MODEL_HHE_CNO_EDGES;
 
   geo.star_ion_spectype = geo.star_spectype
     = geo.disk_ion_spectype = geo.disk_spectype = geo.bl_ion_spectype = geo.bl_spectype = SPECTYPE_BB;
@@ -351,6 +352,9 @@ init_advanced_modes ()
 
   modes.no_macro_pops_for_ions = FALSE; /* use the ion densities from macro_pops where applicable */
   modes.early_stopping = FALSE; /* convergence-based early stopping of ionization cycles */
+  modes.direct_ground_only = FALSE;     /* direct estimators include excited levels */
+  modes.pi_rate_table = FALSE;  /* no table of photoionization rates */
+  modes.cell_spec_dim_given = FALSE;
 
   return (0);
 }
@@ -756,6 +760,38 @@ fixed concentration file. \n\
     rdstr ("Wind.fixed_concentrations_file", &geo.fixed_con_file[0]);
   }
 
+  /* How J_nu in each cell is described.  Only matrix_pow, matrix_est and matrix_multishot fit models
+     to the band sums, so the question is asked only for them; the other modes keep the default bands,
+     which are then used only for diagnostics */
+  geo.band_model = BAND_MODEL_HHE_CNO_EDGES;
+  if (geo.ioniz_mode == IONMODE_MATRIX_SPECTRALMODEL || geo.ioniz_mode == IONMODE_MATRIX_ESTIMATORS
+      || geo.ioniz_mode == IONMODE_MATRIX_MULTISHOT)
+  {
+    strcpy (answer, "hhe_cno_edges");
+    geo.band_model = rdchoice ("Wind.ionization.band_model(hhe_cno_edges,photon_bands,cell_spectrum,user_bands)", "0,1,2,3", answer);
+  }
+  if (geo.band_model == BAND_MODEL_USER_BANDS)
+  {
+    get_user_ion_bands ();
+  }
+
+  /* cell_spectrum takes the photoionization rates from the cell spectra, which then need a fine grid,
+     unless -cell_spec_dim was given: for a new run 1000 log bins, to which the thresholds are added;
+     on a restart 1000 bins in all (see cell_spec_threshold_grid) */
+  if (geo.band_model == BAND_MODEL_CELL_SPECTRUM && modes.cell_spec_dim_given == FALSE)
+  {
+    if (geo.run_type == RUN_TYPE_NEW)
+    {
+      geo.nbins_in_cell_spec = 1000;
+      Log ("init_ionization: band model cell_spectrum: cell spectra with 1000 log bins plus the thresholds\n");
+    }
+    else
+    {
+      resize_cell_spec_flux (1000);
+      Log ("init_ionization: band model cell_spectrum: cell spectra with 1000 bins in all, thresholds included\n");
+    }
+  }
+
 
   /* get_line_transfer_mode reads in the Line_transfer question from the user,
      then alters the variables geo.line_mode, geo.scatter_mode, geo.rt_mode and geo.macro_simple.
@@ -841,6 +877,53 @@ fixed concentration file. \n\
 
   return (0);
 
+}
+
+
+
+/**********************************************************/
+/**
+ * @brief      Read the band boundaries for Wind.ionization.band_model user_bands
+ *
+ * @return     Always returns 0
+ *
+ * @details
+ * The number of bands (at most NXBANDS) and then the inner boundaries in eV,
+ * which must increase.  The outer limits are those of the photon generation
+ * bands, so that the bands cover every photon; ion_bands_init drops any
+ * boundary outside them.  The boundaries are kept in geo (in Hz).
+ **********************************************************/
+
+int
+get_user_ion_bands ()
+{
+  int n;
+  double xx, xlast;
+
+  geo.band_user_n = 10;
+  rdint ("Wind.ionization.band_model.nbands", &geo.band_user_n);
+  if (geo.band_user_n < 1 || geo.band_user_n > NXBANDS)
+  {
+    Error ("get_user_ion_bands: the number of bands must be between 1 and %d, not %d\n", NXBANDS, geo.band_user_n);
+    Exit (EXIT_FAILURE);
+  }
+
+  xlast = 0;
+  xx = 13.6;
+  for (n = 0; n < geo.band_user_n - 1; n++)
+  {
+    rddoub ("Wind.ionization.band_model.band_boundary(eV)", &xx);
+    if (xx <= xlast)
+    {
+      Error ("get_user_ion_bands: the band boundaries must increase (%g eV after %g eV)\n", xx, xlast);
+      Exit (EXIT_FAILURE);
+    }
+    geo.band_user_freq[n] = xx / HEV;
+    xlast = xx;
+    xx = 2. * xx;
+  }
+
+  return (0);
 }
 
 

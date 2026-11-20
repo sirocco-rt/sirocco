@@ -27,6 +27,7 @@ Photons_per_cycle                          1e8
 Ionization_cycles                          15
 Spectrum_cycles                            1
 Wind.ionization(on.the.spot,ML93,LTE_tr,LTE_te,fixed,matrix_bb,matrix_pow,matrix_est)           matrix_pow
+Wind.ionization.band_model(hhe_cno_edges,photon_bands,cell_spectrum,user_bands)           hhe_cno_edges
 Line_transfer(pure_abs,pure_scat,sing_scat,escape_prob,thermal_trapping,macro_atoms_escape_prob,macro_atoms_thermal_trapping) macro_atoms_thermal_trapping
 Atomic_data                                data/cno_processed_abun/h20_hetop_standard80_cno_abun.dat
 Surface.reflection.or.absorption(reflect,absorb,thermalized.rerad)              reflect

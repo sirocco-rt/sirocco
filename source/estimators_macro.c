@@ -205,6 +205,17 @@ bf_estimators_increment (WindPtr one, PhotPtr p, double ds)
           /* This heat contribution is also the contibution to making k-packets in this volume. So we record it. */
 
           xplasma->est.kpkt_abs += heat_contribution;
+
+          /* development (-pi_rate_table): the direct photoionization estimator for this
+             simple ion, which is otherwise only accumulated without macro atoms (in radiation).  As there,
+             it is the number of photoionizations per unit volume */
+          if (modes.pi_rate_table == TRUE)
+          {
+            if (modes.direct_ground_only == FALSE || is_ground_pi_xsection (&phot_top[n]))
+            {
+              xplasma->est.ioniz[phot_top[n].nion] += y * density * zdom[ndom].fill / (PLANCK * freq_av * xplasma->state.vol);
+            }
+          }
         }
       }
     }

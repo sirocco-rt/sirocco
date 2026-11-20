@@ -245,6 +245,18 @@ parse_command_line (int argc, char *argv[])
         Log ("Enabling convergence-based early stopping of ionization cycles\n");
         j = i;
       }
+      else if (strcmp (argv[i], "-direct_ground_only") == 0)
+      {
+        modes.direct_ground_only = TRUE;
+        Log ("parse_command_line: direct photoionization estimators count ground-state photoionization only\n");
+        j = i;
+      }
+      else if (strcmp (argv[i], "-pi_rate_table") == 0)
+      {
+        modes.pi_rate_table = TRUE;
+        Log ("parse_command_line: writing a table of photoionization rates each ionization cycle\n");
+        j = i;
+      }
       else if (strcmp (argv[i], "-i") == 0)
       {
         modes.quit_after_inputs = 1;
@@ -263,6 +275,7 @@ parse_command_line (int argc, char *argv[])
           exit (1);
         }
         Log ("parse_command_line: setting cell_spec_dim to %d\n", geo.nbins_in_cell_spec);
+        modes.cell_spec_dim_given = TRUE;
         i++;
         j = i;
       }
@@ -439,7 +452,13 @@ These are largely diagnostic or for special cases. These include\n\
                         copy per node.  Results are identical; only memory use changes.  Use if shared memory causes problems.\n\
  -early_stopping        Enable convergence-based early stopping of ionization cycles. Sirocco will then query\n\
                         the user for @estop parameters controlling when to stop early.\n\
-\n\
+ -cell_spec_dim N       Number of log bins in the cell spectra (default 100; 1000 with Wind.ionization.band_model cell_spectrum)\n\
+ \n\
+ Development and diagnostics:\n\
+ -pi_rate_table         (development) Write the band, histogram and direct photoionization rates of every cell\n\
+                        and ion each ionization cycle to root.pi_rates.<rank>.txt\n\
+ -direct_ground_only    (development) Direct photoionization estimators count ground-state photoionization only\n\
+ \n\
  -xtest                 Instead of running sirocco, call the routine xtest so that one can diagnose issues associted with the \n\
                         setup.  This is only useful to devlopers \n\
   -xdev                 Instead of running in the normal mode, run in a development mode being used for testing new options \n\

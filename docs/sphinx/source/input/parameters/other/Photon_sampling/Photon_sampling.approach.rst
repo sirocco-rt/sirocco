@@ -1,7 +1,12 @@
 Photon_sampling.approach
 ========================
 Choice of whether and how to use stratified sampling in creating photons during the
-ionization stage of the calculation.
+ionization stage of the calculation (see :ref:`Photon Banding Strategies`).
+
+These bands are used only to generate photons.  The bands in which the radiation in each
+wind cell is recorded and modelled, for the photoionization rates, are a separate set,
+chosen with :ref:`Wind.ionization.band_model`; they are the same as these only if that
+parameter is set to photon_bands.
 
 Type
   Enumerator
