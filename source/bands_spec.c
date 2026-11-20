@@ -61,14 +61,14 @@ band_copy ()
   int n, nband;
   for (n = 0; n < NPLASMA; n++)
   {
-    plasmamain[n].state.nbands = xband.nbands;
-    for (nband = 0; nband < xband.nbands; nband++)
+    plasmamain[n].state.nbands = geo.nxfreq;
+    for (nband = 0; nband < geo.nxfreq; nband++)
     {
-      plasmamain[n].state.f1[nband] = xband.f1[nband];
-      plasmamain[n].state.f2[nband] = xband.f2[nband];
+      plasmamain[n].state.f1[nband] = geo.xfreq[nband];
+      plasmamain[n].state.f2[nband] = geo.xfreq[nband + 1];
     }
     /* Initialize remaining unused band frequencies to safe values */
-    for (nband = xband.nbands; nband < NXBANDS + 1; nband++)
+    for (nband = geo.nxfreq; nband < NXBANDS + 1; nband++)
     {
       plasmamain[n].state.f1[nband] = 0.0;
       plasmamain[n].state.f2[nband] = 0.0;
