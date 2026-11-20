@@ -16,14 +16,8 @@ Usage:
 	
 Arguments:
 '''
-
-
-# we need the classes and numpy modules 
-import py_classes as cls
 import numpy as np
-import subprocess
 import py_plot_util as util
-
 
 has_astropy = True 
 try:
@@ -66,85 +60,6 @@ def read_spectrum(filename):
         print("Please install astropy. returning 1")
         return 1
 
-
-
-def read_spectrum_to_class (filename, new=True):
-    
-    '''
-    reads a Python .spec file and places in specclass array,
-    which is returned
-
-    Parameters        
-        filename : file or str
-            File, filename to read.  
-
-        new:
-            True means the Created column exists in the file 
-    
-    Returns         
-        Success: 
-        spectrum
-        returns a spectrum class cls.specclass
-
-        Failure returns 1
-    '''
-    
-    if not '.spec' in filename: 
-        if not '.log_spec_tot' in filename:
-            if not '.spec_tot' in filename:
-                filename = filename + '.spec' # assume user wants the spectrum file if no suffix
-
-    # this deals with whether the Created column exists or not
-    if new:
-        add = 0
-    else:
-        add = 1
-        
-    
-    # initialise the spectrum array with blank arrays
-    spectrum = cls.specclass ([],[],[],[],[],[],[], [], [], []) 
-    
-    # first read the file into a temporary storage array
-    if has_astropy:
-        '''
-        astropy is present, so we'll use the ascii.read 
-        function to read in the file then put in classes 
-        we can possibly deprecate this function but I have
-        scripts which use a class format for the spectrum 
-        so would like to to retain in short term 
-        '''
-        s = ascii.read(filename)
-        spectrum.freq = s["Freq."]
-        spectrum.wavelength = spectrum_temp["Wavelength"]
-
-        if new:
-            spectrum.created = s['Created']
-
-        spectrum.emitted = s['Emitted']
-        spectrum.censrc = s['CenSrc']
-        spectrum.disk = s['Disk']
-        spectrum.wind = spectrum_temp['Wind'] 
-        spectrum.scattered = spectrum_temp['Scattered']
-        spectrum.hitsurf = spectrum_temp['HitSurf']
-
-        nangles = len(s.dtype.names) - 9 + add
-        spectrum.spec = np.zeros(nangles)
-
-        for i in range(nangles):
-            spectrum.spec[i] = s[s.dtype.names[9 - add + i]]
-
-
-    else:
-        '''
-        astropy is not present
-        '''
-        print("Please install astropy. returning 1")
-        return 1
-    
-
-
-    #finally, return the spectrum class which is a series of named arrays      
-    return spectrum
 
 
 def read_swind_summary(filename, return_inwind=False, mode="2d"):
